@@ -1,0 +1,28 @@
+Source: zigbee-daemon
+Section: utils
+Priority: optional
+Maintainer: Simon Stuerz <simon.stuerz@guh.io>
+Standards-Version: 3.9.7
+Homepage: https://guh.io
+Vcs-Git: https://github.com/guh/guh.git
+Build-Depends: debhelper (>= 9.0.0),
+               dpkg-dev (>= 1.16.1~),
+               qt5-default,
+               qt5-qmake,
+               qtbase5-dev,
+               qtbase5-dev-tools,
+               libqt5serialport5-dev
+
+Package: zigbee-daemon
+Architecture: any
+Section: net
+Multi-Arch: same
+Depends: libqt5network5,
+         libqt5gui5,
+         libqt5serialport5,
+         ${shlibs:Depends},
+         ${misc:Depends}
+Description: Zigbee bridge controller - daemon
+ Description...
+ .
+ This package will install the daemon.

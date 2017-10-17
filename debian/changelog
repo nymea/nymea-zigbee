@@ -1,0 +1,5 @@
+zigbee-daemon (0.0.1) xenial; urgency=medium
+
+  * Initial release.
+
+ -- Simon Stürz <simon.stuerz@guh.io>  Mon, 16 Oct 2017 14:02:07 +0200
