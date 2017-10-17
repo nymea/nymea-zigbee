@@ -3,7 +3,9 @@
 
 #include <QObject>
 
+#include "zigbee.h"
 #include "zigbeeinterface.h"
+#include "zigbeeinterfacemessage.h"
 
 class ZigbeeManager : public QObject
 {
@@ -18,7 +20,13 @@ private:
     ZigbeeInterface *m_interface;
     QString m_serialPort;
 
+    // Controller methods
+    void initController();
+
 signals:
+
+private slots:
+    void onMessageReceived(const ZigbeeInterfaceMessage &message);
 
 public slots:
 
