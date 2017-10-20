@@ -10,194 +10,352 @@ class Zigbee
     Q_GADGET
 
 public:
+    enum ZigbeeProfile {
+        ZigbeeProfileHomeAutomation = 0x0104,
+        ZigbeeProfileLightLink      = 0xC05E
+    };
+    Q_ENUM(ZigbeeProfile)
+
     enum InterfaceMessageType {
-        /* Common Commands */
-        Status                              = 0x8000,
-        Logging                             = 0x8001,
+        // Common Commands
+        MessageTypeNone                                = 0x0000,
+        MessageTypeStatus                              = 0x8000,
+        MessageTypeLogging                             = 0x8001,
 
-        DataIndication                      = 0x8002,
+        MessageTypeDataIndication                      = 0x8002,
 
-        NodeClusterList                     = 0x8003,
-        NodeAttributeList                   = 0x8004,
-        NodeCommandIdList                   = 0x8005,
-        RestartProvisioned                  = 0x8006,
-        RestartFactoryNew                   = 0x8007,
-        GetVersion                          = 0x0010,
-        VersionList                         = 0x8010,
+        MessageTypeNodeClusterList                     = 0x8003,
+        MessageTypeNodeAttributeList                   = 0x8004,
+        MessageTypeNodeCommandIdList                   = 0x8005,
+        MessageTypeRestartProvisioned                  = 0x8006,
+        MessageTypeFactoryNewRestart                   = 0x8007,
+        MessageTypeGetVersion                          = 0x0010,
+        MessageTypeVersionList                         = 0x8010,
 
-        SetExtendetPanId                    = 0x0020,
-        SetChannelMask                      = 0x0021,
-        SetSecurity                         = 0x0022,
-        SetDeviceType                       = 0x0023,
-        StartNetwork                        = 0x0024,
-        StartScan                           = 0x0025,
-        NetworkJoinedFormed                 = 0x8024,
-        NetworkRemoveDevice                 = 0x0026,
-        NetworkWhitelistEnable              = 0x0027,
-        AuthenticateDeviceRequest           = 0x0028,
-        AuthenticateDeviceResponse          = 0x8028,
-        OutOfBandCommisioningDataRequest    = 0x0029,
-        OutOfBandCommisioningDataResponse   = 0x8029,
+        MessageTypeSetExtendetPanId                    = 0x0020,
+        MessageTypeSetChannelMask                      = 0x0021,
+        MessageTypeSetSecurity                         = 0x0022,
+        MessageTypeSetDeviceType                       = 0x0023,
+        MessageTypeStartNetwork                        = 0x0024,
+        MessageTypeStartScan                           = 0x0025,
+        MessageTypeNetworkJoinedFormed                 = 0x8024,
+        MessageTypeNetworkRemoveDevice                 = 0x0026,
+        MessageTypeNetworkWhitelistEnable              = 0x0027,
+        MessageTypeAuthenticateDeviceRequest           = 0x0028,
+        MessageTypeAuthenticateDeviceResponse          = 0x8028,
+        MessageTypeOutOfBandCommisioningDataRequest    = 0x0029,
+        MessageTypeOutOfBandCommisioningDataResponse   = 0x8029,
 
-        Reset                               = 0x0011,
-        ErasePersistentData                 = 0x0012,
-        ZllFactoryNew                       = 0x0013,
-        GetPermitJoin                       = 0x0014,
-        GetPermitJoinResponse               = 0x8014,
-        Bind                                = 0x0030,
-        BindResponse                        = 0x8030,
-        Unbind                              = 0x0031,
-        UnbindResponse                      = 0x8031,
+        MessageTypeReset                               = 0x0011,
+        MessageTypeErasePersistentData                 = 0x0012,
+        MessageTypeZllFactoryNew                       = 0x0013,
+        MessageTypeGetPermitJoining                    = 0x0014,
+        MessageTypeGetPermitJoiningResponse            = 0x8014,
+        MessageTypeBind                                = 0x0030,
+        MessageTypeBindResponse                        = 0x8030,
+        MessageTypeUnbind                              = 0x0031,
+        MessageTypeUnbindResponse                      = 0x8031,
 
-        NetworkAdressRequest                = 0x0040,
-        NetworkAdressResponse               = 0x8040,
-        IeeeAddressResponse                 = 0x0041,
-        IeeeAddressRequest                  = 0x8041,
-        NodeDescriptorRequest               = 0x0042,
-        NodeDescriptorRsponse               = 0x8042,
-        SimpleDescriptorRequest             = 0x0043,
-        SimpleDescriptorResponse            = 0x8043,
-        PowerDescriptorRequest              = 0x0044,
-        PowerDescriptorResponse             = 0x8044,
-        ActiveEndpointRequest               = 0x0045,
-        ActiveEndpointResponse              = 0x8045,
-        MatchDescriptorRequest              = 0x0046,
-        MatchDescriptorResponse             = 0x8046,
-        ManagementLeaveRequest              = 0x0047,
-        ManagementLeaveResponse             = 0x8047,
-        LeaveIndication                     = 0x8048,
-        PermitJoiningRequest                = 0x0049,
-        ManagementNetworkUpdateRequest      = 0x004A,
-        ManagementNetworkUpdateResponse     = 0x804A,
-        SystemServerDiscoveryRequest        = 0x004B,
-        SystemServerDiscoveryResponse       = 0x804B,
-        DeviceAnnounce                      = 0x004D,
-        ManagementLqiRequest                = 0x004E,
-        ManagementLqiResponse               = 0x804E,
+        MessageTypeNetworkAdressRequest                = 0x0040,
+        MessageTypeNetworkAdressResponse               = 0x8040,
+        MessageTypeIeeeAddressResponse                 = 0x0041,
+        MessageTypeIeeeAddressRequest                  = 0x8041,
+        MessageTypeNodeDescriptorRequest               = 0x0042,
+        MessageTypeNodeDescriptorRsponse               = 0x8042,
+        MessageTypeSimpleDescriptorRequest             = 0x0043,
+        MessageTypeSimpleDescriptorResponse            = 0x8043,
+        MessageTypePowerDescriptorRequest              = 0x0044,
+        MessageTypePowerDescriptorResponse             = 0x8044,
+        MessageTypeActiveEndpointRequest               = 0x0045,
+        MessageTypeActiveEndpointResponse              = 0x8045,
+        MessageTypeMatchDescriptorRequest              = 0x0046,
+        MessageTypeMatchDescriptorResponse             = 0x8046,
+        MessageTypeManagementLeaveRequest              = 0x0047,
+        MessageTypeManagementLeaveResponse             = 0x8047,
+        MessageTypeLeaveIndication                     = 0x8048,
+        MessageTypePermitJoiningRequest                = 0x0049,
+        MessageTypeManagementNetworkUpdateRequest      = 0x004A,
+        MessageTypeManagementNetworkUpdateResponse     = 0x804A,
+        MessageTypeSystemServerDiscoveryRequest        = 0x004B,
+        MessageTypeSystemServerDiscoveryResponse       = 0x804B,
+        MessageTypeDeviceAnnounce                      = 0x004D,
+        MessageTypeManagementLqiRequest                = 0x004E,
+        MessageTypeManagementLqiResponse               = 0x804E,
 
-        /* Group Cluster */
-        AddGroupRequest                     = 0x0060,
-        AddGroupResponse                    = 0x8060,
-        ViewGroupRequest                    = 0x0061,
-        ViewGroupResponse                   = 0x8061,
-        GetGroupMembershipRequest           = 0x0062,
-        GetGroupMembershipResponse          = 0x8062,
-        RemoveGroupRequest                  = 0x0063,
-        RemoveGroupResponse                 = 0x8063,
-        RemoveAllGroups                     = 0x0064,
-        GroupIfIdentify                     = 0x0065,
+        // Group Cluster
+        MessageTypeAddGroupRequest                     = 0x0060,
+        MessageTypeAddGroupResponse                    = 0x8060,
+        MessageTypeViewGroupRequest                    = 0x0061,
+        MessageTypeViewGroupResponse                   = 0x8061,
+        MessageTypeGetGroupMembershipRequest           = 0x0062,
+        MessageTypeGetGroupMembershipResponse          = 0x8062,
+        MessageTypeRemoveGroupRequest                  = 0x0063,
+        MessageTypeRemoveGroupResponse                 = 0x8063,
+        MessageTypeRemoveAllGroups                     = 0x0064,
+        MessageTypeGroupIfIdentify                     = 0x0065,
 
-        /* Identify Cluster */
-        IdentifySend                        = 0x0070,
-        IdentifyQuery                       = 0x0071,
+        // Identify Cluster
+        MessageTypeIdentifySend                        = 0x0070,
+        MessageTypeIdentifyQuery                       = 0x0071,
 
-        /* Level Cluster */
-        MoveToLevel                         = 0x0080,
-        MoveToLevelOnOff                    = 0x0081,
-        MoveStep                            = 0x0082,
-        MoveStopMove                        = 0x0083,
-        MoveStopMoveOnOff                   = 0x0084,
+        // Level Cluster
+        MessageTypeMoveToLevel                         = 0x0080,
+        MessageTypeMoveToLevelOnOff                    = 0x0081,
+        MessageTypeMoveStep                            = 0x0082,
+        MessageTypeMoveStopMove                        = 0x0083,
+        MessageTypeMoveStopMoveOnOff                   = 0x0084,
 
-        /* Scenes Cluster */
-        ViewScene                           = 0x00A0,
-        ViewSceneResponse                   = 0x80A0,
-        AddScene                            = 0x00A1,
-        AddSceneResponse                    = 0x80A1,
-        RemoveScene                         = 0x00A2,
-        RemoveSceneResponse                 = 0x80A2,
-        RemoveAllScenes                     = 0x00A3,
-        RemoveAllScenesResponse             = 0x80A3,
-        StoreScene                          = 0x00A4,
-        StoreSceneResponse                  = 0x80A4,
-        RecallScene                         = 0x00A5,
-        SceneMembershipRequest              = 0x00A6,
-        SceneMembershipResponse             = 0x80A6,
+        // Scenes Cluster
+        MessageTypeViewScene                           = 0x00A0,
+        MessageTypeViewSceneResponse                   = 0x80A0,
+        MessageTypeAddScene                            = 0x00A1,
+        MessageTypeAddSceneResponse                    = 0x80A1,
+        MessageTypeRemoveScene                         = 0x00A2,
+        MessageTypeRemoveSceneResponse                 = 0x80A2,
+        MessageTypeRemoveAllScenes                     = 0x00A3,
+        MessageTypeRemoveAllScenesResponse             = 0x80A3,
+        MessageTypeStoreScene                          = 0x00A4,
+        MessageTypeStoreSceneResponse                  = 0x80A4,
+        MessageTypeRecallScene                         = 0x00A5,
+        MessageTypeSceneMembershipRequest              = 0x00A6,
+        MessageTypeSceneMembershipResponse             = 0x80A6,
 
-        /* Colour Cluster */
-        MoveToHue                           = 0x00B0,
-        MoveHue                             = 0x00B1,
-        StepHue                             = 0x00B2,
-        MoveToSaturation                    = 0x00B3,
-        MoveSaturation                      = 0x00B4,
-        StepStaturation                     = 0x00B5,
-        MoveToHueSaturation                 = 0x00B6,
-        MoveToColor                         = 0x00B7,
-        MoveColor                           = 0x00B8,
-        StepColor                           = 0x00B9,
+        //Colour Cluster
+        MessageTypeMoveToHue                           = 0x00B0,
+        MessageTypeMoveHue                             = 0x00B1,
+        MessageTypeStepHue                             = 0x00B2,
+        MessageTypeMoveToSaturation                    = 0x00B3,
+        MessageTypeMoveSaturation                      = 0x00B4,
+        MessageTypeStepStaturation                     = 0x00B5,
+        MessageTypeMoveToHueSaturation                 = 0x00B6,
+        MessageTypeMoveToColor                         = 0x00B7,
+        MessageTypeMoveColor                           = 0x00B8,
+        MessageTypeStepColor                           = 0x00B9,
 
-        /* ZLL Commands */
+        // ZLL Commands
         /* Touchlink */
-        InitiateTouchlink                   = 0x00D0,
-        TouchlinkStatus                     = 0x00D1,
-        TouchlinkFactoryReset               = 0x00D2,
+        MessageTypeInitiateTouchlink                   = 0x00D0,
+        MessageTypeTouchlinkStatus                     = 0x00D1,
+        MessageTypeTouchlinkFactoryReset               = 0x00D2,
 
-        /* Identify Cluster */
-        IdentifyTriggerEffect               = 0x00E0,
+        // Identify Cluster
+        MessageTypeIdentifyTriggerEffect               = 0x00E0,
 
-        /* On/Off Cluster */
-        CluserOnOff                         = 0x0092,
-        CluserOnOffTimed                    = 0x0093,
-        CluserOnOffEffects                  = 0x0094,
-        CluserOnOffUpdate                   = 0x8095,
+        // On/Off Cluster
+        MessageTypeCluserOnOff                         = 0x0092,
+        MessageTypeCluserOnOffTimed                    = 0x0093,
+        MessageTypeCluserOnOffEffects                  = 0x0094,
+        MessageTypeCluserOnOffUpdate                   = 0x8095,
 
-        /* Scenes Cluster */
-        AddEnhancedScene                    = 0x00A7,
-        ViewEnhancedScene                   = 0x00A8,
-        CopyScene                           = 0x00A9,
+        // Scenes Cluster
+        MessageTypeAddEnhancedScene                    = 0x00A7,
+        MessageTypeViewEnhancedScene                   = 0x00A8,
+        MessageTypeCopyScene                           = 0x00A9,
 
-        /* Colour Cluster */
-        EnhancedMoveToHue                   = 0x00BA,
-        EnhancedMoveHue                     = 0x00BB,
-        EnhancedStepHue                     = 0x00BC,
-        EnhancedMoveToHueSaturation         = 0x00BD,
-        ColourLoopSet                       = 0x00BE,
-        StopMoveStep                        = 0x00BF,
-        MoveToColorTemperature              = 0x00C0,
-        MoveColorTemperature                = 0x00C1,
-        StepColorTemperature                = 0x00C2,
+        // Colour Cluster
+        MessageTypeEnhancedMoveToHue                   = 0x00BA,
+        MessageTypeEnhancedMoveHue                     = 0x00BB,
+        MessageTypeEnhancedStepHue                     = 0x00BC,
+        MessageTypeEnhancedMoveToHueSaturation         = 0x00BD,
+        MessageTypeColourLoopSet                       = 0x00BE,
+        MessageTypeStopMoveStep                        = 0x00BF,
+        MessageTypeMoveToColorTemperature              = 0x00C0,
+        MessageTypeMoveColorTemperature                = 0x00C1,
+        MessageTypeStepColorTemperature                = 0x00C2,
 
-        /* ZHA Commands */
-        /* Door Lock Cluster */
-        LockUnlockDoor                      = 0x00F0,
+        // ZHA Commands
+        // Door Lock Cluster
+        MessageTypeLockUnlockDoor                      = 0x00F0,
 
-        /* Attributes */
-        ReadAttributeRequest                = 0x0100,
-        ReadAttributeResponse               = 0x8100,
-        DefaultResponse                     = 0x8101,
-        AttributeReport                     = 0x8102,
-        WriteAttributeRequest               = 0x0110,
-        WriteAttributeResponse              = 0x8110,
-        ConfigReportingRequest              = 0x0120,
-        ConfigReportingResponse             = 0x8120,
-        ReportAttributes                    = 0x8121,
-        AttributeDiscoveryRequest           = 0x0140,
-        AttributeDiscoveryResponse          = 0x8140,
+        // Attributes
+        MessageTypeReadAttributeRequest                = 0x0100,
+        MessageTypeReadAttributeResponse               = 0x8100,
+        MessageTypeDefaultResponse                     = 0x8101,
+        MessageTypeAttributeReport                     = 0x8102,
+        MessageTypeWriteAttributeRequest               = 0x0110,
+        MessageTypeWriteAttributeResponse              = 0x8110,
+        MessageTypeConfigReportingRequest              = 0x0120,
+        MessageTypeConfigReportingResponse             = 0x8120,
+        MessageTypeReportAttributes                    = 0x8121,
+        MessageTypeAttributeDiscoveryRequest           = 0x0140,
+        MessageTypeAttributeDiscoveryResponse          = 0x8140,
 
         /* Persistant data manager messages */
-        DataManagerAvailableRequest         = 0x0300,
-        DataManagerAvailableResponse        = 0x8300,
-        DataManagerSaveRecordRequest        = 0x0200,
-        DataManagerSaveRecordResponse       = 0x8200,
-        DataManagerLoadRecordRequest        = 0x0201,
-        DataManagerLoadRecordResponse       = 0x8201,
-        DataManagerDeleteAllRecordsRequest  = 0x0202,
-        DataManagerDeleteAllRecordsResponse = 0x8202,
+        MessageTypeDataManagerAvailableRequest         = 0x0300,
+        MessageTypeDataManagerAvailableResponse        = 0x8300,
+        MessageTypeDataManagerSaveRecordRequest        = 0x0200,
+        MessageTypeDataManagerSaveRecordResponse       = 0x8200,
+        MessageTypeDataManagerLoadRecordRequest        = 0x0201,
+        MessageTypeDataManagerLoadRecordResponse       = 0x8201,
+        MessageTypeDataManagerDeleteAllRecordsRequest  = 0x0202,
+        MessageTypeDataManagerDeleteAllRecordsResponse = 0x8202,
 
         /* Appliance Statistics Cluster 0x0B03 */
         // http://www.nxp.com/documents/user_manual/JN-UG-3076.pdf
-        StatisticsClusterLogMessage         = 0x0301,   // Was 0x0500, was 0x0301
-        StatisticsClusterLogMessageResponse = 0x8301,
+        MessageTypeStatisticsClusterLogMessage         = 0x0301,   // Was 0x0500, was 0x0301
+        MessageTypeStatisticsClusterLogMessageResponse = 0x8301,
 
         /* IAS Cluster */
-        SendIasZoneEnroolResponse			= 0x0400,
-        IasZoneStatusChangeNotify           = 0x8401,
+        MessageTypeSendIasZoneEnroolResponse			= 0x0400,
+        MessageTypeIasZoneStatusChangeNotify            = 0x8401,
     };
     Q_ENUM(InterfaceMessageType)
 
-    static QString convertByteToHexString(const quint8 &byte);
-    static QString convertByteArrayToHexString(const QByteArray &byteArray);
-    static QString convertByte16ToHexString(const quint16 &byte);
 
+    enum ClusterId {
+        // Basics
+        ClusterIdBasic                  = 0x0000,
+        ClusterIdPower                  = 0x0001,
+        ClusterIdDeviceTemperature      = 0x0002,
+        ClusterIdIdentify               = 0x0003,
+        ClusterIdGroups                 = 0x0004,
+        ClusterIdScenes                 = 0x0005,
+        ClusterIdOnOff                  = 0x0006,
+        ClusterIdOnOffCOnfiguration     = 0x0007,
+        ClusterIdLevelControl           = 0x0008,
+        ClusterIdAlarms                 = 0x0009,
+        ClusterIdTime                   = 0x000A,
+        ClusterIdRssiLocation           = 0x000B,
+        ClusterIdAnalogInputBasic       = 0x000C,
+        ClusterIdAnalogOutputBasic      = 0x000D,
+        ClusterIdValueBasic             = 0x000E,
+        ClusterIdBinaryInputBasic       = 0x000F,
+        ClusterIdBinaryOutputBasic      = 0x0010,
+        ClusterIdBinaryValueBasic       = 0x0011,
+        ClusterIdMultiStateInputBasic   = 0x0012,
+        ClusterIdMultiStateOutputBasic  = 0x0013,
+        ClusterIdMultiStateValueBasic   = 0x0014,
+        ClusterIdCommissoning           = 0x0015,
+
+        // Over the air uppgrade (OTA)
+        ClusterIdOtaUpgrade             = 0x0019,
+
+        // Closures
+        ClusterIdShadeConfiguration     = 0x0100,
+
+        // Door Lock
+        ClusterIdDoorLock = 0x0101,
+
+        // Heating, Ventilation and Air-Conditioning (HVAC)
+        ClusterIdPumpConfigurationControl = 0x0200,
+        ClusterIdThermostat               = 0x0201,
+        ClusterIdFanControll              = 0x0202,
+        ClusterIdDehumiditationControll   = 0x0203,
+        ClusterIdThermostatUserControll   = 0x0204,
+
+        // Lighting
+        ClusterIdColorControl           = 0x0300,
+        ClusterIdBallastConfiguration   = 0x0301,
+
+        // Sensing
+        ClusterIdMeasurementIlluminance         = 0x0400,
+        ClusterIdIlluminanceLevelSensing        = 0x0401,
+        ClusterIdTemperatureMeasurement         = 0x0402,
+        ClusterIdPressureMeasurement            = 0x0403,
+        ClusterIdFlowMeasurement                = 0x0404,
+        ClusterIdRelativeHumidityMeasurement    = 0x0405,
+        ClusterIdOccapancySensing               = 0x0406,
+
+        // Security and Safty
+        ClusterIdIasZone = 0x0500,
+        ClusterIdIasAce  = 0x0501,
+        ClusterIdIasWd   = 0x0502,
+
+        // Smart energy
+        ClusterIdPrice          = 0x0700,
+        ClusterIdLoadControl    = 0x0701,
+        ClusterIdSimpleMetering = 0x0702,
+
+        // Electrical Measurement
+        ClusterIdElectricalMeasurement = 0x0B04,
+
+        // ZLL
+        ClusterIdTouchlinkCommissioning = 0x1000
+    };
+    Q_ENUM(ClusterId)
+
+    enum LightLinkDevice {
+
+        // Lightning devices
+        LightLinkDeviceOnOffLight               = 0x0000,
+        LightLinkDeviceOnOffPlug                = 0x0010,
+        LightLinkDeviceDimmableLight            = 0x0100,
+        LightLinkDeviceDimmablePlug             = 0x0110,
+        LightLinkDeviceColourLight              = 0x0200,
+        LightLinkDeviceExtendedColourLight      = 0x0210,
+        LightLinkDeviceColourTemperatureLight   = 0x0220,
+
+        // Controller devices
+        LightLinkDeviceColourController         = 0x8000,
+        LightLinkDeviceColourSceneController    = 0x8010,
+        LightLinkDeviceNonColourController      = 0x8020,
+        LightLinkDeviceNonColourSceneController = 0x8030,
+        LightLinkDeviceControlBridge            = 0x8040,
+        LightLinkDeviceOnOffSensor              = 0x8050
+    };
+    Q_ENUM(LightLinkDevice)
+
+
+    enum HomeAutomationDevice {
+        // Generic devices
+        HomeAutomationDeviceOnOffSwitch         = 0x0000,
+        HomeAutomationDeviceOnOffOutput         = 0x0002,
+        HomeAutomationDeviceRemoteControl       = 0x0006,
+        HomeAutomationDeviceDoorLock            = 0x000A,
+        HomeAutomationDeviceDoorLockController  = 0x000B,
+        HomeAutomationDeviceSimpleSensor        = 0x000C,
+        HomeAutomationDeviceSmartPlug           = 0x0051,
+
+        // Lightning devices
+        HomeAutomationDeviceOnOffLight           = 0x0100,
+        HomeAutomationDeviceDimmableLight        = 0x0101,
+        HomeAutomationDeviceDimmableColorLight   = 0x0102,
+        HomeAutomationDeviceOnOffLightSwitch     = 0x0103,
+        HomeAutomationDeviceDimmableSwitch       = 0x0104,
+        HomeAutomationDeviceColourDimmerSwitch   = 0x0105,
+        HomeAutomationDeviceLightSensor          = 0x0106,
+        HomeAutomationDeviceOccupacySensor       = 0x0106,
+
+        // Heating, Ventilation and Air-Conditioning (HVAC) devices
+        HomeAutomationDeviceThermostat           = 0x0301,
+
+        // Intruder Alarm System (IAS) devices
+        HomeAutomationDeviceIsaControlEquipment             = 0x0400, // CIE
+        HomeAutomationDeviceIsaAncillaryControlEquipment    = 0x0401, // ACE
+        HomeAutomationDeviceIsaZone                         = 0x0401,
+        HomeAutomationDeviceIsaWarningDevice                = 0x0401  // WD
+    };
+    Q_ENUM(HomeAutomationDevice)
+
+//    enum DeviceType {
+//        DeviceTypeUnknown       = 0xFFFF, // Unknown type
+//        DeviceTypeBasic         = 0x0002, // Gateway
+//        DeviceTypeGateway       = 0x0002, // Gateway
+//        DeviceTypeSimpleSensor  = 0x000C, // ZHA Simple Sensor
+//        DeviceTypeSmartPlug     = 0x0051, // ZHA Smart Plug
+//        DeviceTypeControlBridge = 0x0840, // Control Bridge
+//        DeviceTypeLampOnOff     = 0x0000, // ZLL on/off lamp
+//        DeviceTypeLampDimm      = 0x0100, // ZLL mono lamp
+
+//#define SIMPLE_DESCR_LAMP_DIMM_ZLL     0x0100   // ZLL mono lamp
+//#define SIMPLE_DESCR_LAMP_ONOFF        0x0100   // ZHA on/off lamp
+//#define SIMPLE_DESCR_LAMP_DIMM         0x0101   // ZHA dimmable lamp
+//#define SIMPLE_DESCR_LAMP_COLOUR       0x0102   // ZHA dimmable colour lamp
+//#define SIMPLE_DESCR_LAMP_CCTW         0x01FF   // ZHA / ZLL CCTW lamp
+//#define SIMPLE_DESCR_LAMP_COLOUR_DIMM  0x0200   // ZLL dimmable colour lamp
+//#define SIMPLE_DESCR_LAMP_COLOUR_EXT   0x0210   // ZLL extended colour lamp
+//#define SIMPLE_DESCR_LAMP_COLOUR_TEMP  0x0220   // ZLL colour temperature lamp
+//#define SIMPLE_DESCR_HVAC_HC_UNIT      0x0300   // ZHA HVAC HC Unit (HeatingManager)
+//#define SIMPLE_DESCR_THERMOSTAT        0x0301   // ZHA Thermostat
+//#define SIMPLE_DESCR_HVAC_PUMP         0x0303   // ZHA NVAC Pump
+//#define SIMPLE_DESCR_SWITCH_ONOFF      0x0103   // ZHA On/Off Switch
+//#define SIMPLE_DESCR_SWITCH_DIMM       0x0104   // ZHA Dimm Switch
+//#define SIMPLE_DESCR_SWITCH_COLL_DIMM  0x0105   // ZHA Color Dimm Switch
+//#define SIMPLE_DESCR_LIGHT_SENSOR      0x0106   // ZHA Light sensor
+//#define SIMPLE_DESCR_SMOKE_SENSOR      0x0012   // CES - TriTech CO/smoke sensor
+//#define SIMPLE_DESCR_WINDOW_SENSOR     0x0014   // CES - window sensor
+//#define SIMPLE_DESCR_OCCUPANCY_SENSOR  0x0107   // ZH/ZLO - Occupancy Sensor
+//    };
 
 };
 

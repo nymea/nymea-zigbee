@@ -1,5 +1,6 @@
 #include "zigbeeinterface.h"
 #include "loggingcategory.h"
+#include "zigbeeutils.h"
 
 ZigbeeInterface::ZigbeeInterface(QObject *parent) :
     QObject(parent),
@@ -9,9 +10,19 @@ ZigbeeInterface::ZigbeeInterface(QObject *parent) :
 
 }
 
+ZigbeeInterface::~ZigbeeInterface()
+{
+    disable();
+}
+
 bool ZigbeeInterface::available() const
 {
     return m_serialPort->isOpen();
+}
+
+QString ZigbeeInterface::serialPort() const
+{
+    return m_serialPort->portName();
 }
 
 quint8 ZigbeeInterface::calculateCrc(const quint16 &messageTypeValue, const quint16 &lenghtValue, const QByteArray &data)
@@ -35,16 +46,16 @@ void ZigbeeInterface::streamByte(quint8 byte, bool specialCharacter)
 {
     if (!specialCharacter && byte < 0x10) {
         // Byte stuffing ESC char before stuffed data byte
-        qCDebug(dcZigbeeInterfaceTraffic()) << "[out]" << Zigbee::convertByteToHexString(0x02);
+        qCDebug(dcZigbeeInterfaceTraffic()) << "[out]" << ZigbeeUtils::convertByteToHexString(0x02);
         if (m_serialPort->write(QByteArray::fromRawData("\x02", 1)) < 0) {
-            qCWarning(dcZigbeeInterface()) << "Could not stream ESC byte" << Zigbee::convertByteArrayToHexString(QByteArray::fromRawData("\x02", 1));
+            qCWarning(dcZigbeeInterface()) << "Could not stream ESC byte" << ZigbeeUtils::convertByteArrayToHexString(QByteArray::fromRawData("\x02", 1));
         }
 
         byte ^= 0x10;
     }
-    qCDebug(dcZigbeeInterfaceTraffic()) << "[out]" << Zigbee::convertByteToHexString(byte);
+    qCDebug(dcZigbeeInterfaceTraffic()) << "[out]" << ZigbeeUtils::convertByteToHexString(byte);
     if (m_serialPort->write(QByteArray(1, (char)byte)) < 0) {
-        qCWarning(dcZigbeeInterface()) << "Could not stream byte" << Zigbee::convertByteToHexString(byte);
+        qCWarning(dcZigbeeInterface()) << "Could not stream byte" << ZigbeeUtils::convertByteToHexString(byte);
     }
     m_serialPort->flush();
 }
@@ -66,7 +77,7 @@ void ZigbeeInterface::onReadyRead()
     for (int i = 0; i < data.length(); i++) {
         quint8 byte = static_cast<quint8>(data.at(i));
 
-        qCDebug(dcZigbeeInterfaceTraffic()) << "[ in]" << Zigbee::convertByteToHexString(byte);
+        qCDebug(dcZigbeeInterfaceTraffic()) << "[ in]" << ZigbeeUtils::convertByteToHexString(byte);
 
         switch (byte) {
         case 0x01:
@@ -83,14 +94,17 @@ void ZigbeeInterface::onReadyRead()
             break;
         case 0x03: {
             Zigbee::InterfaceMessageType messageType = static_cast<Zigbee::InterfaceMessageType>(m_messageTypeValue);
+
+            // Check message sanity
             quint8 crc = calculateCrc(m_messageTypeValue, m_lengthValue, m_data);
             if (crc != m_crcValue) {
                 qCWarning(dcZigbeeInterface()) << "Invalid CRC value" << crc << "!=" << m_crcValue;
             } else if (m_data.count() != m_lengthValue) {
                 qCWarning(dcZigbeeInterface()) << "ERROR:s Invalid data length" << m_data.count() << "!=" << m_lengthValue;
             } else {
+                // We got a valid message
                 ZigbeeInterfaceMessage message(messageType, m_data);
-                qCDebug(dcZigbeeInterface()) << "<--" << message;
+                qCDebug(dcZigbeeInterface()) << "<--" << message << "|" << "crc:" << ZigbeeUtils::convertByteToHexString(m_crcValue) << ", length:" << ZigbeeUtils::convertUint16ToHexString(m_lengthValue);
                 emit messageReceived(message);
             }
             setReadingState(WaitForStart);
@@ -144,7 +158,9 @@ void ZigbeeInterface::onReadyRead()
 
 void ZigbeeInterface::onError(const QSerialPort::SerialPortError &error)
 {
-    qCWarning(dcZigbeeInterface()) << "Serial port error:" << error << m_serialPort->errorString();
+    if (error != QSerialPort::NoError) {
+        qCWarning(dcZigbeeInterface()) << "Serial port error:" << error << m_serialPort->errorString();
+    }
 }
 
 bool ZigbeeInterface::enable(const QString &serialPort)
@@ -194,7 +210,7 @@ void ZigbeeInterface::sendMessage(const ZigbeeInterfaceMessage &message)
 
     quint8 crcValue = calculateCrc(messageTypeValue, lengthValue, message.data());
 
-    qCDebug(dcZigbeeInterface()) << "-->" << message << "crc:" << Zigbee::convertByteToHexString(crcValue) << ", length:" << Zigbee::convertByte16ToHexString(lengthValue);
+    qCDebug(dcZigbeeInterface()) << "-->" << message << "|" << "crc:" << ZigbeeUtils::convertByteToHexString(crcValue) << ", length:" << ZigbeeUtils::convertUint16ToHexString(lengthValue);
 
     streamByte(0x01, true);
     streamByte((messageTypeValue >> 8) & 0xff);

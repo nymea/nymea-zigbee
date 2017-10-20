@@ -11,16 +11,28 @@ INSTALLS += target
 
 SOURCES += main.cpp \
     core.cpp \
-    zigbeeinterface.cpp \
-    zigbeemanager.cpp \
+    interface/zigbeeinterface.cpp \
+    interface/zigbeeinterfacemessage.cpp \
+    interface/zigbeeinterfacerequest.cpp \
+    interface/zigbeeinterfacereply.cpp \
+    zigbeenetworkmanager.cpp \
     zigbee.cpp \
-    zigbeeinterfacemessage.cpp \
-    loggingcategory.cpp
+    loggingcategory.cpp \
+    zigbeebridgecontroller.cpp \
+    zigbeeutils.cpp \
+    zigbeenode.cpp \
+    zigbeeaddress.cpp
 
 HEADERS += \
     core.h \
-    zigbeeinterface.h \
-    zigbeemanager.h \
+    interface/zigbeeinterface.h \
+    interface/zigbeeinterfacemessage.h \
+    interface/zigbeeinterfacerequest.h \
+    interface/zigbeeinterfacereply.h \
+    zigbeenetworkmanager.h \
     zigbee.h \
-    zigbeeinterfacemessage.h \
-    loggingcategory.h
+    loggingcategory.h \
+    zigbeebridgecontroller.h \
+    zigbeeutils.h \
+    zigbeenode.h \
+    zigbeeaddress.h

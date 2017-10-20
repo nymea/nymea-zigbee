@@ -58,9 +58,31 @@ int main(int argc, char *argv[])
 
     QCoreApplication application(argc, argv);
 
+    // Command line parser
+    QCommandLineParser parser;
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.setApplicationDescription(QString("\nDaemon for the zigbee NXP uart bridge.\n\nCopyright %1 2016 Simon Stürz <simon.stuerz@guh.io>\nAll rights reserved.").arg(QChar(0xA9)));
+
+    QCommandLineOption debugLevelOption(QStringList() << "d" << "debug-level", "Set debug level [1-4].");
+    debugLevelOption.setDefaultValue("1");
+    debugLevelOption.setValueName("level");
+    parser.addOption(debugLevelOption);
+
+    parser.process(application);
+
+    bool debugLevelValueOk = false;
+    int debugLevel = parser.value(debugLevelOption).toInt(&debugLevelValueOk);
+
+    if (debugLevel < 1 || debugLevel > 4 || !debugLevelValueOk) {
+        qWarning() << "Invalid debug level passed:" << parser.value(debugLevelOption);
+        debugLevel = 1;
+    }
+
     s_loggingFilters.insert("Zigbee", true);
-    s_loggingFilters.insert("ZigbeeInterface", true);
-    s_loggingFilters.insert("ZigbeeInterfaceTraffic", false);
+    s_loggingFilters.insert("ZigbeeController", (debugLevel > 1));
+    s_loggingFilters.insert("ZigbeeInterface", (debugLevel > 2));
+    s_loggingFilters.insert("ZigbeeInterfaceTraffic", (debugLevel > 3));
 
     QLoggingCategory::installFilter(loggingCategoryFilter);
 

@@ -23,8 +23,10 @@ public:
     Q_ENUM(ReadingState)
 
     explicit ZigbeeInterface(QObject *parent = nullptr);
+    ~ZigbeeInterface();
 
     bool available() const;
+    QString serialPort() const;
 
 private:
     QSerialPort *m_serialPort;

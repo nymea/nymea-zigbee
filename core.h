@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include "zigbeemanager.h"
+#include "zigbeenetworkmanager.h"
 
 class Core : public QObject
 {
@@ -12,7 +12,7 @@ public:
     explicit Core(QObject *parent = nullptr);
 
 private:
-    ZigbeeManager *m_manager;
+    ZigbeeNetworkManager *m_manager;
 
 signals:
 

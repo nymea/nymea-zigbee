@@ -1,4 +1,5 @@
 #include "zigbeeinterfacemessage.h"
+#include "zigbeeutils.h"
 
 ZigbeeInterfaceMessage::ZigbeeInterfaceMessage()
 {
@@ -32,8 +33,13 @@ void ZigbeeInterfaceMessage::setData(const QByteArray &data)
     m_data = data;
 }
 
+bool ZigbeeInterfaceMessage::isValid() const
+{
+    return m_messageType != Zigbee::MessageTypeNone;
+}
+
 QDebug operator<<(QDebug dbg, const ZigbeeInterfaceMessage &message)
 {
-    dbg.nospace().noquote() << "InterfaceMessage(" << message.messageType() << Zigbee::convertByteArrayToHexString(message.data()) << ")";
+    dbg.nospace().noquote() << ZigbeeUtils::messageTypeToString(message.messageType()) << "(" << ZigbeeUtils::convertUint16ToHexString(static_cast<quint16>(message.messageType())) << ")" << " | " <<  ZigbeeUtils::convertByteArrayToHexString(message.data());
     return dbg.space();
 }

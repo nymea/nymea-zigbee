@@ -18,8 +18,10 @@ public:
     QByteArray data() const;
     void setData(const QByteArray &data);
 
+    bool isValid() const;
+
 private:
-    Zigbee::InterfaceMessageType m_messageType;
+    Zigbee::InterfaceMessageType m_messageType = Zigbee::MessageTypeNone;
     QByteArray m_data;
 
 };
