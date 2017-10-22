@@ -14,14 +14,14 @@ ZigbeeAddress::ZigbeeAddress(quint64 address)
 
 ZigbeeAddress::ZigbeeAddress(const QString &address)
 {
-    QString a = address;
+    QString addressString = address;
 
-    if (a.length() == 17)
-        a.remove(QLatin1Char(':'));
+    if (addressString.length() == 23)
+        addressString.remove(QLatin1Char(':'));
 
-    if (a.length() == 12) {
+    if (addressString.length() == 16) {
         bool ok;
-        m_address = a.toULongLong(&ok, 16);
+        m_address = addressString.toULongLong(&ok, 16);
         if (!ok)
             clear();
     } else {
@@ -46,14 +46,14 @@ quint64 ZigbeeAddress::toUInt64() const
 
 QString ZigbeeAddress::toString() const
 {
-    QString s(QStringLiteral("%1:%2:%3:%4:%5:%6"));
+    QString string(QStringLiteral("%1:%2:%3:%4:%5:%6:%7:%8"));
 
-    for (int i = 5; i >= 0; --i) {
-        const quint8 a = (m_address >> (i*8)) & 0xff;
-        s = s.arg(a, 2, 16, QLatin1Char('0'));
+    for (int i = 7; i >= 0; --i) {
+        const quint8 value = (m_address >> (i*8)) & 0xff;
+        string = string.arg(value, 2, 16, QLatin1Char('0'));
     }
 
-    return s.toUpper();
+    return string.toUpper();
 }
 
 bool ZigbeeAddress::isNull() const

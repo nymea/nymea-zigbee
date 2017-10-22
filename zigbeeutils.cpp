@@ -3,15 +3,34 @@
 #include <QMetaEnum>
 #include <QDataStream>
 
+QBitArray ZigbeeUtils::convertByteArrayToBitArray(const QByteArray &byteArray)
+{
+    QBitArray bitArray(byteArray.count() * 8);
+
+    // Convert from QByteArray to QBitArray
+    for(int i = 0; i < byteArray.count(); ++i) {
+        for(int b = 0; b < 8; b++) {
+            bitArray.setBit(i * 8 + b, byteArray.at(i) & (1 << ( 7 - b)));
+        }
+    }
+
+    return bitArray;
+}
+
+QByteArray ZigbeeUtils::convertBitArrayToByteArray(const QBitArray &bitArray)
+{
+    QByteArray byteArray;
+
+    for(int b = 0; b < bitArray.count(); ++b) {
+        byteArray[b / 8] = (byteArray.at( b / 8) | ((bitArray[b] ? 1 : 0) << (7 - ( b % 8))));
+    }
+    return byteArray;
+}
+
 QString ZigbeeUtils::convertByteToHexString(const quint8 &byte)
 {
-    QString hexString;
-    QString byteString = QString::number(byte, 16);
-    if (byteString.count() == 1) {
-        hexString = QString("0x0%1").arg(byteString);
-    } else {
-        hexString = QString("0x%1").arg(byteString);
-    }
+    QString hexString(QStringLiteral("0x%1"));
+    hexString = hexString.arg(byte, 2, 16, QLatin1Char('0'));
     return hexString.toStdString().data();
 }
 
@@ -27,19 +46,20 @@ QString ZigbeeUtils::convertByteArrayToHexString(const QByteArray &byteArray)
     return hexString.toStdString().data();
 }
 
-QString ZigbeeUtils::convertUint16ToHexString(const quint16 &byte)
-{
-    quint8 msbByte = (byte >> 8) & 0xff;
-    quint8 lsbByte = (byte >> 0) & 0xff;
-
-    return convertByteToHexString(msbByte) + convertByteToHexString(lsbByte).remove("0x");
-}
-
-QString ZigbeeUtils::convertUint64ToHexString(const quint64 &byte)
+QString ZigbeeUtils::convertUint16ToHexString(const quint16 &value)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream << byte;
+    stream << value;
+
+    return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
+}
+
+QString ZigbeeUtils::convertUint64ToHexString(const quint64 &value)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << value;
     return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
 }
 
@@ -60,7 +80,7 @@ QString ZigbeeUtils::clusterIdToString(const Zigbee::ClusterId &clusterId)
 
     QString enumString = metaEnum.valueToKey(clusterId);
 
-    return enumString.remove("Zigbee::ClusterId(ClusterId").remove(")");
+    return enumString.remove("Zigbee::ClusterId(ClusterId").remove(")").append(QString("(%1)").arg(ZigbeeUtils::convertUint16ToHexString(clusterId)));
 }
 
 QString ZigbeeUtils::profileIdToString(const Zigbee::ZigbeeProfile &profileId)

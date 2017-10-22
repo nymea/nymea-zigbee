@@ -4,6 +4,7 @@
 #include <QObject>
 
 #include "zigbeenode.h"
+#include "zigbeeaddress.h"
 #include "zigbeebridgecontroller.h"
 
 class ZigbeeNetworkManager : public ZigbeeNode
@@ -39,8 +40,12 @@ private:
     void startScan();
     void permitJoining(quint16 targetAddress = 0xfffc, const quint8 advertisingIntervall = 254);
     void getPermitJoiningStatus();
+
     void requestNodeDescription(const quint16 &shortAddress);
     void requestSimpleNodeDescription(const quint16 &shortAddress, const quint8 &endpoint = 1);
+    void requestPowerDescriptor(const quint16 &shortAddress);
+
+    void requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile);
 
 signals:
 
@@ -61,8 +66,11 @@ private slots:
 
     void onRequestNodeDescriptionFinished();
     void onRequestSimpleNodeDescriptionFinished();
+    void onRequestPowerDescriptorFinished();
 
-    // Controler notifications
+    void onRequestMatchDescriptorFinished();
+
+    // Process controller notifications/messages
     void processLoggingMessage(const ZigbeeInterfaceMessage &message);
     void processFactoryNewRestart(const ZigbeeInterfaceMessage &message);
     void processNodeClusterList(const ZigbeeInterfaceMessage &message);

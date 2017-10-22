@@ -23,9 +23,6 @@ public:
     };
     Q_ENUM(FrequencyBand)
 
-
-
-
     explicit ZigbeeNode(QObject *parent = nullptr);
 
     quint16 shortAddress() const;

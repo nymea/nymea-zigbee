@@ -1,4 +1,4 @@
-Source: zigbee-daemon
+Source: qt-zigbee
 Section: utils
 Priority: optional
 Maintainer: Simon Stuerz <simon.stuerz@guh.io>
@@ -13,7 +13,7 @@ Build-Depends: debhelper (>= 9.0.0),
                qtbase5-dev-tools,
                libqt5serialport5-dev
 
-Package: zigbee-daemon
+Package: qt-zigbee
 Architecture: any
 Section: net
 Multi-Arch: same
@@ -22,7 +22,7 @@ Depends: libqt5network5,
          libqt5serialport5,
          ${shlibs:Depends},
          ${misc:Depends}
-Description: Zigbee bridge controller - daemon
- Description...
+Description: Zigbee bridge controller Qt5 - tool
+ Tool written in Qt fro interacting with the NXP Zigbee controller.
  .
- This package will install the daemon.
+ This package will install the qt-zigbee tool.
