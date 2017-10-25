@@ -17,6 +17,9 @@ ZigbeeInterface::~ZigbeeInterface()
 
 bool ZigbeeInterface::available() const
 {
+    if (!m_serialPort)
+        return false;
+
     return m_serialPort->isOpen();
 }
 

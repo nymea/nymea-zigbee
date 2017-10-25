@@ -9,7 +9,7 @@ class Core : public QObject
 {
     Q_OBJECT
 public:
-    explicit Core(QObject *parent = nullptr);
+    explicit Core(const int &channel, QObject *parent = nullptr);
 
 private:
     ZigbeeNetworkManager *m_manager;

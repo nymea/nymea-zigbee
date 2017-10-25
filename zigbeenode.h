@@ -4,10 +4,17 @@
 #include <QObject>
 
 #include "zigbee.h"
+#include "zigbeeaddress.h"
+#include "zigbeebridgecontroller.h"
+
+class ZigbeeNetworkManager;
 
 class ZigbeeNode : public QObject
 {
     Q_OBJECT
+
+    friend class ZigbeeNetworkManager;
+
 public:
     enum NodeType {
         NodeTypeCoordinator = 0,
@@ -23,10 +30,8 @@ public:
     };
     Q_ENUM(FrequencyBand)
 
-    explicit ZigbeeNode(QObject *parent = nullptr);
-
     quint16 shortAddress() const;
-    quint64 extendedAddress() const;
+    ZigbeeAddress extendedAddress() const;
 
     // Information from node descriptor
     NodeType nodeType() const;
@@ -34,17 +39,35 @@ public:
 
     bool canBeCoordinator() const;
 
+    void init();
+
 private:
+    ZigbeeBridgeController *m_controller;
+
     quint16 m_shortAddress = 0;
-    quint64 m_extendedAddress = 0;
+    ZigbeeAddress m_extendedAddress;
     NodeType m_nodeType;
 
-protected:
-    void setShortAddress(const quint16 &shortAddress);
-    void setExtendedAddress(const quint64 &extendedAddress);
+    void requestNodeDescription();
+    void requestSimpleNodeDescription();
+    void requestPowerDescriptor();
 
+
+protected:
+    ZigbeeNode(ZigbeeBridgeController *controller, QObject *parent = nullptr);
+
+    ZigbeeBridgeController *controller();
+
+    void setShortAddress(const quint16 &shortAddress);
+    void setExtendedAddress(const ZigbeeAddress &extendedAddress);
 
 signals:
+
+private slots:
+    void onRequestNodeDescriptionFinished();
+    void onRequestSimpleNodeDescriptionFinished();
+    void onRequestPowerDescriptorFinished();
+
 
 public slots:
 

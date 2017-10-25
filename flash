@@ -1,0 +1,84 @@
+#!/bin/sh -e
+
+setProgramMode() {
+  # Control Pins to put JN516x in bootloader mode
+  # Pin ZIGBEE_PROGRAM - CSID6 -  PE10 (4*32 + 10) = 138
+  # Pin ZiGBEE_RESET - CSID7 - PE11 (4*32 + 11) = 139
+  echo "Set up program mode for zigbee module"
+  if [ ! -d /sys/class/gpio/gpio138 ]; then echo 138 > /sys/class/gpio/export; fi
+  if [ ! -d /sys/class/gpio/gpio139 ]; then echo 139 > /sys/class/gpio/export; fi
+
+  echo "out" > /sys/class/gpio/gpio138/direction
+  echo "out" > /sys/class/gpio/gpio139/direction
+
+  echo 0 > /sys/class/gpio/gpio138/active_low
+  echo 1 > /sys/class/gpio/gpio139/active_low
+
+  #resetLow
+  resetHigh
+  programHigh
+  programLow
+  resetLow
+}
+
+programLow() {
+  if [ -z "$1" ]; then TIMEOUT=1; else TIMEOUT=$1; fi
+  echo "Program 0"
+  echo 0 > /sys/class/gpio/gpio138/value
+  sleep $TIMEOUT
+}
+
+programHigh() {
+  if [ -z "$1" ]; then TIMEOUT=1; else TIMEOUT=$1; fi
+  echo "Program 1"
+  echo 1 > /sys/class/gpio/gpio138/value
+  sleep $TIMEOUT
+}
+
+resetLow() {
+  if [ -z "$1" ]; then TIMEOUT=1; else TIMEOUT=$1; fi
+  echo "Reset 0"
+  echo 0 > /sys/class/gpio/gpio139/value
+  sleep $TIMEOUT
+}
+
+resetHigh() {
+  if [ -z "$1" ]; then TIMEOUT=1; else TIMEOUT=$1; fi
+  echo "Reset 1"
+  echo 1 > /sys/class/gpio/gpio139/value
+  sleep $TIMEOUT
+}
+
+startFlash() {
+  if [ $1 ]; then
+    echo "Start flashing $1 on /dev/ttyS0"
+    #/usr/bin/JennicModuleProgrammer -I 38400 -P 38400 -s /dev/ttyS0 -f $1 -v -V 3
+    /usr/bin/iot_jp -I 38400 -P 38400 -s /dev/ttyS0 -f $1 -v -V 3
+    #/usr/bin/iot_jp -I 115200 -P 115200 -s /dev/ttyS0 -f $1 -v -V 3
+    result=$?
+  else
+    echo "Error: no firmware file passed"
+  fi
+}
+
+setNormalMode() {
+  # Control Pins to put JN516x in normal mode
+  echo "Set up normal mode"
+#  programLow 0.5
+#  resetHigh
+#  resetLow
+}
+
+cleanup() {
+  echo "Clean up"
+  echo 138 > /sys/class/gpio/unexport
+ # echo 139 > /sys/class/gpio/unexport
+}
+
+setProgramMode
+startFlash $1
+setNormalMode
+cleanup
+
+echo "Done"
+

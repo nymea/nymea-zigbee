@@ -1,8 +1,8 @@
 #include "core.h"
 #include <QDebug>
 
-Core::Core(QObject *parent) :
+Core::Core(const int &channel, QObject *parent) :
     QObject(parent)
 {
-    m_manager = new ZigbeeNetworkManager("/dev/ttyS0", this);
+    m_manager = new ZigbeeNetworkManager(channel, "/dev/ttyS0", this);
 }

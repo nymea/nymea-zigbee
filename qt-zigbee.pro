@@ -4,7 +4,7 @@ QT += serialport
 CONFIG += c++11 console
 CONFIG -= app_bundle
 
-TARGET = qt-zigbee
+TARGET = zigbee-cli
 
 target.path = /usr/bin
 INSTALLS += target

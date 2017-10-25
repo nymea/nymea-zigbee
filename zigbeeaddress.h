@@ -11,7 +11,6 @@ public:
     explicit ZigbeeAddress(quint64 address);
     explicit ZigbeeAddress(const QString &address);
     ZigbeeAddress(const ZigbeeAddress &other);
-    ~ZigbeeAddress();
 
     quint64 toUInt64() const;
     QString toString() const;

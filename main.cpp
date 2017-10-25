@@ -57,6 +57,8 @@ int main(int argc, char *argv[])
     qInstallMessageHandler(consoleLogHandler);
 
     QCoreApplication application(argc, argv);
+    application.setOrganizationName("guh");
+    application.setApplicationName("qt-zigbee");
 
     // Command line parser
     QCommandLineParser parser;
@@ -64,18 +66,25 @@ int main(int argc, char *argv[])
     parser.addVersionOption();
     parser.setApplicationDescription(QString("\nDaemon for the zigbee NXP uart bridge.\n\nCopyright %1 2016 Simon Stürz <simon.stuerz@guh.io>\nAll rights reserved.").arg(QChar(0xA9)));
 
+    // Debug level
     QCommandLineOption debugLevelOption(QStringList() << "d" << "debug-level", "Set debug level [1-4].");
     debugLevelOption.setDefaultValue("1");
     debugLevelOption.setValueName("level");
     parser.addOption(debugLevelOption);
 
+    // Channel
+    QCommandLineOption channelOption(QStringList() << "c" << "channel", "Set channel for the zigbee network. Channel between [11-26] are allowed. If not specified, the quitest channel will be choosen automatically.");
+    channelOption.setDefaultValue(0);
+    channelOption.setValueName("channel");
+    parser.addOption(channelOption);
+
     parser.process(application);
 
+    // Check debug level
     bool debugLevelValueOk = false;
     int debugLevel = parser.value(debugLevelOption).toInt(&debugLevelValueOk);
-
     if (debugLevel < 1 || debugLevel > 4 || !debugLevelValueOk) {
-        qWarning() << "Invalid debug level passed:" << parser.value(debugLevelOption);
+        qCritical() << "Invalid debug level passed:" << parser.value(debugLevelOption) << "Reset to default debug level 1.";
         debugLevel = 1;
     }
 
@@ -86,7 +95,19 @@ int main(int argc, char *argv[])
 
     QLoggingCategory::installFilter(loggingCategoryFilter);
 
-    Core core;
+    // Check channel
+    bool channelValueOk = false;
+    int channel = parser.value(channelOption).toInt(&channelValueOk);
+    if (channel != 0) {
+        if (channel < 11 || channel > 26 || !channelValueOk) {
+            qCritical() << "Invalid channel value passed:" << parser.value(channelOption) << "Selecting automatically quitest channel.";
+            channel = 0;
+        }
+    }
+
+
+
+    Core core(channel);
 
     return application.exec();
 }

@@ -9,7 +9,7 @@ ZigbeeBridgeController::ZigbeeBridgeController(const QString &serialPort, QObjec
     connect(m_interface, &ZigbeeInterface::messageReceived, this, &ZigbeeBridgeController::onMessageReceived);
 
     if (!m_interface->enable(serialPort)) {
-        qCWarning(dcZigbeeController()) << "Could not enable ZigbeeInterface on" << serialPort;
+        qCCritical(dcZigbeeController()) << "Could not enable ZigbeeInterface on" << serialPort;
         return;
     }
 }

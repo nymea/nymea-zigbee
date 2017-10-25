@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QVariant>
 #include <QByteArray>
 
 class Zigbee
@@ -192,11 +193,11 @@ public:
 
         // Appliance Statistics Cluster 0x0B03
         // http://www.nxp.com/documents/user_manual/JN-UG-3076.pdf
-        MessageTypeStatisticsClusterLogMessage         = 0x0301,   // Was 0x0500, was 0x0301
-        MessageTypeStatisticsClusterLogMessageResponse = 0x8301,
+        MessageTypeStatisticsClusterLogMessage          = 0x0301,   // Was 0x0500, was 0x0301
+        MessageTypeStatisticsClusterLogMessageResponse  = 0x8301,
 
         // IAS Cluster
-        MessageTypeSendIasZoneEnroolResponse			= 0x0400,
+        MessageTypeSendIasZoneEnroolResponse            = 0x0400,
         MessageTypeIasZoneStatusChangeNotify            = 0x8401,
 
         // Extended utils
@@ -297,9 +298,9 @@ public:
         LightLinkDeviceColourTemperatureLight   = 0x0220,
 
         // Controller devices
-        LightLinkDeviceColourController         = 0x8000,
-        LightLinkDeviceColourSceneController    = 0x8010,
-        LightLinkDeviceNonColourController      = 0x8020,
+        LightLinkDeviceColourController         = 0x0800,
+        LightLinkDeviceColourSceneController    = 0x0810,
+        LightLinkDeviceNonColourController      = 0x0820,
         LightLinkDeviceNonColourSceneController = 0x8030,
         LightLinkDeviceControlBridge            = 0x8040,
         LightLinkDeviceOnOffSensor              = 0x8050
@@ -316,7 +317,7 @@ public:
         HomeAutomationDeviceDoorLockController  = 0x000B,
         HomeAutomationDeviceSimpleSensor        = 0x000C,
         HomeAutomationDeviceSmartPlug           = 0x0051,
-        HomeAutomationDeviceControlBridge       = 0x8040,
+        HomeAutomationDeviceControlBridge       = 0x0840,
 
         // Lightning devices
         HomeAutomationDeviceOnOffLight           = 0x0100,
@@ -339,9 +340,65 @@ public:
     };
     Q_ENUM(HomeAutomationDevice)
 
-
-
-
+    enum DataType {
+        NoData          = 0x00,
+        Data8           = 0x08,
+        Data16          = 0x09,
+        Data24          = 0x0a,
+        Data32          = 0x0b,
+        Data40          = 0x0c,
+        Data48          = 0x0d,
+        Data56          = 0x0e,
+        Data64          = 0x0f,
+        Bool            = 0x10,
+        BitMap8         = 0x18,
+        BitMap16        = 0x19,
+        BitMap24        = 0x1a,
+        BitMap32        = 0x1b,
+        BitMap40        = 0x1c,
+        BitMap48        = 0x1d,
+        BitMap56        = 0x1e,
+        BitMap64        = 0x1f,
+        Uint8           = 0x20,
+        Uint16          = 0x21,
+        Uint24          = 0x22,
+        Uint32          = 0x23,
+        Uint40          = 0x24,
+        Uint48          = 0x25,
+        Uint56          = 0x26,
+        Uint64          = 0x27,
+        Int8            = 0x28,
+        Int16           = 0x29,
+        Int24           = 0x2a,
+        Int32           = 0x2b,
+        Int40           = 0x2c,
+        Int48           = 0x2d,
+        Int56           = 0x2e,
+        Int64           = 0x2f,
+        Enum8           = 0x30,
+        Enum16          = 0x31,
+        FloatSemi       = 0x38,
+        FloatSingle     = 0x39,
+        FloatDouble     = 0x3a,
+        OctetString     = 0x41,
+        CharString      = 0x42,
+        LongOctetString = 0x43,
+        LongCharString  = 0x44,
+        Array           = 0x48,
+        Structure       = 0x4c,
+        Set             = 0x50,
+        Bag             = 0x51,
+        TimeOfDay       = 0xe0,
+        Date            = 0xe1,
+        UtcTime         = 0xe2,
+        Cluster         = 0xe8,
+        Attribute       = 0xe9,
+        BacnetId        = 0xea,
+        IeeeAddress     = 0xf0,
+        BitKey128       = 0xf1,
+        Unknown         = 0xff
+    };
+    Q_ENUM(DataType)
 
     ///* Manufacturer Codes */
     ///* Codes less than 0x1000 were issued for RF4CE */

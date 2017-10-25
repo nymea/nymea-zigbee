@@ -34,11 +34,6 @@ ZigbeeAddress::ZigbeeAddress(const ZigbeeAddress &other)
     m_address = other.toUInt64();
 }
 
-ZigbeeAddress::~ZigbeeAddress()
-{
-
-}
-
 quint64 ZigbeeAddress::toUInt64() const
 {
     return m_address;
@@ -64,6 +59,12 @@ bool ZigbeeAddress::isNull() const
 void ZigbeeAddress::clear()
 {
     m_address = 0;
+}
+
+ZigbeeAddress &ZigbeeAddress::operator=(const ZigbeeAddress &other)
+{
+    m_address = other.toUInt64();
+    return *this;
 }
 
 bool ZigbeeAddress::operator<(const ZigbeeAddress &other) const
