@@ -43,6 +43,8 @@ private:
     void getPermitJoiningStatus();
     void enableWhitelist();
 
+    void initiateTouchLink();
+
     void requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile);
 
 signals:
@@ -65,6 +67,8 @@ private slots:
     void onGetPermitJoiningStatusFinished();
     void onPermitJoiningFinished();
     void onEnableWhitelistFinished();
+
+    void onInitiateTouchLinkFinished();
 
     void onRequestMatchDescriptorFinished();
 

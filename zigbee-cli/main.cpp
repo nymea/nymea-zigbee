@@ -1,10 +1,14 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
+#include <QDateTime>
 #include <unistd.h>
+#include <stdio.h>
 
 #include "core.h"
+#include "zigbeecommander.h"
 #include "loggingcategory.h"
+#include "terminalcommander.h"
 
 static const char *const normal = "\033[0m";
 static const char *const warning = "\e[33m";
@@ -33,24 +37,22 @@ static void consoleLogHandler(QtMsgType type, const QMessageLogContext& context,
 {
     switch (type) {
     case QtInfoMsg:
-        fprintf(stdout, " I | %s: %s\n", context.category, message.toUtf8().data());
+        TerminalCommander::instance()->printToTerminal(QString("%1: %2\n").arg(context.category).arg(message.toUtf8().data()));
         break;
     case QtDebugMsg:
-        fprintf(stdout, " I | %s: %s\n", context.category, message.toUtf8().data());
+        TerminalCommander::instance()->printToTerminal(QString("%1: %2\n").arg(context.category).arg(message.toUtf8().data()));
         break;
     case QtWarningMsg:
-        fprintf(stdout, "%s W | %s: %s%s\n", warning, context.category, message.toUtf8().data(), normal);
+        TerminalCommander::instance()->printToTerminal(QString("%1%2: %3%4\n").arg(terminalColorYellow).arg(context.category).arg(message.toUtf8().data()).arg(terminalColorNormal));
         break;
     case QtCriticalMsg:
-        fprintf(stdout, "%s C | %s: %s%s\n", error, context.category, message.toUtf8().data(), normal);
+        TerminalCommander::instance()->printToTerminal(QString("%1%2: %3%4\n").arg(terminalColorRed).arg(context.category).arg(message.toUtf8().data()).arg(terminalColorNormal));
         break;
     case QtFatalMsg:
-        fprintf(stdout, "%s F | %s: %s%s\n", error, context.category, message.toUtf8().data(), normal);
+        TerminalCommander::instance()->printToTerminal(QString("%1%2: %3%4\n").arg(terminalColorRed).arg(context.category).arg(message.toUtf8().data()).arg(terminalColorNormal));
         break;
     }
-    fflush(stdout);
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -104,8 +106,6 @@ int main(int argc, char *argv[])
             channel = 0;
         }
     }
-
-
 
     Core core(channel);
 

@@ -1,4 +1,4 @@
-Source: qt-zigbee
+Source: qtzigbee
 Section: utils
 Priority: optional
 Maintainer: Simon Stuerz <simon.stuerz@guh.io>
@@ -11,18 +11,50 @@ Build-Depends: debhelper (>= 9.0.0),
                qt5-qmake,
                qtbase5-dev,
                qtbase5-dev-tools,
-               libqt5serialport5-dev
+               libqt5serialport5-dev,
+               libncurses5-dev
 
-Package: qt-zigbee
+Package: zigbee-cli
 Architecture: any
 Section: net
 Multi-Arch: same
-Depends: libqt5network5,
-         libqt5gui5,
-         libqt5serialport5,
-         ${shlibs:Depends},
-         ${misc:Depends}
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         libqtzigbee1 (= ${binary:Version}),
+         libncurses5
 Description: Zigbee bridge controller Qt5 - tool
- Tool written in Qt fro interacting with the NXP Zigbee controller.
+ Command line tool written in Qt for interacting with the NXP Zigbee controller.
  .
- This package will install the qt-zigbee tool.
+ This package will install the zigbee-cli tool.
+
+Package: libqtzigbee1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         libqt5network5,
+         libqt5gui5,
+         libqt5serialport5
+Description: Qt 5 based library for Zigbee
+ Qt 5 based library for Zigbee.
+
+
+Package: libqtzigbee1-dev
+Section: libdevel
+Architecture: any
+Depends: libqtzigbee1 (= ${binary:Version}),
+  ${shlibs:Depends},
+  ${misc:Depends}
+Description: Qt 5 based library for Zigbee - development files
+ Development files for Qt 5 based Zigbee library.
+
+
+Package: libqtzigbee1-dbg
+Priority: extra
+Architecture: any
+Section: debug
+Depends: libqtzigbee1 (= ${binary:Version}),
+  ${shlibs:Depends},
+  ${misc:Depends}
+Description: Qt 5 based library for Zigbee - debug symbols
+ Debug Symbols for Qt 5 based Zigbee library.

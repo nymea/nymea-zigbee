@@ -15,7 +15,7 @@ ZigbeeNetworkManager::ZigbeeNetworkManager(const int &channel, const QString &se
         qCDebug(dcZigbee()) << "Bridge controller started successfully on" << serialPort;
     } else {
         qCCritical(dcZigbee()) << "The zigbee controller is not available on" << serialPort;
-        //return;
+        return;
     }
 
     QSettings settings;
@@ -55,6 +55,8 @@ ZigbeeNetworkManager::ZigbeeNetworkManager(const int &channel, const QString &se
     permitJoining();
     //getPermitJoiningStatus();
 
+    //startScan();
+    initiateTouchLink();
 }
 
 QString ZigbeeNetworkManager::controllerVersion() const
@@ -247,6 +249,15 @@ void ZigbeeNetworkManager::enableWhitelist()
 
     ZigbeeInterfaceReply *reply = controller()->sendRequest(request);
     connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onEnableWhitelistFinished);
+}
+
+void ZigbeeNetworkManager::initiateTouchLink()
+{
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeInitiateTouchlink));
+    request.setDescription("Initiate touch link");
+
+    ZigbeeInterfaceReply *reply = controller()->sendRequest(request);
+    connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onInitiateTouchLinkFinished);
 }
 
 void ZigbeeNetworkManager::requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile)
@@ -508,6 +519,19 @@ void ZigbeeNetworkManager::onEnableWhitelistFinished()
     qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
 }
 
+void ZigbeeNetworkManager::onInitiateTouchLinkFinished()
+{
+    ZigbeeInterfaceReply *reply = static_cast<ZigbeeInterfaceReply *>(sender());
+    reply->deleteLater();
+
+    if (reply->status() != ZigbeeInterfaceReply::Success) {
+        qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+        return;
+    }
+
+    qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+}
+
 void ZigbeeNetworkManager::processLoggingMessage(const ZigbeeInterfaceMessage &message)
 {
     quint8 logLevel = static_cast<quint8>(message.data().at(0));
@@ -746,7 +770,6 @@ void ZigbeeNetworkManager::processAttributeReport(const ZigbeeInterfaceMessage &
 
 void ZigbeeNetworkManager::processLeaveIndication(const ZigbeeInterfaceMessage &message)
 {
-
     quint16 shortAddress = message.data().at(0);
     shortAddress <<= 8;
     shortAddress |= message.data().at(1);
@@ -755,7 +778,7 @@ void ZigbeeNetworkManager::processLeaveIndication(const ZigbeeInterfaceMessage &
 
     qCDebug(dcZigbee()) << "Node leaving:" << ZigbeeUtils::convertUint16ToHexString(shortAddress) << rejoining;
 
-    // remove node
+    // TODO: remove node
 }
 
 void ZigbeeNetworkManager::onMessageReceived(const ZigbeeInterfaceMessage &message)
