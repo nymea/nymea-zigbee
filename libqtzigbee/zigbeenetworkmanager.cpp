@@ -69,6 +69,11 @@ QList<ZigbeeNode *> ZigbeeNetworkManager::nodeList() const
     return m_nodeList;
 }
 
+bool ZigbeeNetworkManager::networkRunning() const
+{
+    return m_networkRunning;
+}
+
 void ZigbeeNetworkManager::reset()
 {
     qCCritical(dcZigbee()) << "Reset networkmanager: TODO: needs to be implementet";

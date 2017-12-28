@@ -4,17 +4,59 @@
 #include <QDateTime>
 #include <unistd.h>
 #include <stdio.h>
+#include <initializer_list>
+#include <signal.h>
+
 
 #include "core.h"
-#include "zigbeecommander.h"
 #include "loggingcategory.h"
 #include "terminalcommander.h"
 
-static const char *const normal = "\033[0m";
-static const char *const warning = "\e[33m";
-static const char *const error = "\e[31m";
-
 static QHash<QString, bool> s_loggingFilters;
+
+//static bool s_aboutToShutdown = false;
+
+//static void catchUnixSignals(const std::vector<int>& quitSignals, const std::vector<int>& ignoreSignals = std::vector<int>()) {
+//    auto handler = [](int sig) -> void {
+//        switch (sig) {
+//        case SIGQUIT:
+//            qCDebug(dcZigbee()) << "Cought SIGQUIT quit signal...";
+//            break;
+//        case SIGINT:
+//            qCDebug(dcZigbee()) << "Cought SIGINT quit signal...";
+//            break;
+//        case SIGTERM:
+//            qCDebug(dcZigbee()) << "Cought SIGTERM quit signal...";
+//            break;
+//        case SIGHUP:
+//            qCDebug(dcZigbee()) << "Cought SIGHUP quit signal...";
+//            break;
+//        case SIGSEGV: {
+//            qCDebug(dcZigbee()) << "Cought SIGSEGV signal. Segmentation fault!";
+//            exit(1);
+//        }
+//        default:
+//            break;
+//        }
+
+//        if (s_aboutToShutdown) {
+//            return;
+//        }
+
+//        s_aboutToShutdown = true;
+//        TerminalCommander::instance()->destroy();
+//        TerminalCommander::instance()->quit();
+//    };
+
+
+
+//    // all these signals will be ignored.
+//    for (int sig : ignoreSignals)
+//        signal(sig, SIG_IGN);
+
+//    for (int sig : quitSignals)
+//        signal(sig, handler);
+//}
 
 static void loggingCategoryFilter(QLoggingCategory *category)
 {
@@ -59,6 +101,9 @@ int main(int argc, char *argv[])
     qInstallMessageHandler(consoleLogHandler);
 
     QCoreApplication application(argc, argv);
+
+    //catchUnixSignals({SIGQUIT, SIGINT, SIGTERM, SIGHUP, SIGSEGV});
+
     application.setOrganizationName("guh");
     application.setApplicationName("qt-zigbee");
 

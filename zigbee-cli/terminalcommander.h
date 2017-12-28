@@ -11,6 +11,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "terminalcommand.h"
+
 static const char *const terminalColorNormal = "\033[0m";
 static const char *const terminalColorYellow = "\x1B[0;93m";
 static const char *const terminalColorRed = "\x1B[0;91m";
@@ -24,21 +26,26 @@ class TerminalCommander : public QThread
     Q_OBJECT
 public:
     static TerminalCommander* instance();
+    void destroy();
 
-    QStringList commands() const;
+    QList<TerminalCommand> commands() const;
+    void setCommands(QList<TerminalCommand> commands);
+
     void printToTerminal(const QString &message);
 
 private:
     explicit TerminalCommander(QObject *parent = nullptr);
     ~TerminalCommander();
 
-    bool m_abort = false;
-    QMutex mutex;
+    QList<TerminalCommand> m_commands;
 
-    QStringList m_commands;
+    QMutex m_mutex;
+    bool m_abort = false;
 
     static void rl_printf(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+    static void signalHandler(int status);
 
+    void printHelpMessage();
 
 signals:
     void commandReceived(const QStringList &tokens);

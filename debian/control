@@ -12,7 +12,7 @@ Build-Depends: debhelper (>= 9.0.0),
                qtbase5-dev,
                qtbase5-dev-tools,
                libqt5serialport5-dev,
-               libncurses5-dev
+               libreadline-dev
 
 Package: zigbee-cli
 Architecture: any

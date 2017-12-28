@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <readline/readline.h>
 
+#include "terminalcommander.h"
 #include "zigbeenetworkmanager.h"
 
 class Core : public QObject
@@ -17,8 +18,10 @@ public:
     explicit Core(const int &channel, QObject *parent = nullptr);
 
 private:
-    ZigbeeNetworkManager *m_manager;
-    QTimer *m_testTimer;
+    ZigbeeNetworkManager *m_manager = nullptr;
+    QTimer *m_testTimer = nullptr;
+
+    QList<TerminalCommand> m_commands;
 
 signals:
 

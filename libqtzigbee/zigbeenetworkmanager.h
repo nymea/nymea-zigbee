@@ -19,12 +19,17 @@ public:
 
     void reset();
 
+
+    bool networkRunning() const;
+
 private:
     ZigbeeBridgeController *m_controller = nullptr;
     QString m_controllerVersion;
-    quint64 m_extendedPanId;
+    quint64 m_extendedPanId = 0;
 
     QList<ZigbeeNode *> m_nodeList;
+
+    bool m_networkRunning = false;
 
     quint64 generateRandomPanId();
 
@@ -48,6 +53,7 @@ private:
     void requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile);
 
 signals:
+    void runningChanged(const bool &running);
 
 private slots:
     void onMessageReceived(const ZigbeeInterfaceMessage &message);
@@ -71,7 +77,6 @@ private slots:
     void onInitiateTouchLinkFinished();
 
     void onRequestMatchDescriptorFinished();
-
 
     // Process controller notifications/messages
     void processLoggingMessage(const ZigbeeInterfaceMessage &message);
