@@ -5,7 +5,7 @@ CONFIG -= app_bundle
 
 TARGET = zigbee-cli
 
-LIBS += -lncurses -L$$buildDir/libqtzigbee -lqtzigbee1 -lreadline
+LIBS += -L$$buildDir/libqtzigbee -lqtzigbee1 -lreadline
 
 INCLUDEPATH += ../libqtzigbee/
 
