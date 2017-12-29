@@ -55,9 +55,9 @@ void Core::onCommandReceived(const QStringList &tokens)
     qCDebug(dcZigbee()) << "Executing" << tokens.join(" ");
 
     if (command.command() == "start") {
-        m_manager->startNetwork();
+        //m_manager->startNetwork();
     } else if (command.command() == "version") {
-        m_manager->getVersion();
+        //m_manager->getVersion();
     }
 
 }
