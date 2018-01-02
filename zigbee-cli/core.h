@@ -15,19 +15,18 @@ class Core : public QObject
 {
     Q_OBJECT
 public:
-    explicit Core(const int &channel, QObject *parent = nullptr);
+    explicit Core(const QString &serialPort, const int &channel, QObject *parent = nullptr);
 
 private:
     ZigbeeNetworkManager *m_manager = nullptr;
-    QTimer *m_testTimer = nullptr;
-
     QList<TerminalCommand> m_commands;
+    QString m_serialPort;
 
 signals:
 
 private slots:
-    void onTimeout();
     void onCommandReceived(const QStringList &tokens);
+
 };
 
 #endif // CORE_H

@@ -73,4 +73,7 @@ public slots:
 
 };
 
+QDebug operator<<(QDebug debug, ZigbeeNode *node);
+
+
 #endif // ZIGBEENODE_H

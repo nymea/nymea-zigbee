@@ -39,24 +39,24 @@ ZigbeeNetworkManager::ZigbeeNetworkManager(const int &channel, const QString &se
         qCDebug(dcZigbee()) << "Using channel" << channel << "for the zigbee network.";
     }
 
-    // Call init methods
-    erasePersistentData();
-    //resetController();
-    getVersion();
-    setExtendedPanId(m_extendedPanId);
-    setChannelMask(channelMask);
-    setDeviceType(NodeTypeCoordinator);
-    startNetwork();
+//    // Call init methods
+//    erasePersistentData();
+//    //resetController();
+//    getVersion();
+//    setExtendedPanId(m_extendedPanId);
+//    setChannelMask(channelMask);
+//    setDeviceType(NodeTypeCoordinator);
+//    startNetwork();
 
 
-    //startScan();
-    //getPermitJoiningStatus();
-    enableWhitelist();
-    permitJoining();
-    //getPermitJoiningStatus();
+//    //startScan();
+//    //getPermitJoiningStatus();
+//    enableWhitelist();
+//    permitJoining();
+//    //getPermitJoiningStatus();
 
-    //startScan();
-    initiateTouchLink();
+//    //startScan();
+//    initiateTouchLink();
 }
 
 QString ZigbeeNetworkManager::controllerVersion() const
@@ -69,14 +69,14 @@ QList<ZigbeeNode *> ZigbeeNetworkManager::nodeList() const
     return m_nodeList;
 }
 
+quint64 ZigbeeNetworkManager::extendedPanId() const
+{
+    return m_extendedPanId;
+}
+
 bool ZigbeeNetworkManager::networkRunning() const
 {
     return m_networkRunning;
-}
-
-void ZigbeeNetworkManager::reset()
-{
-    qCCritical(dcZigbee()) << "Reset networkmanager: TODO: needs to be implementet";
 }
 
 quint64 ZigbeeNetworkManager::generateRandomPanId()
@@ -84,6 +84,59 @@ quint64 ZigbeeNetworkManager::generateRandomPanId()
     srand(static_cast<int>(QDateTime::currentMSecsSinceEpoch() / 1000));
     srand(qrand());
     return (ULLONG_MAX - 0) * (qrand()/(double)RAND_MAX);
+}
+
+void ZigbeeNetworkManager::parseNetworkFormed(const QByteArray &data)
+{
+    // Parse network status
+    quint8 networkStatus = static_cast<quint8>(data.at(0));
+    QString networkStatusString;
+
+    if (networkStatus == 0) {
+        networkStatusString = "joined";
+    } else if (networkStatus == 1) {
+        networkStatusString = "created";
+    } else if (networkStatus >= 128 && networkStatus <= 244) {
+        networkStatusString = "failed: Zigbee event code: " + QString::number(networkStatus);
+    } else {
+        networkStatusString = "unknown";
+    }
+
+
+    // Parse short network address
+    quint16 shortAddress = data.at(1);
+    shortAddress <<= 8;
+    shortAddress |= data.at(2);
+
+    // Parse extended network address
+    quint64 extendedAddress = data.at(3);
+    extendedAddress <<= 8;
+    extendedAddress |= data.at(4);
+    extendedAddress <<= 8;
+    extendedAddress |= data.at(5);
+    extendedAddress <<= 8;
+    extendedAddress |= data.at(6);
+    extendedAddress <<= 8;
+    extendedAddress |= data.at(7);
+    extendedAddress <<= 8;
+    extendedAddress |= data.at(8);
+    extendedAddress <<= 8;
+    extendedAddress |= data.at(9);
+    extendedAddress <<= 8;
+    extendedAddress |= data.at(10);
+
+    // Parse network channel
+    quint8 channel = static_cast<quint8>(data.at(11));
+
+    qCDebug(dcZigbee()).noquote() << "Network" << networkStatusString;
+    qCDebug(dcZigbee()) << "    Address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+    qCDebug(dcZigbee()) << "    Extended address:" << ZigbeeAddress(extendedAddress);
+    qCDebug(dcZigbee()) << "    Channel:" << channel;
+
+    // Set the node information
+    setShortAddress(shortAddress);
+    setExtendedAddress(ZigbeeAddress(extendedAddress));
+
 }
 
 void ZigbeeNetworkManager::loadNetwork()
@@ -100,7 +153,7 @@ void ZigbeeNetworkManager::loadNetwork()
         node->setExtendedAddress(ZigbeeAddress(nodeAddress));
         node->setShortAddress(shortAddress);
         m_nodeList.append(node);
-        node->init();
+        //node->init();
     }
 
 }
@@ -194,7 +247,17 @@ void ZigbeeNetworkManager::setDeviceType(const NodeType &deviceType)
     stream << deviceTypeValue;
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeSetDeviceType, data));
-    request.setDescription("Set device type");
+
+    switch (deviceType) {
+    case NodeTypeCoordinator:
+        request.setDescription("Set device type coordinator");
+        break;
+    case NodeTypeRouter:
+        request.setDescription("Set device type router");
+        break;
+    default:
+        break;
+    }
 
     ZigbeeInterfaceReply *reply = controller()->sendRequest(request);
     connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onSetDeviceTypeFinished);
@@ -264,6 +327,16 @@ void ZigbeeNetworkManager::initiateTouchLink()
     ZigbeeInterfaceReply *reply = controller()->sendRequest(request);
     connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onInitiateTouchLinkFinished);
 }
+
+void ZigbeeNetworkManager::touchLinkFactoryReset()
+{
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeTouchlinkFactoryReset));
+    request.setDescription("Touch link factory reset");
+
+    ZigbeeInterfaceReply *reply = controller()->sendRequest(request);
+    connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onTouchLinkFactoryResetFinished);
+}
+
 
 void ZigbeeNetworkManager::requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile)
 {
@@ -402,54 +475,7 @@ void ZigbeeNetworkManager::onStartNetworkFinished()
     qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
     qCDebug(dcZigbeeController()) << reply->additionalMessage();
 
-    // Parse network status
-    quint8 networkStatus = static_cast<quint8>(reply->additionalMessage().data().at(0));
-    QString networkStatusString;
-
-    if (networkStatus == 0) {
-        networkStatusString = "joined";
-    } else if (networkStatus == 1) {
-        networkStatusString = "created";
-    } else if (networkStatus >= 128 && networkStatus <= 244) {
-        networkStatusString = "failed: Zigbee event code: " + QString::number(networkStatus);
-    } else {
-        networkStatusString = "unknown";
-    }
-
-
-    // Parse short network address
-    quint16 shortAddress = reply->additionalMessage().data().at(1);
-    shortAddress <<= 8;
-    shortAddress |= reply->additionalMessage().data().at(2);
-
-    // Parse extended network address
-    quint64 extendedAddress = reply->additionalMessage().data().at(3);
-    extendedAddress <<= 8;
-    extendedAddress |= reply->additionalMessage().data().at(4);
-    extendedAddress <<= 8;
-    extendedAddress |= reply->additionalMessage().data().at(5);
-    extendedAddress <<= 8;
-    extendedAddress |= reply->additionalMessage().data().at(6);
-    extendedAddress <<= 8;
-    extendedAddress |= reply->additionalMessage().data().at(7);
-    extendedAddress <<= 8;
-    extendedAddress |= reply->additionalMessage().data().at(8);
-    extendedAddress <<= 8;
-    extendedAddress |= reply->additionalMessage().data().at(9);
-    extendedAddress <<= 8;
-    extendedAddress |= reply->additionalMessage().data().at(10);
-
-    // Parse network channel
-    quint8 channel = static_cast<quint8>(reply->additionalMessage().data().at(11));
-
-    qCDebug(dcZigbee()).noquote() << "Network" << networkStatusString;
-    qCDebug(dcZigbee()) << "    Address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
-    qCDebug(dcZigbee()) << "    Extended address:" << ZigbeeAddress(extendedAddress);
-    qCDebug(dcZigbee()) << "    Channel:" << channel;
-
-    // Set the node information
-    setShortAddress(shortAddress);
-    setExtendedAddress(ZigbeeAddress(extendedAddress));
+    parseNetworkFormed(reply->additionalMessage().data());
 
     init();
 
@@ -468,6 +494,9 @@ void ZigbeeNetworkManager::onStartScanFinished()
 
     qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
     qCDebug(dcZigbeeController()) << reply->additionalMessage();
+
+    parseNetworkFormed(reply->additionalMessage().data());
+
 }
 
 void ZigbeeNetworkManager::onGetPermitJoiningStatusFinished()
@@ -525,6 +554,19 @@ void ZigbeeNetworkManager::onEnableWhitelistFinished()
 }
 
 void ZigbeeNetworkManager::onInitiateTouchLinkFinished()
+{
+    ZigbeeInterfaceReply *reply = static_cast<ZigbeeInterfaceReply *>(sender());
+    reply->deleteLater();
+
+    if (reply->status() != ZigbeeInterfaceReply::Success) {
+        qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+        return;
+    }
+
+    qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+}
+
+void ZigbeeNetworkManager::onTouchLinkFactoryResetFinished()
 {
     ZigbeeInterfaceReply *reply = static_cast<ZigbeeInterfaceReply *>(sender());
     reply->deleteLater();

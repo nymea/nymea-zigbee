@@ -14,13 +14,30 @@ public:
     explicit ZigbeeNetworkManager(const int &channel = 0, const QString &serialPort = "/dev/ttyS0", QObject *parent = nullptr);
 
     QString controllerVersion() const;
-
     QList<ZigbeeNode *> nodeList() const;
-
-    void reset();
-
-
+    quint64 extendedPanId() const;
     bool networkRunning() const;
+
+    // Controller methods
+    void resetController();
+    void erasePersistentData();
+    void sendDataManagerAvailableResponse();
+    void getVersion();
+    void setExtendedPanId(const quint64 &panId);
+    void setChannelMask(const quint32 &channelMask);
+    void setDeviceType(const NodeType &deviceType);
+    void startNetwork();
+    void startScan();
+
+    void permitJoining(quint16 targetAddress = 0xfffc, const quint8 advertisingIntervall = 254);
+
+    void getPermitJoiningStatus();
+    void enableWhitelist();
+
+    void initiateTouchLink();
+    void touchLinkFactoryReset();
+
+    void requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile);
 
 private:
     ZigbeeBridgeController *m_controller = nullptr;
@@ -33,24 +50,7 @@ private:
 
     quint64 generateRandomPanId();
 
-    // Controller methods
-    void resetController();
-    void erasePersistentData();
-    void sendDataManagerAvailableResponse();
-    void getVersion();
-    void setExtendedPanId(const quint64 &panId);
-    void setChannelMask(const quint32 &channelMask);
-    void setDeviceType(const NodeType &deviceType);
-    void startNetwork();
-    void startScan();
-    void permitJoining(quint16 targetAddress = 0xfffc, const quint8 advertisingIntervall = 254);
-
-    void getPermitJoiningStatus();
-    void enableWhitelist();
-
-    void initiateTouchLink();
-
-    void requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile);
+    void parseNetworkFormed(const QByteArray &data);
 
 signals:
     void runningChanged(const bool &running);
@@ -75,6 +75,7 @@ private slots:
     void onEnableWhitelistFinished();
 
     void onInitiateTouchLinkFinished();
+    void onTouchLinkFactoryResetFinished();
 
     void onRequestMatchDescriptorFinished();
 

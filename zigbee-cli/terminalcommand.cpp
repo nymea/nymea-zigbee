@@ -52,7 +52,23 @@ void TerminalCommand::setOptionalParameters(const QStringList &parameters)
     m_optionalParameters = parameters;
 }
 
+QString TerminalCommand::defaultParameter() const
+{
+    return m_defaultParamter;
+}
+
+void TerminalCommand::setDefaultParameters(const QString &parameter)
+{
+    m_defaultParamter = parameter;
+}
+
 bool TerminalCommand::isValid()
 {
     return !m_command.isEmpty() && !m_description.isEmpty();
+}
+
+QDebug operator<<(QDebug debug, const TerminalCommand &command)
+{
+    debug << command.command() << command.description();
+    return debug;
 }

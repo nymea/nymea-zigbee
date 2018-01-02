@@ -14,49 +14,49 @@
 
 static QHash<QString, bool> s_loggingFilters;
 
-//static bool s_aboutToShutdown = false;
+static bool s_aboutToShutdown = false;
 
-//static void catchUnixSignals(const std::vector<int>& quitSignals, const std::vector<int>& ignoreSignals = std::vector<int>()) {
-//    auto handler = [](int sig) -> void {
-//        switch (sig) {
-//        case SIGQUIT:
-//            qCDebug(dcZigbee()) << "Cought SIGQUIT quit signal...";
-//            break;
-//        case SIGINT:
-//            qCDebug(dcZigbee()) << "Cought SIGINT quit signal...";
-//            break;
-//        case SIGTERM:
-//            qCDebug(dcZigbee()) << "Cought SIGTERM quit signal...";
-//            break;
-//        case SIGHUP:
-//            qCDebug(dcZigbee()) << "Cought SIGHUP quit signal...";
-//            break;
-//        case SIGSEGV: {
-//            qCDebug(dcZigbee()) << "Cought SIGSEGV signal. Segmentation fault!";
-//            exit(1);
-//        }
-//        default:
-//            break;
-//        }
+static void catchUnixSignals(const std::vector<int>& quitSignals, const std::vector<int>& ignoreSignals = std::vector<int>()) {
+    auto handler = [](int sig) -> void {
+        switch (sig) {
+        case SIGQUIT:
+            qCDebug(dcZigbee()) << "Cought SIGQUIT quit signal...";
+            break;
+        case SIGINT:
+            qCDebug(dcZigbee()) << "Cought SIGINT quit signal...";
+            break;
+        case SIGTERM:
+            qCDebug(dcZigbee()) << "Cought SIGTERM quit signal...";
+            break;
+        case SIGHUP:
+            qCDebug(dcZigbee()) << "Cought SIGHUP quit signal...";
+            break;
+        case SIGSEGV: {
+            qCDebug(dcZigbee()) << "Cought SIGSEGV signal. Segmentation fault!";
+            exit(1);
+        }
+        default:
+            break;
+        }
 
-//        if (s_aboutToShutdown) {
-//            return;
-//        }
+        if (s_aboutToShutdown) {
+            return;
+        }
 
-//        s_aboutToShutdown = true;
-//        TerminalCommander::instance()->destroy();
-//        TerminalCommander::instance()->quit();
-//    };
+        s_aboutToShutdown = true;
+        TerminalCommander::instance()->destroy();
+        TerminalCommander::instance()->quit();
+    };
 
 
 
-//    // all these signals will be ignored.
-//    for (int sig : ignoreSignals)
-//        signal(sig, SIG_IGN);
+    // all these signals will be ignored.
+    for (int sig : ignoreSignals)
+        signal(sig, SIG_IGN);
 
-//    for (int sig : quitSignals)
-//        signal(sig, handler);
-//}
+    for (int sig : quitSignals)
+        signal(sig, handler);
+}
 
 static void loggingCategoryFilter(QLoggingCategory *category)
 {
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 
     QCoreApplication application(argc, argv);
 
-    //catchUnixSignals({SIGQUIT, SIGINT, SIGTERM, SIGHUP, SIGSEGV});
+    catchUnixSignals({SIGQUIT, SIGINT, SIGTERM, SIGHUP, SIGSEGV});
 
     application.setOrganizationName("guh");
     application.setApplicationName("qt-zigbee");
@@ -111,13 +111,20 @@ int main(int argc, char *argv[])
     QCommandLineParser parser;
     parser.addHelpOption();
     parser.addVersionOption();
-    parser.setApplicationDescription(QString("\nDaemon for the zigbee NXP uart bridge.\n\nCopyright %1 2016 Simon Stürz <simon.stuerz@guh.io>\nAll rights reserved.").arg(QChar(0xA9)));
+    parser.setApplicationDescription(QString("\nCommand line tool for the zigbee NXP uart control bridge.\n\nCopyright %1 2018 Simon Stürz <simon.stuerz@guh.io>\nAll rights reserved.").arg(QChar(0xA9)));
 
     // Debug level
-    QCommandLineOption debugLevelOption(QStringList() << "d" << "debug-level", "Set debug level [1-4].");
+    QCommandLineOption debugLevelOption(QStringList() << "d" << "debug-level", "Set debug level [1-4]. Default 1.");
     debugLevelOption.setDefaultValue("1");
     debugLevelOption.setValueName("level");
     parser.addOption(debugLevelOption);
+
+    // Debug level
+    QCommandLineOption serialOption(QStringList() << "s" << "serial-port", "Set the serial port for the NXP controller. Default '/dev/ttyUSB0'.");
+    serialOption.setDefaultValue("/dev/ttyUSB0");
+    serialOption.setValueName("port");
+    parser.addOption(serialOption);
+
 
     // Channel
     QCommandLineOption channelOption(QStringList() << "c" << "channel", "Set channel for the zigbee network. Channel between [11-26] are allowed. If not specified, the quitest channel will be choosen automatically.");
@@ -135,6 +142,7 @@ int main(int argc, char *argv[])
         debugLevel = 1;
     }
 
+    s_loggingFilters.insert("Application", true);
     s_loggingFilters.insert("Zigbee", true);
     s_loggingFilters.insert("ZigbeeController", (debugLevel > 1));
     s_loggingFilters.insert("ZigbeeInterface", (debugLevel > 2));
@@ -152,7 +160,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    Core core(channel);
+
+
+    Core core(parser.value(serialOption), channel);
 
     return application.exec();
 }

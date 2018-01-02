@@ -253,3 +253,9 @@ void ZigbeeNode::onRequestPowerDescriptorFinished()
     qCDebug(dcZigbee()) << "    Status:" << ZigbeeUtils::convertByteToHexString(status);
     qCDebug(dcZigbee()) << "    Bitfiled:" << ZigbeeUtils::convertUint16ToHexString(bitField);
 }
+
+QDebug operator<<(QDebug debug, ZigbeeNode *node)
+{
+    debug.nospace().noquote() << "Node(" << node->shortAddress() << ", " << node->extendedAddress().toString() << ") ";
+    return debug;
+}
