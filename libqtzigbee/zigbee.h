@@ -46,6 +46,10 @@ public:
         MessageTypeAuthenticateDeviceResponse          = 0x8028,
         MessageTypeOutOfBandCommisioningDataRequest    = 0x0029,
         MessageTypeOutOfBandCommisioningDataResponse   = 0x8029,
+        MessageTypeUserDescriptorSet                   = 0x002B,
+        MessageTypeUserDescriptorNotify                = 0x802B,
+        MessageTypeUserDescriptorRequest               = 0x002C,
+        MessageTypeUserDescriptorResponse              = 0x802C,
 
         MessageTypeReset                               = 0x0011,
         MessageTypeErasePersistentData                 = 0x0012,
@@ -56,6 +60,8 @@ public:
         MessageTypeBindResponse                        = 0x8030,
         MessageTypeUnbind                              = 0x0031,
         MessageTypeUnbindResponse                      = 0x8031,
+        MessageTypeComplexDescriptorRequest            = 0x0034,
+        MessageTypeComplexDescriptorResponse           = 0x8034,
 
         MessageTypeNetworkAdressRequest                = 0x0040,
         MessageTypeNetworkAdressResponse               = 0x8040,
@@ -400,6 +406,25 @@ public:
     };
     Q_ENUM(DataType)
 
+    enum Manufacturer {
+        // RF4CE
+        PanasonicRF4CE          = 0x0001,
+        SonyRF4CE               = 0x0002,
+        SamsungRF4CE            = 0x0003,
+        PhilipsRF4CE            = 0x0004,
+        FreescaleRF4CE          = 0x0005,
+        OkiSemiRF4CE            = 0x0006,
+        TiRF4CE                 = 0x0007,
+
+        //  Manufacturer Codes for non RF4CE devices
+        Cirronet = 0x1000,
+        Chipcon = 0x1001,
+        Ember = 0x1003,
+
+    };
+    Q_ENUM(Manufacturer)
+
+
     ///* Manufacturer Codes */
     ///* Codes less than 0x1000 were issued for RF4CE */
     //#define ZBEE_MFG_CODE_PANASONIC_RF4CE       0x0001
@@ -412,7 +437,7 @@ public:
 
     ///* Manufacturer Codes for non RF4CE devices */
     //#define ZBEE_MFG_CODE_CIRRONET              0x1000
-    //#define ZBEE_MFG_CODE_CHIPCON               0x1001
+    //#define ZBEE_MFG_CODE_CHIPCON
     //#define ZBEE_MFG_CODE_EMBER                 0x1002
     //#define ZBEE_MFG_CODE_NTS                   0x1003
     //#define ZBEE_MFG_CODE_FREESCALE             0x1004

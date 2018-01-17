@@ -16,6 +16,10 @@ public:
     // Data utils
     QBitArray convertByteArrayToBitArray(const QByteArray &byteArray);
     QByteArray convertBitArrayToByteArray(const QBitArray &bitArray);
+    static bool checkBitUint16(const quint16 &value, const int &bitNumber);
+
+    static quint16 convertByteArrayToUint16(const QByteArray &data);
+    static quint64 convertByteArrayToUint64(const QByteArray &data);
 
     // Debug utils
     static QString convertByteToHexString(const quint8 &byte);

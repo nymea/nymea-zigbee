@@ -13,9 +13,13 @@ class ZigbeeNetworkManager : public ZigbeeNode
 public:
     explicit ZigbeeNetworkManager(const int &channel = 0, const QString &serialPort = "/dev/ttyS0", QObject *parent = nullptr);
 
+    bool isAvailable() const;
+
     QString controllerVersion() const;
+    QString serialPort() const;
     QList<ZigbeeNode *> nodeList() const;
     quint64 extendedPanId() const;
+
     bool networkRunning() const;
 
     // Controller methods
@@ -24,12 +28,14 @@ public:
     void sendDataManagerAvailableResponse();
     void getVersion();
     void setExtendedPanId(const quint64 &panId);
-    void setChannelMask(const quint32 &channelMask);
+    void setChannelMask(const quint32 &channelMask = 0x07fff800);
     void setDeviceType(const NodeType &deviceType);
     void startNetwork();
     void startScan();
 
-    void permitJoining(quint16 targetAddress = 0xfffc, const quint8 advertisingIntervall = 254);
+    void permitJoining(quint16 targetAddress = 0xfffc, const quint8 advertisingIntervall = 180, bool tcSignificance = false);
+
+    void requestLinkQuality();
 
     void getPermitJoiningStatus();
     void enableWhitelist();
@@ -37,10 +43,17 @@ public:
     void initiateTouchLink();
     void touchLinkFactoryReset();
 
+    void networkAddressRequest(quint16 targetAddress, quint64 extendedAddress);
+
     void requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile);
+
+    void setInitialSecurity(quint8 keyState, quint8 keySequence, quint8 keyType, const QString &key);
+
+    void authenticateDevice(const ZigbeeAddress &ieeeAddress);
 
 private:
     ZigbeeBridgeController *m_controller = nullptr;
+    QString m_serialPort;
     QString m_controllerVersion;
     quint64 m_extendedPanId = 0;
 
@@ -76,8 +89,12 @@ private slots:
 
     void onInitiateTouchLinkFinished();
     void onTouchLinkFactoryResetFinished();
+    void onRequestLinkQualityFinished();
 
     void onRequestMatchDescriptorFinished();
+    void onSetSecurityFinished();
+    void onNetworkAddressRequestFinished();
+    void onAuthenticateDeviceFinished();
 
     // Process controller notifications/messages
     void processLoggingMessage(const ZigbeeInterfaceMessage &message);
@@ -88,6 +105,7 @@ private slots:
     void processDeviceAnnounce(const ZigbeeInterfaceMessage &message);
     void processAttributeReport(const ZigbeeInterfaceMessage &message);
     void processLeaveIndication(const ZigbeeInterfaceMessage &message);
+    void processRestartProvisioned(const ZigbeeInterfaceMessage &message);
 };
 
 #endif // ZIGBEEMANAGER_H

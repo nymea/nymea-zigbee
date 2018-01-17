@@ -21,6 +21,9 @@ private:
     ZigbeeNetworkManager *m_manager = nullptr;
     QList<TerminalCommand> m_commands;
     QString m_serialPort;
+    quint32 m_channelMask = 0;
+
+    ZigbeeNode *findNode(const QString &shortAddressString);
 
 signals:
 

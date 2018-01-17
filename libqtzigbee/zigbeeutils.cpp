@@ -27,6 +27,43 @@ QByteArray ZigbeeUtils::convertBitArrayToByteArray(const QBitArray &bitArray)
     return byteArray;
 }
 
+bool ZigbeeUtils::checkBitUint16(const quint16 &value, const int &bitNumber)
+{
+    return value & (1 << bitNumber);
+}
+
+quint16 ZigbeeUtils::convertByteArrayToUint16(const QByteArray &data)
+{
+    Q_ASSERT_X(data.count() == 2, "converting data", "Invalid byte array size for converting to quint16");
+
+    quint16 value = static_cast<quint8>(data.at(0));
+    value <<= 8;
+    value |= static_cast<quint8>(data.at(1));
+    return value;
+}
+
+quint64 ZigbeeUtils::convertByteArrayToUint64(const QByteArray &data)
+{
+    Q_ASSERT_X(data.count() == 8, "converting data", "Invalid byte array size for converting to quint64");
+
+    quint64 value = static_cast<quint8>(data.at(0));
+    value <<= 8;
+    value |= static_cast<quint8>(data.at(1));
+    value <<= 8;
+    value |= static_cast<quint8>(data.at(2));
+    value <<= 8;
+    value |= static_cast<quint8>(data.at(3));
+    value <<= 8;
+    value |= static_cast<quint8>(data.at(4));
+    value <<= 8;
+    value |= static_cast<quint8>(data.at(5));
+    value <<= 8;
+    value |= static_cast<quint8>(data.at(6));
+    value <<= 8;
+    value |= static_cast<quint8>(data.at(7));
+    return value;
+}
+
 QString ZigbeeUtils::convertByteToHexString(const quint8 &byte)
 {
     QString hexString(QStringLiteral("0x%1"));
@@ -39,7 +76,7 @@ QString ZigbeeUtils::convertByteArrayToHexString(const QByteArray &byteArray)
     QString hexString;
     for (int i = 0; i < byteArray.count(); i++) {
         hexString.append(convertByteToHexString((quint8)byteArray.at(i)));
-        if (i != byteArray.count() -1) {
+        if (i != byteArray.count() - 1) {
             hexString.append(" ");
         }
     }
