@@ -1,14 +1,14 @@
 #include "zigbeebridgecontroller.h"
 #include "loggingcategory.h"
 
-ZigbeeBridgeController::ZigbeeBridgeController(const QString &serialPort, QObject *parent) :
+ZigbeeBridgeController::ZigbeeBridgeController(const QString &serialPort, qint32 baudrate, QObject *parent) :
     QObject(parent)
 {
     m_interface = new ZigbeeInterface(this);
 
     connect(m_interface, &ZigbeeInterface::messageReceived, this, &ZigbeeBridgeController::onMessageReceived);
 
-    if (!m_interface->enable(serialPort)) {
+    if (!m_interface->enable(serialPort, baudrate)) {
         qCCritical(dcZigbeeController()) << "Could not enable ZigbeeInterface on" << serialPort;
         return;
     }

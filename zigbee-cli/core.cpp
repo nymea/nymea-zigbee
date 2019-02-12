@@ -4,14 +4,15 @@
 
 #include <QCoreApplication>
 
-Core::Core(const QString &serialPort, const int &channel, QObject *parent) :
+Core::Core(const QString &serialPort, qint32 baudrate, const int &channel, QObject *parent) :
     QObject(parent),
-    m_serialPort(serialPort)
+    m_serialPort(serialPort),
+    m_baudRate(baudrate)
 {
     m_channelMask = 0;
     m_channelMask |= 1 << (channel);
 
-    m_manager = new ZigbeeNetworkManager(channel, m_serialPort, this);
+    m_manager = new ZigbeeNetworkManager(channel, m_serialPort, m_baudRate, this);
 
     // Set commands
     TerminalCommand runCommand("run", "Run the zigbee controller in a normal non interactive mode.");

@@ -6,8 +6,8 @@
 #include <QDataStream>
 #include <QSettings>
 
-ZigbeeNetworkManager::ZigbeeNetworkManager(const int &channel, const QString &serialPort, QObject *parent) :
-    ZigbeeNode(new ZigbeeBridgeController(serialPort, parent), parent),
+ZigbeeNetworkManager::ZigbeeNetworkManager(const int &channel, const QString &serialPort, qint32 baudrate, QObject *parent) :
+    ZigbeeNode(new ZigbeeBridgeController(serialPort, baudrate, parent), parent),
     m_serialPort(serialPort)
 {
     connect(controller(), &ZigbeeBridgeController::messageReceived, this, &ZigbeeNetworkManager::onMessageReceived);

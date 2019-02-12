@@ -166,7 +166,7 @@ void ZigbeeInterface::onError(const QSerialPort::SerialPortError &error)
     }
 }
 
-bool ZigbeeInterface::enable(const QString &serialPort)
+bool ZigbeeInterface::enable(const QString &serialPort, qint32 baudrate)
 {
     if (m_serialPort) {
         delete m_serialPort;
@@ -174,7 +174,8 @@ bool ZigbeeInterface::enable(const QString &serialPort)
     }
 
     m_serialPort = new QSerialPort(serialPort, this);
-    m_serialPort->setBaudRate(QSerialPort::Baud115200);
+    //m_serialPort->setBaudRate(QSerialPort::Baud115200);
+    m_serialPort->setBaudRate(baudrate);
     m_serialPort->setDataBits(QSerialPort::Data8);
     m_serialPort->setParity(QSerialPort::NoParity);
     m_serialPort->setFlowControl(QSerialPort::NoFlowControl);

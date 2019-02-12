@@ -56,7 +56,7 @@ private slots:
     void onError(const QSerialPort::SerialPortError &error);
 
 public slots:
-    bool enable(const QString &serialPort = "/dev/ttyS0");
+    bool enable(const QString &serialPort = "/dev/ttyS0", qint32 baudrate = 115200);
     void disable();
 
     void sendMessage(const ZigbeeInterfaceMessage &message);

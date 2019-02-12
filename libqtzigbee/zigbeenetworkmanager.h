@@ -11,7 +11,7 @@ class ZigbeeNetworkManager : public ZigbeeNode
 {
     Q_OBJECT
 public:
-    explicit ZigbeeNetworkManager(const int &channel = 0, const QString &serialPort = "/dev/ttyS0", QObject *parent = nullptr);
+    explicit ZigbeeNetworkManager(const int &channel = 0, const QString &serialPort = "/dev/ttyS0", qint32 baudrate = 115200, QObject *parent = nullptr);
 
     bool isAvailable() const;
 

@@ -14,7 +14,7 @@ class ZigbeeBridgeController : public QObject
 {
     Q_OBJECT
 public:
-    explicit ZigbeeBridgeController(const QString &serialPort, QObject *parent = nullptr);
+    explicit ZigbeeBridgeController(const QString &serialPort, qint32 baudrate, QObject *parent = nullptr);
 
     bool available() const;
 

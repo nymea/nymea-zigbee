@@ -125,10 +125,14 @@ int main(int argc, char *argv[])
     serialOption.setValueName("port");
     parser.addOption(serialOption);
 
+    QCommandLineOption baudOption(QStringList() << "b" << "baudrate", "Set the serial port baud rate for the NXP controller. Default '115200'.");
+    baudOption.setDefaultValue("115200");
+    baudOption.setValueName("baudrate");
+    parser.addOption(baudOption);
 
     // Channel
     QCommandLineOption channelOption(QStringList() << "c" << "channel", "Set channel for the zigbee network. Channel between [11-26] are allowed. If not specified, the quitest channel will be choosen automatically.");
-    channelOption.setDefaultValue(0);
+    channelOption.setDefaultValue("0");
     channelOption.setValueName("channel");
     parser.addOption(channelOption);
 
@@ -160,9 +164,15 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Check baud rate value
+    bool baudrateValueOk = false;
+    int baudrate = parser.value(baudOption).toInt(&baudrateValueOk);
+    if (!debugLevelValueOk) {
+        qCritical() << "Invalid baud rate passed:" << parser.value(baudOption) << "Reset to default baudrate 115200.";
+        baudrate = 115200;
+    }
 
-
-    Core core(parser.value(serialOption), channel);
+    Core core(parser.value(serialOption), baudrate, channel);
 
     return application.exec();
 }
