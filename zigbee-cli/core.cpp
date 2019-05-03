@@ -96,7 +96,7 @@ void Core::onCommandReceived(const QStringList &tokens)
         m_manager->setDeviceType(nodeType);
         // Note: this is the leaked philips ZLL master key
         m_manager->setInitialSecurity(3, 0, 1, "9F5595F10257C8A469CBF42BC93FEE31");
-        m_manager->setInitialSecurity(4, 0, 1, "5A6967426565416C6C69616E63653039");
+        //m_manager->setInitialSecurity(4, 0, 1, "5A6967426565416C6C69616E63653039");
 
     } else if (command.command() == "start") {
         m_manager->startNetwork();
@@ -109,7 +109,7 @@ void Core::onCommandReceived(const QStringList &tokens)
     } else if (command.command() == "reset") {
         m_manager->resetController();
     } else if (command.command() == "permit-join") {
-        m_manager->permitJoining(0xfffc, 180, true);
+        m_manager->permitJoining(0x0000, 180, true);
     } else if (command.command() == "touch-link") {
         m_manager->initiateTouchLink();
     } else if (command.command() == "reset-touchlink") {

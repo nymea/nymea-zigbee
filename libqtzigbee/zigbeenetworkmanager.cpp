@@ -20,6 +20,7 @@ ZigbeeNetworkManager::ZigbeeNetworkManager(const int &channel, const QString &se
     }
 
     QSettings settings;
+    qCDebug(dcZigbee()) << "Loading settings from" << settings.fileName();
     settings.beginGroup("Network");
     m_extendedPanId = static_cast<quint64>(settings.value("panId", 0).toLongLong());
     qCDebug(dcZigbee()) << "Loading saved pan id" << m_extendedPanId;
@@ -156,7 +157,7 @@ void ZigbeeNetworkManager::resetController()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeReset));
     request.setDescription("Reset controller");
-    request.setTimoutIntervall(3000);
+    request.setTimoutIntervall(5000);
 
     ZigbeeInterfaceReply *reply = controller()->sendRequest(request);
     connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onResetControllerFinished);

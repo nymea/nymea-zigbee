@@ -150,8 +150,6 @@ void ZigbeeInterface::onReadyRead()
             case WaitForData:
                 m_data.append(static_cast<char>(byte));
                 break;
-            default:
-                break;
             }
 
             break;
@@ -174,7 +172,6 @@ bool ZigbeeInterface::enable(const QString &serialPort, qint32 baudrate)
     }
 
     m_serialPort = new QSerialPort(serialPort, this);
-    //m_serialPort->setBaudRate(QSerialPort::Baud115200);
     m_serialPort->setBaudRate(baudrate);
     m_serialPort->setDataBits(QSerialPort::Data8);
     m_serialPort->setParity(QSerialPort::NoParity);
@@ -184,7 +181,7 @@ bool ZigbeeInterface::enable(const QString &serialPort, qint32 baudrate)
     connect(m_serialPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(onError(QSerialPort::SerialPortError)));
 
     if (!m_serialPort->open(QSerialPort::ReadWrite)) {
-        qCWarning(dcZigbeeInterface()) << "Could not open serial port" << serialPort;
+        qCWarning(dcZigbeeInterface()) << "Could not open serial port" << serialPort << baudrate;
         delete m_serialPort;
         m_serialPort = nullptr;
         return false;
