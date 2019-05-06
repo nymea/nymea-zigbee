@@ -1,10 +1,10 @@
-Source: qtzigbee
+Source: nymea-zigbee
 Section: utils
 Priority: optional
 Maintainer: Simon Stuerz <simon.stuerz@guh.io>
 Standards-Version: 3.9.7
-Homepage: https://guh.io
-Vcs-Git: https://github.com/guh/guh.git
+Homepage: https://nymea.io
+Vcs-Git: https://github.com/guh/nymea.git
 Build-Depends: debhelper (>= 9.0.0),
                dpkg-dev (>= 1.16.1~),
                qt5-default,
@@ -20,14 +20,14 @@ Section: net
 Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends},
-         libqtzigbee1 (= ${binary:Version}),
+         libnymea-zigbee1 (= ${binary:Version}),
          libncurses5
 Description: Zigbee bridge controller Qt5 - tool
  Command line tool written in Qt for interacting with the NXP Zigbee controller.
  .
  This package will install the zigbee-cli tool.
 
-Package: libqtzigbee1
+Package: libnymea-zigbee1
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends},
@@ -39,21 +39,21 @@ Description: Qt 5 based library for Zigbee
  Qt 5 based library for Zigbee.
 
 
-Package: libqtzigbee1-dev
+Package: libnymea-zigbee1-dev
 Section: libdevel
 Architecture: any
-Depends: libqtzigbee1 (= ${binary:Version}),
+Depends: libnymea-zigbee1 (= ${binary:Version}),
   ${shlibs:Depends},
   ${misc:Depends}
 Description: Qt 5 based library for Zigbee - development files
  Development files for Qt 5 based Zigbee library.
 
 
-Package: libqtzigbee1-dbg
+Package: libnymea-zigbee1-dbg
 Priority: extra
 Architecture: any
 Section: debug
-Depends: libqtzigbee1 (= ${binary:Version}),
+Depends: libnymea-zigbee1 (= ${binary:Version}),
   ${shlibs:Depends},
   ${misc:Depends}
 Description: Qt 5 based library for Zigbee - debug symbols

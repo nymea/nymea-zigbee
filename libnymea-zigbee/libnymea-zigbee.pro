@@ -1,6 +1,6 @@
 include(../config.pri)
 
-TARGET = qtzigbee1
+TARGET = nymea-zigbee1
 TEMPLATE = lib
 
 target.path = /usr/lib
@@ -35,7 +35,7 @@ INSTALLS += target
 
 # install header file with relative subdirectory
 for(header, HEADERS) {
-    path = /usr/include/qtzigbee/$${dirname(header)}
+    path = /usr/include/nymea-zigbee/$${dirname(header)}
     eval(headers_$${path}.files += $${header})
     eval(headers_$${path}.path = $${path})
     eval(INSTALLS *= headers_$${path})

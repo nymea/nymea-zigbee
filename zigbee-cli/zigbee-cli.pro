@@ -5,9 +5,9 @@ CONFIG -= app_bundle
 
 TARGET = zigbee-cli
 
-LIBS += -L$$buildDir/libqtzigbee -lqtzigbee1 -lreadline
+LIBS += -L$$buildDir/libnymea-zigbee -lnymea-zigbee1 -lreadline
 
-INCLUDEPATH += ../libqtzigbee/
+INCLUDEPATH += ../libnymea-zigbee/
 
 target.path = /usr/bin
 INSTALLS += target

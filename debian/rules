@@ -17,7 +17,7 @@ include /usr/share/dpkg/buildflags.mk
 	dh $@ --buildsystem=qmake --parallel
 
 override_dh_strip:
-	dh_strip --dbg-package=libqtzigbee1-dbg
+	dh_strip --dbg-package=libnymea-zigbee1-dbg
 
 override_dh_auto_build:
 	make -j$(DEB_PARALLEL_JOBS)
