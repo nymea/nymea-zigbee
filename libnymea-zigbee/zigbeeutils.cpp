@@ -1,5 +1,6 @@
 #include "zigbeeutils.h"
 
+#include <QDateTime>
 #include <QMetaEnum>
 #include <QDataStream>
 
@@ -22,7 +23,7 @@ QByteArray ZigbeeUtils::convertBitArrayToByteArray(const QBitArray &bitArray)
     QByteArray byteArray;
 
     for(int b = 0; b < bitArray.count(); ++b) {
-        byteArray[b / 8] = (byteArray.at( b / 8) | ((bitArray[b] ? 1 : 0) << (7 - ( b % 8))));
+        byteArray[b / 8] = static_cast<char>((byteArray.at( b / 8) | ((bitArray[b] ? 1 : 0) << (7 - ( b % 8)))));
     }
     return byteArray;
 }
@@ -75,7 +76,7 @@ QString ZigbeeUtils::convertByteArrayToHexString(const QByteArray &byteArray)
 {
     QString hexString;
     for (int i = 0; i < byteArray.count(); i++) {
-        hexString.append(convertByteToHexString((quint8)byteArray.at(i)));
+        hexString.append(convertByteToHexString(static_cast<quint8>(byteArray.at(i))));
         if (i != byteArray.count() - 1) {
             hexString.append(" ");
         }
@@ -128,4 +129,11 @@ QString ZigbeeUtils::profileIdToString(const Zigbee::ZigbeeProfile &profileId)
     QString enumString = metaEnum.valueToKey(profileId);
 
     return enumString.remove("Zigbee::ZigbeeProfile(ZigbeeProfile").remove(")");
+}
+
+quint64 ZigbeeUtils::generateRandomPanId()
+{
+    srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
+    srand(static_cast<uint>(qrand()));
+    return static_cast<quint64>((ULLONG_MAX - 0) * (qrand()/static_cast<double>(RAND_MAX)));
 }

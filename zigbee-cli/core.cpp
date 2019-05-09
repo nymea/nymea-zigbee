@@ -12,7 +12,10 @@ Core::Core(const QString &serialPort, qint32 baudrate, const int &channel, QObje
     m_channelMask = 0;
     m_channelMask |= 1 << (channel);
 
-    m_manager = new ZigbeeNetworkManager(channel, m_serialPort, m_baudRate, this);
+    ZigbeeBridgeController *controller = new ZigbeeBridgeController(this);
+    controller->enable(serialPort, baudrate);
+
+    //m_manager = new ZigbeeNetworkManager(channel, controller, this);
 
     // Set commands
     TerminalCommand runCommand("run", "Run the zigbee controller in a normal non interactive mode.");
@@ -95,8 +98,8 @@ void Core::onCommandReceived(const QStringList &tokens)
         m_manager->setChannelMask(0x2108800);
         m_manager->setDeviceType(nodeType);
         // Note: this is the leaked philips ZLL master key
-        m_manager->setInitialSecurity(3, 0, 1, "9F5595F10257C8A469CBF42BC93FEE31");
-        //m_manager->setInitialSecurity(4, 0, 1, "5A6967426565416C6C69616E63653039");
+        //m_manager->setInitialSecurity(3, 0, 1, "9F5595F10257C8A469CBF42BC93FEE31");
+        m_manager->setInitialSecurity(4, 0, 1, "5A6967426565416C6C69616E63653039");
 
     } else if (command.command() == "start") {
         m_manager->startNetwork();

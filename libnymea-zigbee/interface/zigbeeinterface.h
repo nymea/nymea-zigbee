@@ -2,6 +2,7 @@
 #define ZIGBEEINTERFACE_H
 
 #include <QObject>
+#include <QTimer>
 #include <QSerialPort>
 
 #include "zigbee.h"
@@ -29,11 +30,13 @@ public:
     QString serialPort() const;
 
 private:
-    QSerialPort *m_serialPort;
+    QTimer *m_reconnectTimer = nullptr;
+    QSerialPort *m_serialPort = nullptr;
     QByteArray m_messageBuffer;
+    bool m_available = false;
 
     // Message parsing
-    ReadingState m_readingState;
+    ReadingState m_readingState = WaitForStart;
     quint8 m_crcValue;
     quint8 m_currentValue;
     quint16 m_messageTypeValue;
@@ -44,14 +47,15 @@ private:
     quint8 calculateCrc(const quint16 &messageTypeValue, const quint16 &lenghtValue, const QByteArray &data);
 
     void streamByte(quint8 byte, bool specialCharacter = false);
-
+    void setAvailable(bool available);
     void setReadingState(const ReadingState & state);
 
 signals:
-    void availableChanged(const bool &available);
+    void availableChanged(bool available);
     void messageReceived(const ZigbeeInterfaceMessage &message);
 
 private slots:
+    void onReconnectTimeout();
     void onReadyRead();
     void onError(const QSerialPort::SerialPortError &error);
 

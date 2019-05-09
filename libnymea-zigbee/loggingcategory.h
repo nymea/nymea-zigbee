@@ -4,7 +4,7 @@
 #include <QDebug>
 #include <QLoggingCategory>
 
-Q_DECLARE_LOGGING_CATEGORY(dcZigbee)
+Q_DECLARE_LOGGING_CATEGORY(dcZigbeeNetwork)
 Q_DECLARE_LOGGING_CATEGORY(dcZigbeeInterface)
 Q_DECLARE_LOGGING_CATEGORY(dcZigbeeController)
 Q_DECLARE_LOGGING_CATEGORY(dcZigbeeInterfaceTraffic)

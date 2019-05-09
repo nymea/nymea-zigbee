@@ -10,10 +10,13 @@ SOURCES += \
     interface/zigbeeinterfacemessage.cpp \
     interface/zigbeeinterfacerequest.cpp \
     interface/zigbeeinterfacereply.cpp \
+    nxp/nxpzigbeenetworkmanager.cpp \
+    zigbeenetwork.cpp \
     zigbeenetworkmanager.cpp \
     zigbee.cpp \
     loggingcategory.cpp \
     zigbeebridgecontroller.cpp \
+    zigbeesecurityconfiguration.cpp \
     zigbeeutils.cpp \
     zigbeenode.cpp \
     zigbeeaddress.cpp \
@@ -23,10 +26,13 @@ HEADERS += \
     interface/zigbeeinterfacemessage.h \
     interface/zigbeeinterfacerequest.h \
     interface/zigbeeinterfacereply.h \
+    nxp/nxpzigbeenetworkmanager.h \
+    zigbeenetwork.h \
     zigbeenetworkmanager.h \
     zigbee.h \
     loggingcategory.h \
     zigbeebridgecontroller.h \
+    zigbeesecurityconfiguration.h \
     zigbeeutils.h \
     zigbeenode.h \
     zigbeeaddress.h \

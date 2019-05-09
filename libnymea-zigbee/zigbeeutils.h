@@ -32,6 +32,8 @@ public:
     static QString clusterIdToString(const Zigbee::ClusterId &clusterId);
     static QString profileIdToString(const Zigbee::ZigbeeProfile &profileId);
 
+    static quint64 generateRandomPanId();
+
 };
 
 #endif // ZIGBEEUTILS_H

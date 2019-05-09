@@ -3,100 +3,77 @@
 
 #include <QObject>
 
-#include "zigbeenode.h"
+#include "zigbeenetwork.h"
 #include "zigbeeaddress.h"
 #include "zigbeebridgecontroller.h"
+#include "zigbeesecurityconfiguration.h"
 
-class ZigbeeNetworkManager : public ZigbeeNode
+class ZigbeeNetworkManager : public ZigbeeNetwork
 {
     Q_OBJECT
 public:
-    explicit ZigbeeNetworkManager(const int &channel = 0, const QString &serialPort = "/dev/ttyS0", qint32 baudrate = 115200, QObject *parent = nullptr);
-
-    bool isAvailable() const;
+    explicit ZigbeeNetworkManager(QObject *parent = nullptr);
 
     QString controllerVersion() const;
-    QString serialPort() const;
-    QList<ZigbeeNode *> nodeList() const;
-    quint64 extendedPanId() const;
 
     bool networkRunning() const;
 
-    // Controller methods
-    void resetController();
-    void erasePersistentData();
-    void sendDataManagerAvailableResponse();
-    void getVersion();
-    void setExtendedPanId(const quint64 &panId);
-    void setChannelMask(const quint32 &channelMask = 0x07fff800);
-    void setDeviceType(const NodeType &deviceType);
-    void startNetwork();
-    void startScan();
-
-    void permitJoining(quint16 targetAddress = 0xfffc, const quint8 advertisingIntervall = 180, bool tcSignificance = false);
-
-    void requestLinkQuality();
-
-    void getPermitJoiningStatus();
-    void enableWhitelist();
-
-    void initiateTouchLink();
-    void touchLinkFactoryReset();
-
-    void networkAddressRequest(quint16 targetAddress, quint64 extendedAddress);
-
-    void requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile);
-
-    void setInitialSecurity(quint8 keyState, quint8 keySequence, quint8 keyType, const QString &key);
-
-    void authenticateDevice(const ZigbeeAddress &ieeeAddress);
-
 private:
+    enum StartingState {
+        StartingStateNone,
+        StartingStateErase,
+        StartingStateReset,
+        StartingStateGetVersion,
+        StartingStateSetPanId,
+        StartingStateSetChannel,
+        StartingStateSetSecurity,
+        StartingStateStartNetwork,
+        StartingStateReadeNodeDescriptor,
+        StartingStateReadSimpleDescriptor,
+        StartingStateReadPowerDescriptor
+    };
+
     ZigbeeBridgeController *m_controller = nullptr;
-    QString m_serialPort;
     QString m_controllerVersion;
-    quint64 m_extendedPanId = 0;
 
-    QList<ZigbeeNode *> m_nodeList;
-
-    bool m_networkRunning = false;
-
-    quint64 generateRandomPanId();
-
-    void parseNetworkFormed(const QByteArray &data);
+    StartingState m_startingState = StartingStateNone;
+    void setStartingState(StartingState state);
 
 signals:
     void runningChanged(const bool &running);
 
 private slots:
     void onMessageReceived(const ZigbeeInterfaceMessage &message);
+    void onControllerAvailableChanged(bool available);
 
-    void loadNetwork();
-    void saveNetwork();
+    // Controller command finished slots
+    void onCommandResetControllerFinished();
+    void onCommandErasePersistentDataFinished();
+    void onCommandGetVersionFinished();
+    void onCommandSetExtendedPanIdFinished();
+    void onCommandSetChannelMaskFinished();
+    void onCommandSetDeviceTypeFinished();
+    void onCommandStartNetworkFinished();
+    void onCommandStartScanFinished();
+    void onCommandGetPermitJoiningStatusFinished();
+    void onCommandPermitJoiningFinished();
+    void onCommandEnableWhitelistFinished();
 
-    // Controller methods finished slots
-    void onResetControllerFinished();
-    void onErasePersistentDataFinished();
-    void onGetVersionFinished();
-    void onSetExtendedPanIdFinished();
-    void onSetChannelMaskFinished();
-    void onSetDeviceTypeFinished();
-    void onStartNetworkFinished();
-    void onStartScanFinished();
-    void onGetPermitJoiningStatusFinished();
-    void onPermitJoiningFinished();
-    void onEnableWhitelistFinished();
+    void onCommandNodeDescriptorRequestFinished();
+    void onCommandSimpleDescriptorRequestFinished();
+    void onCommandPowerDescriptorRequestFinished();
 
-    void onInitiateTouchLinkFinished();
-    void onTouchLinkFactoryResetFinished();
-    void onRequestLinkQualityFinished();
+    void onCommandInitiateTouchLinkFinished();
+    void onCommandTouchLinkFactoryResetFinished();
+    void onCommandRequestLinkQualityFinished();
 
-    void onRequestMatchDescriptorFinished();
-    void onSetSecurityFinished();
-    void onNetworkAddressRequestFinished();
-    void onAuthenticateDeviceFinished();
+    void onCommandRequestMatchDescriptorFinished();
+    void onCommandSetSecurityFinished();
+    void onCommandNetworkAddressRequestFinished();
+    void onCommandAuthenticateDeviceFinished();
 
     // Process controller notifications/messages
+    void processNetworkFormed(const ZigbeeInterfaceMessage &message);
     void processLoggingMessage(const ZigbeeInterfaceMessage &message);
     void processFactoryNewRestart(const ZigbeeInterfaceMessage &message);
     void processNodeClusterList(const ZigbeeInterfaceMessage &message);
@@ -106,6 +83,11 @@ private slots:
     void processAttributeReport(const ZigbeeInterfaceMessage &message);
     void processLeaveIndication(const ZigbeeInterfaceMessage &message);
     void processRestartProvisioned(const ZigbeeInterfaceMessage &message);
+
+public slots:
+    void startNetwork() override;
+    void stopNetwork() override;
+
 };
 
 #endif // ZIGBEEMANAGER_H

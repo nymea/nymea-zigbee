@@ -3,11 +3,13 @@
 #include "zigbeeutils.h"
 
 ZigbeeInterface::ZigbeeInterface(QObject *parent) :
-    QObject(parent),
-    m_serialPort(nullptr),
-    m_readingState(WaitForStart)
+    QObject(parent)
 {
+    m_reconnectTimer = new QTimer(this);
+    m_reconnectTimer->setSingleShot(true);
+    m_reconnectTimer->setInterval(5000);
 
+    connect(m_reconnectTimer, &QTimer::timeout, this, &ZigbeeInterface::onReconnectTimeout);
 }
 
 ZigbeeInterface::~ZigbeeInterface()
@@ -56,11 +58,22 @@ void ZigbeeInterface::streamByte(quint8 byte, bool specialCharacter)
 
         byte ^= 0x10;
     }
+
     qCDebug(dcZigbeeInterfaceTraffic()) << "[out]" << ZigbeeUtils::convertByteToHexString(byte);
-    if (m_serialPort->write(QByteArray(1, (char)byte)) < 0) {
+    if (m_serialPort->write(QByteArray(1, static_cast<char>(byte))) < 0) {
         qCWarning(dcZigbeeInterface()) << "Could not stream byte" << ZigbeeUtils::convertByteToHexString(byte);
     }
+
     m_serialPort->flush();
+}
+
+void ZigbeeInterface::setAvailable(bool available)
+{
+    if (m_available == available)
+        return;
+
+    m_available = available;
+    emit availableChanged(m_available);
 }
 
 void ZigbeeInterface::setReadingState(const ZigbeeInterface::ReadingState &state)
@@ -70,6 +83,19 @@ void ZigbeeInterface::setReadingState(const ZigbeeInterface::ReadingState &state
 
     m_readingState = state;
     qCDebug(dcZigbeeInterfaceTraffic()) << m_readingState;
+}
+
+void ZigbeeInterface::onReconnectTimeout()
+{
+    if (m_serialPort && !m_serialPort->isOpen()) {
+        if (!m_serialPort->open(QSerialPort::ReadWrite)) {
+            setAvailable(false);
+            m_reconnectTimer->start();
+        } else {
+            qCDebug(dcZigbeeInterface()) << "The controller showed up again.";
+            setAvailable(true);
+        }
+    }
 }
 
 void ZigbeeInterface::onReadyRead()
@@ -159,8 +185,11 @@ void ZigbeeInterface::onReadyRead()
 
 void ZigbeeInterface::onError(const QSerialPort::SerialPortError &error)
 {
-    if (error != QSerialPort::NoError) {
-        qCWarning(dcZigbeeInterface()) << "Serial port error:" << error << m_serialPort->errorString();
+    if (error != QSerialPort::NoError && m_serialPort->isOpen()) {
+        qCCritical(dcZigbeeInterface()) << "Serial port error:" << error << m_serialPort->errorString();
+        m_reconnectTimer->start();
+        m_serialPort->close();
+        setAvailable(false);
     }
 }
 
@@ -170,6 +199,8 @@ bool ZigbeeInterface::enable(const QString &serialPort, qint32 baudrate)
         delete m_serialPort;
         m_serialPort = nullptr;
     }
+
+    setAvailable(false);
 
     m_serialPort = new QSerialPort(serialPort, this);
     m_serialPort->setBaudRate(baudrate);
@@ -182,12 +213,12 @@ bool ZigbeeInterface::enable(const QString &serialPort, qint32 baudrate)
 
     if (!m_serialPort->open(QSerialPort::ReadWrite)) {
         qCWarning(dcZigbeeInterface()) << "Could not open serial port" << serialPort << baudrate;
-        delete m_serialPort;
-        m_serialPort = nullptr;
+        m_reconnectTimer->start();
         return false;
     }
 
     qCDebug(dcZigbeeInterface()) << "Interface enabled successfully on" << serialPort;
+    setAvailable(true);
     return true;
 }
 
@@ -208,7 +239,6 @@ void ZigbeeInterface::sendMessage(const ZigbeeInterfaceMessage &message)
 {
     quint16 messageTypeValue = static_cast<quint16>(message.messageType());
     quint16 lengthValue = static_cast<quint16>(message.data().count());
-
     quint8 crcValue = calculateCrc(messageTypeValue, lengthValue, message.data());
 
     qCDebug(dcZigbeeInterface()) << "-->" << message << "|" << "crc:" << ZigbeeUtils::convertByteToHexString(crcValue) << ", length:" << ZigbeeUtils::convertUint16ToHexString(lengthValue);
@@ -221,7 +251,7 @@ void ZigbeeInterface::sendMessage(const ZigbeeInterfaceMessage &message)
     streamByte(crcValue);
 
     for (int i = 0; i < message.data().count(); i++) {
-        streamByte(message.data().at(i));
+        streamByte(static_cast<quint8>(message.data().at(i)));
     }
     streamByte(0x03, true);
 }

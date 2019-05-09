@@ -5,9 +5,6 @@
 
 #include "zigbee.h"
 #include "zigbeeaddress.h"
-#include "zigbeebridgecontroller.h"
-
-class ZigbeeNetworkManager;
 
 class ZigbeeNode : public QObject
 {
@@ -29,6 +26,12 @@ public:
         FrequencyBand2400Mhz
     };
     Q_ENUM(FrequencyBand)
+
+    enum DeviceType {
+        DeviceTypeFullFunction,
+        DeviceTypeReducedFunction
+    };
+    Q_ENUM(DeviceType)
 
     enum Relationship {
         Parent,
@@ -59,44 +62,56 @@ public:
     };
     Q_ENUM(PowerLevel)
 
+    ZigbeeNode(QObject *parent = nullptr);
+
     quint16 shortAddress() const;
     ZigbeeAddress extendedAddress() const;
-    int endPoint() const;
+    quint8 endPoint() const;
 
     // Information from node descriptor
     NodeType nodeType() const;
     FrequencyBand frequencyBand() const;
-    Relationship relationShip() const;
+    Relationship relationship() const;
     Zigbee::ZigbeeProfile profile() const;
     quint16 manufacturerCode() const;
 
+    bool complexDescriptorAvailable() const;
+    bool userDescriptorAvailable() const;
+
+    quint16 maximumRxSize() const;
+    quint16 maximumTxSize() const;
+    quint8 maximumBufferSize() const;
+
+    // Information from node power descriptor
     PowerMode powerMode() const;
     PowerSource powerSource() const;
     QList<PowerSource> availablePowerSources() const;
     PowerLevel powerLevel() const;
 
     // Node specific zigbee commands
-    void init();
-    void identify();
-    void toggle(int addressMode);
+//    void init();
+//    void identify();
+//    void toggle(int addressMode);
 
 private:
-    ZigbeeBridgeController *m_controller;
-
     quint16 m_shortAddress = 0;
     ZigbeeAddress m_extendedAddress;
-    int m_endPoint = 0;
+    quint8 m_endPoint = 1;
 
     NodeType m_nodeType = NodeTypeRouter;
     FrequencyBand m_frequencyBand = FrequencyBand2400Mhz;
-    Relationship m_relationShip = Parent;
-
+    Relationship m_relationship = Parent;
     Zigbee::ZigbeeProfile m_profile;
     quint16 m_manufacturerCode = 0;
 
-    quint16 m_maximalRxSize = 0;
-    quint16 m_maximalTxSize = 0;
+    bool m_complexDescriptorAvailable = false;
+    bool m_userDescriptorAvailable = false;
 
+    quint16 m_maximumRxSize = 0;
+    quint16 m_maximumTxSize = 0;
+    quint8 m_maximumBufferSize = 0;
+
+    // Server Mask
     bool m_isPrimaryTrustCenter = false;
     bool m_isBackupTrustCenter = false;
     bool m_isPrimaryBindingCache = false;
@@ -111,36 +126,38 @@ private:
     QList<PowerSource> m_availablePowerSources;
     PowerLevel m_powerLevel;
 
-    // Mac capabilities
+    // Mac capabilities flag
+    bool m_alternatePanCoordinator = false;
+    DeviceType m_deviceType = DeviceTypeFullFunction;
+    bool m_powerSourceFlagMainPower = false;
     bool m_receiverOnWhenIdle = false;
     bool m_securityCapability = false;
+    bool m_allocateAddress = false;
 
-    void requestNodeDescription();
-    void requestSimpleNodeDescription();
-    void requestPowerDescriptor();
-    void requestUserDescriptor();
-
-    void saveToSettings();
+    // Descriptor capability
+    bool m_extendedActiveEndpointListAvailable = false;
+    bool m_extendedSimpleDescriptorListAvailable = false;
 
 protected:
-    ZigbeeNode(ZigbeeBridgeController *controller, QObject *parent = nullptr);
-
-    ZigbeeBridgeController *controller();
-
     void setShortAddress(const quint16 &shortAddress);
     void setExtendedAddress(const ZigbeeAddress &extendedAddress);
+    void setEndPoint(quint8 endPoint);
 
-signals:
+    void setNodeType(NodeType nodeType);
+    void setFrequencyBand(FrequencyBand frequencyBand);
+    void setRelationship(Relationship relationship);
+    void setZigbeeProfile(Zigbee::ZigbeeProfile profile);
+    void setManufacturerCode(quint16 manufacturerCode);
 
-private slots:
-    void onRequestNodeDescriptionFinished();
-    void onRequestSimpleNodeDescriptionFinished();
-    void onRequestPowerDescriptorFinished();
-    void onRequestUserDescriptorFinished();
-    void onToggleFinished();
-    void onIdentifyFinished();
+    void setMaximumRxSize(quint16 size);
+    void setMaximumTxSize(quint16 size);
+    void setMaximumBufferSize(quint8 size);
 
-public slots:
+    void setServerMask(quint16 serverMask);
+    void setComplexDescriptorAvailable(bool complexDescriptorAvailable);
+    void setUserDescriptorAvailable(bool userDescriptorAvailable);
+    void setMacCapabilitiesFlag(quint16 macFlag);
+    void setDescriptorFlag(quint8 descriptorFlag);
 
 };
 
