@@ -2,6 +2,7 @@
 #define ZIGBEENETWORK_H
 
 #include <QObject>
+#include <QSettings>
 
 #include "zigbeenode.h"
 #include "zigbeesecurityconfiguration.h"
@@ -26,7 +27,8 @@ public:
 
     enum Error {
         ErrorNoError,
-        ErrorHardwareUnavailable
+        ErrorHardwareUnavailable,
+        ErrorZigbeeError
     };
     Q_ENUM(Error)
 
@@ -36,6 +38,9 @@ public:
     ControllerType controlerType() const;
 
     Error error() const;
+
+    QString settingsFilenName() const;
+    void setSettingsFileName(const QString &settingsFileName);
 
     // Serial port configuration
     QString serialPortName() const;
@@ -56,8 +61,9 @@ public:
 
     QList<ZigbeeNode *> nodes() const;
 
-    ZigbeeNode *getZigbeeNode(quint16 shortAddress);
-    ZigbeeNode *getZigbeeNode(ZigbeeAddress address);
+    ZigbeeNode *coordinatorNode() const;
+    ZigbeeNode *getZigbeeNode(quint16 shortAddress) const;
+    ZigbeeNode *getZigbeeNode(ZigbeeAddress address) const;
 
 private:
     ControllerType m_controllerType = ControlerTypeNxp;
@@ -74,7 +80,11 @@ private:
     ZigbeeSecurityConfiguration m_securityConfiguration;
     ZigbeeNode::NodeType m_nodeType = ZigbeeNode::NodeTypeCoordinator;
 
+    QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
     QList<ZigbeeNode *> m_nodes;
+
+    void saveNetwork();
+    void loadNetwork();
 
 protected:
     void addNode(ZigbeeNode *node);
@@ -84,9 +94,18 @@ protected:
     void setError(Error error);
 
 signals:
+    void settingsFileNameChanged(const QString &settingsFileName);
+    void serialPortNameChanged(const QString &serialPortName);
+    void serialBaudrateChanged(qint32 serialBaudrate);
+
+    void extendedPanIdChanged(quint64 extendedPanId);
+    void channelChanged(uint channel);
+    void securityConfigurationChanged(const ZigbeeSecurityConfiguration &securityConfiguration);
+
     void nodeAdded(ZigbeeNode *node);
     void nodeRemoved(ZigbeeNode *node);
 
+    void permitJoiningChanged(bool permitJoining);
     void stateChanged(State state);
     void errorOccured(Error error);
 

@@ -26,6 +26,15 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandResetController()
     return sendRequest(request);
 }
 
+ZigbeeInterfaceReply *ZigbeeBridgeController::commandSoftResetController()
+{
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeZllFactoryNew, QByteArray()));
+    request.setDescription("Soft reset controller");
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
 ZigbeeInterfaceReply *ZigbeeBridgeController::commandErasePersistantData()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeErasePersistentData, QByteArray()));

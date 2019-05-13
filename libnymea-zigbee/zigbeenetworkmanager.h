@@ -18,6 +18,11 @@ public:
 
     bool networkRunning() const;
 
+    // Note: Follwoing methods should be abstract
+    bool permitJoining() const;
+    void setPermitJoining(bool permitJoining);
+
+
 private:
     enum StartingState {
         StartingStateNone,
@@ -27,7 +32,9 @@ private:
         StartingStateSetPanId,
         StartingStateSetChannel,
         StartingStateSetSecurity,
+        StartingStateSetNodeType,
         StartingStateStartNetwork,
+        StartingStateGetPermitJoinStatus,
         StartingStateReadeNodeDescriptor,
         StartingStateReadSimpleDescriptor,
         StartingStateReadPowerDescriptor
@@ -39,8 +46,11 @@ private:
     StartingState m_startingState = StartingStateNone;
     void setStartingState(StartingState state);
 
+    bool m_permitJoining = false;
+    bool m_networkRunning = false;
+
 signals:
-    void runningChanged(const bool &running);
+    void permitJoiningChanged(bool permitJoining);
 
 private slots:
     void onMessageReceived(const ZigbeeInterfaceMessage &message);
@@ -48,11 +58,12 @@ private slots:
 
     // Controller command finished slots
     void onCommandResetControllerFinished();
+    void onCommandSoftResetControllerFinished();
     void onCommandErasePersistentDataFinished();
     void onCommandGetVersionFinished();
     void onCommandSetExtendedPanIdFinished();
     void onCommandSetChannelMaskFinished();
-    void onCommandSetDeviceTypeFinished();
+    void onCommandSetNodeTypeFinished();
     void onCommandStartNetworkFinished();
     void onCommandStartScanFinished();
     void onCommandGetPermitJoiningStatusFinished();

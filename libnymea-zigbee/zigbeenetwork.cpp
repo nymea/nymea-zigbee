@@ -1,3 +1,4 @@
+#include "zigbeeutils.h"
 #include "zigbeenetwork.h"
 #include "loggingcategory.h"
 
@@ -23,6 +24,20 @@ ZigbeeNetwork::Error ZigbeeNetwork::error() const
     return m_error;
 }
 
+QString ZigbeeNetwork::settingsFilenName() const
+{
+    return m_settingsFileName;
+}
+
+void ZigbeeNetwork::setSettingsFileName(const QString &settingsFileName)
+{
+    if (m_settingsFileName == settingsFileName)
+        return;
+
+    m_settingsFileName = settingsFileName;
+    emit settingsFileNameChanged(m_settingsFileName);
+}
+
 QString ZigbeeNetwork::serialPortName() const
 {
     return m_serialPortName;
@@ -30,7 +45,11 @@ QString ZigbeeNetwork::serialPortName() const
 
 void ZigbeeNetwork::setSerialPortName(const QString &serialPortName)
 {
+    if (m_serialPortName == serialPortName)
+        return;
+
     m_serialPortName = serialPortName;
+    emit serialPortNameChanged(m_serialPortName);
 }
 
 qint32 ZigbeeNetwork::serialBaudrate() const
@@ -40,7 +59,11 @@ qint32 ZigbeeNetwork::serialBaudrate() const
 
 void ZigbeeNetwork::setSerialBaudrate(qint32 baudrate)
 {
+    if (m_serialBaudrate == baudrate)
+        return;
+
     m_serialBaudrate = baudrate;
+    emit serialBaudrateChanged(m_serialBaudrate);
 }
 
 quint64 ZigbeeNetwork::extendedPanId() const
@@ -50,7 +73,11 @@ quint64 ZigbeeNetwork::extendedPanId() const
 
 void ZigbeeNetwork::setExtendedPanId(quint64 extendedPanId)
 {
+    if (m_extendedPanId == extendedPanId)
+        return;
+
     m_extendedPanId = extendedPanId;
+    emit extendedPanIdChanged(m_extendedPanId);
 }
 
 uint ZigbeeNetwork::channel() const
@@ -60,7 +87,11 @@ uint ZigbeeNetwork::channel() const
 
 void ZigbeeNetwork::setChannel(uint channel)
 {
+    if (m_channel == channel)
+        return;
+
     m_channel = channel;
+    emit channelChanged(m_channel);
 }
 
 ZigbeeSecurityConfiguration ZigbeeNetwork::securityConfiguration() const
@@ -70,7 +101,11 @@ ZigbeeSecurityConfiguration ZigbeeNetwork::securityConfiguration() const
 
 void ZigbeeNetwork::setSecurityConfiguration(const ZigbeeSecurityConfiguration &securityConfiguration)
 {
+    if (m_securityConfiguration == securityConfiguration)
+        return;
+
     m_securityConfiguration = securityConfiguration;
+    emit securityConfigurationChanged(m_securityConfiguration);
 }
 
 QList<ZigbeeNode *> ZigbeeNetwork::nodes() const
@@ -78,7 +113,12 @@ QList<ZigbeeNode *> ZigbeeNetwork::nodes() const
     return m_nodes;
 }
 
-ZigbeeNode *ZigbeeNetwork::getZigbeeNode(quint16 shortAddress)
+ZigbeeNode *ZigbeeNetwork::coordinatorNode() const
+{
+    return getZigbeeNode(0);
+}
+
+ZigbeeNode *ZigbeeNetwork::getZigbeeNode(quint16 shortAddress) const
 {
     foreach (ZigbeeNode *node, m_nodes) {
         if (node->shortAddress() == shortAddress) {
@@ -89,7 +129,7 @@ ZigbeeNode *ZigbeeNetwork::getZigbeeNode(quint16 shortAddress)
     return nullptr;
 }
 
-ZigbeeNode *ZigbeeNetwork::getZigbeeNode(ZigbeeAddress address)
+ZigbeeNode *ZigbeeNetwork::getZigbeeNode(ZigbeeAddress address) const
 {
     foreach (ZigbeeNode *node, m_nodes) {
         if (node->extendedAddress() == address) {
@@ -98,6 +138,59 @@ ZigbeeNode *ZigbeeNetwork::getZigbeeNode(ZigbeeAddress address)
     }
 
     return nullptr;
+}
+
+void ZigbeeNetwork::saveNetwork()
+{
+    qCDebug(dcZigbeeNetwork()) << "Save current network configuration to" << m_settingsFileName;
+    QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
+    settings.beginGroup("Network");
+    settings.setValue("panId", extendedPanId());
+    settings.setValue("channel", channel());
+    settings.endGroup();
+
+    settings.beginWriteArray("Nodes");
+    for (int i = 0; i < nodes().count(); i++) {
+        settings.setArrayIndex(i);
+        settings.setValue("nwkAddress", nodes().at(i)->shortAddress());
+        settings.setValue("ieeeAddress", nodes().at(i)->extendedAddress().toString());
+        // TODO: save the rest of the node
+    }
+    settings.endArray();
+}
+
+void ZigbeeNetwork::loadNetwork()
+{
+    qCDebug(dcZigbeeNetwork()) << "Load current network configuration from" << m_settingsFileName;
+    QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
+    settings.beginGroup("Network");
+    quint64 extendedPanId = static_cast<quint64>(settings.value("panId", 0).toUInt());
+    if (extendedPanId == 0) {
+        extendedPanId = ZigbeeUtils::generateRandomPanId();
+        qCDebug(dcZigbeeNetwork()) << "Create new PAN id" << extendedPanId;
+    }
+    setExtendedPanId(extendedPanId);
+    setChannel(settings.value("channel", 0).toUInt());
+    settings.endGroup();
+
+    settings.beginReadArray("Nodes");
+    for (int i = 0; i < nodes().count(); i++) {
+        settings.setArrayIndex(i);
+        ZigbeeNode *node = new ZigbeeNode(this);
+        node->setShortAddress(static_cast<quint16>(settings.value("nwkAddress", 0).toUInt()));
+        node->setExtendedAddress(ZigbeeAddress(settings.value("ieeeAddress").toString()));
+
+        // TODO: load the rest of the node
+    }
+    settings.endArray();
+
+    qCDebug(dcZigbeeNetwork()) << "PAN Id:" << m_extendedPanId << ZigbeeUtils::convertUint64ToHexString(m_extendedPanId);
+    qCDebug(dcZigbeeNetwork()) << "Channel" << m_channel;
+
+    qCDebug(dcZigbeeNetwork()) << "Nodes:";
+    foreach (ZigbeeNode *node, nodes()) {
+        qCDebug(dcZigbeeNetwork()) << "  - " << node;
+    }
 }
 
 void ZigbeeNetwork::addNode(ZigbeeNode *node)
@@ -109,6 +202,7 @@ void ZigbeeNetwork::addNode(ZigbeeNode *node)
 
     m_nodes.append(node);
     emit nodeAdded(node);
+    saveNetwork();
 }
 
 void ZigbeeNetwork::removeNode(ZigbeeNode *node)
@@ -120,6 +214,7 @@ void ZigbeeNetwork::removeNode(ZigbeeNode *node)
 
     m_nodes.removeAll(node);
     emit nodeRemoved(node);
+    saveNetwork();
 }
 
 void ZigbeeNetwork::setState(ZigbeeNetwork::State state)
@@ -130,6 +225,9 @@ void ZigbeeNetwork::setState(ZigbeeNetwork::State state)
     qCDebug(dcZigbeeNetwork()) << "State changed" << state;
     m_state = state;
     emit stateChanged(m_state);
+
+    if (state == StateRunning) saveNetwork();
+    if (state == StateStarting) loadNetwork();
 }
 
 void ZigbeeNetwork::setError(ZigbeeNetwork::Error error)

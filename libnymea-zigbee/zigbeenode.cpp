@@ -75,6 +75,81 @@ quint8 ZigbeeNode::maximumBufferSize() const
     return m_maximumBufferSize;
 }
 
+bool ZigbeeNode::isPrimaryTrustCenter() const
+{
+    return m_isPrimaryTrustCenter;
+}
+
+bool ZigbeeNode::isBackupTrustCenter() const
+{
+    return m_isBackupTrustCenter;
+}
+
+bool ZigbeeNode::isPrimaryBindingCache() const
+{
+    return m_isPrimaryBindingCache;
+}
+
+bool ZigbeeNode::isBackupBindingCache() const
+{
+    return m_isBackupBindingCache;
+}
+
+bool ZigbeeNode::isPrimaryDiscoveryCache() const
+{
+    return m_isPrimaryDiscoveryCache;
+}
+
+bool ZigbeeNode::isBackupDiscoveryCache() const
+{
+    return m_isBackupDiscoveryCache;
+}
+
+bool ZigbeeNode::isNetworkManager() const
+{
+    return m_isNetworkManager;
+}
+
+bool ZigbeeNode::extendedActiveEndpointListAvailable() const
+{
+    return m_extendedActiveEndpointListAvailable;
+}
+
+bool ZigbeeNode::extendedSimpleDescriptorListAvailable() const
+{
+    return m_extendedSimpleDescriptorListAvailable;
+}
+
+bool ZigbeeNode::alternatePanCoordinator() const
+{
+    return m_alternatePanCoordinator;
+}
+
+ZigbeeNode::DeviceType ZigbeeNode::deviceType() const
+{
+    return m_deviceType;
+}
+
+bool ZigbeeNode::powerSourceFlagMainPower() const
+{
+    return m_powerSourceFlagMainPower;
+}
+
+bool ZigbeeNode::receiverOnWhenIdle() const
+{
+    return m_receiverOnWhenIdle;
+}
+
+bool ZigbeeNode::securityCapability() const
+{
+    return m_securityCapability;
+}
+
+bool ZigbeeNode::allocateAddress() const
+{
+    return m_allocateAddress;
+}
+
 ZigbeeNode::PowerMode ZigbeeNode::powerMode() const
 {
     return m_powerMode;

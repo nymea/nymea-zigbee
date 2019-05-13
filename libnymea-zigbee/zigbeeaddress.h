@@ -21,7 +21,7 @@ public:
     ZigbeeAddress &operator=(const ZigbeeAddress &other);
     bool operator<(const ZigbeeAddress &other) const;
     bool operator==(const ZigbeeAddress &other) const;
-    inline bool operator!=(const ZigbeeAddress &other) const;
+    bool operator!=(const ZigbeeAddress &other) const;
 
 private:
      quint64 m_address;

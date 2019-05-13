@@ -21,6 +21,7 @@ public:
 
     // Direct commands
     ZigbeeInterfaceReply *commandResetController();
+    ZigbeeInterfaceReply *commandSoftResetController();
     ZigbeeInterfaceReply *commandErasePersistantData();
     ZigbeeInterfaceReply *commandGetVersion();
     ZigbeeInterfaceReply *commandSetExtendedPanId(quint64 extendedPanId);

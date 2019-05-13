@@ -10,6 +10,7 @@ class ZigbeeNode : public QObject
 {
     Q_OBJECT
 
+    friend class ZigbeeNetwork;
     friend class ZigbeeNetworkManager;
 
 public:
@@ -82,16 +83,32 @@ public:
     quint16 maximumTxSize() const;
     quint8 maximumBufferSize() const;
 
+    // Server Mask
+    bool isPrimaryTrustCenter() const;
+    bool isBackupTrustCenter() const;
+    bool isPrimaryBindingCache() const;
+    bool isBackupBindingCache() const;
+    bool isPrimaryDiscoveryCache() const;
+    bool isBackupDiscoveryCache() const;
+    bool isNetworkManager() const;
+
+    // Descriptor capability
+    bool extendedActiveEndpointListAvailable() const;
+    bool extendedSimpleDescriptorListAvailable() const;
+
+    // Mac capabilities flag
+    bool alternatePanCoordinator() const;
+    DeviceType deviceType() const;
+    bool powerSourceFlagMainPower() const;
+    bool receiverOnWhenIdle() const;
+    bool securityCapability() const;
+    bool allocateAddress() const;
+
     // Information from node power descriptor
     PowerMode powerMode() const;
     PowerSource powerSource() const;
     QList<PowerSource> availablePowerSources() const;
     PowerLevel powerLevel() const;
-
-    // Node specific zigbee commands
-//    void init();
-//    void identify();
-//    void toggle(int addressMode);
 
 private:
     quint16 m_shortAddress = 0;

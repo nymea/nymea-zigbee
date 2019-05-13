@@ -5,6 +5,12 @@ ZigbeeSecurityConfiguration::ZigbeeSecurityConfiguration()
 
 }
 
+ZigbeeSecurityConfiguration::ZigbeeSecurityConfiguration(const ZigbeeSecurityConfiguration &other)
+{
+    m_networkKey = other.networkKey();
+    m_globalTrustCenterLinkKey = other.networkKey();
+}
+
 QString ZigbeeSecurityConfiguration::networkKey() const
 {
     return m_networkKey;
@@ -23,4 +29,14 @@ QString ZigbeeSecurityConfiguration::globalTrustCenterLinkKey() const
 void ZigbeeSecurityConfiguration::setGlobalTrustCenterlinkKey(const QString &globalTrustCenterLinkKey)
 {
     m_globalTrustCenterLinkKey = globalTrustCenterLinkKey;
+}
+
+bool ZigbeeSecurityConfiguration::operator==(const ZigbeeSecurityConfiguration &other) const
+{
+    return m_networkKey == other.networkKey() && m_globalTrustCenterLinkKey == other.globalTrustCenterLinkKey();
+}
+
+bool ZigbeeSecurityConfiguration::operator!=(const ZigbeeSecurityConfiguration &other) const
+{
+    return !operator==(other);
 }

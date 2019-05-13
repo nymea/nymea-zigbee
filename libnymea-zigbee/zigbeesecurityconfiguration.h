@@ -6,13 +6,17 @@
 class ZigbeeSecurityConfiguration
 {
 public:
-    ZigbeeSecurityConfiguration();
+    explicit ZigbeeSecurityConfiguration();
+    ZigbeeSecurityConfiguration(const ZigbeeSecurityConfiguration &other);
 
     QString networkKey() const;
     void setNetworkKey(const QString &networkKey);
 
     QString globalTrustCenterLinkKey() const;
     void setGlobalTrustCenterlinkKey(const QString & globalTrustCenterLinkKey);
+
+    bool operator==(const ZigbeeSecurityConfiguration &other) const;
+    bool operator!=(const ZigbeeSecurityConfiguration &other) const;
 
 private:
     // This is the local network key
