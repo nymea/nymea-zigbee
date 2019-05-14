@@ -232,6 +232,7 @@ void ZigbeeInterface::disable()
 
     delete m_serialPort;
     m_serialPort = nullptr;
+    setAvailable(false);
     qCDebug(dcZigbeeInterface()) << "Interface disabled";
 }
 

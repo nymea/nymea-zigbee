@@ -15,6 +15,8 @@ public:
     QString globalTrustCenterLinkKey() const;
     void setGlobalTrustCenterlinkKey(const QString & globalTrustCenterLinkKey);
 
+    void clear();
+
     bool operator==(const ZigbeeSecurityConfiguration &other) const;
     bool operator!=(const ZigbeeSecurityConfiguration &other) const;
 

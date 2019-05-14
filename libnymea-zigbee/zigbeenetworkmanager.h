@@ -14,7 +14,10 @@ class ZigbeeNetworkManager : public ZigbeeNetwork
 public:
     explicit ZigbeeNetworkManager(QObject *parent = nullptr);
 
-    QString controllerVersion() const;
+    QString controllerFirmwareVersion() const;
+
+    // Note: temporary public available for debugging
+    ZigbeeBridgeController *controller() const;
 
     bool networkRunning() const;
 
@@ -41,13 +44,16 @@ private:
     };
 
     ZigbeeBridgeController *m_controller = nullptr;
-    QString m_controllerVersion;
+    QString m_controllerFirmwareVersion;
 
     StartingState m_startingState = StartingStateNone;
     void setStartingState(StartingState state);
 
+    QList<ZigbeeNode *> m_uninitializedNodes;
+
     bool m_permitJoining = false;
     bool m_networkRunning = false;
+    bool m_factoryResetting = false;
 
 signals:
     void permitJoiningChanged(bool permitJoining);
@@ -98,6 +104,7 @@ private slots:
 public slots:
     void startNetwork() override;
     void stopNetwork() override;
+    void factoryResetNetwork() override;
 
 };
 

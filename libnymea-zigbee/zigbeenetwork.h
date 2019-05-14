@@ -62,8 +62,13 @@ public:
     QList<ZigbeeNode *> nodes() const;
 
     ZigbeeNode *coordinatorNode() const;
+
     ZigbeeNode *getZigbeeNode(quint16 shortAddress) const;
-    ZigbeeNode *getZigbeeNode(ZigbeeAddress address) const;
+    ZigbeeNode *getZigbeeNode(const ZigbeeAddress &address) const;
+
+    bool hasNode(quint16 shortAddress) const;
+    bool hasNode(const ZigbeeAddress &address) const;
+
 
 private:
     ControllerType m_controllerType = ControlerTypeNxp;
@@ -88,7 +93,11 @@ private:
 
 protected:
     void addNode(ZigbeeNode *node);
+    void addNodeInternally(ZigbeeNode *node);
     void removeNode(ZigbeeNode *node);
+    void removeNodeInternally(ZigbeeNode *node);
+
+    void clearSettings();
 
     void setState(State state);
     void setError(Error error);
@@ -112,6 +121,7 @@ signals:
 public slots:
     virtual void startNetwork() = 0;
     virtual void stopNetwork() = 0;
+    virtual void factoryResetNetwork() = 0;
 
 };
 

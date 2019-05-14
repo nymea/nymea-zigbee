@@ -261,7 +261,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandNodeDescriptorRequest(quint
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeNodeDescriptorRequest, data));
     request.setExpectedAdditionalMessageType(Zigbee::MessageTypeNodeDescriptorRsponse);
     request.setDescription("Node descriptor request for " + ZigbeeUtils::convertUint16ToHexString(shortAddress));
-    request.setTimoutIntervall(5000);
+    request.setTimoutIntervall(10000);
 
     return sendRequest(request);
 }
@@ -275,7 +275,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandSimpleDescriptorRequest(qui
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeSimpleDescriptorRequest, data));
     request.setExpectedAdditionalMessageType(Zigbee::MessageTypeSimpleDescriptorResponse);
-    request.setDescription("Simple node descriptor request for " + ZigbeeUtils::convertUint16ToHexString(shortAddress) + "endpoint " + QString::number(endpoint));
+    request.setDescription("Simple node descriptor request for " + ZigbeeUtils::convertUint16ToHexString(shortAddress) + " endpoint " + QString::number(endpoint));
     request.setTimoutIntervall(5000);
 
     return sendRequest(request);
@@ -329,16 +329,24 @@ void ZigbeeBridgeController::onMessageReceived(const ZigbeeInterfaceMessage &mes
         if (message.messageType() == Zigbee::MessageTypeStatus) {
             // We have a status message for the current reply
             m_currentReply->setStatusMessage(message);
-
+            qCDebug(dcZigbeeController()) << "Current request" << m_currentReply->request().description() << "status message received";
             // TODO: check if success, if not, finish reply
-
-        } else if (message.messageType() == m_currentReply->request().expectedAdditionalMessageType()) {
+        } else if (m_currentReply->request().expectsAdditionalMessage() &&
+                   message.messageType() == m_currentReply->request().expectedAdditionalMessageType()) {
             m_currentReply->setAdditionalMessage(message);
+            qCDebug(dcZigbeeController()) << "Current request" << m_currentReply->request().description() << "additional message received";
+        } else {
+            // Not a reply related message
+            qCDebug(dcZigbeeController()) << "Current request" << m_currentReply->request().description() << "but not related message received";
+            emit messageReceived(message);
+            return;
         }
 
         // Check if request is complete
         if (m_currentReply->isComplete()) {
+            qCDebug(dcZigbeeController()) << "Current request" << m_currentReply->request().description() << "is complete!";
             m_currentReply->setFinished();
+
             // Note: the request class has to take care about the reply object
             m_currentReply = nullptr;
 
@@ -347,10 +355,11 @@ void ZigbeeBridgeController::onMessageReceived(const ZigbeeInterfaceMessage &mes
 
             return;
         }
+    } else {
+        // Not a reply message
+        emit messageReceived(message);
     }
 
-    // Not a reply message
-    emit messageReceived(message);
 }
 
 void ZigbeeBridgeController::onReplyTimeout()
