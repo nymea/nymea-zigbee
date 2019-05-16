@@ -16,6 +16,7 @@ class ZigbeeBridgeController : public QObject
     Q_OBJECT
 public:
     explicit ZigbeeBridgeController(QObject *parent = nullptr);
+    ~ZigbeeBridgeController();
 
     bool available() const;
 

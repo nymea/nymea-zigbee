@@ -12,6 +12,11 @@ ZigbeeBridgeController::ZigbeeBridgeController(QObject *parent) :
     connect(m_interface, &ZigbeeInterface::messageReceived, this, &ZigbeeBridgeController::onMessageReceived);
 }
 
+ZigbeeBridgeController::~ZigbeeBridgeController()
+{
+    qCDebug(dcZigbeeController()) << "Destroy controller";
+}
+
 bool ZigbeeBridgeController::available() const
 {
     return m_interface->available();
@@ -247,7 +252,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandAuthenticateDevice(const Zi
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeAuthenticateDeviceRequest, data));
     request.setExpectedAdditionalMessageType(Zigbee::MessageTypeAuthenticateDeviceResponse);
     request.setDescription(QString("Authenticate device %1").arg(ieeeAddress.toString()));
-    request.setTimoutIntervall(5000);
+    request.setTimoutIntervall(2000);
 
     return sendRequest(request);
 }
@@ -261,7 +266,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandNodeDescriptorRequest(quint
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeNodeDescriptorRequest, data));
     request.setExpectedAdditionalMessageType(Zigbee::MessageTypeNodeDescriptorRsponse);
     request.setDescription("Node descriptor request for " + ZigbeeUtils::convertUint16ToHexString(shortAddress));
-    request.setTimoutIntervall(10000);
+    request.setTimoutIntervall(5000);
 
     return sendRequest(request);
 }

@@ -480,8 +480,7 @@ void ZigbeeNetworkManager::processNetworkFormed(const ZigbeeInterfaceMessage &me
     qCDebug(dcZigbeeNetwork()) << "    Extended address:" << ZigbeeAddress(extendedAddress);
     qCDebug(dcZigbeeNetwork()) << "    Channel:" << channel;
     qCDebug(dcZigbeeNetwork()) << "    Extended PAN ID:" << extendedPanId();
-    qCDebug(dcZigbeeNetwork()) << "    Permit joining" << permitJoining();
-
+    qCDebug(dcZigbeeNetwork()) << "    Permit joining:" << permitJoining();
 
     m_networkRunning = true;
 
@@ -490,7 +489,7 @@ void ZigbeeNetworkManager::processNetworkFormed(const ZigbeeInterfaceMessage &me
     setExtendedAddress(ZigbeeAddress(extendedAddress));
     setChannel(channel);
 
-    addNode(this);
+    addUnitializedNode(this);
 }
 
 void ZigbeeNetworkManager::onCommandEnableWhitelistFinished()
@@ -519,42 +518,40 @@ void ZigbeeNetworkManager::onCommandNodeDescriptorRequestFinished()
     qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
     qCDebug(dcZigbeeController()) << reply->additionalMessage();
 
-    quint8 sequenceNumber = static_cast<quint8>(reply->additionalMessage().data().at(0));
-    quint8 status = static_cast<quint8>(reply->additionalMessage().data().at(1));
 
-    Q_UNUSED(sequenceNumber)
-    Q_UNUSED(status)
+    QByteArray data = reply->additionalMessage().data();
 
-    quint16 shortAddress = static_cast<quint16>(reply->additionalMessage().data().at(2));
-    shortAddress <<= 8;
-    shortAddress |= reply->additionalMessage().data().at(3);
+    quint8 sequenceNumber = 0;
+    quint8 status = 0;
+    quint16 shortAddress = 0;
+    quint16 manufacturerCode = 0;
+    quint16 maximalRxSize = 0;
+    quint16 maximalTxSize = 0;
+    quint16 serverMask = 0;
+    quint8 descriptorFlag = 0;
+    quint8 macFlags = 0;
+    quint8 maxBufferSize = 0;
+    quint16 bitField = 0;
 
-    quint16 manufacturerCode = static_cast<quint16>(reply->additionalMessage().data().at(4));
-    manufacturerCode <<= 8;
-    manufacturerCode |= reply->additionalMessage().data().at(5);
-
-    quint16 maximalRxSize = static_cast<quint16>(reply->additionalMessage().data().at(6));
-    maximalRxSize <<= 8;
-    maximalRxSize |= reply->additionalMessage().data().at(7);
-
-    quint16 maximalTxSize = static_cast<quint16>(reply->additionalMessage().data().at(8));
-    maximalTxSize <<= 8;
-    maximalTxSize |= reply->additionalMessage().data().at(9);
-
-    quint16 serverMask = static_cast<quint16>(reply->additionalMessage().data().at(10));
-    serverMask <<= 8;
-    serverMask |= reply->additionalMessage().data().at(11);
-
-    quint8 descriptorFlag = static_cast<quint8>(reply->additionalMessage().data().at(12));
-    quint8 macFlags = static_cast<quint8>(reply->additionalMessage().data().at(13));
-    quint8 maxBufferSize = static_cast<quint8>(reply->additionalMessage().data().at(14));
-
-    quint16 bitField = static_cast<quint16>(reply->additionalMessage().data().at(15));
-    bitField <<= 8;
-    bitField |= reply->additionalMessage().data().at(16);
+    QDataStream stream(&data, QIODevice::ReadOnly);
+    stream >> sequenceNumber;
+    stream >> status;
+    stream >> shortAddress;
+    stream >> manufacturerCode;
+    stream >> maximalRxSize;
+    stream >> maximalTxSize;
+    stream >> serverMask;
+    stream >> descriptorFlag;
+    stream >> macFlags;
+    stream >> maxBufferSize;
+    stream >> bitField;
 
     // Get node object
     ZigbeeNode *node = getZigbeeNode(shortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Could not find node for address" << shortAddress << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+        return;
+    }
 
     // Set node data
     node->setManufacturerCode(manufacturerCode);
@@ -570,7 +567,7 @@ void ZigbeeNetworkManager::onCommandNodeDescriptorRequestFinished()
     if (!ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
         node->setNodeType(NodeTypeCoordinator);
     } else if (!ZigbeeUtils::checkBitUint16(bitField, 0) && ZigbeeUtils::checkBitUint16(bitField, 1)) {
-        node->setNodeType(NodeTypeCoordinator);
+        node->setNodeType(NodeTypeRouter);
     } else if (ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
         node->setNodeType(NodeTypeEndDevice);
     }
@@ -625,36 +622,39 @@ void ZigbeeNetworkManager::onCommandSimpleDescriptorRequestFinished()
     qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
     qCDebug(dcZigbeeController()) << reply->additionalMessage();
 
-    quint8 sequenceNumber = static_cast<quint8>(reply->additionalMessage().data().at(0));
-    quint8 status = static_cast<quint8>(reply->additionalMessage().data().at(1));
+    QByteArray data = reply->additionalMessage().data();
 
-    quint16 nwkAddress = static_cast<quint16>(reply->additionalMessage().data().at(2));
-    nwkAddress <<= 8;
-    nwkAddress |= reply->additionalMessage().data().at(3);
+    quint8 sequenceNumber = 0;
+    quint8 status = 0;
+    quint16 shortAddress = 0;
+    quint8 length = 0;
+    quint8 endPoint = 0;
+    quint16 profileId = 0;
+    quint16 deviceId = 0;
+    quint8 bitField = 0;
+    quint8 inputClusterCount = 0;
+    quint8 outputClusterCount = 0;
 
-    quint8 length = static_cast<quint8>(reply->additionalMessage().data().at(4));
+    QDataStream stream(&data, QIODevice::ReadOnly);
+    stream >> sequenceNumber;
+    stream >> status;
+    stream >> shortAddress;
+    stream >> length;
 
     if (length == 0) {
-        qCWarning(dcZigbeeNetwork()) << "Length 0";
+        qCWarning(dcZigbeeNetwork()) << "Simple node descriptior has a length of 0.";
         return;
     }
 
-    quint8 endPoint = static_cast<quint8>(reply->additionalMessage().data().at(5));
-
-    quint16 profileId = static_cast<quint16>(reply->additionalMessage().data().at(6));
-    profileId <<= 8;
-    profileId |= reply->additionalMessage().data().at(7);
-
-    quint16 deviceId = static_cast<quint16>(reply->additionalMessage().data().at(8));
-    deviceId <<= 8;
-    deviceId |= reply->additionalMessage().data().at(9);
-
-    quint8 bitField = static_cast<quint8>(reply->additionalMessage().data().at(10));
+    stream >> endPoint;
+    stream >> profileId;
+    stream >> deviceId;
+    stream >> bitField;
 
     qCDebug(dcZigbeeNetwork()) << "Node simple descriptor:";
     qCDebug(dcZigbeeNetwork()) << "    Sequence number:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
     qCDebug(dcZigbeeNetwork()) << "    Status:" << ZigbeeUtils::convertByteToHexString(status);
-    qCDebug(dcZigbeeNetwork()) << "    Nwk address:" << ZigbeeUtils::convertUint16ToHexString(nwkAddress);
+    qCDebug(dcZigbeeNetwork()) << "    Nwk address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
     qCDebug(dcZigbeeNetwork()) << "    Lenght:" << ZigbeeUtils::convertByteToHexString(length);
     qCDebug(dcZigbeeNetwork()) << "    End Point:" << ZigbeeUtils::convertByteToHexString(endPoint);
     qCDebug(dcZigbeeNetwork()) << "    Profile:" << ZigbeeUtils::profileIdToString(static_cast<Zigbee::ZigbeeProfile>(profileId));
@@ -667,29 +667,39 @@ void ZigbeeNetworkManager::onCommandSimpleDescriptorRequestFinished()
 
     qCDebug(dcZigbeeNetwork()) << "    Bit field:" << ZigbeeUtils::convertByteToHexString(bitField);
 
-    quint8 inputClusterCount = static_cast<quint8>(reply->additionalMessage().data().at(10));
-
-    qCDebug(dcZigbeeNetwork()) << "    Input clusters:";
-    QByteArray inputClusterListData = reply->additionalMessage().data().mid(11, inputClusterCount * 2);
-    for (int i = 0; i < inputClusterListData.count(); i+=2) {
-        quint16 clusterId = static_cast<quint16>(inputClusterListData.at(i));
-        clusterId <<= 8;
-        clusterId |= inputClusterListData .at(i+1);
-
+    stream >> inputClusterCount;
+    qCDebug(dcZigbeeNetwork()) << "    Input clusters: (" << inputClusterCount << ")";
+    for (int i = 0; i < inputClusterCount; i+=1) {
+        quint16 clusterId = 0;
+        stream >> clusterId;
         qCDebug(dcZigbeeNetwork()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
     }
 
-    quint8 outputClusterCount = static_cast<quint8>(reply->additionalMessage().data().at(12 + inputClusterCount * 2));
+    stream >> outputClusterCount;
+    qCDebug(dcZigbeeNetwork()) << "    Output clusters: (" << outputClusterCount << ")";
+    for (int i = 0; i < outputClusterCount; i+=1) {
+        if (stream.atEnd()) {
+            qCWarning(dcZigbeeNode()) << "Data stream already at the end but more data expected. Looks like the firmware doesn't provide more data.";
+            break;
+        }
 
-    qCDebug(dcZigbeeNetwork()) << "    Output clusters:";
-    QByteArray outputClusterListData = reply->additionalMessage().data().mid(12 + inputClusterCount * 2, outputClusterCount * 2);
-    for (int i = 0; i < outputClusterListData.count(); i+=2) {
-        quint16 clusterId = static_cast<quint16>(outputClusterListData.at(i));
-        clusterId <<= 8;
-        clusterId |= outputClusterListData .at(i+1);
-
+        quint16 clusterId = 0;
+        stream >> clusterId;
         qCDebug(dcZigbeeNetwork()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
     }
+
+    // Get node object
+    ZigbeeNode *node = getZigbeeNode(shortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Could not find node for address" << shortAddress << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+        if (m_startingState == StartingStateReadSimpleDescriptor) setStartingState(StartingStateReadPowerDescriptor);
+        return;
+    }
+
+    // Set node data
+    node->setEndPoint(endPoint);
+    node->setZigbeeProfile(static_cast<Zigbee::ZigbeeProfile>(profileId));
+    node->setDeviceId(deviceId);
 
     if (m_startingState == StartingStateReadSimpleDescriptor) setStartingState(StartingStateReadPowerDescriptor);
 }
@@ -699,8 +709,24 @@ void ZigbeeNetworkManager::onCommandPowerDescriptorRequestFinished()
     ZigbeeInterfaceReply *reply = static_cast<ZigbeeInterfaceReply *>(sender());
     reply->deleteLater();
 
+    // Note: get the short address from the request data
+    QByteArray requestData = reply->request().message().data();
+    quint16 shortAddress;
+    QDataStream stream(&requestData, QIODevice::ReadOnly);
+    stream >> shortAddress;
+
     if (reply->status() != ZigbeeInterfaceReply::Success) {
         qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+        // Note: the power descriptor is the last request from the initialization
+        ZigbeeNode *node = getZigbeeNode(shortAddress);
+        if (!node) {
+            qCWarning(dcZigbeeNetwork()) << "Could not find node for address" << shortAddress << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+            if (m_startingState == StartingStateReadSimpleDescriptor) setStartingState(StartingStateReadPowerDescriptor);
+            return;
+        }
+        if (node->state() != ZigbeeNode::StateInitialized) {
+            node->setState(ZigbeeNode::StateInitialized);
+        }
         return;
     }
 
@@ -712,19 +738,20 @@ void ZigbeeNetworkManager::onCommandPowerDescriptorRequestFinished()
 
     quint16 bitField = static_cast<quint16>(reply->additionalMessage().data().at(2));
     bitField <<= 8;
-    bitField |= reply->additionalMessage().data().at(3);
+    bitField |= static_cast<quint8>(reply->additionalMessage().data().at(3));
 
     // Bit 0 - 3 Power mode
     // 0000: Receiver configured according to “Receiver on when idle” MAC flag in the Node Descriptor
     // 0001: Receiver switched on periodically
     // 0010: Receiver switched on when stimulated, e.g. by pressing a button
 
+    ZigbeeNode::PowerMode powerMode = PowerModeAlwaysOn;
     if (!ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
-        m_powerMode = PowerModeAlwaysOn;
+        powerMode = PowerModeAlwaysOn;
     } else if (ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
-        m_powerMode = PowerModeOnPeriodically;
+        powerMode = PowerModeOnPeriodically;
     } else if (!ZigbeeUtils::checkBitUint16(bitField, 0) && ZigbeeUtils::checkBitUint16(bitField, 1)) {
-        m_powerMode = PowerModeOnWhenStimulated;
+        powerMode = PowerModeOnWhenStimulated;
     }
 
     // Bit 4 - 7 Available power sources
@@ -733,21 +760,23 @@ void ZigbeeNetworkManager::onCommandPowerDescriptorRequestFinished()
     // Bit 2: Disposable battery
     // Bit 4: Reserved
 
+    QList<ZigbeeNode::PowerSource> availablePowerSources;
     if (ZigbeeUtils::checkBitUint16(bitField, 4)) {
-        m_availablePowerSources.append(PowerSourcePermanentMainSupply);
+        availablePowerSources.append(PowerSourcePermanentMainSupply);
     } else if (ZigbeeUtils::checkBitUint16(bitField, 5)) {
-        m_availablePowerSources.append(PowerSourceRecharchableBattery);
+        availablePowerSources.append(PowerSourceRecharchableBattery);
     } else if (ZigbeeUtils::checkBitUint16(bitField, 6)) {
-        m_availablePowerSources.append(PowerSourceDisposableBattery);
+        availablePowerSources.append(PowerSourceDisposableBattery);
     }
 
     // Bit 8 - 11 Active source: according to the same schema as available power sources
+    ZigbeeNode::PowerSource powerSource = PowerSourcePermanentMainSupply;
     if (ZigbeeUtils::checkBitUint16(bitField, 8)) {
-        m_powerSource = PowerSourcePermanentMainSupply;
+        powerSource = PowerSourcePermanentMainSupply;
     } else if (ZigbeeUtils::checkBitUint16(bitField, 9)) {
-        m_powerSource = PowerSourceRecharchableBattery;
+        powerSource = PowerSourceRecharchableBattery;
     } else if (ZigbeeUtils::checkBitUint16(bitField, 10)) {
-        m_powerSource = PowerSourceDisposableBattery;
+        powerSource = PowerSourceDisposableBattery;
     }
 
     // Bit 12 - 15: Battery level if available
@@ -755,15 +784,15 @@ void ZigbeeNetworkManager::onCommandPowerDescriptorRequestFinished()
     // 0100: Approximately 33%
     // 1000: Approximately 66%
     // 1100: Approximately 100% (near fully charged)
-
+    ZigbeeNode::PowerLevel powerLevel = PowerLevelCriticalLow;
     if (!ZigbeeUtils::checkBitUint16(bitField, 14) && !ZigbeeUtils::checkBitUint16(bitField, 15)) {
-        m_powerLevel = PowerLevelCriticalLow;
+        powerLevel = PowerLevelCriticalLow;
     } else if (ZigbeeUtils::checkBitUint16(bitField, 14) && !ZigbeeUtils::checkBitUint16(bitField, 15)) {
-        m_powerLevel = PowerLevelLow;
+        powerLevel = PowerLevelLow;
     } else if (!ZigbeeUtils::checkBitUint16(bitField, 14) && ZigbeeUtils::checkBitUint16(bitField, 15)) {
-        m_powerLevel = PowerLevelOk;
+        powerLevel = PowerLevelOk;
     } else if (ZigbeeUtils::checkBitUint16(bitField, 14) && ZigbeeUtils::checkBitUint16(bitField, 15)) {
-        m_powerLevel = PowerLevelFull;
+        powerLevel = PowerLevelFull;
     }
 
     qCDebug(dcZigbeeNetwork()) << "Node power descriptor:";
@@ -772,12 +801,32 @@ void ZigbeeNetworkManager::onCommandPowerDescriptorRequestFinished()
     qCDebug(dcZigbeeNetwork()) << "    Bitfiled:" << ZigbeeUtils::convertUint16ToHexString(bitField);
     qCDebug(dcZigbeeNetwork()) << "    Power mode:" << m_powerMode;
     qCDebug(dcZigbeeNetwork()) << "    Available power sources:";
-    foreach (const PowerSource &source, m_availablePowerSources) {
+    foreach (const PowerSource &source, availablePowerSources) {
         qCDebug(dcZigbeeNetwork()) << "        " << source;
     }
-    qCDebug(dcZigbeeNetwork()) << "    Power source:" << m_powerSource;
-    qCDebug(dcZigbeeNetwork()) << "    Power level:" << m_powerLevel;
+    qCDebug(dcZigbeeNetwork()) << "    Power source:" << powerSource;
+    qCDebug(dcZigbeeNetwork()) << "    Power level:" << powerLevel;
 
+    // Get node object
+    ZigbeeNode *node = getZigbeeNode(shortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Could not find node for address" << shortAddress << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+        if (m_startingState == StartingStateReadSimpleDescriptor) setStartingState(StartingStateReadPowerDescriptor);
+        return;
+    }
+
+    // Set node data
+    node->setPowerMode(powerMode);
+    node->setPowerSource(powerSource);
+    node->setAvailablePowerSources(availablePowerSources);
+    node->setPowerLevel(powerLevel);
+
+    // Note: the power descriptor is the last request from the initialization
+    if (node->state() != ZigbeeNode::StateInitialized) {
+        node->setState(ZigbeeNode::StateInitialized);
+    }
+
+    // Note: the power descriptor request for the coordinator is the last step from the network init process
     if (m_startingState == StartingStateReadPowerDescriptor) {
         setStartingState(StartingStateNone);
         setState(StateRunning);
@@ -1013,7 +1062,7 @@ void ZigbeeNetworkManager::processDeviceAnnounce(const ZigbeeInterfaceMessage &m
     qCDebug(dcZigbeeNetwork()) << "    Extended address:" << ZigbeeAddress(ieeeAddress);
     qCDebug(dcZigbeeNetwork()) << "    Mac capabilities:" << ZigbeeUtils::convertByteToHexString(macCapabilitiesFlag);
 
-    ZigbeeNode *node = new ZigbeeNode(this);
+    ZigbeeNode *node = createNode();
     node->setShortAddress(shortAddress);
     node->setExtendedAddress(ZigbeeAddress(ieeeAddress));
     node->setMacCapabilitiesFlag(macCapabilitiesFlag);
@@ -1021,7 +1070,8 @@ void ZigbeeNetworkManager::processDeviceAnnounce(const ZigbeeInterfaceMessage &m
     qCDebug(dcZigbeeNetwork()) << "    Node:" << node;
 
     // FIXME: check if node already added, and if we have to update it
-    addNode(node);
+    addUnitializedNode(node);
+    node->setState(StateInitializing);
 
     ZigbeeInterfaceReply *reply = nullptr;
     reply = m_controller->commandAuthenticateDevice(node->extendedAddress(), securityConfiguration().globalTrustCenterLinkKey());
@@ -1071,8 +1121,13 @@ void ZigbeeNetworkManager::processAttributeReport(const ZigbeeInterfaceMessage &
         break;
     }
 
-    // TODO: find node and set attribute value
+    ZigbeeNode *node = getZigbeeNode(sourceAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNode()) << "Received an attribute report from an unknown node. Ignoring data.";
+        return;
+    }
 
+    node->setClusterAttribute(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeClusterAttribute(attributeId, dataType, data));
 }
 
 void ZigbeeNetworkManager::processLeaveIndication(const ZigbeeInterfaceMessage &message)
@@ -1080,23 +1135,16 @@ void ZigbeeNetworkManager::processLeaveIndication(const ZigbeeInterfaceMessage &
     QByteArray data = message.data();
     quint64 extendedAddress = 0;
     bool rejoining = 0;
+
     QDataStream stream(&data, QIODevice::ReadOnly);
     stream >> extendedAddress;
     stream >> rejoining;
 
     ZigbeeAddress address(extendedAddress);
-
-//    ZigbeeAddress extendedAddress = ZigbeeAddress(ZigbeeUtils::convertByteArrayToUint64(message.data().mid(0, 8)));
-//    quint8 rejoining = static_cast<quint8>(message.data().at(9));
-
     qCDebug(dcZigbeeNetwork()) << "Node leaving indication:" << address.toString() << "rejoining:" << rejoining;
 
     ZigbeeNode *node = getZigbeeNode(address);
-    if (node) {
-        removeNode(node);
-    }
-
-    // TODO: remove node
+    if (node) removeNode(node);
 }
 
 void ZigbeeNetworkManager::processRestartProvisioned(const ZigbeeInterfaceMessage &message)

@@ -10,6 +10,11 @@ ZigbeeNode::ZigbeeNode(QObject *parent) :
 
 }
 
+ZigbeeNode::State ZigbeeNode::state() const
+{
+    return m_state;
+}
+
 quint16 ZigbeeNode::shortAddress() const
 {
     return m_shortAddress;
@@ -50,6 +55,11 @@ quint16 ZigbeeNode::manufacturerCode() const
     return m_manufacturerCode;
 }
 
+quint16 ZigbeeNode::deviceId() const
+{
+    return m_deviceId;
+}
+
 bool ZigbeeNode::complexDescriptorAvailable() const
 {
     return m_complexDescriptorAvailable;
@@ -73,6 +83,36 @@ quint16 ZigbeeNode::maximumTxSize() const
 quint8 ZigbeeNode::maximumBufferSize() const
 {
     return m_maximumBufferSize;
+}
+
+QList<ZigbeeCluster *> ZigbeeNode::inputClusters() const
+{
+    return m_inputClusters.values();
+}
+
+ZigbeeCluster *ZigbeeNode::getInputCluster(Zigbee::ClusterId clusterId) const
+{
+    return m_inputClusters.value(clusterId);
+}
+
+bool ZigbeeNode::hasInputCluster(Zigbee::ClusterId clusterId) const
+{
+    return m_inputClusters.keys().contains(clusterId);
+}
+
+QList<ZigbeeCluster *> ZigbeeNode::outputClusters() const
+{
+    return m_outputClusters.values();
+}
+
+bool ZigbeeNode::hasOutputCluster(Zigbee::ClusterId clusterId) const
+{
+    return m_outputClusters.keys().contains(clusterId);
+}
+
+ZigbeeCluster *ZigbeeNode::getOutputCluster(Zigbee::ClusterId clusterId) const
+{
+    return m_outputClusters.value(clusterId);
 }
 
 bool ZigbeeNode::isPrimaryTrustCenter() const
@@ -170,6 +210,16 @@ ZigbeeNode::PowerLevel ZigbeeNode::powerLevel() const
     return m_powerLevel;
 }
 
+void ZigbeeNode::setState(ZigbeeNode::State state)
+{
+    if (m_state == state)
+        return;
+
+    qCDebug(dcZigbeeNode()) << "State changed" << state;
+    m_state = state;
+    emit stateChanged(m_state);
+}
+
 
 //void ZigbeeNode::identify()
 //{
@@ -246,6 +296,11 @@ void ZigbeeNode::setManufacturerCode(quint16 manufacturerCode)
     m_manufacturerCode = manufacturerCode;
 }
 
+void ZigbeeNode::setDeviceId(quint16 deviceId)
+{
+    m_deviceId = deviceId;
+}
+
 void ZigbeeNode::setMaximumRxSize(quint16 size)
 {
     m_maximumRxSize = size;
@@ -301,6 +356,57 @@ void ZigbeeNode::setDescriptorFlag(quint8 descriptorFlag)
 {
     m_extendedActiveEndpointListAvailable = ((descriptorFlag >> 0) & 0x01);
     m_extendedSimpleDescriptorListAvailable = ((descriptorFlag >> 1) & 0x01);
+}
+
+void ZigbeeNode::setPowerMode(ZigbeeNode::PowerMode powerMode)
+{
+    m_powerMode = powerMode;
+}
+
+void ZigbeeNode::setPowerSource(ZigbeeNode::PowerSource powerSource)
+{
+    m_powerSource = powerSource;
+}
+
+void ZigbeeNode::setAvailablePowerSources(QList<ZigbeeNode::PowerSource> availablePowerSources)
+{
+    m_availablePowerSources = availablePowerSources;
+}
+
+void ZigbeeNode::setPowerLevel(ZigbeeNode::PowerLevel powerLevel)
+{
+    m_powerLevel = powerLevel;
+}
+
+void ZigbeeNode::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
+{
+    //qCDebug(dcZigbeeNode()) << this << "cluster attribute changed" << clusterId << attribute;
+    ZigbeeCluster *cluster = m_outputClusters.value(clusterId);
+
+    // Note: create the cluster if not there yet
+    bool clusterCreated = false;
+    if (!cluster) {
+        cluster = new ZigbeeCluster(clusterId, this);
+        qCWarning(dcZigbeeNode()) << "Created cluster" << cluster;
+        connect(cluster, &ZigbeeCluster::attributeChanged, this, &ZigbeeNode::onClusterAttributeChanged);
+        m_outputClusters.insert(clusterId, cluster);
+        clusterCreated = true;
+    }
+
+    // Set the attribute if valid
+    if (attribute.isValid())
+        cluster->setAttribute(attribute);
+
+    if (clusterCreated)
+        emit clusterAdded(cluster);
+
+}
+
+void ZigbeeNode::onClusterAttributeChanged(const ZigbeeClusterAttribute &attribute)
+{
+    ZigbeeCluster *cluster = static_cast<ZigbeeCluster *>(sender());
+    qCDebug(dcZigbeeNode()) << "Cluster" << cluster << "attribute changed" << attribute;
+    emit clusterAttributeChanged(cluster, attribute);
 }
 
 //void ZigbeeNode::onRequestUserDescriptorFinished()

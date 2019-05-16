@@ -14,6 +14,7 @@ ZigbeeInterface::ZigbeeInterface(QObject *parent) :
 
 ZigbeeInterface::~ZigbeeInterface()
 {
+    qCCritical(dcZigbeeInterface()) << "Destroy interface";
     disable();
 }
 
@@ -127,14 +128,21 @@ void ZigbeeInterface::onReadyRead()
             // Check message sanity
             quint8 crc = calculateCrc(m_messageTypeValue, m_lengthValue, m_data);
             if (crc != m_crcValue) {
-                qCWarning(dcZigbeeInterface()) << "Invalid CRC value" << crc << "!=" << m_crcValue;
+                qCWarning(dcZigbeeInterface()) << "Received message end: Invalid CRC value" << crc << "!=" << m_crcValue;
             } else if (m_data.count() != m_lengthValue) {
-                qCWarning(dcZigbeeInterface()) << "ERROR:s Invalid data length" << m_data.count() << "!=" << m_lengthValue;
+                qCWarning(dcZigbeeInterface()) << "Received message end: Invalid data length of message" << m_data.count() << "!=" << m_lengthValue;
             } else {
                 // We got a valid message
                 ZigbeeInterfaceMessage message(messageType, m_data);
                 qCDebug(dcZigbeeInterface()) << "<--" << message << "|" << "crc:" << ZigbeeUtils::convertByteToHexString(m_crcValue) << ", length:" << ZigbeeUtils::convertUint16ToHexString(m_lengthValue);
                 emit messageReceived(message);
+
+                // Clear all information for the next byte
+                m_crcValue = 0;
+                m_messageTypeValue = 0;
+                m_lengthValue = 0;
+                m_escapeDetected = false;
+                m_data.clear();
             }
             setReadingState(WaitForStart);
             break;
@@ -150,6 +158,7 @@ void ZigbeeInterface::onReadyRead()
             // Read data bytes depending on the reading state
             switch (m_readingState) {
             case WaitForStart:
+                qCWarning(dcZigbeeInterfaceTraffic()) << "Wait for start but reviced data:" << byte;
                 break;
             case WaitForTypeMsb:
                 m_messageTypeValue = byte;

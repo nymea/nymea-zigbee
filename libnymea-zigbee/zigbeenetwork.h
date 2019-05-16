@@ -87,15 +87,19 @@ private:
 
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
     QList<ZigbeeNode *> m_nodes;
+    QList<ZigbeeNode *> m_uninitializedNodes;
 
     void saveNetwork();
     void loadNetwork();
+    void addNodeInternally(ZigbeeNode *node);
+    void removeNodeInternally(ZigbeeNode *node);
 
 protected:
     void addNode(ZigbeeNode *node);
-    void addNodeInternally(ZigbeeNode *node);
+    void addUnitializedNode(ZigbeeNode *node);
     void removeNode(ZigbeeNode *node);
-    void removeNodeInternally(ZigbeeNode *node);
+
+    ZigbeeNode *createNode();
 
     void clearSettings();
 
@@ -117,6 +121,9 @@ signals:
     void permitJoiningChanged(bool permitJoining);
     void stateChanged(State state);
     void errorOccured(Error error);
+
+private slots:
+    void onNodeStateChanged(ZigbeeNode::State state);
 
 public slots:
     virtual void startNetwork() = 0;

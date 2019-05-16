@@ -6,8 +6,17 @@
 class ZigbeeSecurityConfiguration
 {
 public:
+    enum ZigbeeSecurityMode {
+        ZigbeeSecurityModeNone,
+        ZigbeeSecurityModeNetworkLayer,
+        ZigbeeSecurityModeApplicationLayer
+    };
+
     explicit ZigbeeSecurityConfiguration();
     ZigbeeSecurityConfiguration(const ZigbeeSecurityConfiguration &other);
+
+    ZigbeeSecurityMode zigbeeSecurityMode() const;
+    void setZigbeeSecurityMode(ZigbeeSecurityMode zigbeeSecurityMode);
 
     QString networkKey() const;
     void setNetworkKey(const QString &networkKey);
@@ -21,6 +30,8 @@ public:
     bool operator!=(const ZigbeeSecurityConfiguration &other) const;
 
 private:
+    ZigbeeSecurityMode m_zigbeeSecurityMode = ZigbeeSecurityModeNone;
+
     // This is the local network key
     QString m_networkKey;
 

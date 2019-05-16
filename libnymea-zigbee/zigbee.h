@@ -216,6 +216,7 @@ public:
 
     enum ClusterId {
         // Basics
+        ClusterIdUnknown                = 0xffff,
         ClusterIdBasic                  = 0x0000,
         ClusterIdPower                  = 0x0001,
         ClusterIdDeviceTemperature      = 0x0002,
@@ -291,6 +292,24 @@ public:
         ClusterIdApplianceStatistics        = 0x0B03
     };
     Q_ENUM(ClusterId)
+
+    enum ClusterAttributeBasic {
+        ClusterAttributeBasicZclVersion = 0x0000,
+        ClusterAttributeBasicApplicationVersion = 0x0001,
+        ClusterAttributeBasicStackVersion = 0x0002,
+        ClusterAttributeBasicHardwareVersion = 0x0003,
+        ClusterAttributeBasicManufacturerName = 0x0004,
+        ClusterAttributeBasicModelIdentifier = 0x0005,
+        ClusterAttributeBasicDataCode = 0x0006,
+        ClusterAttributeBasicPowerSource = 0x0007,
+        ClusterAttributeBasicLocationDescription = 0x0010,
+        ClusterAttributeBasicPhysicalEnvironment = 0x0011,
+        ClusterAttributeBasicDeviceEnabled = 0x0012,
+        ClusterAttributeBasicAlarmMask = 0x0013,
+        ClusterAttributeBasicDisableLocalConfig = 0x0014,
+        ClusterAttributeBasicSoftwareBuildId = 0x4000
+    };
+    Q_ENUM(ClusterAttributeBasic)
 
 
     enum LightLinkDevice {

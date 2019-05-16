@@ -4,6 +4,7 @@
 #include <QObject>
 
 #include "zigbee.h"
+#include "zigbeecluster.h"
 #include "zigbeeaddress.h"
 
 class ZigbeeNode : public QObject
@@ -14,6 +15,13 @@ class ZigbeeNode : public QObject
     friend class ZigbeeNetworkManager;
 
 public:
+    enum State {
+        StateUninitialized,
+        StateInitializing,
+        StateInitialized
+    };
+    Q_ENUM(State)
+
     enum NodeType {
         NodeTypeCoordinator = 0,
         NodeTypeRouter = 1,
@@ -63,7 +71,7 @@ public:
     };
     Q_ENUM(PowerLevel)
 
-    ZigbeeNode(QObject *parent = nullptr);
+    State state() const;
 
     quint16 shortAddress() const;
     ZigbeeAddress extendedAddress() const;
@@ -75,6 +83,7 @@ public:
     Relationship relationship() const;
     Zigbee::ZigbeeProfile profile() const;
     quint16 manufacturerCode() const;
+    quint16 deviceId() const;
 
     bool complexDescriptorAvailable() const;
     bool userDescriptorAvailable() const;
@@ -82,6 +91,14 @@ public:
     quint16 maximumRxSize() const;
     quint16 maximumTxSize() const;
     quint8 maximumBufferSize() const;
+
+    QList<ZigbeeCluster *> inputClusters() const;
+    ZigbeeCluster *getInputCluster(Zigbee::ClusterId clusterId) const;
+    bool hasInputCluster(Zigbee::ClusterId clusterId) const;
+
+    QList<ZigbeeCluster *> outputClusters() const;
+    ZigbeeCluster *getOutputCluster(Zigbee::ClusterId clusterId) const;
+    bool hasOutputCluster(Zigbee::ClusterId clusterId) const;
 
     // Server Mask
     bool isPrimaryTrustCenter() const;
@@ -111,6 +128,12 @@ public:
     PowerLevel powerLevel() const;
 
 private:
+    ZigbeeNode(QObject *parent = nullptr);
+    State m_state = StateUninitialized;
+
+    QHash<Zigbee::ClusterId, ZigbeeCluster *> m_inputClusters;
+    QHash<Zigbee::ClusterId, ZigbeeCluster *> m_outputClusters;
+
     quint16 m_shortAddress = 0;
     ZigbeeAddress m_extendedAddress;
     quint8 m_endPoint = 1;
@@ -120,6 +143,7 @@ private:
     Relationship m_relationship = Parent;
     Zigbee::ZigbeeProfile m_profile;
     quint16 m_manufacturerCode = 0;
+    quint16 m_deviceId = 0;
 
     bool m_complexDescriptorAvailable = false;
     bool m_userDescriptorAvailable = false;
@@ -156,6 +180,8 @@ private:
     bool m_extendedSimpleDescriptorListAvailable = false;
 
 protected:
+    void setState(State state);
+
     void setShortAddress(const quint16 &shortAddress);
     void setExtendedAddress(const ZigbeeAddress &extendedAddress);
     void setEndPoint(quint8 endPoint);
@@ -165,6 +191,7 @@ protected:
     void setRelationship(Relationship relationship);
     void setZigbeeProfile(Zigbee::ZigbeeProfile profile);
     void setManufacturerCode(quint16 manufacturerCode);
+    void setDeviceId(quint16 deviceType);
 
     void setMaximumRxSize(quint16 size);
     void setMaximumTxSize(quint16 size);
@@ -175,6 +202,22 @@ protected:
     void setUserDescriptorAvailable(bool userDescriptorAvailable);
     void setMacCapabilitiesFlag(quint16 macFlag);
     void setDescriptorFlag(quint8 descriptorFlag);
+
+    void setPowerMode(PowerMode powerMode);
+    void setPowerSource(PowerSource powerSource);
+    void setAvailablePowerSources(QList<PowerSource> availablePowerSources);
+    void setPowerLevel(PowerLevel powerLevel);
+
+    // Cluster commands
+    void setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute = ZigbeeClusterAttribute());
+
+signals:
+    void stateChanged(State state);
+    void clusterAdded(ZigbeeCluster *cluster);
+    void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
+
+private slots:
+    void onClusterAttributeChanged(const ZigbeeClusterAttribute &attribute);
 
 };
 

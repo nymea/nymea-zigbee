@@ -11,6 +11,8 @@ SOURCES += \
     interface/zigbeeinterfacerequest.cpp \
     interface/zigbeeinterfacereply.cpp \
     nxp/nxpzigbeenetworkmanager.cpp \
+    zigbeecluster.cpp \
+    zigbeeclusterattribute.cpp \
     zigbeenetwork.cpp \
     zigbeenetworkmanager.cpp \
     zigbee.cpp \
@@ -27,6 +29,8 @@ HEADERS += \
     interface/zigbeeinterfacerequest.h \
     interface/zigbeeinterfacereply.h \
     nxp/nxpzigbeenetworkmanager.h \
+    zigbeecluster.h \
+    zigbeeclusterattribute.h \
     zigbeenetwork.h \
     zigbeenetworkmanager.h \
     zigbee.h \
