@@ -39,10 +39,8 @@ ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 id)
 void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     if (hasAttribute(attribute.id())) {
-        if (m_attributes.value(attribute.id()) != attribute) {
-            m_attributes[attribute.id()] = attribute;
-            emit attributeChanged(attribute);
-        }
+        m_attributes[attribute.id()] = attribute;
+        emit attributeChanged(attribute);
     } else {
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);

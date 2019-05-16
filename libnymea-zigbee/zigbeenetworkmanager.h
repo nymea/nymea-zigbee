@@ -25,7 +25,6 @@ public:
     bool permitJoining() const;
     void setPermitJoining(bool permitJoining);
 
-
 private:
     enum StartingState {
         StartingStateNone,

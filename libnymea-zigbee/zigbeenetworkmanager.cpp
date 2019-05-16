@@ -176,7 +176,6 @@ void ZigbeeNetworkManager::onCommandResetControllerFinished()
     }
 
     qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
-    //if (m_startingState == StartingStateReset && !m_networkRunning) setStartingState(StartingStateGetVersion);
 }
 
 void ZigbeeNetworkManager::onCommandSoftResetControllerFinished()
@@ -207,7 +206,6 @@ void ZigbeeNetworkManager::onCommandErasePersistentDataFinished()
     qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
     if (m_startingState == StartingStateErase) {
         setStartingState(StartingStateReset);
-        //        setState(StateStarting);
     }
 }
 
@@ -427,7 +425,6 @@ void ZigbeeNetworkManager::onCommandAuthenticateDeviceFinished()
     quint16 shortPan = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(38, 2));
     quint64 extendedPanId = ZigbeeUtils::convertByteArrayToUint64(reply->additionalMessage().data().mid(40, 8));
 
-
     qCDebug(dcZigbeeNetwork()) << "Authentication response:";
     qCDebug(dcZigbeeNetwork()) << "    Gateways address:" << ZigbeeAddress(gatewayIeeeAddress);
     qCDebug(dcZigbeeNetwork()) << "    Key:" << encryptedKey;
@@ -489,7 +486,9 @@ void ZigbeeNetworkManager::processNetworkFormed(const ZigbeeInterfaceMessage &me
     setExtendedAddress(ZigbeeAddress(extendedAddress));
     setChannel(channel);
 
-    addUnitializedNode(this);
+    if (!hasNode(this->shortAddress()))
+        addUnitializedNode(this);
+
 }
 
 void ZigbeeNetworkManager::onCommandEnableWhitelistFinished()
@@ -830,6 +829,9 @@ void ZigbeeNetworkManager::onCommandPowerDescriptorRequestFinished()
     if (m_startingState == StartingStateReadPowerDescriptor) {
         setStartingState(StartingStateNone);
         setState(StateRunning);
+        foreach (ZigbeeNode *node, nodes()) {
+            node->setConnected(true);
+        }
     }
 }
 
@@ -1193,6 +1195,9 @@ void ZigbeeNetworkManager::startNetwork()
     connect(m_controller, &ZigbeeBridgeController::messageReceived, this, &ZigbeeNetworkManager::onMessageReceived);
     connect(m_controller, &ZigbeeBridgeController::availableChanged, this, &ZigbeeNetworkManager::onControllerAvailableChanged);
 
+    if (state() == StateUninitialized)
+        loadNetwork();
+
     if (!m_controller->enable(serialPortName(), serialBaudrate())) {
         setState(StateDisconnected);
         setStartingState(StartingStateNone);
@@ -1267,6 +1272,10 @@ void ZigbeeNetworkManager::onControllerAvailableChanged(bool available)
     }
 
     if (!available) {
+        foreach (ZigbeeNode *node, nodes()) {
+            node->setConnected(false);
+        }
+
         setError(ErrorHardwareUnavailable);
         setState(StateDisconnected);
         setStartingState(StartingStateNone);
@@ -1281,7 +1290,7 @@ void ZigbeeNetworkManager::onControllerAvailableChanged(bool available)
 
 void ZigbeeNetworkManager::factoryResetNetwork()
 {
-    qCDebug(dcZigbeeNetwork()) << "Factory reset network and forgett all information. This cannot be undone.";
+    qCDebug(dcZigbeeNetwork()) << "Factory reset network and forget all information. This cannot be undone.";
     clearSettings();
 
     setState(StateStarting);

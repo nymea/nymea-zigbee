@@ -18,6 +18,7 @@ public:
     Q_ENUM(ControllerType)
 
     enum State {
+        StateUninitialized,
         StateDisconnected,
         StateStarting,
         StateRunning,
@@ -72,7 +73,7 @@ public:
 
 private:
     ControllerType m_controllerType = ControlerTypeNxp;
-    State m_state = StateDisconnected;
+    State m_state = StateUninitialized;
     Error m_error = ErrorNoError;
 
     // Serial port configuration
@@ -89,19 +90,22 @@ private:
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
 
-    void saveNetwork();
-    void loadNetwork();
     void addNodeInternally(ZigbeeNode *node);
     void removeNodeInternally(ZigbeeNode *node);
 
 protected:
+    void saveNetwork();
+    void loadNetwork();
+    void clearSettings();
+
+    void saveNode(ZigbeeNode *node);
+    void removeNodeFromSettings(ZigbeeNode *node);
+
     void addNode(ZigbeeNode *node);
     void addUnitializedNode(ZigbeeNode *node);
     void removeNode(ZigbeeNode *node);
 
     ZigbeeNode *createNode();
-
-    void clearSettings();
 
     void setState(State state);
     void setError(Error error);
@@ -124,6 +128,7 @@ signals:
 
 private slots:
     void onNodeStateChanged(ZigbeeNode::State state);
+    void onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
 
 public slots:
     virtual void startNetwork() = 0;

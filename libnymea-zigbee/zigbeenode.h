@@ -72,6 +72,7 @@ public:
     Q_ENUM(PowerLevel)
 
     State state() const;
+    bool connected() const;
 
     quint16 shortAddress() const;
     ZigbeeAddress extendedAddress() const;
@@ -129,6 +130,7 @@ public:
 
 private:
     ZigbeeNode(QObject *parent = nullptr);
+    bool m_connected = false;
     State m_state = StateUninitialized;
 
     QHash<Zigbee::ClusterId, ZigbeeCluster *> m_inputClusters;
@@ -181,6 +183,7 @@ private:
 
 protected:
     void setState(State state);
+    void setConnected(bool connected);
 
     void setShortAddress(const quint16 &shortAddress);
     void setExtendedAddress(const ZigbeeAddress &extendedAddress);
@@ -213,6 +216,7 @@ protected:
 
 signals:
     void stateChanged(State state);
+    void connectedChanged(bool connected);
     void clusterAdded(ZigbeeCluster *cluster);
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
 

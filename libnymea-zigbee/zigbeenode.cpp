@@ -15,6 +15,11 @@ ZigbeeNode::State ZigbeeNode::state() const
     return m_state;
 }
 
+bool ZigbeeNode::connected() const
+{
+    return m_connected;
+}
+
 quint16 ZigbeeNode::shortAddress() const
 {
     return m_shortAddress;
@@ -220,6 +225,16 @@ void ZigbeeNode::setState(ZigbeeNode::State state)
     emit stateChanged(m_state);
 }
 
+void ZigbeeNode::setConnected(bool connected)
+{
+    if (m_connected == connected)
+        return;
+
+    qCDebug(dcZigbeeNode()) << "Connected changed" << connected;
+    m_connected = connected;
+    emit connectedChanged(m_connected);
+}
+
 
 //void ZigbeeNode::identify()
 //{
@@ -380,14 +395,14 @@ void ZigbeeNode::setPowerLevel(ZigbeeNode::PowerLevel powerLevel)
 
 void ZigbeeNode::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
 {
-    //qCDebug(dcZigbeeNode()) << this << "cluster attribute changed" << clusterId << attribute;
+    qCDebug(dcZigbeeNode()) << this << "cluster attribute changed" << clusterId << attribute;
     ZigbeeCluster *cluster = m_outputClusters.value(clusterId);
 
     // Note: create the cluster if not there yet
     bool clusterCreated = false;
     if (!cluster) {
         cluster = new ZigbeeCluster(clusterId, this);
-        qCWarning(dcZigbeeNode()) << "Created cluster" << cluster;
+        qCDebug(dcZigbeeNode()) << "Created cluster" << cluster;
         connect(cluster, &ZigbeeCluster::attributeChanged, this, &ZigbeeNode::onClusterAttributeChanged);
         m_outputClusters.insert(clusterId, cluster);
         clusterCreated = true;
