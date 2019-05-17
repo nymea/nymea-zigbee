@@ -54,6 +54,9 @@ private:
     bool m_networkRunning = false;
     bool m_factoryResetting = false;
 
+    void readControllerVersion();
+    void readPermitJoinStatus();
+
 signals:
     void permitJoiningChanged(bool permitJoining);
 
@@ -65,14 +68,11 @@ private slots:
     void onCommandResetControllerFinished();
     void onCommandSoftResetControllerFinished();
     void onCommandErasePersistentDataFinished();
-    void onCommandGetVersionFinished();
     void onCommandSetExtendedPanIdFinished();
     void onCommandSetChannelMaskFinished();
     void onCommandSetNodeTypeFinished();
     void onCommandStartNetworkFinished();
     void onCommandStartScanFinished();
-    void onCommandGetPermitJoiningStatusFinished();
-    void onCommandPermitJoiningFinished();
     void onCommandEnableWhitelistFinished();
 
     void onCommandNodeDescriptorRequestFinished();
