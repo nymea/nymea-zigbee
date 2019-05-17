@@ -38,7 +38,19 @@ void ZigbeeNetworkManager::setPermitJoining(bool permitJoining)
         return;
 
     ZigbeeInterfaceReply *reply = m_controller->commandPermitJoin(0, (permitJoining ? 255 : 0));
-    connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onCommandPermitJoiningFinished);
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, permitJoining](){
+        reply->deleteLater();
+
+        if (reply->status() != ZigbeeInterfaceReply::Success) {
+            qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            return;
+        }
+
+        qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully." << permitJoining;
+
+        // Read the permit joining status back in order to update the state
+        readPermitJoinStatus();
+    });
 }
 
 void ZigbeeNetworkManager::setStartingState(ZigbeeNetworkManager::StartingState state)
@@ -67,8 +79,7 @@ void ZigbeeNetworkManager::setStartingState(ZigbeeNetworkManager::StartingState 
     }
     case StartingStateGetVersion: {
         qCDebug(dcZigbeeNetwork()) << "Starting state changed: Get controller version";
-        ZigbeeInterfaceReply *reply = m_controller->commandGetVersion();
-        connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onCommandGetVersionFinished);
+        readControllerVersion();
         break;
     }
     case StartingStateSetPanId: {
@@ -115,8 +126,7 @@ void ZigbeeNetworkManager::setStartingState(ZigbeeNetworkManager::StartingState 
     }
     case StartingStateGetPermitJoinStatus: {
         qCDebug(dcZigbeeNetwork()) << "Starting state changed: Get permit join status";
-        ZigbeeInterfaceReply *reply = m_controller->commandGetPermitJoinStatus();
-        connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onCommandGetPermitJoiningStatusFinished);
+        readPermitJoinStatus();
         break;
     }
     case StartingStateReadeNodeDescriptor: {
@@ -138,6 +148,57 @@ void ZigbeeNetworkManager::setStartingState(ZigbeeNetworkManager::StartingState 
         break;
     }
     }
+}
+
+void ZigbeeNetworkManager::readControllerVersion()
+{
+    ZigbeeInterfaceReply *reply = m_controller->commandGetVersion();
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply](){
+        reply->deleteLater();
+
+        if (reply->status() != ZigbeeInterfaceReply::Success) {
+            qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            return;
+        }
+
+        if (reply->additionalMessage().data().count() != 4) {
+            qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << ":" << "Invalid payload size";
+            return;
+        }
+
+        qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+
+        // Parse version
+        quint16 majorVersion = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(0, 2));
+        quint16 minorVersion = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(2, 2));
+
+        m_controllerFirmwareVersion = QString("%1.%2").arg(majorVersion).arg(minorVersion);
+        qCDebug(dcZigbeeNetwork()) << "Controller version:" << m_controllerFirmwareVersion;
+
+        if (m_startingState == StartingStateGetVersion) setStartingState(StartingStateSetPanId);
+
+    });
+}
+
+void ZigbeeNetworkManager::readPermitJoinStatus()
+{
+    ZigbeeInterfaceReply *reply = m_controller->commandGetPermitJoinStatus();
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply](){
+        reply->deleteLater();
+
+        if (reply->status() != ZigbeeInterfaceReply::Success) {
+            qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            return;
+        }
+
+        qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        qCDebug(dcZigbeeController()) << reply->additionalMessage();
+
+        m_permitJoining = static_cast<bool>(reply->additionalMessage().data().at(0));
+        emit permitJoiningChanged(m_permitJoining);
+
+        if (m_startingState == StartingStateGetPermitJoinStatus) setStartingState(StartingStateReadeNodeDescriptor);
+    });
 }
 
 //void ZigbeeNetworkManager::requestMatchDescriptor(const quint16 &shortAddress, const Zigbee::ZigbeeProfile &profile)
@@ -207,33 +268,6 @@ void ZigbeeNetworkManager::onCommandErasePersistentDataFinished()
     if (m_startingState == StartingStateErase) {
         setStartingState(StartingStateReset);
     }
-}
-
-void ZigbeeNetworkManager::onCommandGetVersionFinished()
-{
-    ZigbeeInterfaceReply *reply = static_cast<ZigbeeInterfaceReply *>(sender());
-    reply->deleteLater();
-
-    if (reply->status() != ZigbeeInterfaceReply::Success) {
-        qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
-        return;
-    }
-
-    if (reply->additionalMessage().data().count() != 4) {
-        qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << ":" << "Invalid payload size";
-        return;
-    }
-
-    qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
-
-    // Parse version
-    quint16 majorVersion = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(0, 2));
-    quint16 minorVersion = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(2, 2));
-
-    m_controllerFirmwareVersion = QString("%1.%2").arg(majorVersion).arg(minorVersion);
-    qCDebug(dcZigbeeNetwork()) << "Controller version:" << m_controllerFirmwareVersion;
-
-    if (m_startingState == StartingStateGetVersion) setStartingState(StartingStateSetPanId);
 }
 
 void ZigbeeNetworkManager::onCommandSetExtendedPanIdFinished()
@@ -307,42 +341,6 @@ void ZigbeeNetworkManager::onCommandStartScanFinished()
     qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
     qCDebug(dcZigbeeController()) << reply->additionalMessage();
     processNetworkFormed(reply->additionalMessage());
-}
-
-void ZigbeeNetworkManager::onCommandGetPermitJoiningStatusFinished()
-{
-    ZigbeeInterfaceReply *reply = static_cast<ZigbeeInterfaceReply *>(sender());
-    reply->deleteLater();
-
-    if (reply->status() != ZigbeeInterfaceReply::Success) {
-        qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
-        return;
-    }
-
-    qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
-    qCDebug(dcZigbeeController()) << reply->additionalMessage();
-
-    m_permitJoining = static_cast<bool>(reply->additionalMessage().data().at(0));
-    emit permitJoiningChanged(m_permitJoining);
-
-    if (m_startingState == StartingStateGetPermitJoinStatus) setStartingState(StartingStateReadeNodeDescriptor);
-}
-
-void ZigbeeNetworkManager::onCommandPermitJoiningFinished()
-{
-    ZigbeeInterfaceReply *reply = static_cast<ZigbeeInterfaceReply *>(sender());
-    reply->deleteLater();
-
-    if (reply->status() != ZigbeeInterfaceReply::Success) {
-        qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
-        return;
-    }
-
-    qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
-
-    // Read the permit joining status back in order to update the state
-    ZigbeeInterfaceReply *getJoiningReply = m_controller->commandGetPermitJoinStatus();
-    connect(getJoiningReply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkManager::onCommandGetPermitJoiningStatusFinished);
 }
 
 void ZigbeeNetworkManager::onCommandRequestMatchDescriptorFinished()
@@ -473,10 +471,10 @@ void ZigbeeNetworkManager::processNetworkFormed(const ZigbeeInterfaceMessage &me
     quint8 channel = static_cast<quint8>(data.at(11));
 
     qCDebug(dcZigbeeNetwork()).noquote() << "Network" << networkStatusString;
+    qCDebug(dcZigbeeNetwork()) << "    Extended PAN ID:" << extendedPanId();
     qCDebug(dcZigbeeNetwork()) << "    Address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
     qCDebug(dcZigbeeNetwork()) << "    Extended address:" << ZigbeeAddress(extendedAddress);
     qCDebug(dcZigbeeNetwork()) << "    Channel:" << channel;
-    qCDebug(dcZigbeeNetwork()) << "    Extended PAN ID:" << extendedPanId();
     qCDebug(dcZigbeeNetwork()) << "    Permit joining:" << permitJoining();
 
     m_networkRunning = true;
@@ -829,6 +827,7 @@ void ZigbeeNetworkManager::onCommandPowerDescriptorRequestFinished()
     if (m_startingState == StartingStateReadPowerDescriptor) {
         setStartingState(StartingStateNone);
         setState(StateRunning);
+        readControllerVersion();
         foreach (ZigbeeNode *node, nodes()) {
             node->setConnected(true);
         }
@@ -1108,6 +1107,7 @@ void ZigbeeNetworkManager::processAttributeReport(const ZigbeeInterfaceMessage &
     QByteArray attributeData = data.left(dataSize);
 
     if (attributeData.length() != dataSize) {
+        qCCritical(dcZigbeeNetwork()) << "HACK";
         // Note: the NXP firmware for JN5169 has a bug here and does not send the attributeStatus.
         // Repars data without attribute status
         sequenceNumber = 0;
