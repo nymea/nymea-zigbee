@@ -1091,16 +1091,40 @@ void ZigbeeNetworkManager::processDeviceAnnounce(const ZigbeeInterfaceMessage &m
 
 void ZigbeeNetworkManager::processAttributeReport(const ZigbeeInterfaceMessage &message)
 {
-    quint8 sequenceNumber = static_cast<quint8>(message.data().at(0));
-    quint16 sourceAddress = ZigbeeUtils::convertByteArrayToUint16(message.data().mid(1, 2));
-    quint8 endPoint = static_cast<quint8>(message.data().at(3));
-    quint16 clusterId = ZigbeeUtils::convertByteArrayToUint16(message.data().mid(4, 2));
-    quint16 attributeId = ZigbeeUtils::convertByteArrayToUint16(message.data().mid(6, 2));
-    quint8 attributDataType = static_cast<quint8>(message.data().at(8));
+    QByteArray data = message.data();
+    quint8 sequenceNumber = 0;
+    quint16 sourceAddress = 0;
+    quint8 endPoint = 0;
+    quint16 clusterId = 0;
+    quint16 attributeId = 0;
+    quint8 attributeStatus = 0;
+    quint8 attributDataType = 0;
+    quint16 dataSize = 0;
 
-    quint16 attributeSize = ZigbeeUtils::convertByteArrayToUint16(message.data().mid(9, 2));
-    QByteArray data = message.data().mid(11);
+    QDataStream stream(&data, QIODevice::ReadOnly);
+    stream >> sequenceNumber >> sourceAddress >> endPoint >> clusterId >> attributeId >> attributeStatus >> attributDataType >> dataSize;
+
     Zigbee::DataType dataType = static_cast<Zigbee::DataType>(attributDataType);
+    QByteArray attributeData = data.left(dataSize);
+
+    if (attributeData.length() != dataSize) {
+        // Note: the NXP firmware for JN5169 has a bug here and does not send the attributeStatus.
+        // Repars data without attribute status
+        sequenceNumber = 0;
+        sourceAddress = 0;
+        endPoint = 0;
+        clusterId = 0;
+        attributeId = 0;
+        attributeStatus = 0;
+        attributDataType = 0;
+        dataSize = 0;
+
+        QDataStream alternativeStream(&data, QIODevice::ReadOnly);
+        alternativeStream >> sequenceNumber >> sourceAddress >> endPoint >> clusterId >> attributeId >> attributDataType >> dataSize;
+
+        dataType = static_cast<Zigbee::DataType>(attributDataType);
+        attributeData = data.left(dataSize);
+    }
 
     qCDebug(dcZigbeeNetwork()) << "Attribute report:";
     qCDebug(dcZigbeeNetwork()) << "    SQN:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
@@ -1109,7 +1133,7 @@ void ZigbeeNetworkManager::processAttributeReport(const ZigbeeInterfaceMessage &
     qCDebug(dcZigbeeNetwork()) << "    Cluster:" << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
     qCDebug(dcZigbeeNetwork()) << "    Attribut id:" << ZigbeeUtils::convertUint16ToHexString(attributeId);
     qCDebug(dcZigbeeNetwork()) << "    Attribut data type:" << dataType;
-    qCDebug(dcZigbeeNetwork()) << "    Attribut size:" << attributeSize;
+    qCDebug(dcZigbeeNetwork()) << "    Attribut size:" << dataSize;
     qCDebug(dcZigbeeNetwork()) << "    Data:" << ZigbeeUtils::convertByteArrayToHexString(data);
 
     switch (dataType) {
