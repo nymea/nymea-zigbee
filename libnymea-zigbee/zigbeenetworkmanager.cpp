@@ -1104,10 +1104,10 @@ void ZigbeeNetworkManager::processAttributeReport(const ZigbeeInterfaceMessage &
     stream >> sequenceNumber >> sourceAddress >> endPoint >> clusterId >> attributeId >> attributeStatus >> attributDataType >> dataSize;
 
     Zigbee::DataType dataType = static_cast<Zigbee::DataType>(attributDataType);
-    QByteArray attributeData = data.left(dataSize);
+    QByteArray attributeData = data.right(dataSize);
 
     if (attributeData.length() != dataSize) {
-        qCCritical(dcZigbeeNetwork()) << "HACK";
+        qCCritical(dcZigbeeNetwork()) << "HACK" << attributeData.length() << "!=" << dataSize;
         // Note: the NXP firmware for JN5169 has a bug here and does not send the attributeStatus.
         // Repars data without attribute status
         sequenceNumber = 0;
@@ -1123,7 +1123,7 @@ void ZigbeeNetworkManager::processAttributeReport(const ZigbeeInterfaceMessage &
         alternativeStream >> sequenceNumber >> sourceAddress >> endPoint >> clusterId >> attributeId >> attributDataType >> dataSize;
 
         dataType = static_cast<Zigbee::DataType>(attributDataType);
-        attributeData = data.left(dataSize);
+        attributeData = data.right(dataSize);
     }
 
     qCDebug(dcZigbeeNetwork()) << "Attribute report:";
@@ -1134,14 +1134,14 @@ void ZigbeeNetworkManager::processAttributeReport(const ZigbeeInterfaceMessage &
     qCDebug(dcZigbeeNetwork()) << "    Attribut id:" << ZigbeeUtils::convertUint16ToHexString(attributeId);
     qCDebug(dcZigbeeNetwork()) << "    Attribut data type:" << dataType;
     qCDebug(dcZigbeeNetwork()) << "    Attribut size:" << dataSize;
-    qCDebug(dcZigbeeNetwork()) << "    Data:" << ZigbeeUtils::convertByteArrayToHexString(data);
+    qCDebug(dcZigbeeNetwork()) << "    Data:" << ZigbeeUtils::convertByteArrayToHexString(attributeData);
 
     switch (dataType) {
     case Zigbee::CharString:
-        qCDebug(dcZigbeeNetwork()) << "    Data(converted)" << QString::fromUtf8(data);
+        qCDebug(dcZigbeeNetwork()) << "    Data(converted)" << QString::fromUtf8(attributeData);
         break;
     case Zigbee::Bool:
-        qCDebug(dcZigbeeNetwork()) << "    Data(converted)" << static_cast<bool>(data.at(0));
+        qCDebug(dcZigbeeNetwork()) << "    Data(converted)" << static_cast<bool>(attributeData.at(0));
         break;
     default:
         break;
@@ -1153,7 +1153,7 @@ void ZigbeeNetworkManager::processAttributeReport(const ZigbeeInterfaceMessage &
         return;
     }
 
-    node->setClusterAttribute(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeClusterAttribute(attributeId, dataType, data));
+    node->setClusterAttribute(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeClusterAttribute(attributeId, dataType, attributeData));
 }
 
 void ZigbeeNetworkManager::processLeaveIndication(const ZigbeeInterfaceMessage &message)
