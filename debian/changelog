@@ -1,3 +1,11 @@
+nymea-zigbee (0.0.2) bionic; urgency=medium
+
+  * First working base version of zigbee gateway
+  * Abstract template preparaion for multiple hardware support
+  * Rudimentary version of zigbee cluster functionality
+
+ -- Simon Stürz <simon.stuerz@nymea.io>  Fri, 17 May 2019 11:53:31 +0200
+
 nymea-zigbee (0.0.1) bionic; urgency=medium
 
   * Initial release.

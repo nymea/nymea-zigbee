@@ -14,7 +14,7 @@ ZigbeeInterface::ZigbeeInterface(QObject *parent) :
 
 ZigbeeInterface::~ZigbeeInterface()
 {
-    qCCritical(dcZigbeeInterface()) << "Destroy interface";
+    qCDebug(dcZigbeeInterface()) << "Destroy interface";
     disable();
 }
 

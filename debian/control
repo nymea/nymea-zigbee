@@ -14,19 +14,6 @@ Build-Depends: debhelper (>= 9.0.0),
                libqt5serialport5-dev,
                libreadline-dev
 
-Package: zigbee-cli
-Architecture: any
-Section: net
-Multi-Arch: same
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
-         libnymea-zigbee1 (= ${binary:Version}),
-         libncurses5
-Description: Zigbee bridge controller Qt5 - tool
- Command line tool written in Qt for interacting with the NXP Zigbee controller.
- .
- This package will install the zigbee-cli tool.
-
 Package: libnymea-zigbee1
 Section: libs
 Architecture: any
