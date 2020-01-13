@@ -48,6 +48,13 @@ void ZigbeeSecurityConfiguration::clear()
     m_globalTrustCenterLinkKey = "5A6967426565416C6C69616E63653039";
 }
 
+ZigbeeSecurityConfiguration &ZigbeeSecurityConfiguration::operator=(const ZigbeeSecurityConfiguration &other)
+{
+    m_networkKey = other.networkKey();
+    m_globalTrustCenterLinkKey = other.globalTrustCenterLinkKey();
+    return *this;
+}
+
 bool ZigbeeSecurityConfiguration::operator==(const ZigbeeSecurityConfiguration &other) const
 {
     return m_networkKey == other.networkKey() && m_globalTrustCenterLinkKey == other.globalTrustCenterLinkKey() && m_zigbeeSecurityMode == other.zigbeeSecurityMode();

@@ -26,6 +26,7 @@ public:
 
     void clear();
 
+    ZigbeeSecurityConfiguration &operator=(const ZigbeeSecurityConfiguration &other);
     bool operator==(const ZigbeeSecurityConfiguration &other) const;
     bool operator!=(const ZigbeeSecurityConfiguration &other) const;
 
