@@ -8,6 +8,7 @@ ZigbeeSecurityConfiguration::ZigbeeSecurityConfiguration()
 ZigbeeSecurityConfiguration::ZigbeeSecurityConfiguration(const ZigbeeSecurityConfiguration &other)
 {
     m_networkKey = other.networkKey();
+    m_zigbeeSecurityMode = other.zigbeeSecurityMode();
     m_globalTrustCenterLinkKey = other.networkKey();
 }
 
@@ -51,6 +52,7 @@ void ZigbeeSecurityConfiguration::clear()
 ZigbeeSecurityConfiguration &ZigbeeSecurityConfiguration::operator=(const ZigbeeSecurityConfiguration &other)
 {
     m_networkKey = other.networkKey();
+    m_zigbeeSecurityMode = other.zigbeeSecurityMode();
     m_globalTrustCenterLinkKey = other.globalTrustCenterLinkKey();
     return *this;
 }
