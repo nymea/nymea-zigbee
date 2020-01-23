@@ -1,3 +1,10 @@
+nymea-zigbee (0.0.4) xenial; urgency=medium
+
+  [ Simon Stürz ]
+  * Add assign operator for zigbee security configuration
+
+ -- Jenkins <jenkins@nymea.io>  Thu, 16 Jan 2020 00:39:10 +0100
+
 nymea-zigbee (0.0.3) xenial; urgency=medium
 
   [ Michael Zanetti ]
