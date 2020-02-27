@@ -34,16 +34,11 @@
 #include "zigbeenode.h"
 #include "zigbeesecurityconfiguration.h"
 
-class ZigbeeNetwork : public ZigbeeNode
+class ZigbeeNetwork : public QObject
 {
     Q_OBJECT
 
 public:
-    enum ControllerType {
-        ControlerTypeNxp
-    };
-    Q_ENUM(ControllerType)
-
     enum State {
         StateUninitialized,
         StateDisconnected,
@@ -60,10 +55,9 @@ public:
     };
     Q_ENUM(Error)
 
-    explicit ZigbeeNetwork(ControllerType controllerType, QObject *parent = nullptr);
+    explicit ZigbeeNetwork(QObject *parent = nullptr);
 
     State state() const;
-    ControllerType controlerType() const;
 
     Error error() const;
 
@@ -99,7 +93,6 @@ public:
 
 
 private:
-    ControllerType m_controllerType = ControlerTypeNxp;
     State m_state = StateUninitialized;
     Error m_error = ErrorNoError;
 

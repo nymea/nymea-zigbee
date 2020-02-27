@@ -35,7 +35,7 @@
 #include "zigbeebridgecontroller.h"
 #include "zigbeesecurityconfiguration.h"
 
-class ZigbeeNetworkManager : public ZigbeeNetwork
+class ZigbeeNetworkManager : public QObject
 {
     Q_OBJECT
 public:
@@ -51,6 +51,7 @@ public:
     // Note: Follwoing methods should be abstract
     bool permitJoining() const;
     void setPermitJoining(bool permitJoining);
+    void resetController();
 
 private:
     enum StartingState {
@@ -65,7 +66,6 @@ private:
         StartingStateStartNetwork,
         StartingStateGetPermitJoinStatus,
         StartingStateReadeNodeDescriptor,
-        StartingStateReadSimpleDescriptor,
         StartingStateReadPowerDescriptor
     };
 
@@ -126,6 +126,7 @@ private slots:
     void processAttributeReport(const ZigbeeInterfaceMessage &message);
     void processLeaveIndication(const ZigbeeInterfaceMessage &message);
     void processRestartProvisioned(const ZigbeeInterfaceMessage &message);
+    void processRouterDiscoveryConfirm(const ZigbeeInterfaceMessage &message);
 
 public slots:
     void startNetwork() override;

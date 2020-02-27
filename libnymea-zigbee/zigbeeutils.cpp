@@ -120,6 +120,15 @@ QString ZigbeeUtils::convertUint16ToHexString(const quint16 &value)
     return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
 }
 
+QString ZigbeeUtils::convertUint32ToHexString(const quint32 &value)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << value;
+
+    return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
+}
+
 QString ZigbeeUtils::convertUint64ToHexString(const quint64 &value)
 {
     QByteArray data;
@@ -160,6 +169,7 @@ QString ZigbeeUtils::profileIdToString(const Zigbee::ZigbeeProfile &profileId)
 
 quint64 ZigbeeUtils::generateRandomPanId()
 {
+    // Note: the PAN ID has to be between 0x0000 and 0x3fff
     qsrand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
-    return static_cast<quint64>((ULLONG_MAX - 0) * (qrand()/static_cast<double>(RAND_MAX)));
+    return static_cast<quint64>(rand() % (0x3fff - 1) + 1);
 }

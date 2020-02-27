@@ -31,7 +31,7 @@
 #include <QObject>
 #include <QDebug>
 
-#include "zigbee.h"
+#include "../zigbee.h"
 
 class ZigbeeInterfaceMessage
 {

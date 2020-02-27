@@ -52,6 +52,7 @@ public:
     static QString convertByteToHexString(const quint8 &byte);
     static QString convertByteArrayToHexString(const QByteArray &byteArray);
     static QString convertUint16ToHexString(const quint16 &value);
+    static QString convertUint32ToHexString(const quint32 &value);
     static QString convertUint64ToHexString(const quint64 &value);
 
     // Enum prittify print methods

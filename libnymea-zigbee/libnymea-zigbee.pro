@@ -8,14 +8,15 @@ SOURCES += \
     interface/zigbeeinterfacemessage.cpp \
     interface/zigbeeinterfacerequest.cpp \
     interface/zigbeeinterfacereply.cpp \
-    nxp/nxpzigbeenetworkmanager.cpp \
+    nxp/zigbeenetworknxp.cpp \
+    nxp/zigbeebridgecontrollernxp.cpp \
     zigbeecluster.cpp \
     zigbeeclusterattribute.cpp \
     zigbeenetwork.cpp \
     zigbeenetworkmanager.cpp \
     zigbee.cpp \
     loggingcategory.cpp \
-    zigbeebridgecontroller.cpp \
+    zigbeenodeendpoint.cpp \
     zigbeesecurityconfiguration.cpp \
     zigbeeutils.cpp \
     zigbeenode.cpp \
@@ -26,14 +27,15 @@ HEADERS += \
     interface/zigbeeinterfacemessage.h \
     interface/zigbeeinterfacerequest.h \
     interface/zigbeeinterfacereply.h \
-    nxp/nxpzigbeenetworkmanager.h \
+    nxp/zigbeenetworknxp.h \
+    nxp/zigbeebridgecontrollernxp.h \
     zigbeecluster.h \
     zigbeeclusterattribute.h \
     zigbeenetwork.h \
     zigbeenetworkmanager.h \
     zigbee.h \
     loggingcategory.h \
-    zigbeebridgecontroller.h \
+    zigbeenodeendpoint.h \
     zigbeesecurityconfiguration.h \
     zigbeeutils.h \
     zigbeenode.h \

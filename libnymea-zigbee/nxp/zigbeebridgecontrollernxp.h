@@ -59,6 +59,7 @@ public:
     ZigbeeInterfaceReply *commandStartScan();
     ZigbeeInterfaceReply *commandPermitJoin(quint16 targetAddress = 0xfffc, const quint8 advertisingIntervall = 180, bool tcSignificance = false);
     ZigbeeInterfaceReply *commandGetPermitJoinStatus();
+    ZigbeeInterfaceReply *commandRequestActiveEndpoints(quint16 shortAddress);
     ZigbeeInterfaceReply *commandRequestLinkQuality(quint16 shortAddress);
     ZigbeeInterfaceReply *commandEnableWhiteList();
     ZigbeeInterfaceReply *commandInitiateTouchLink();
@@ -70,6 +71,7 @@ public:
     ZigbeeInterfaceReply *commandSimpleDescriptorRequest(quint16 shortAddress, quint8 endpoint);
     ZigbeeInterfaceReply *commandPowerDescriptorRequest(quint16 shortAddress);
     ZigbeeInterfaceReply *commandUserDescriptorRequest(quint16 shortAddress, quint16 address);
+
 
 private:
     ZigbeeInterface *m_interface = nullptr;

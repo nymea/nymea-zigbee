@@ -103,15 +103,13 @@ public:
 
     quint16 shortAddress() const;
     ZigbeeAddress extendedAddress() const;
-    quint8 endPoint() const;
+    QList<quint8> endPoints() const;
 
     // Information from node descriptor
     NodeType nodeType() const;
     FrequencyBand frequencyBand() const;
     Relationship relationship() const;
-    Zigbee::ZigbeeProfile profile() const;
     quint16 manufacturerCode() const;
-    quint16 deviceId() const;
 
     bool complexDescriptorAvailable() const;
     bool userDescriptorAvailable() const;
@@ -119,14 +117,6 @@ public:
     quint16 maximumRxSize() const;
     quint16 maximumTxSize() const;
     quint8 maximumBufferSize() const;
-
-    QList<ZigbeeCluster *> inputClusters() const;
-    ZigbeeCluster *getInputCluster(Zigbee::ClusterId clusterId) const;
-    bool hasInputCluster(Zigbee::ClusterId clusterId) const;
-
-    QList<ZigbeeCluster *> outputClusters() const;
-    ZigbeeCluster *getOutputCluster(Zigbee::ClusterId clusterId) const;
-    bool hasOutputCluster(Zigbee::ClusterId clusterId) const;
 
     // Server Mask
     bool isPrimaryTrustCenter() const;
@@ -160,19 +150,16 @@ private:
     bool m_connected = false;
     State m_state = StateUninitialized;
 
-    QHash<Zigbee::ClusterId, ZigbeeCluster *> m_inputClusters;
-    QHash<Zigbee::ClusterId, ZigbeeCluster *> m_outputClusters;
-
     quint16 m_shortAddress = 0;
     ZigbeeAddress m_extendedAddress;
-    quint8 m_endPoint = 1;
+    QList<quint8> m_endPoints;
 
+    // Node descriptor information
+    QByteArray m_nodeDescriptorRawData;
     NodeType m_nodeType = NodeTypeRouter;
     FrequencyBand m_frequencyBand = FrequencyBand2400Mhz;
     Relationship m_relationship = Parent;
-    Zigbee::ZigbeeProfile m_profile;
     quint16 m_manufacturerCode = 0;
-    quint16 m_deviceId = 0;
 
     bool m_complexDescriptorAvailable = false;
     bool m_userDescriptorAvailable = false;
@@ -182,6 +169,7 @@ private:
     quint8 m_maximumBufferSize = 0;
 
     // Server Mask
+    quint16 m_serverMask = 0;
     bool m_isPrimaryTrustCenter = false;
     bool m_isBackupTrustCenter = false;
     bool m_isPrimaryBindingCache = false;
@@ -191,12 +179,14 @@ private:
     bool m_isNetworkManager = false;
 
     // Power information
+    quint16 m_powerDescriptorFlag = 0;
     PowerMode m_powerMode;
     PowerSource m_powerSource;
     QList<PowerSource> m_availablePowerSources;
     PowerLevel m_powerLevel;
 
     // Mac capabilities flag
+    quint8 m_macCapabilitiesFlag = 0;
     bool m_alternatePanCoordinator = false;
     DeviceType m_deviceType = DeviceTypeFullFunction;
     bool m_powerSourceFlagMainPower = false;
@@ -205,38 +195,35 @@ private:
     bool m_allocateAddress = false;
 
     // Descriptor capability
+    quint8 m_descriptorFlag = 0;
     bool m_extendedActiveEndpointListAvailable = false;
     bool m_extendedSimpleDescriptorListAvailable = false;
 
-protected:
+private:
     void setState(State state);
     void setConnected(bool connected);
 
     void setShortAddress(const quint16 &shortAddress);
     void setExtendedAddress(const ZigbeeAddress &extendedAddress);
-    void setEndPoint(quint8 endPoint);
+    void setEndPoints(QList<quint8> endPoints);
 
-    void setNodeType(NodeType nodeType);
-    void setFrequencyBand(FrequencyBand frequencyBand);
-    void setRelationship(Relationship relationship);
-    void setZigbeeProfile(Zigbee::ZigbeeProfile profile);
-    void setManufacturerCode(quint16 manufacturerCode);
-    void setDeviceId(quint16 deviceType);
+    // Note: node descriptor properties (raw data for settings)
+    QByteArray nodeDescriptorRawData() const;
+    void setNodeDescriptorRawData(const QByteArray nodeDescriptorRawData);
 
-    void setMaximumRxSize(quint16 size);
-    void setMaximumTxSize(quint16 size);
-    void setMaximumBufferSize(quint8 size);
-
+    quint16 serverMask() const;
     void setServerMask(quint16 serverMask);
-    void setComplexDescriptorAvailable(bool complexDescriptorAvailable);
-    void setUserDescriptorAvailable(bool userDescriptorAvailable);
-    void setMacCapabilitiesFlag(quint16 macFlag);
+
+    // MAC capability raw data flag for settings
+    quint8 macCapabilitiesFlag() const;
+    void setMacCapabilitiesFlag(quint8 macFlag);
+
+    quint8 descriptorFlag() const;
     void setDescriptorFlag(quint8 descriptorFlag);
 
-    void setPowerMode(PowerMode powerMode);
-    void setPowerSource(PowerSource powerSource);
-    void setAvailablePowerSources(QList<PowerSource> availablePowerSources);
-    void setPowerLevel(PowerLevel powerLevel);
+    // Power decriptor data
+    quint16 powerDescriptorFlag() const;
+    void setPowerDescriptorFlag(quint16 powerDescriptorFlag);
 
     // Cluster commands
     void setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute = ZigbeeClusterAttribute());

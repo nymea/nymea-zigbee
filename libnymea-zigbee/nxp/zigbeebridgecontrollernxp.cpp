@@ -102,12 +102,16 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandSetChannelMask(quint32 chan
     //       0x07fff800 select from all channels 11 - 26
     //       0x2108800 primary zigbee light link channels 11, 15, 20, 25
 
+    //Zigbee::ZigbeeChannels channels = (Zigbee::ZigbeeChannel11 | Zigbee::ZigbeeChannel15 | Zigbee::ZigbeeChannel20 | Zigbee::ZigbeeChannel25);
+
+    qCDebug(dcZigbeeController()) << "Set channel mask" << ZigbeeUtils::convertUint32ToHexString(channelMask);
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::BigEndian);
     stream << channelMask;
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeSetChannelMask, data));
-    request.setDescription("Set channel mask " + ZigbeeUtils::convertByteArrayToHexString(data));
+    request.setDescription("Set channel mask" + ZigbeeUtils::convertByteArrayToHexString(data));
 
     return sendRequest(request);
 }
@@ -182,6 +186,20 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandGetPermitJoinStatus()
     request.setDescription("Get permit joining status");
     request.setExpectedAdditionalMessageType(Zigbee::MessageTypeGetPermitJoiningResponse);
     request.setTimoutIntervall(1000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeController::commandRequestActiveEndpoints(quint16 shortAddress)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << shortAddress;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeActiveEndpointRequest, data));
+    request.setDescription("Get active endpoints");
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeActiveEndpointResponse);
+    request.setTimoutIntervall(3000);
 
     return sendRequest(request);
 }

@@ -44,6 +44,26 @@ public:
     };
     Q_ENUM(ZigbeeProfile)
 
+    enum ZigbeeChannel {
+        ZigbeeChannel11,
+        ZigbeeChannel12,
+        ZigbeeChannel13,
+        ZigbeeChannel14,
+        ZigbeeChannel15,
+        ZigbeeChannel16,
+        ZigbeeChannel17,
+        ZigbeeChannel18,
+        ZigbeeChannel19,
+        ZigbeeChannel20,
+        ZigbeeChannel21,
+        ZigbeeChannel22,
+        ZigbeeChannel23,
+        ZigbeeChannel24,
+        ZigbeeChannel25
+    };
+    Q_ENUM(ZigbeeChannel)
+    Q_DECLARE_FLAGS(ZigbeeChannels, ZigbeeChannel)
+
     enum InterfaceMessageType {
         // Common Commands
         MessageTypeNone                                = 0x0000,
@@ -470,6 +490,25 @@ public:
     };
     Q_ENUM(Manufacturer)
 
+    enum ZigbeeNwkLayerStatus {
+        ZigbeeNwkLayerStatusJointNetwork = 0x00,
+        ZigbeeNwkLayerStatusFormedNetwork = 0x01,
+        ZigbeeNwkLayerStatusInvalidParameter = 0xc1,
+        ZigbeeNwkLayerStatusInvalidRequest = 0xc2,
+        ZigbeeNwkLayerStatusNotPermitted = 0xc3,
+        ZigbeeNwkLayerStatusStartupFailure = 0xc4,
+        ZigbeeNwkLayerStatusAlreadyPresent = 0xc5,
+        ZigbeeNwkLayerStatusSynchFailure = 0xc6,
+        ZigbeeNwkLayerStatusTableFull = 0xc7,
+        ZigbeeNwkLayerStatusUnknownDevice = 0xc8,
+        ZigbeeNwkLayerStatusUnsupportedAttribute = 0xc9,
+        ZigbeeNwkLayerStatusNoNetworks = 0xca,
+        ZigbeeNwkLayerStatusLeaveUnconfirmed = 0xcb,
+        ZigbeeNwkLayerStatusMaxFrmCntr = 0xcc,
+        ZigbeeNwkLayerStatusNoKey = 0xcd,
+        ZigbeeNwkLayerStatusBadCcmOutput = 0xce
+    };
+    Q_ENUM(ZigbeeNwkLayerStatus)
 
     ///* Manufacturer Codes */
     ///* Codes less than 0x1000 were issued for RF4CE */
@@ -1164,5 +1203,7 @@ public:
 
 
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Zigbee::ZigbeeChannels)
 
 #endif // ZIGBEE_H
