@@ -4,10 +4,10 @@ TARGET = nymea-zigbee1
 TEMPLATE = lib
 
 SOURCES += \
-    interface/zigbeeinterface.cpp \
-    interface/zigbeeinterfacemessage.cpp \
-    interface/zigbeeinterfacerequest.cpp \
-    interface/zigbeeinterfacereply.cpp \
+    nxp/interface/zigbeeinterface.cpp \
+    nxp/interface/zigbeeinterfacemessage.cpp \
+    nxp/interface/zigbeeinterfacerequest.cpp \
+    nxp/interface/zigbeeinterfacereply.cpp \
     nxp/zigbeenetworknxp.cpp \
     nxp/zigbeebridgecontrollernxp.cpp \
     zigbeecluster.cpp \
@@ -23,10 +23,10 @@ SOURCES += \
     zigbeeaddress.cpp \
 
 HEADERS += \
-    interface/zigbeeinterface.h \
-    interface/zigbeeinterfacemessage.h \
-    interface/zigbeeinterfacerequest.h \
-    interface/zigbeeinterfacereply.h \
+    nxp/interface/zigbeeinterface.h \
+    nxp/interface/zigbeeinterfacemessage.h \
+    nxp/interface/zigbeeinterfacerequest.h \
+    nxp/interface/zigbeeinterfacereply.h \
     nxp/zigbeenetworknxp.h \
     nxp/zigbeebridgecontrollernxp.h \
     zigbeecluster.h \

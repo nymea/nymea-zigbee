@@ -41,7 +41,7 @@ class ZigbeeNetwork : public QObject
 public:
     enum State {
         StateUninitialized,
-        StateDisconnected,
+        StateOffline,
         StateStarting,
         StateRunning,
         StateStopping
@@ -81,6 +81,9 @@ public:
     ZigbeeSecurityConfiguration securityConfiguration() const;
     void setSecurityConfiguration(const ZigbeeSecurityConfiguration &securityConfiguration);
 
+    bool permitJoining() const;
+    void setPermitJoining(bool permitJoining);
+
     QList<ZigbeeNode *> nodes() const;
 
     ZigbeeNode *coordinatorNode() const;
@@ -105,6 +108,7 @@ private:
     uint m_channel = 0;
     ZigbeeSecurityConfiguration m_securityConfiguration;
     ZigbeeNode::NodeType m_nodeType = ZigbeeNode::NodeTypeCoordinator;
+    bool m_permitJoining = false;
 
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
     QList<ZigbeeNode *> m_nodes;
@@ -124,8 +128,6 @@ protected:
     void addNode(ZigbeeNode *node);
     void addUnitializedNode(ZigbeeNode *node);
     void removeNode(ZigbeeNode *node);
-
-    ZigbeeNode *createNode();
 
     void setState(State state);
     void setError(Error error);

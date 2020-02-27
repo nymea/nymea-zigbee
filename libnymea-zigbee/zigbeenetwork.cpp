@@ -129,6 +129,21 @@ void ZigbeeNetwork::setSecurityConfiguration(const ZigbeeSecurityConfiguration &
     emit securityConfigurationChanged(m_securityConfiguration);
 }
 
+bool ZigbeeNetwork::permitJoining() const
+{
+    return m_permitJoining;
+}
+
+void ZigbeeNetwork::setPermitJoining(bool permitJoining)
+{
+    if (m_permitJoining == permitJoining)
+        return;
+
+    qCDebug(dcZigbeeNetwork()) << "Permit joining changed to" << permitJoining;
+    m_permitJoining = permitJoining;
+    emit permitJoiningChanged(m_permitJoining);
+}
+
 QList<ZigbeeNode *> ZigbeeNetwork::nodes() const
 {
     return m_nodes;
@@ -242,7 +257,7 @@ void ZigbeeNetwork::loadNetwork()
     foreach (const QString ieeeAddressString, settings.childGroups()) {
         settings.beginGroup(ieeeAddressString);
 
-        ZigbeeNode *node = createNode();
+        ZigbeeNode *node = new ZigbeeNode(this);
         node->setExtendedAddress(ZigbeeAddress(ieeeAddressString));
         node->setShortAddress(static_cast<quint16>(settings.value("nwkAddress", 0).toUInt()));
         node->setMacCapabilitiesFlag(static_cast<quint8>(settings.value("macCapabilitiesFlag", 0).toUInt()));
@@ -285,8 +300,8 @@ void ZigbeeNetwork::loadNetwork()
 //           settings.endGroup(); // clusterId
 //        }
 //        settings.endGroup(); // outputCluster
-
-        node->setState(StateInitialized);
+        //FIXME
+        //node->setState(StateInitialized);
         addNodeInternally(node);
 
         settings.endGroup(); // ieeeAddress

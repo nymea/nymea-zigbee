@@ -32,7 +32,7 @@
 #include <QTimer>
 #include <QSerialPort>
 
-#include "../zigbee.h"
+#include "../../zigbee.h"
 #include "zigbeeinterfacemessage.h"
 
 class ZigbeeInterface : public QObject

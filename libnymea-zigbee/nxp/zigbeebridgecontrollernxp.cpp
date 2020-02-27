@@ -25,31 +25,31 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeebridgecontroller.h"
+#include "zigbeebridgecontrollernxp.h"
 #include "loggingcategory.h"
 #include "zigbeeutils.h"
 
 #include <QDataStream>
 
-ZigbeeBridgeController::ZigbeeBridgeController(QObject *parent) :
+ZigbeeBridgeControllerNxp::ZigbeeBridgeControllerNxp(QObject *parent) :
     QObject(parent)
 {
     m_interface = new ZigbeeInterface(this);
-    connect(m_interface, &ZigbeeInterface::availableChanged, this, &ZigbeeBridgeController::availableChanged);
-    connect(m_interface, &ZigbeeInterface::messageReceived, this, &ZigbeeBridgeController::onMessageReceived);
+    connect(m_interface, &ZigbeeInterface::availableChanged, this, &ZigbeeBridgeControllerNxp::availableChanged);
+    connect(m_interface, &ZigbeeInterface::messageReceived, this, &ZigbeeBridgeControllerNxp::onMessageReceived);
 }
 
-ZigbeeBridgeController::~ZigbeeBridgeController()
+ZigbeeBridgeControllerNxp::~ZigbeeBridgeControllerNxp()
 {
     qCDebug(dcZigbeeController()) << "Destroy controller";
 }
 
-bool ZigbeeBridgeController::available() const
+bool ZigbeeBridgeControllerNxp::available() const
 {
     return m_interface->available();
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandResetController()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandResetController()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeReset, QByteArray()));
     request.setDescription("Reset controller");
@@ -58,7 +58,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandResetController()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandSoftResetController()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSoftResetController()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeZllFactoryNew, QByteArray()));
     request.setDescription("Soft reset controller");
@@ -67,7 +67,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandSoftResetController()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandErasePersistantData()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandErasePersistantData()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeErasePersistentData, QByteArray()));
     request.setDescription("Erase persistent data");
@@ -75,7 +75,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandErasePersistantData()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandGetVersion()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandGetVersion()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeGetVersion, QByteArray()));
     request.setDescription("Get version");
@@ -84,7 +84,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandGetVersion()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandSetExtendedPanId(quint64 extendedPanId)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSetExtendedPanId(quint64 extendedPanId)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -96,7 +96,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandSetExtendedPanId(quint64 ex
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandSetChannelMask(quint32 channelMask)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSetChannelMask(quint32 channelMask)
 {
     // Note: 10 < value < 27 -> using sinle channel value
     //       0x07fff800 select from all channels 11 - 26
@@ -116,7 +116,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandSetChannelMask(quint32 chan
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandSetNodeType(ZigbeeNode::NodeType nodeType)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSetNodeType(ZigbeeNode::NodeType nodeType)
 {
     quint8 deviceTypeValue = 0;
     if (nodeType == ZigbeeNode::NodeTypeEndDevice) {
@@ -146,7 +146,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandSetNodeType(ZigbeeNode::Nod
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandStartNetwork()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandStartNetwork()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeStartNetwork, QByteArray()));
     request.setDescription("Start network");
@@ -156,7 +156,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandStartNetwork()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandStartScan()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandStartScan()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeStartScan, QByteArray()));
     request.setDescription("Start scan");
@@ -166,7 +166,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandStartScan()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandPermitJoin(quint16 targetAddress, const quint8 advertisingIntervall, bool tcSignificance)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandPermitJoin(quint16 targetAddress, const quint8 advertisingIntervall, bool tcSignificance)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -180,7 +180,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandPermitJoin(quint16 targetAd
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandGetPermitJoinStatus()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandGetPermitJoinStatus()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeGetPermitJoining, QByteArray()));
     request.setDescription("Get permit joining status");
@@ -190,7 +190,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandGetPermitJoinStatus()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandRequestActiveEndpoints(quint16 shortAddress)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandRequestActiveEndpoints(quint16 shortAddress)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -204,7 +204,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandRequestActiveEndpoints(quin
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandRequestLinkQuality(quint16 shortAddress)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandRequestLinkQuality(quint16 shortAddress)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -219,7 +219,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandRequestLinkQuality(quint16 
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandEnableWhiteList()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandEnableWhiteList()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeNetworkWhitelistEnable, QByteArray()));
     request.setDescription("Enable whitelist");
@@ -227,7 +227,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandEnableWhiteList()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandInitiateTouchLink()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandInitiateTouchLink()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeInitiateTouchlink, QByteArray()));
     request.setDescription("Initiate touch link");
@@ -235,7 +235,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandInitiateTouchLink()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandTouchLinkFactoryReset()
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandTouchLinkFactoryReset()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeTouchlinkFactoryReset, QByteArray()));
     request.setDescription("Touch link factory reset");
@@ -243,7 +243,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandTouchLinkFactoryReset()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandNetworkAddressRequest(quint16 targetAddress, quint64 extendedAddress)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandNetworkAddressRequest(quint16 targetAddress, quint64 extendedAddress)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -260,7 +260,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandNetworkAddressRequest(quint
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandSetSecurityStateAndKey(quint8 keyState, quint8 keySequence, quint8 keyType, const QString &key)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSetSecurityStateAndKey(quint8 keyState, quint8 keySequence, quint8 keyType, const QString &key)
 {
     // Note: calls ZPS_vAplSecSetInitialSecurityState
 
@@ -287,7 +287,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandSetSecurityStateAndKey(quin
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandAuthenticateDevice(const ZigbeeAddress &ieeeAddress, const QString &key)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandAuthenticateDevice(const ZigbeeAddress &ieeeAddress, const QString &key)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -302,7 +302,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandAuthenticateDevice(const Zi
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandNodeDescriptorRequest(quint16 shortAddress)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandNodeDescriptorRequest(quint16 shortAddress)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -316,7 +316,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandNodeDescriptorRequest(quint
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandSimpleDescriptorRequest(quint16 shortAddress, quint8 endpoint)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSimpleDescriptorRequest(quint16 shortAddress, quint8 endpoint)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -331,7 +331,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandSimpleDescriptorRequest(qui
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandPowerDescriptorRequest(quint16 shortAddress)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandPowerDescriptorRequest(quint16 shortAddress)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -345,7 +345,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandPowerDescriptorRequest(quin
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::commandUserDescriptorRequest(quint16 shortAddress, quint16 address)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandUserDescriptorRequest(quint16 shortAddress, quint16 address)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
@@ -360,7 +360,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeController::commandUserDescriptorRequest(quint
     return sendRequest(request);
 }
 
-void ZigbeeBridgeController::sendMessage(ZigbeeInterfaceReply *reply)
+void ZigbeeBridgeControllerNxp::sendMessage(ZigbeeInterfaceReply *reply)
 {
     if (!reply)
         return;
@@ -372,7 +372,7 @@ void ZigbeeBridgeController::sendMessage(ZigbeeInterfaceReply *reply)
     reply->startTimer(reply->request().timeoutIntervall());
 }
 
-void ZigbeeBridgeController::onMessageReceived(const ZigbeeInterfaceMessage &message)
+void ZigbeeBridgeControllerNxp::onMessageReceived(const ZigbeeInterfaceMessage &message)
 {
     // Check if we have a current reply
     if (m_currentReply) {
@@ -412,7 +412,7 @@ void ZigbeeBridgeController::onMessageReceived(const ZigbeeInterfaceMessage &mes
 
 }
 
-void ZigbeeBridgeController::onReplyTimeout()
+void ZigbeeBridgeControllerNxp::onReplyTimeout()
 {
     m_currentReply->setFinished();
     m_currentReply = nullptr;
@@ -422,21 +422,21 @@ void ZigbeeBridgeController::onReplyTimeout()
 
 }
 
-bool ZigbeeBridgeController::enable(const QString &serialPort, qint32 baudrate)
+bool ZigbeeBridgeControllerNxp::enable(const QString &serialPort, qint32 baudrate)
 {
     return m_interface->enable(serialPort, baudrate);
 }
 
-void ZigbeeBridgeController::disable()
+void ZigbeeBridgeControllerNxp::disable()
 {
     m_interface->disable();
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeController::sendRequest(const ZigbeeInterfaceRequest &request)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::sendRequest(const ZigbeeInterfaceRequest &request)
 {
     // Create Reply
     ZigbeeInterfaceReply *reply = new ZigbeeInterfaceReply(request);
-    connect(reply, &ZigbeeInterfaceReply::timeout, this, &ZigbeeBridgeController::onReplyTimeout);
+    connect(reply, &ZigbeeInterfaceReply::timeout, this, &ZigbeeBridgeControllerNxp::onReplyTimeout);
 
     // If reply running, enqueue, else send request
     if (m_currentReply) {

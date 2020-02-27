@@ -33,12 +33,12 @@
 
 #include "zigbeeinterfacerequest.h"
 
-class ZigbeeBridgeController;
+class ZigbeeBridgeControllerNxp;
 
 class ZigbeeInterfaceReply : public QObject
 {
     Q_OBJECT
-    friend class ZigbeeBridgeController;
+    friend class ZigbeeBridgeControllerNxp;
 
 public:
     enum Status {
@@ -80,7 +80,7 @@ private:
     quint8 m_sequenceNumber;
     QString m_statusErrorMessage;
 
-    // Called by ZigbeeBridgeController
+    // Called by ZigbeeBridgeControllerNxp
     void setStatusMessage(const ZigbeeInterfaceMessage &statusMessage);
     void setAdditionalMessage(const ZigbeeInterfaceMessage &additionalMessage);
 

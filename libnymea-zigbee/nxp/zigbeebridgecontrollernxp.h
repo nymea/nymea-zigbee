@@ -38,12 +38,12 @@
 #include "interface/zigbeeinterfacerequest.h"
 #include "interface/zigbeeinterfacemessage.h"
 
-class ZigbeeBridgeController : public QObject
+class ZigbeeBridgeControllerNxp : public QObject
 {
     Q_OBJECT
 public:
-    explicit ZigbeeBridgeController(QObject *parent = nullptr);
-    ~ZigbeeBridgeController();
+    explicit ZigbeeBridgeControllerNxp(QObject *parent = nullptr);
+    ~ZigbeeBridgeControllerNxp();
 
     bool available() const;
 
