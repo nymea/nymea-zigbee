@@ -22,7 +22,6 @@ private:
         StartingStateSetSecurity,
         StartingStateSetNodeType,
         StartingStateStartNetwork,
-        StartingStateGetPermitJoinStatus,
         StartingStateReadeNodeDescriptor,
         StartingStateReadPowerDescriptor
     };
@@ -43,13 +42,9 @@ private slots:
     // Controller command finished slots
     void onCommandResetControllerFinished();
     void onCommandSoftResetControllerFinished();
-    void onCommandErasePersistentDataFinished();
-    void onCommandSetExtendedPanIdFinished();
-    void onCommandSetChannelMaskFinished();
-    void onCommandSetNodeTypeFinished();
     void onCommandStartNetworkFinished();
     void onCommandStartScanFinished();
-    void onCommandEnableWhitelistFinished();
+    //void onCommandEnableWhitelistFinished();
 
 //    void onCommandNodeDescriptorRequestFinished();
 //    void onCommandSimpleDescriptorRequestFinished();
@@ -60,9 +55,8 @@ private slots:
     void onCommandRequestLinkQualityFinished();
 
     void onCommandRequestMatchDescriptorFinished();
-    void onCommandSetSecurityFinished();
-    void onCommandNetworkAddressRequestFinished();
-    void onCommandAuthenticateDeviceFinished();
+//    void onCommandNetworkAddressRequestFinished();
+//    void onCommandAuthenticateDeviceFinished();
 
     // Process controller notifications/messages
     void processNetworkFormed(const ZigbeeInterfaceMessage &message);

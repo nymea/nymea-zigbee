@@ -45,18 +45,17 @@ public:
     };
     Q_ENUM(BackendType)
 
-    explicit ZigbeeNetworkManager(const QSerialPortInfo &serialPortInfo, QSerialPort::BaudRate baudrate, BackendType backendType, QObject *parent = nullptr);
+    explicit ZigbeeNetworkManager(const QString &serialPortName, qint32 baudrate, BackendType backendType, QObject *parent = nullptr);
 
-    QSerialPortInfo serialPortInfo() const;
-    QSerialPort::BaudRate baudrate() const;
+    QString serialPortName() const;
+    qint32 baudrate() const;
     BackendType backendType() const;
 
     ZigbeeNetwork *network() const;
 
-
 private:
-    QSerialPortInfo m_serialPortInfo;
-    QSerialPort::BaudRate m_baudrate;
+    QString m_serialPortName;
+    qint32 m_baudrate;
     BackendType m_backendType = BackendTypeNxp;
     ZigbeeNetwork *m_network = nullptr;
 

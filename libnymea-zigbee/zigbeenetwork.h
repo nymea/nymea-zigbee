@@ -75,8 +75,8 @@ public:
     quint64 extendedPanId() const;
     void setExtendedPanId(quint64 extendedPanId);
 
-    uint channel() const;
-    void setChannel(uint channel);
+    quint32 channel() const;
+    void setChannel(quint32 channel);
 
     ZigbeeSecurityConfiguration securityConfiguration() const;
     void setSecurityConfiguration(const ZigbeeSecurityConfiguration &securityConfiguration);
@@ -97,7 +97,6 @@ public:
 
 private:
     State m_state = StateUninitialized;
-    Error m_error = ErrorNoError;
 
     // Serial port configuration
     QString m_serialPortName = "/dev/ttyUSB0";
@@ -105,7 +104,7 @@ private:
 
     // Network configurations
     quint64 m_extendedPanId = 0;
-    uint m_channel = 0;
+    quint32 m_channel = 0;
     ZigbeeSecurityConfiguration m_securityConfiguration;
     ZigbeeNode::NodeType m_nodeType = ZigbeeNode::NodeTypeCoordinator;
     bool m_permitJoining = false;
@@ -118,12 +117,16 @@ private:
     void removeNodeInternally(ZigbeeNode *node);
 
 protected:
+    Error m_error = ErrorNoError;
+
     void saveNetwork();
     void loadNetwork();
     void clearSettings();
 
     void saveNode(ZigbeeNode *node);
     void removeNodeFromSettings(ZigbeeNode *node);
+
+    ZigbeeNode *createNode(QObject *parent);
 
     void addNode(ZigbeeNode *node);
     void addUnitializedNode(ZigbeeNode *node);

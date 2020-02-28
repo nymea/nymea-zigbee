@@ -170,6 +170,5 @@ QString ZigbeeUtils::profileIdToString(const Zigbee::ZigbeeProfile &profileId)
 quint64 ZigbeeUtils::generateRandomPanId()
 {
     // Note: the PAN ID has to be between 0x0000 and 0x3fff
-    qsrand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
     return static_cast<quint64>(rand() % (0x3fff - 1) + 1);
 }

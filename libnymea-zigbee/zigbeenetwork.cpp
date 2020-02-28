@@ -101,12 +101,12 @@ void ZigbeeNetwork::setExtendedPanId(quint64 extendedPanId)
     emit extendedPanIdChanged(m_extendedPanId);
 }
 
-uint ZigbeeNetwork::channel() const
+quint32 ZigbeeNetwork::channel() const
 {
     return m_channel;
 }
 
-void ZigbeeNetwork::setChannel(uint channel)
+void ZigbeeNetwork::setChannel(quint32 channel)
 {
     if (m_channel == channel)
         return;
@@ -244,10 +244,6 @@ void ZigbeeNetwork::loadNetwork()
 
     settings.beginGroup("Network");
     quint64 extendedPanId = static_cast<quint64>(settings.value("panId", 0).toULongLong());
-    if (extendedPanId == 0) {
-        extendedPanId = ZigbeeUtils::generateRandomPanId();
-        qCDebug(dcZigbeeNetwork()) << "Create new PAN ID" << extendedPanId;
-    }
     setExtendedPanId(extendedPanId);
     setChannel(settings.value("channel", 0).toUInt());
     settings.endGroup(); // Network
@@ -333,14 +329,6 @@ void ZigbeeNetwork::loadNetwork()
 
 void ZigbeeNetwork::clearSettings()
 {
-    qCDebug(dcZigbeeNetwork()) << "Clear network settings";
-
-    // Reset network configurations
-    m_extendedPanId = 0;
-    m_channel = 0;
-    m_securityConfiguration.clear();
-    m_nodeType = ZigbeeNode::NodeTypeCoordinator;
-
     qCDebug(dcZigbeeNetwork()) << "Remove zigbee nodes from network";
     foreach (ZigbeeNode *node, m_nodes) {
         removeNode(node);
@@ -349,6 +337,13 @@ void ZigbeeNetwork::clearSettings()
     qCDebug(dcZigbeeNetwork()) << "Clear network settings" << m_settingsFileName;
     QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
     settings.clear();
+
+    // Reset network configurations
+    qCDebug(dcZigbeeNetwork()) << "Clear network properties";
+    m_extendedPanId = 0;
+    m_channel = 0;
+    m_securityConfiguration.clear();
+    m_nodeType = ZigbeeNode::NodeTypeCoordinator;
 }
 
 void ZigbeeNetwork::saveNode(ZigbeeNode *node)
@@ -419,6 +414,11 @@ void ZigbeeNetwork::removeNodeFromSettings(ZigbeeNode *node)
     settings.endGroup();
 
     settings.endGroup(); // Nodes
+}
+
+ZigbeeNode *ZigbeeNetwork::createNode(QObject *parent)
+{
+    return new ZigbeeNode(parent);
 }
 
 void ZigbeeNetwork::addNode(ZigbeeNode *node)

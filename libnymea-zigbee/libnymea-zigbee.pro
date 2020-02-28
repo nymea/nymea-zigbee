@@ -10,6 +10,7 @@ SOURCES += \
     nxp/interface/zigbeeinterfacereply.cpp \
     nxp/zigbeenetworknxp.cpp \
     nxp/zigbeebridgecontrollernxp.cpp \
+    nxp/zigbeenodenxp.cpp \
     zigbeecluster.cpp \
     zigbeeclusterattribute.cpp \
     zigbeenetwork.cpp \
@@ -29,6 +30,7 @@ HEADERS += \
     nxp/interface/zigbeeinterfacereply.h \
     nxp/zigbeenetworknxp.h \
     nxp/zigbeebridgecontrollernxp.h \
+    nxp/zigbeenodenxp.h \
     zigbeecluster.h \
     zigbeeclusterattribute.h \
     zigbeenetwork.h \

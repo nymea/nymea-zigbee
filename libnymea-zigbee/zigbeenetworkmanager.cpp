@@ -35,27 +35,29 @@
 #include <QDataStream>
 #include <QSettings>
 
-ZigbeeNetworkManager::ZigbeeNetworkManager(const QSerialPortInfo &serialPortInfo, QSerialPort::BaudRate baudrate, BackendType backendType, QObject *parent) :
+ZigbeeNetworkManager::ZigbeeNetworkManager(const QString &serialPortName, qint32 baudrate, BackendType backendType, QObject *parent) :
     QObject(parent),
-    m_serialPortInfo(serialPortInfo),
+    m_serialPortName(serialPortName),
     m_baudrate(baudrate),
     m_backendType(backendType)
 {
+    srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
+
     switch (backendType) {
     case BackendTypeNxp:
         m_network = new ZigbeeNetworkNxp(this);
-        m_network->setSerialPortName(m_serialPortInfo.systemLocation());
-        m_network->setSerialBaudrate(static_cast<qint32>(baudrate));
+        m_network->setSerialPortName(m_serialPortName);
+        m_network->setSerialBaudrate(baudrate);
         break;
     }
 }
 
-QSerialPortInfo ZigbeeNetworkManager::serialPortInfo() const
+QString ZigbeeNetworkManager::serialPortName() const
 {
-    return m_serialPortInfo;
+    return m_serialPortName;
 }
 
-QSerialPort::BaudRate ZigbeeNetworkManager::baudrate() const
+qint32 ZigbeeNetworkManager::baudrate() const
 {
     return m_baudrate;
 }
