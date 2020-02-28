@@ -59,7 +59,7 @@ public:
     ZigbeeInterfaceReply *commandStartScan();
     ZigbeeInterfaceReply *commandPermitJoin(quint16 targetAddress = 0xfffc, const quint8 advertisingIntervall = 180, bool tcSignificance = false);
     ZigbeeInterfaceReply *commandGetPermitJoinStatus();
-    ZigbeeInterfaceReply *commandRequestActiveEndpoints(quint16 shortAddress);
+    ZigbeeInterfaceReply *commandActiveEndpointsRequest(quint16 shortAddress);
     ZigbeeInterfaceReply *commandRequestLinkQuality(quint16 shortAddress);
     ZigbeeInterfaceReply *commandEnableWhiteList();
     ZigbeeInterfaceReply *commandInitiateTouchLink();

@@ -39,7 +39,6 @@ class ZigbeeNode : public QObject
     Q_OBJECT
 
     friend class ZigbeeNetwork;
-    friend class ZigbeeNetworkManager;
 
 public:
     enum State {
@@ -146,7 +145,6 @@ public:
     PowerLevel powerLevel() const;
 
 private:
-    ZigbeeNode(QObject *parent = nullptr);
     bool m_connected = false;
     State m_state = StateUninitialized;
 
@@ -199,7 +197,8 @@ private:
     bool m_extendedActiveEndpointListAvailable = false;
     bool m_extendedSimpleDescriptorListAvailable = false;
 
-private:
+protected:
+    ZigbeeNode(QObject *parent = nullptr);
     void setState(State state);
     void setConnected(bool connected);
 
@@ -224,6 +223,9 @@ private:
     // Power decriptor data
     quint16 powerDescriptorFlag() const;
     void setPowerDescriptorFlag(quint16 powerDescriptorFlag);
+
+    //
+    virtual void startInitialization();
 
     // Cluster commands
     void setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute = ZigbeeClusterAttribute());

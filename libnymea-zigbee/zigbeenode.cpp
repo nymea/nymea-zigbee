@@ -493,6 +493,11 @@ void ZigbeeNode::setPowerDescriptorFlag(quint16 powerDescriptorFlag)
 
 }
 
+void ZigbeeNode::startInitialization()
+{
+    qCWarning(dcZigbeeNode()) << "Start initialization is not implemented for this backend.";
+}
+
 void ZigbeeNode::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeNode()) << this << "cluster attribute changed" << clusterId << attribute;

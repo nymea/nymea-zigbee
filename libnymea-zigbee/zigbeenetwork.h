@@ -94,7 +94,6 @@ public:
     bool hasNode(quint16 shortAddress) const;
     bool hasNode(const ZigbeeAddress &address) const;
 
-
 private:
     State m_state = StateUninitialized;
 
@@ -107,7 +106,6 @@ private:
     quint32 m_channel = 0;
     ZigbeeSecurityConfiguration m_securityConfiguration;
     ZigbeeNode::NodeType m_nodeType = ZigbeeNode::NodeTypeCoordinator;
-    bool m_permitJoining = false;
 
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
     QList<ZigbeeNode *> m_nodes;
@@ -118,6 +116,11 @@ private:
 
 protected:
     Error m_error = ErrorNoError;
+    ZigbeeNode *m_coordinatorNode = nullptr;
+    bool m_permitJoining = false;
+
+    virtual ZigbeeNode *createNode(QObject *parent) = 0;
+    virtual void setPermitJoiningInternal(bool permitJoining) = 0;
 
     void saveNetwork();
     void loadNetwork();
@@ -126,14 +129,14 @@ protected:
     void saveNode(ZigbeeNode *node);
     void removeNodeFromSettings(ZigbeeNode *node);
 
-    ZigbeeNode *createNode(QObject *parent);
-
     void addNode(ZigbeeNode *node);
     void addUnitializedNode(ZigbeeNode *node);
     void removeNode(ZigbeeNode *node);
 
     void setState(State state);
     void setError(Error error);
+
+    bool networkConfigurationAvailable() const;
 
 signals:
     void settingsFileNameChanged(const QString &settingsFileName);

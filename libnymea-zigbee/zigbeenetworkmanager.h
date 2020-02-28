@@ -35,32 +35,14 @@
 #include "zigbeenetwork.h"
 
 
-class ZigbeeNetworkManager : public QObject
+class ZigbeeNetworkManager
 {
-    Q_OBJECT
-
 public:
     enum BackendType {
         BackendTypeNxp
     };
-    Q_ENUM(BackendType)
 
-    explicit ZigbeeNetworkManager(const QString &serialPortName, qint32 baudrate, BackendType backendType, QObject *parent = nullptr);
-
-    QString serialPortName() const;
-    qint32 baudrate() const;
-    BackendType backendType() const;
-
-    ZigbeeNetwork *network() const;
-
-private:
-    QString m_serialPortName;
-    qint32 m_baudrate;
-    BackendType m_backendType = BackendTypeNxp;
-    ZigbeeNetwork *m_network = nullptr;
-
-private slots:
-
+    static ZigbeeNetwork *createZigbeeNetwork(BackendType backend, QObject *parent = nullptr);
 };
 
 #endif // ZIGBEEMANAGER_H

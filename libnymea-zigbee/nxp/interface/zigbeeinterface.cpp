@@ -222,7 +222,7 @@ void ZigbeeInterface::onReadyRead()
 void ZigbeeInterface::onError(const QSerialPort::SerialPortError &error)
 {
     if (error != QSerialPort::NoError && m_serialPort->isOpen()) {
-        qCCritical(dcZigbeeInterface()) << "Serial port error:" << error << m_serialPort->errorString();
+        qCWarning(dcZigbeeInterface()) << "Serial port error:" << error << m_serialPort->errorString();
         m_reconnectTimer->start();
         m_serialPort->close();
         setAvailable(false);

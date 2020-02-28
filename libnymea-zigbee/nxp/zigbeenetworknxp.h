@@ -35,6 +35,10 @@ private:
     void readControllerVersion();
     void readPermitJoinStatus();
 
+protected:
+    ZigbeeNode *createNode(QObject *parent) override;
+    void setPermitJoiningInternal(bool permitJoining) override;
+
 private slots:
     void onMessageReceived(const ZigbeeInterfaceMessage &message);
     void onControllerAvailableChanged(bool available);
@@ -42,7 +46,6 @@ private slots:
     // Controller command finished slots
     void onCommandResetControllerFinished();
     void onCommandSoftResetControllerFinished();
-    void onCommandStartNetworkFinished();
     void onCommandStartScanFinished();
     //void onCommandEnableWhitelistFinished();
 

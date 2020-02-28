@@ -27,47 +27,18 @@
 
 #include "zigbeenetworkmanager.h"
 #include "loggingcategory.h"
-#include "zigbeeutils.h"
 
 #include "nxp/zigbeenetworknxp.h"
 
 #include <QDateTime>
-#include <QDataStream>
-#include <QSettings>
 
-ZigbeeNetworkManager::ZigbeeNetworkManager(const QString &serialPortName, qint32 baudrate, BackendType backendType, QObject *parent) :
-    QObject(parent),
-    m_serialPortName(serialPortName),
-    m_baudrate(baudrate),
-    m_backendType(backendType)
+ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(ZigbeeNetworkManager::BackendType backend, QObject *parent)
 {
     srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
-
-    switch (backendType) {
+    switch (backend) {
     case BackendTypeNxp:
-        m_network = new ZigbeeNetworkNxp(this);
-        m_network->setSerialPortName(m_serialPortName);
-        m_network->setSerialBaudrate(baudrate);
-        break;
+        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));
     }
-}
 
-QString ZigbeeNetworkManager::serialPortName() const
-{
-    return m_serialPortName;
-}
-
-qint32 ZigbeeNetworkManager::baudrate() const
-{
-    return m_baudrate;
-}
-
-ZigbeeNetworkManager::BackendType ZigbeeNetworkManager::backendType() const
-{
-    return m_backendType;
-}
-
-ZigbeeNetwork *ZigbeeNetworkManager::network() const
-{
-    return m_network;
+    return nullptr;
 }

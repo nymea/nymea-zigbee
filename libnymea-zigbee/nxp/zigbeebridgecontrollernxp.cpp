@@ -190,7 +190,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandGetPermitJoinStatus()
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandRequestActiveEndpoints(quint16 shortAddress)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandActiveEndpointsRequest(quint16 shortAddress)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
