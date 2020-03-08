@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -32,6 +32,7 @@
 #include <QSettings>
 
 #include "zigbeenode.h"
+#include "zigbeebridgecontroller.h"
 #include "zigbeesecurityconfiguration.h"
 
 class ZigbeeNetwork : public QObject
@@ -63,6 +64,8 @@ public:
 
     QString settingsFilenName() const;
     void setSettingsFileName(const QString &settingsFileName);
+
+    virtual ZigbeeBridgeController *bridgeController() const = 0;
 
     // Serial port configuration
     QString serialPortName() const;
@@ -104,7 +107,6 @@ private:
     // Network configurations
     quint64 m_extendedPanId = 0;
     quint32 m_channel = 0;
-    ZigbeeSecurityConfiguration m_securityConfiguration;
     ZigbeeNode::NodeType m_nodeType = ZigbeeNode::NodeTypeCoordinator;
 
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
@@ -118,6 +120,7 @@ protected:
     Error m_error = ErrorNoError;
     ZigbeeNode *m_coordinatorNode = nullptr;
     bool m_permitJoining = false;
+    ZigbeeSecurityConfiguration m_securityConfiguration;
 
     virtual ZigbeeNode *createNode(QObject *parent) = 0;
     virtual void setPermitJoiningInternal(bool permitJoining) = 0;
@@ -161,8 +164,12 @@ private slots:
 public slots:
     virtual void startNetwork() = 0;
     virtual void stopNetwork() = 0;
+    virtual void reset() = 0;
     virtual void factoryResetNetwork() = 0;
 
 };
+
+QDebug operator<<(QDebug debug, ZigbeeNetwork *network);
+
 
 #endif // ZIGBEENETWORK_H

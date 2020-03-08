@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -31,16 +31,6 @@
 
 #include <QDataStream>
 
-/* Node initialisation steps (sequentially)
- * - Authenticate
- * - Node descriptor
- * - Power descriptor
- * - Active endpoints
- * - for each endpoint do:
- *    * Simple descriptor request
- */
-
-
 ZigbeeNode::ZigbeeNode(QObject *parent) :
     QObject(parent)
 {
@@ -67,9 +57,25 @@ ZigbeeAddress ZigbeeNode::extendedAddress() const
     return m_extendedAddress;
 }
 
-QList<quint8> ZigbeeNode::endPoints() const
+QList<ZigbeeNodeEndpoint *> ZigbeeNode::endpoints() const
 {
-    return m_endPoints;
+    return m_endpoints;
+}
+
+bool ZigbeeNode::hasEndpoint(quint8 endpointId) const
+{
+    return getEndpoint(endpointId) != nullptr;
+}
+
+ZigbeeNodeEndpoint *ZigbeeNode::getEndpoint(quint8 endpointId) const
+{
+    foreach (ZigbeeNodeEndpoint *endpoint, m_endpoints) {
+        if (endpoint->endpointId() == endpointId) {
+            return endpoint;
+        }
+    }
+
+    return nullptr;
 }
 
 ZigbeeNode::NodeType ZigbeeNode::nodeType() const
@@ -116,7 +122,6 @@ quint8 ZigbeeNode::maximumBufferSize() const
 {
     return m_maximumBufferSize;
 }
-
 
 bool ZigbeeNode::isPrimaryTrustCenter() const
 {
@@ -279,11 +284,6 @@ void ZigbeeNode::setExtendedAddress(const ZigbeeAddress &extendedAddress)
     m_extendedAddress = extendedAddress;
 }
 
-void ZigbeeNode::setEndPoints(QList<quint8> endPoints)
-{
-    m_endPoints = endPoints;
-}
-
 QByteArray ZigbeeNode::nodeDescriptorRawData() const
 {
     return m_nodeDescriptorRawData;
@@ -427,6 +427,8 @@ void ZigbeeNode::setPowerDescriptorFlag(quint16 powerDescriptorFlag)
 {
     m_powerDescriptorFlag = powerDescriptorFlag;
 
+    qCDebug(dcZigbeeNode()) << "Parse power descriptor flag" << ZigbeeUtils::convertUint16ToHexString(m_powerDescriptorFlag);
+
     // Bit 0 - 3 Power mode
     // 0000: Receiver configured according to “Receiver on when idle” MAC flag in the Node Descriptor
     // 0001: Receiver switched on periodically
@@ -490,7 +492,6 @@ void ZigbeeNode::setPowerDescriptorFlag(quint16 powerDescriptorFlag)
     }
     qCDebug(dcZigbeeNode()) << "    Power source:" << m_powerSource;
     qCDebug(dcZigbeeNode()) << "    Power level:" << m_powerLevel;
-
 }
 
 void ZigbeeNode::startInitialization()
@@ -498,29 +499,29 @@ void ZigbeeNode::startInitialization()
     qCWarning(dcZigbeeNode()) << "Start initialization is not implemented for this backend.";
 }
 
-void ZigbeeNode::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
-{
-    qCDebug(dcZigbeeNode()) << this << "cluster attribute changed" << clusterId << attribute;
-//    ZigbeeCluster *cluster = m_outputClusters.value(clusterId);
+//void ZigbeeNode::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
+//{
+//    qCDebug(dcZigbeeNode()) << this << "cluster attribute changed" << clusterId << attribute;
+////    ZigbeeCluster *cluster = m_outputClusters.value(clusterId);
 
-//    // Note: create the cluster if not there yet
-//    bool clusterCreated = false;
-//    if (!cluster) {
-//        cluster = new ZigbeeCluster(clusterId, this);
-//        qCDebug(dcZigbeeNode()) << "Created cluster" << cluster;
-//        connect(cluster, &ZigbeeCluster::attributeChanged, this, &ZigbeeNode::onClusterAttributeChanged);
-//        m_outputClusters.insert(clusterId, cluster);
-//        clusterCreated = true;
-//    }
+////    // Note: create the cluster if not there yet
+////    bool clusterCreated = false;
+////    if (!cluster) {
+////        cluster = new ZigbeeCluster(clusterId, this);
+////        qCDebug(dcZigbeeNode()) << "Created cluster" << cluster;
+////        connect(cluster, &ZigbeeCluster::attributeChanged, this, &ZigbeeNode::onClusterAttributeChanged);
+////        m_outputClusters.insert(clusterId, cluster);
+////        clusterCreated = true;
+////    }
 
-//    // Set the attribute if valid
-//    if (attribute.isValid())
-//        cluster->setAttribute(attribute);
+////    // Set the attribute if valid
+////    if (attribute.isValid())
+////        cluster->setAttribute(attribute);
 
-//    if (clusterCreated)
-//        emit clusterAdded(cluster);
+////    if (clusterCreated)
+////        emit clusterAdded(cluster);
 
-}
+//}
 
 void ZigbeeNode::onClusterAttributeChanged(const ZigbeeClusterAttribute &attribute)
 {
@@ -586,15 +587,6 @@ QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {
     debug.nospace().noquote() << "ZigbeeNode(" << ZigbeeUtils::convertUint16ToHexString(node->shortAddress());
     debug.nospace().noquote() << ", " << node->extendedAddress().toString();
-//    debug.nospace().noquote() << ", End points: ";
-
-//    for (int i = 0; i < node->endPoints().count(); i++) {
-//        debug.nospace().noquote() << ZigbeeUtils::convertByteToHexString(node->endPoints().at(i));
-//        if (i != node->endPoints().count() - 1 && node->endPoints().count() > 1) {
-//            debug.nospace().noquote() << ", ";
-//        }
-//    }
-
-    debug.nospace().noquote() << ") ";
-    return debug;
+    debug.nospace().noquote() << ")";
+    return debug.space();
 }

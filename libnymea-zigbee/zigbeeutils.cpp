@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -171,4 +171,9 @@ quint64 ZigbeeUtils::generateRandomPanId()
 {
     // Note: the PAN ID has to be between 0x0000 and 0x3fff
     return static_cast<quint64>(rand() % (0x3fff - 1) + 1);
+}
+
+QPointF ZigbeeUtils::convertColorToXY(const QColor &color)
+{
+    floar r = color.red()
 }

@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -31,8 +31,8 @@
 #include <QObject>
 
 #include "zigbee.h"
-#include "zigbeecluster.h"
 #include "zigbeeaddress.h"
+#include "zigbeenodeendpoint.h"
 
 class ZigbeeNode : public QObject
 {
@@ -102,7 +102,10 @@ public:
 
     quint16 shortAddress() const;
     ZigbeeAddress extendedAddress() const;
-    QList<quint8> endPoints() const;
+
+    QList<ZigbeeNodeEndpoint *> endpoints() const;
+    bool hasEndpoint(quint8 endpointId) const;
+    ZigbeeNodeEndpoint *getEndpoint(quint8 endpointId) const;
 
     // Information from node descriptor
     NodeType nodeType() const;
@@ -150,7 +153,6 @@ private:
 
     quint16 m_shortAddress = 0;
     ZigbeeAddress m_extendedAddress;
-    QList<quint8> m_endPoints;
 
     // Node descriptor information
     QByteArray m_nodeDescriptorRawData;
@@ -199,12 +201,14 @@ private:
 
 protected:
     ZigbeeNode(QObject *parent = nullptr);
+
+    QList<ZigbeeNodeEndpoint *> m_endpoints;
+
     void setState(State state);
     void setConnected(bool connected);
 
     void setShortAddress(const quint16 &shortAddress);
     void setExtendedAddress(const ZigbeeAddress &extendedAddress);
-    void setEndPoints(QList<quint8> endPoints);
 
     // Note: node descriptor properties (raw data for settings)
     QByteArray nodeDescriptorRawData() const;
@@ -224,11 +228,9 @@ protected:
     quint16 powerDescriptorFlag() const;
     void setPowerDescriptorFlag(quint16 powerDescriptorFlag);
 
-    //
+    // This method starts the node initialization phase (read descriptors and endpoints)
     virtual void startInitialization();
-
-    // Cluster commands
-    void setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute = ZigbeeClusterAttribute());
+    virtual ZigbeeNodeEndpoint *createNodeEndpoint(quint8 endpointId, QObject *parent) = 0;
 
 signals:
     void stateChanged(State state);

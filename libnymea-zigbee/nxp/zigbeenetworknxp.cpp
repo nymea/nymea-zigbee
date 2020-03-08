@@ -1,15 +1,52 @@
-#include "zigbeenetworknxp.h"
-#include "../loggingcategory.h"
-#include "../zigbeeutils.h"
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*
+* Copyright 2013 - 2020, nymea GmbH
+* Contact: contact@nymea.io
+*
+* This file is part of nymea-zigbee.
+* This project including source code and documentation is protected by copyright law, and
+* remains the property of nymea GmbH. All rights, including reproduction, publication,
+* editing and translation, are reserved. The use of this project is subject to the terms of a
+* license agreement to be concluded with nymea GmbH in accordance with the terms
+* of use of nymea GmbH, available under https://nymea.io/license
+*
+* GNU Lesser General Public License Usage
+* Alternatively, this project may be redistributed and/or modified under the terms of the GNU
+* Lesser General Public License as published by the Free Software Foundation; version 3.
+* this project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU Lesser General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public License along with this project.
+* If not, see <https://www.gnu.org/licenses/>.
+*
+* For any further details and any questions please contact us under contact@nymea.io
+* or see our FAQ/Licensing Information on https://nymea.io/license/faq
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+#include "zigbeenodeendpointnxp.h"
+#include "zigbeenetworknxp.h"
+#include "loggingcategory.h"
 #include "zigbeenodenxp.h"
+#include "zigbeeutils.h"
 
 #include <QDataStream>
 
 ZigbeeNetworkNxp::ZigbeeNetworkNxp(QObject *parent) :
     ZigbeeNetwork(parent)
 {
+    m_controller = new ZigbeeBridgeControllerNxp(this);
+    connect(m_controller, &ZigbeeBridgeControllerNxp::messageReceived, this, &ZigbeeNetworkNxp::onMessageReceived);
+    connect(m_controller, &ZigbeeBridgeControllerNxp::availableChanged, this, &ZigbeeNetworkNxp::onControllerAvailableChanged);
+}
 
+ZigbeeBridgeController *ZigbeeNetworkNxp::bridgeController() const
+{
+    if (m_controller)
+        return qobject_cast<ZigbeeBridgeController *>(m_controller);
+
+    return nullptr;
 }
 
 void ZigbeeNetworkNxp::setStartingState(ZigbeeNetworkNxp::StartingState state)
@@ -32,24 +69,17 @@ void ZigbeeNetworkNxp::setStartingState(ZigbeeNetworkNxp::StartingState state)
             if (reply->status() != ZigbeeInterfaceReply::Success) {
                 qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
                 // TODO: check error handling
-                return;
+                //return;
             }
 
             m_factoryResetting = false;
             qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
-            setStartingState(StartingStateReset);
+            setStartingState(StartingStateGetVersion);
         });
         break;
     }
     case StartingStateReset: {
         m_networkRunning = false;
-
-        //        qCDebug(dcZigbeeNetwork()) << "";
-        //        ZigbeeInterfaceReply *reply = m_controller->commandSoftResetController();
-        //        connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply](){
-        //            reply->deleteLater();
-
-        //        });
         qCDebug(dcZigbeeNetwork()) << "Starting state changed: Reset controller";
         ZigbeeInterfaceReply *reply = m_controller->commandResetController();
         connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
@@ -124,17 +154,30 @@ void ZigbeeNetworkNxp::setStartingState(ZigbeeNetworkNxp::StartingState state)
     }
     case StartingStateSetSecurity: {
         qCDebug(dcZigbeeNetwork()) << "Starting state changed: Set security configuration";
-        ZigbeeInterfaceReply *reply = m_controller->commandSetSecurityStateAndKey(4, 0, 1, "5A6967426565416C6C69616E63653039");
+
+        qCDebug(dcZigbeeNetwork()) << "Set global trust center link key" << securityConfiguration().globalTrustCenterLinkKey();
+        ZigbeeInterfaceReply *reply = m_controller->commandSetSecurityStateAndKey(4, 0, 1, securityConfiguration().globalTrustCenterLinkKey().toByteArray());
         connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply](){
             reply->deleteLater();
 
             if (reply->status() != ZigbeeInterfaceReply::Success) {
                 qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
-                return;
             }
 
             qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
-            setStartingState(StartingStateSetNodeType);
+
+            qCDebug(dcZigbeeNetwork()) << "Set network link key" << securityConfiguration().networkKey();
+            ZigbeeInterfaceReply *reply2 = m_controller->commandSetSecurityStateAndKey(3, 0, 1, securityConfiguration().networkKey().toByteArray());
+            connect(reply2, &ZigbeeInterfaceReply::finished, this, [this, reply2](){
+                reply2->deleteLater();
+
+                if (reply2->status() != ZigbeeInterfaceReply::Success) {
+                    qCWarning(dcZigbeeController()) << "Could not" << reply2->request().description() << reply2->status() << reply2->statusErrorMessage();
+                }
+
+                qCDebug(dcZigbeeController()) << reply2->request().description() << "finished successfully";
+                setStartingState(StartingStateSetNodeType);
+            });
         });
         break;
     }
@@ -171,18 +214,6 @@ void ZigbeeNetworkNxp::setStartingState(ZigbeeNetworkNxp::StartingState state)
         });
         break;
     }
-    case StartingStateReadeNodeDescriptor: {
-        qCDebug(dcZigbeeNetwork()) << "Starting state changed: Read coordinator node descriptor";
-        //ZigbeeInterfaceReply *reply = m_controller->commandNodeDescriptorRequest(0x0000);
-        //connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkNxp::onCommandNodeDescriptorRequestFinished);
-        break;
-    }
-    case StartingStateReadPowerDescriptor: {
-        qCDebug(dcZigbeeNetwork()) << "Starting state changed: Read coordinator power descriptor";
-        //ZigbeeInterfaceReply *reply = m_controller->commandPowerDescriptorRequest(0x0000);
-        //connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkNxp::onCommandPowerDescriptorRequestFinished);
-        break;
-    }
     }
 }
 
@@ -208,11 +239,11 @@ void ZigbeeNetworkNxp::readControllerVersion()
         quint16 majorVersion = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(0, 2));
         quint16 minorVersion = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(2, 2));
 
-        //m_controllerFirmwareVersion = QString("%1.%2").arg(majorVersion).arg(minorVersion);
         qCDebug(dcZigbeeNetwork()) << "Controller version:" << QString("%1.%2").arg(majorVersion).arg(minorVersion);
-
+        m_controller->setFirmwareVersionString(QString("%1.%2").arg(majorVersion).arg(minorVersion));
         if (m_startingState == StartingStateGetVersion)
             setStartingState(StartingStateSetPanId);
+
     });
 }
 
@@ -241,6 +272,10 @@ ZigbeeNode *ZigbeeNetworkNxp::createNode(QObject *parent)
 
 void ZigbeeNetworkNxp::setPermitJoiningInternal(bool permitJoining)
 {
+
+//    ZigbeeInterfaceReply *replyGroup = m_controller->commandAddGroup(0x00, 0x0000, 0x01, 0x01, 0x0001);
+//    connect(replyGroup, &ZigbeeInterfaceReply::finished, replyGroup, &ZigbeeInterfaceReply::deleteLater);
+
     // Note: 0xfffc = all routers
     qCDebug(dcZigbeeNetwork()) << "Send request to" << (permitJoining ? "enable" : "disable") << "permit joining network.";
     ZigbeeInterfaceReply *reply = m_controller->commandPermitJoin(0xfffc, (permitJoining ? 255 : 0));
@@ -344,12 +379,6 @@ void ZigbeeNetworkNxp::onCommandRequestLinkQualityFinished()
         qCDebug(dcZigbeeNetwork()) << "        Depth:" << depth;
         qCDebug(dcZigbeeNetwork()) << "        Link quality:" << linkQuality;
         qCDebug(dcZigbeeNetwork()) << "        BitMap:" << ZigbeeUtils::convertByteToHexString(bitMap);
-
-        //        foreach (ZigbeeNode *node, nodes()) {
-        //            if (node->extendedAddress() == ZigbeeAddress(ieeeAddress)) {
-        //                node->setShortAddress(shortAddress);
-        //            }
-        //        }
     }
 }
 
@@ -543,13 +572,46 @@ void ZigbeeNetworkNxp::processDeviceAnnounce(const ZigbeeInterfaceMessage &messa
     node->setShortAddress(shortAddress);
     node->setExtendedAddress(ZigbeeAddress(ieeeAddress));
     node->setMacCapabilitiesFlag(macCapabilitiesFlag);
-    qCDebug(dcZigbeeNetwork()) << "Node:" << node;
+
     node->startInitialization();
     addUnitializedNode(node);
 
-    //    ZigbeeInterfaceReply *reply = nullptr;
-    //    reply = m_controller->commandAuthenticateDevice(node->extendedAddress(), securityConfiguration().globalTrustCenterLinkKey());
-    //    connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNetworkNxp::onCommandAuthenticateDeviceFinished);
+//    qCDebug(dcZigbeeNetwork()) << "Start authenticating" << node;
+//    ZigbeeInterfaceReply *reply = m_controller->commandAuthenticateDevice(node->extendedAddress(), securityConfiguration().networkKey().toByteArray());
+//    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, node](){
+//        reply->deleteLater();
+
+//        if (reply->status() != ZigbeeInterfaceReply::Success) {
+//            qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+//            return;
+//        }
+
+//        qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+//        qCDebug(dcZigbeeController()) << reply->additionalMessage();
+
+//        quint64 gatewayIeeeAddress = ZigbeeUtils::convertByteArrayToUint64(reply->additionalMessage().data().mid(0, 8));
+//        QString encryptedKey = reply->additionalMessage().data().mid(8, 16).toHex();
+//        QByteArray mic = reply->additionalMessage().data().mid(24, 4);
+//        quint64 initiatorIeeeAddress = ZigbeeUtils::convertByteArrayToUint64(reply->additionalMessage().data().mid(28, 8));
+//        quint8 activeKeySequenceNumber = static_cast<quint8>(reply->additionalMessage().data().at(36));
+//        quint8 channel = static_cast<quint8>(reply->additionalMessage().data().at(37));
+//        quint16 shortPan = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(38, 2));
+//        quint64 extendedPanId = ZigbeeUtils::convertByteArrayToUint64(reply->additionalMessage().data().mid(40, 8));
+
+//        qCDebug(dcZigbeeNetwork()) << "Authentication response for" << node;
+//        qCDebug(dcZigbeeNetwork()) << "    Gateways address:" << ZigbeeAddress(gatewayIeeeAddress);
+//        qCDebug(dcZigbeeNetwork()) << "    Key:" << ZigbeeNetworkKey(encryptedKey).toString();
+//        qCDebug(dcZigbeeNetwork()) << "    MIC:" << mic.toHex();
+//        qCDebug(dcZigbeeNetwork()) << "    Initiator address:" << ZigbeeAddress(initiatorIeeeAddress);
+//        qCDebug(dcZigbeeNetwork()) << "    Active key sequence number:" << activeKeySequenceNumber;
+//        qCDebug(dcZigbeeNetwork()) << "    Channel:" << channel;
+//        qCDebug(dcZigbeeNetwork()) << "    Short PAN ID:" << ZigbeeUtils::convertUint16ToHexString(shortPan);
+//        qCDebug(dcZigbeeNetwork()) << "    Extended PAN ID:" << extendedPanId << ZigbeeUtils::convertUint64ToHexString(extendedPanId);
+
+//        node->startInitialization();
+//        addUnitializedNode(node);
+//    });
+
 
 }
 
@@ -558,7 +620,7 @@ void ZigbeeNetworkNxp::processAttributeReport(const ZigbeeInterfaceMessage &mess
     QByteArray data = message.data();
     quint8 sequenceNumber = 0;
     quint16 sourceAddress = 0;
-    quint8 endPoint = 0;
+    quint8 endpointId = 0;
     quint16 clusterId = 0;
     quint16 attributeId = 0;
     quint8 attributeStatus = 0;
@@ -566,7 +628,7 @@ void ZigbeeNetworkNxp::processAttributeReport(const ZigbeeInterfaceMessage &mess
     quint16 dataSize = 0;
 
     QDataStream stream(&data, QIODevice::ReadOnly);
-    stream >> sequenceNumber >> sourceAddress >> endPoint >> clusterId >> attributeId >> attributeStatus >> attributDataType >> dataSize;
+    stream >> sequenceNumber >> sourceAddress >> endpointId >> clusterId >> attributeId >> attributeStatus >> attributDataType >> dataSize;
 
     Zigbee::DataType dataType = static_cast<Zigbee::DataType>(attributDataType);
     QByteArray attributeData = data.right(dataSize);
@@ -577,7 +639,7 @@ void ZigbeeNetworkNxp::processAttributeReport(const ZigbeeInterfaceMessage &mess
         // Repars data without attribute status
         sequenceNumber = 0;
         sourceAddress = 0;
-        endPoint = 0;
+        endpointId = 0;
         clusterId = 0;
         attributeId = 0;
         attributeStatus = 0;
@@ -585,7 +647,7 @@ void ZigbeeNetworkNxp::processAttributeReport(const ZigbeeInterfaceMessage &mess
         dataSize = 0;
 
         QDataStream alternativeStream(&data, QIODevice::ReadOnly);
-        alternativeStream >> sequenceNumber >> sourceAddress >> endPoint >> clusterId >> attributeId >> attributDataType >> dataSize;
+        alternativeStream >> sequenceNumber >> sourceAddress >> endpointId >> clusterId >> attributeId >> attributDataType >> dataSize;
 
         dataType = static_cast<Zigbee::DataType>(attributDataType);
         attributeData = data.right(dataSize);
@@ -594,9 +656,10 @@ void ZigbeeNetworkNxp::processAttributeReport(const ZigbeeInterfaceMessage &mess
     qCDebug(dcZigbeeNetwork()) << "Attribute report:";
     qCDebug(dcZigbeeNetwork()) << "    SQN:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
     qCDebug(dcZigbeeNetwork()) << "    Source address:" << ZigbeeUtils::convertUint16ToHexString(sourceAddress);
-    qCDebug(dcZigbeeNetwork()) << "    End point:" << ZigbeeUtils::convertByteToHexString(endPoint);
+    qCDebug(dcZigbeeNetwork()) << "    End point:" << ZigbeeUtils::convertByteToHexString(endpointId);
     qCDebug(dcZigbeeNetwork()) << "    Cluster:" << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
     qCDebug(dcZigbeeNetwork()) << "    Attribut id:" << ZigbeeUtils::convertUint16ToHexString(attributeId);
+    qCDebug(dcZigbeeNetwork()) << "    Attribut status:" <<  static_cast<Zigbee::ZigbeeStatus>(attributeStatus);
     qCDebug(dcZigbeeNetwork()) << "    Attribut data type:" << dataType;
     qCDebug(dcZigbeeNetwork()) << "    Attribut size:" << dataSize;
     qCDebug(dcZigbeeNetwork()) << "    Data:" << ZigbeeUtils::convertByteArrayToHexString(attributeData);
@@ -612,14 +675,95 @@ void ZigbeeNetworkNxp::processAttributeReport(const ZigbeeInterfaceMessage &mess
         break;
     }
 
-    // FIXME
-    //    ZigbeeNode *node = getZigbeeNode(sourceAddress);
-    //    if (!node) {
-    //        qCWarning(dcZigbeeNode()) << "Received an attribute report from an unknown node. Ignoring data.";
-    //        return;
-    //    }
+    ZigbeeNode *node = getZigbeeNode(sourceAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNode()) << "Received an attribute report from an unknown node. Ignoring data.";
+        return;
+    }
 
-    //    node->setClusterAttribute(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeClusterAttribute(attributeId, dataType, attributeData));
+    ZigbeeNodeEndpointNxp *endpoint = qobject_cast<ZigbeeNodeEndpointNxp *>(node->getEndpoint(endpointId));
+    if (!endpoint) {
+        qCWarning(dcZigbeeNetwork()) << "There is no endpoint for this attribute report.";
+        return;
+    }
+
+    endpoint->setClusterAttribute(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeClusterAttribute(attributeId, dataType, attributeData));
+}
+
+void ZigbeeNetworkNxp::processReadAttributeResponse(const ZigbeeInterfaceMessage &message)
+{
+    QByteArray data = message.data();
+
+    quint8 sequenceNumber = 0;
+    quint16 sourceAddress = 0;
+    quint8 endpointId = 0;
+    quint16 clusterId = 0;
+    quint16 attributeId = 0;
+    quint8 attributeStatus = 0;
+    quint8 attributDataType = 0;
+    quint16 dataSize = 0;
+
+    QDataStream stream(&data, QIODevice::ReadOnly);
+    stream >> sequenceNumber >> sourceAddress >> endpointId >> clusterId >> attributeId >> attributeStatus >> attributDataType >> dataSize;
+
+    Zigbee::DataType dataType = static_cast<Zigbee::DataType>(attributDataType);
+    QByteArray attributeData = data.right(dataSize);
+
+    if (attributeData.length() != dataSize) {
+        qCWarning(dcZigbeeNetwork()) << "HACK" << attributeData.length() << "!=" << dataSize;
+        // Note: the NXP firmware for JN5169 has a bug here and does not send the attributeStatus.
+        // Repars data without attribute status
+        sequenceNumber = 0;
+        sourceAddress = 0;
+        endpointId = 0;
+        clusterId = 0;
+        attributeId = 0;
+        attributeStatus = 0;
+        attributDataType = 0;
+        dataSize = 0;
+
+        QDataStream alternativeStream(&data, QIODevice::ReadOnly);
+        alternativeStream >> sequenceNumber >> sourceAddress >> endpointId >> clusterId >> attributeId >> attributDataType >> dataSize;
+
+        dataType = static_cast<Zigbee::DataType>(attributDataType);
+        attributeData = data.right(dataSize);
+    }
+
+    qCDebug(dcZigbeeNetwork()) << "Attribute read response:";
+    qCDebug(dcZigbeeNetwork()) << "    SQN:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
+    qCDebug(dcZigbeeNetwork()) << "    Source address:" << ZigbeeUtils::convertUint16ToHexString(sourceAddress);
+    qCDebug(dcZigbeeNetwork()) << "    End point:" << ZigbeeUtils::convertByteToHexString(endpointId);
+    qCDebug(dcZigbeeNetwork()) << "    Cluster:" << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
+    qCDebug(dcZigbeeNetwork()) << "    Attribut id:" << ZigbeeUtils::convertUint16ToHexString(attributeId);
+    qCDebug(dcZigbeeNetwork()) << "    Attribut status:" <<  static_cast<Zigbee::ZigbeeStatus>(attributeStatus);
+    qCDebug(dcZigbeeNetwork()) << "    Attribut data type:" << dataType;
+    qCDebug(dcZigbeeNetwork()) << "    Attribut size:" << dataSize;
+    qCDebug(dcZigbeeNetwork()) << "    Data:" << ZigbeeUtils::convertByteArrayToHexString(attributeData);
+
+    switch (dataType) {
+    case Zigbee::CharString:
+        qCDebug(dcZigbeeNetwork()) << "    Data(converted)" << QString::fromUtf8(attributeData);
+        break;
+    case Zigbee::Bool:
+        qCDebug(dcZigbeeNetwork()) << "    Data(converted)" << static_cast<bool>(attributeData.at(0));
+        break;
+    default:
+        break;
+    }
+
+    ZigbeeNode *node = getZigbeeNode(sourceAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNode()) << "Received an attribute report from an unknown node. Ignoring data.";
+        return;
+    }
+
+    ZigbeeNodeEndpointNxp *endpoint = qobject_cast<ZigbeeNodeEndpointNxp *>(node->getEndpoint(endpointId));
+    if (!endpoint) {
+        qCWarning(dcZigbeeNetwork()) << "There is no endpoint for this attribute report.";
+        return;
+    }
+
+    endpoint->setClusterAttribute(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeClusterAttribute(attributeId, dataType, attributeData));
 }
 
 void ZigbeeNetworkNxp::processLeaveIndication(const ZigbeeInterfaceMessage &message)
@@ -675,6 +819,8 @@ void ZigbeeNetworkNxp::processRestartProvisioned(const ZigbeeInterfaceMessage &m
     if (m_startingState == StartingStateReset) {
         if (m_networkRunning) {
             qCDebug(dcZigbeeNetwork()) << "Reset finished. Network already running. No need to set it up";
+            readControllerVersion();
+
             // FIXME: get network status
             //setStartingState(StartingStateGetPermitJoinStatus);
         } else {
@@ -692,6 +838,31 @@ void ZigbeeNetworkNxp::processRouterDiscoveryConfirm(const ZigbeeInterfaceMessag
     quint8 status = static_cast<quint8>(message.data().at(0));
     Zigbee::ZigbeeNwkLayerStatus networkStatus = static_cast<Zigbee::ZigbeeNwkLayerStatus>(message.data().at(0));
     qCDebug(dcZigbeeNetwork()) << "Router discovery confirm received" << status << networkStatus;
+}
+
+void ZigbeeNetworkNxp::processDefaultResponse(const ZigbeeInterfaceMessage &message)
+{
+    // Parse network status
+    QByteArray data = message.data();
+    quint8 sequenceNumber = 0;
+    quint16 shortAddress = 0;
+    quint8 sourceEndpoint = 0;
+    quint8 destinationEndpoint = 0;
+    quint16 clusterId = 0;
+    quint8 commandId = 0;
+    quint8 commandStatus = 0;
+
+    QDataStream stream(&data, QIODevice::ReadOnly);
+    stream >> sequenceNumber >> shortAddress >> sourceEndpoint >> destinationEndpoint >> clusterId >> commandId >> commandStatus;
+
+    qCDebug(dcZigbeeNetwork()).noquote() << "Default response" << sequenceNumber;
+    qCDebug(dcZigbeeNetwork()) << "    Short address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+    qCDebug(dcZigbeeNetwork()) << "    Source endpoint:" << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+    qCDebug(dcZigbeeNetwork()) << "    Destination endpoint:" << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+    qCDebug(dcZigbeeNetwork()) << "    Destination endpoint:" << static_cast<Zigbee::ClusterId>(clusterId);
+    qCDebug(dcZigbeeNetwork()) << "    Command:" << ZigbeeUtils::convertByteToHexString(commandId);
+    qCDebug(dcZigbeeNetwork()) << "    Command status:" << static_cast<Zigbee::ZigbeeStatus>(commandStatus);
+
 }
 
 void ZigbeeNetworkNxp::onMessageReceived(const ZigbeeInterfaceMessage &message)
@@ -718,6 +889,9 @@ void ZigbeeNetworkNxp::onMessageReceived(const ZigbeeInterfaceMessage &message)
     case Zigbee::MessageTypeAttributeReport:
         processAttributeReport(message);
         break;
+    case Zigbee::MessageTypeReadAttributeResponse:
+        processReadAttributeResponse(message);
+        break;
     case Zigbee::MessageTypeLeaveIndication:
         processLeaveIndication(message);
         break;
@@ -729,6 +903,9 @@ void ZigbeeNetworkNxp::onMessageReceived(const ZigbeeInterfaceMessage &message)
         break;
     case Zigbee::MessageTypeRouterDiscoveryConfirm:
         processRouterDiscoveryConfirm(message);
+        break;
+    case Zigbee::MessageTypeDefaultResponse:
+        processDefaultResponse(message);
         break;
     default:
         qCWarning(dcZigbeeController()) << "Unhandled message received:" << message;
@@ -901,18 +1078,53 @@ void ZigbeeNetworkNxp::processNetworkFormed(const ZigbeeInterfaceMessage &messag
         node->setExtendedAddress(ZigbeeAddress(extendedAddress));
         node->startInitialization();
 
-
         connect(node, &ZigbeeNode::stateChanged, this, [this, node](){
             if (node->state() == ZigbeeNode::StateInitialized) {
                 m_coordinatorNode = qobject_cast<ZigbeeNode *>(node);
                 addNode(m_coordinatorNode);
                 qCDebug(dcZigbeeNetwork()) << "Coordinator node initialized. The network is now set up.";
                 setState(StateRunning);
+
+//                ZigbeeInterfaceReply *reply = m_controller->commandBindLocalGroup(Zigbee::ClusterIdOnOff, 0x01, 0x0001);
+//                connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+//                    reply->deleteLater();
+
+//                    if (reply->status() != ZigbeeInterfaceReply::Success) {
+//                        qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+//                        return;
+//                    }
+
+//                    qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+//                });
             }
         });
     } else {
         // Primary initialization was already done.
-        setState(StateRunning);
+        ZigbeeInterfaceReply *reply = m_controller->commandGetVersion();
+        connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply](){
+            reply->deleteLater();
+
+            if (reply->status() != ZigbeeInterfaceReply::Success) {
+                qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+                return;
+            }
+
+            if (reply->additionalMessage().data().count() != 4) {
+                qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << ":" << "Invalid payload size";
+                return;
+            }
+
+            qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+
+            // Parse version
+            quint16 majorVersion = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(0, 2));
+            quint16 minorVersion = ZigbeeUtils::convertByteArrayToUint16(reply->additionalMessage().data().mid(2, 2));
+
+            qCDebug(dcZigbeeNetwork()) << "Controller version:" << QString("%1.%2").arg(majorVersion).arg(minorVersion);
+            m_controller->setFirmwareVersionString(QString("%1.%2").arg(majorVersion).arg(minorVersion));
+
+            setState(StateRunning);
+        });
     }
 }
 
@@ -920,16 +1132,6 @@ void ZigbeeNetworkNxp::startNetwork()
 {
     // FIXME: define if router or coordinator
     qCDebug(dcZigbeeNetwork()) << "Start network...";
-    if (m_controller) {
-        qCDebug(dcZigbeeNetwork()) << "Clean up old controller...";
-        delete m_controller;
-        m_controller = nullptr;
-    }
-
-    qCDebug(dcZigbeeNetwork()) << "Create new controller..." << state();
-    m_controller = new ZigbeeBridgeControllerNxp(this);
-    connect(m_controller, &ZigbeeBridgeControllerNxp::messageReceived, this, &ZigbeeNetworkNxp::onMessageReceived);
-    connect(m_controller, &ZigbeeBridgeControllerNxp::availableChanged, this, &ZigbeeNetworkNxp::onControllerAvailableChanged);
 
     if (state() == StateUninitialized)
         loadNetwork();
@@ -943,6 +1145,15 @@ void ZigbeeNetworkNxp::startNetwork()
         setExtendedPanId(ZigbeeUtils::generateRandomPanId());
         qCDebug(dcZigbeeNetwork()) << "Created new PAN ID:" << extendedPanId();
     }
+
+    if (securityConfiguration().networkKey().isNull()) {
+        qCDebug(dcZigbeeNetwork()) << "Create a new network key";
+        ZigbeeNetworkKey key = ZigbeeNetworkKey::generateKey();
+        m_securityConfiguration.setNetworkKey(key);
+    }
+
+    qCDebug(dcZigbeeNetwork()) << "Using network link key" << securityConfiguration().networkKey();
+    qCDebug(dcZigbeeNetwork()) << "Using global trust center link key" << securityConfiguration().globalTrustCenterLinkKey();
 
     // TODO: get desired channel, by default use all
 
@@ -974,6 +1185,26 @@ void ZigbeeNetworkNxp::stopNetwork()
     emit permitJoiningChanged(m_permitJoining);
     setState(StateOffline);
     setError(ErrorNoError);
+}
+
+void ZigbeeNetworkNxp::reset()
+{
+    qCDebug(dcZigbeeNetwork()) << "Reset the bridge controller.";
+    setState(StateOffline);
+
+    ZigbeeInterfaceReply *reply = m_controller->commandResetController();
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+        reply->deleteLater();
+
+        if (reply->status() != ZigbeeInterfaceReply::Success) {
+            qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            return;
+        }
+
+        qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        // Note: the controller is now sending a log of cluster and attribte/command information
+        // After the reset the state machine will continue
+    });
 }
 
 void ZigbeeNetworkNxp::factoryResetNetwork()

@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -34,7 +34,9 @@
 
 ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(ZigbeeNetworkManager::BackendType backend, QObject *parent)
 {
+    // Note: required for generating random PAN ID
     srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
+
     switch (backend) {
     case BackendTypeNxp:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));

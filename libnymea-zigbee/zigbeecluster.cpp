@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -28,11 +28,17 @@
 #include "zigbeeutils.h"
 #include "zigbeecluster.h"
 
-ZigbeeCluster::ZigbeeCluster(Zigbee::ClusterId clusterId, QObject *parent) :
+ZigbeeCluster::ZigbeeCluster(Zigbee::ClusterId clusterId, Direction direction, QObject *parent) :
     QObject(parent),
-    m_clusterId(clusterId)
+    m_clusterId(clusterId),
+    m_direction(direction)
 {
 
+}
+
+ZigbeeCluster::Direction ZigbeeCluster::direction() const
+{
+    return m_direction;
 }
 
 Zigbee::ClusterId ZigbeeCluster::clusterId() const
@@ -78,7 +84,9 @@ QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
 {
     debug.nospace().noquote() << "ZigbeeCluster("
                               << ZigbeeUtils::convertUint16ToHexString(static_cast<quint16>(cluster->clusterId())) << ", "
-                              << cluster->clusterName() << ")";
+                              << cluster->clusterName() << ", "
+                              << cluster->direction()
+                              << ")";
 
     return debug.space();
 }

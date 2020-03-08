@@ -10,13 +10,18 @@ SOURCES += \
     nxp/interface/zigbeeinterfacereply.cpp \
     nxp/zigbeenetworknxp.cpp \
     nxp/zigbeebridgecontrollernxp.cpp \
+    nxp/zigbeenodeendpointnxp.cpp \
     nxp/zigbeenodenxp.cpp \
+    zigbeebridgecontroller.cpp \
     zigbeecluster.cpp \
     zigbeeclusterattribute.cpp \
+    zigbeemanufacturer.cpp \
     zigbeenetwork.cpp \
+    zigbeenetworkkey.cpp \
     zigbeenetworkmanager.cpp \
     zigbee.cpp \
     loggingcategory.cpp \
+    zigbeenetworkreply.cpp \
     zigbeenodeendpoint.cpp \
     zigbeesecurityconfiguration.cpp \
     zigbeeutils.cpp \
@@ -30,13 +35,18 @@ HEADERS += \
     nxp/interface/zigbeeinterfacereply.h \
     nxp/zigbeenetworknxp.h \
     nxp/zigbeebridgecontrollernxp.h \
+    nxp/zigbeenodeendpointnxp.h \
     nxp/zigbeenodenxp.h \
+    zigbeebridgecontroller.h \
     zigbeecluster.h \
     zigbeeclusterattribute.h \
+    zigbeemanufacturer.h \
     zigbeenetwork.h \
+    zigbeenetworkkey.h \
     zigbeenetworkmanager.h \
     zigbee.h \
     loggingcategory.h \
+    zigbeenetworkreply.h \
     zigbeenodeendpoint.h \
     zigbeesecurityconfiguration.h \
     zigbeeutils.h \

@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -32,10 +32,10 @@
 #include <QDataStream>
 
 ZigbeeBridgeControllerNxp::ZigbeeBridgeControllerNxp(QObject *parent) :
-    QObject(parent)
+    ZigbeeBridgeController(parent)
 {
     m_interface = new ZigbeeInterface(this);
-    connect(m_interface, &ZigbeeInterface::availableChanged, this, &ZigbeeBridgeControllerNxp::availableChanged);
+    connect(m_interface, &ZigbeeInterface::availableChanged, this, &ZigbeeBridgeControllerNxp::onInterfaceAvailableChanged);
     connect(m_interface, &ZigbeeInterface::messageReceived, this, &ZigbeeBridgeControllerNxp::onMessageReceived);
 }
 
@@ -44,9 +44,9 @@ ZigbeeBridgeControllerNxp::~ZigbeeBridgeControllerNxp()
     qCDebug(dcZigbeeController()) << "Destroy controller";
 }
 
-bool ZigbeeBridgeControllerNxp::available() const
+void ZigbeeBridgeControllerNxp::setFirmwareVersionString(const QString &firmwareVersion)
 {
-    return m_interface->available();
+    setFirmwareVersion(firmwareVersion);
 }
 
 ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandResetController()
@@ -199,7 +199,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandActiveEndpointsRequest(q
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeActiveEndpointRequest, data));
     request.setDescription("Get active endpoints");
     request.setExpectedAdditionalMessageType(Zigbee::MessageTypeActiveEndpointResponse);
-    request.setTimoutIntervall(3000);
+    request.setTimoutIntervall(5000);
 
     return sendRequest(request);
 }
@@ -260,7 +260,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandNetworkAddressRequest(qu
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSetSecurityStateAndKey(quint8 keyState, quint8 keySequence, quint8 keyType, const QString &key)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSetSecurityStateAndKey(quint8 keyState, quint8 keySequence, quint8 keyType, const QByteArray &key)
 {
     // Note: calls ZPS_vAplSecSetInitialSecurityState
 
@@ -274,12 +274,16 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSetSecurityStateAndKey(q
     // Key Type:
     //      ZPS_APS_UNIQUE_LINK_KEY =
 
+    qCDebug(dcZigbeeController()) << "Set security" << ZigbeeUtils::convertByteArrayToHexString(key) << qUtf8Printable(key) << key;
+
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
     stream << keyState;
     stream << keySequence;
     stream << keyType;
-    stream << QByteArray::fromHex(key.toUtf8());
+    for (int i = 0; i < key.count(); i++) {
+        stream << static_cast<quint8>(key.at(i));
+    }
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeSetSecurity, data));
     request.setDescription("Set security configuration");
@@ -287,12 +291,12 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSetSecurityStateAndKey(q
     return sendRequest(request);
 }
 
-ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandAuthenticateDevice(const ZigbeeAddress &ieeeAddress, const QString &key)
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandAuthenticateDevice(const ZigbeeAddress &ieeeAddress, const QByteArray &key)
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
     stream << ieeeAddress.toUInt64();
-    stream << QByteArray::fromHex(key.toUtf8());
+    stream << key;
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeAuthenticateDeviceRequest, data));
     request.setExpectedAdditionalMessageType(Zigbee::MessageTypeAuthenticateDeviceResponse);
@@ -326,7 +330,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandSimpleDescriptorRequest(
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeSimpleDescriptorRequest, data));
     request.setExpectedAdditionalMessageType(Zigbee::MessageTypeSimpleDescriptorResponse);
     request.setDescription("Simple node descriptor request for " + ZigbeeUtils::convertUint16ToHexString(shortAddress) + " endpoint " + QString::number(endpoint));
-    request.setTimoutIntervall(5000);
+    request.setTimoutIntervall(10000);
 
     return sendRequest(request);
 }
@@ -360,6 +364,284 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandUserDescriptorRequest(qu
     return sendRequest(request);
 }
 
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandReadAttributeRequest(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, ZigbeeCluster *cluster, QList<quint16> attributes, bool manufacturerSpecific, quint16 manufacturerId)
+{
+    // Address mode: TODO
+
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << shortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << static_cast<quint16>(cluster->clusterId());
+
+    // 0: server -> client, 1: client -> server
+    if (cluster->direction() == ZigbeeCluster::Input) {
+        stream << static_cast<quint8>(0);
+    } else {
+        stream << static_cast<quint8>(1);
+    }
+
+    if (manufacturerSpecific) {
+        stream << static_cast<quint8>(1);
+    } else {
+        stream << static_cast<quint8>(0);
+    }
+
+    stream << manufacturerId;
+    stream << static_cast<quint8>(attributes.count());
+    for (int i = 0; i < attributes.count(); i++) {
+        stream << attributes.at(i);
+    }
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeReadAttributeRequest, data));
+    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeReadAttributeResponse);
+    request.setDescription("Read attribute request for " + ZigbeeUtils::convertUint16ToHexString(shortAddress));
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandConfigureReportingRequest(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, ZigbeeCluster *cluster, QList<quint16> attributes, bool manufacturerSpecific, quint16 manufacturerId)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << shortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << static_cast<quint16>(cluster->clusterId());
+
+    // 0: server -> client, 1: client -> server
+    if (cluster->direction() == ZigbeeCluster::Input) {
+        stream << static_cast<quint8>(1);
+    } else {
+        stream << static_cast<quint8>(0);
+    }
+
+    if (manufacturerSpecific) {
+        stream << static_cast<quint8>(1);
+    } else {
+        stream << static_cast<quint8>(0);
+    }
+
+    stream << manufacturerId;
+    stream << static_cast<quint8>(attributes.count());
+    for (int i = 0; i < attributes.count(); i++) {
+        stream << attributes.at(i);
+    }
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeConfigReportingRequest, data));
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeConfigReportingResponse);
+    request.setDescription("Configure reporting request for " + ZigbeeUtils::convertUint16ToHexString(shortAddress));
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandIdentify(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint16 duration)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << shortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << duration;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeIdentifySend, data));
+    request.setDescription("Identify request for " + ZigbeeUtils::convertUint16ToHexString(shortAddress));
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandBindGroup(const ZigbeeAddress &sourceAddress, quint8 sourceEndpoint, quint16 clusterId, quint16 destinationAddress, quint8 destinationEndpoint)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << sourceAddress.toUInt64();
+    stream << sourceEndpoint;
+    stream << clusterId;
+    stream << static_cast<quint8>(Zigbee::DestinationAddressModeGroup);
+    stream << destinationAddress;
+    stream << destinationEndpoint;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeBind, data));
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeBindResponse);
+    request.setDescription("Bind group request");
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandBindUnicast(const ZigbeeAddress &sourceAddress, quint8 sourceEndpoint, quint16 clusterId, const ZigbeeAddress &destinationAddress, quint8 destinationEndpoint)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << sourceAddress.toUInt64();
+    stream << sourceEndpoint;
+    stream << clusterId;
+    stream << static_cast<quint8>(Zigbee::DestinationAddressModeUnicastIeee);
+    stream << destinationAddress.toUInt64();
+    stream << destinationEndpoint;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeBind, data));
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeBindResponse);
+    request.setDescription("Bind unicast request");
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandBindLocalGroup(quint16 clusterId, quint8 sourceEndpoint, quint16 groupAddress)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << clusterId;
+    stream << sourceEndpoint;
+    stream << groupAddress;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeBindGroup, data));
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeBindGroupResponse);
+    request.setDescription("Bind local group request");
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandOnOffNoEffects(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, ZigbeeCluster::OnOffClusterCommand command)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << targetShortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << static_cast<quint8>(command);
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeCluserOnOff, data));
+    request.setDescription("Send on/off cluster command");
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandAddGroup(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint16 groupAddress)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << targetShortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << groupAddress;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeAddGroupRequest, data));
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeAddGroupResponse);
+    request.setDescription("Add group request");
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToLevel(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint8 onOff, quint8 level, quint16 transitionTime)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << targetShortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << static_cast<quint8>(onOff);
+    stream << level;
+    stream << transitionTime;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToLevelOnOff, data));
+    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setDescription(QString("Move to level on/off %1").arg(level));
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToColourTemperature(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint16 colourTemperature, quint16 transitionTime)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << targetShortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << colourTemperature;
+    stream << transitionTime;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToColorTemperature, data));
+    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setDescription(QString("Move to colour temperature %1").arg(colourTemperature));
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToHueSaturation(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint8 hue, quint8 saturation, quint16 transitionTime)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << targetShortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << hue << saturation;
+    stream << transitionTime;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToHueSaturation, data));
+    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setDescription(QString("Move to hue %1 saturation %2").arg(hue).arg(saturation));
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToHue(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint8 hue, quint16 transitionTime)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << targetShortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << hue;
+    stream << transitionTime;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToHue, data));
+    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setDescription(QString("Move to hue %1").arg(hue));
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToSaturation(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint8 saturation, quint16 transitionTime)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << targetShortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << saturation;
+    stream << transitionTime;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToSaturation, data));
+    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setDescription(QString("Move to saturation %1").arg(saturation));
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
 void ZigbeeBridgeControllerNxp::sendMessage(ZigbeeInterfaceReply *reply)
 {
     if (!reply)
@@ -370,6 +652,11 @@ void ZigbeeBridgeControllerNxp::sendMessage(ZigbeeInterfaceReply *reply)
 
     m_interface->sendMessage(reply->request().message());
     reply->startTimer(reply->request().timeoutIntervall());
+}
+
+void ZigbeeBridgeControllerNxp::onInterfaceAvailableChanged(bool available)
+{
+    setAvailable(available);
 }
 
 void ZigbeeBridgeControllerNxp::onMessageReceived(const ZigbeeInterfaceMessage &message)

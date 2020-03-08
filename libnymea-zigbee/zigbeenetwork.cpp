@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -200,6 +200,11 @@ void ZigbeeNetwork::addNodeInternally(ZigbeeNode *node)
         return;
     }
 
+    // Set the coordinator node if the short address is 0x0000
+    if (node->shortAddress() == 0) {
+        m_coordinatorNode = node;
+    }
+
     // FIXME: check when and how the note will be reachable
     //node->setConnected(state() == StateRunning);
 
@@ -226,6 +231,8 @@ void ZigbeeNetwork::saveNetwork()
     settings.beginGroup("Network");
     settings.setValue("panId", extendedPanId());
     settings.setValue("channel", channel());
+    settings.setValue("networkKey", securityConfiguration().networkKey().toString());
+    settings.setValue("trustCenterLinkKey", securityConfiguration().globalTrustCenterLinkKey().toString());
     settings.endGroup();
 
     foreach (ZigbeeNode *node, nodes()) {
@@ -242,6 +249,14 @@ void ZigbeeNetwork::loadNetwork()
     quint64 extendedPanId = static_cast<quint64>(settings.value("panId", 0).toULongLong());
     setExtendedPanId(extendedPanId);
     setChannel(settings.value("channel", 0).toUInt());
+    ZigbeeNetworkKey netKey(settings.value("networkKey", QString()).toString());
+    if (netKey.isValid())
+        m_securityConfiguration.setNetworkKey(netKey);
+
+    ZigbeeNetworkKey tcKey(settings.value("trustCenterLinkKey", QString("5A6967426565416C6C69616E63653039")).toString());
+    if (!tcKey.isValid())
+        m_securityConfiguration.setGlobalTrustCenterlinkKey(tcKey);
+
     settings.endGroup(); // Network
 
     // Load nodes
@@ -255,70 +270,49 @@ void ZigbeeNetwork::loadNetwork()
         node->setMacCapabilitiesFlag(static_cast<quint8>(settings.value("macCapabilitiesFlag", 0).toUInt()));
         node->setNodeDescriptorRawData(settings.value("nodeDescriptorRawData", QByteArray()).toByteArray());
         node->setPowerDescriptorFlag(static_cast<quint16>(settings.value("powerDescriptorFlag", 0).toUInt()));
-        // TODO: load endpoints
 
-        //        settings.beginGroup("inputCluster");
-        //        foreach (const QString &clusterIdString, settings.childGroups()) {
-        //           settings.beginGroup(clusterIdString);
-        //           Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(clusterIdString.toInt());
+        int endpointsCount = settings.beginReadArray("endpoints");
+        //qCDebug(dcZigbeeNetwork()) << "loading endpoints" << endpointsCount << settings.childKeys() << settings.childGroups();
+        for (int i = 0; i < endpointsCount; i++) {
+            settings.setArrayIndex(i);
+            quint8 endpointId = static_cast<quint8>(settings.value("id", 0).toUInt());
+            ZigbeeNodeEndpoint *endpoint = node->createNodeEndpoint(endpointId, node);
+            endpoint->m_profile = static_cast<Zigbee::ZigbeeProfile>(settings.value("profile", 0).toUInt());
+            endpoint->m_deviceId = static_cast<quint16>(settings.value("deviceId", 0).toUInt());
+            endpoint->m_deviceVersion = static_cast<quint8>(settings.value("deviceId", 0).toUInt());
+            //qCDebug(dcZigbeeNetwork()) << "Created" << endpoint;
 
-        //           foreach (const QString &attributeIdString, settings.childGroups()) {
-        //               settings.beginGroup(attributeIdString);
-        //               quint16 id = static_cast<quint16>(attributeIdString.toInt());
-        //               Zigbee::DataType dataType = static_cast<Zigbee::DataType>(settings.value("dataType", 0).toInt());
-        //               QByteArray data = settings.value("data").toByteArray();
-        //               node->setClusterAttribute(clusterId, ZigbeeClusterAttribute(id, dataType, data));
-        //               settings.endGroup(); // attributeId
-        //           }
-        //           settings.endGroup(); // clusterId
-        //        }
-        //        settings.endGroup(); // inputCluster
+            int inputClustersCount = settings.beginReadArray("inputClusters");
+            for (int n = 0; n < inputClustersCount; n ++) {
+                settings.setArrayIndex(n);
+                Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(settings.value("clusterId", 0).toUInt());
+                ZigbeeCluster *cluster = new ZigbeeCluster(clusterId, ZigbeeCluster::Input, endpoint);
+                //qCDebug(dcZigbeeNetwork()) << "Created" << cluster;
+                endpoint->m_inputClusters.insert(clusterId, cluster);
+            }
+            settings.endArray(); // inputClusters
 
-        //        // Output cluster
-        //        settings.beginGroup("outputCluster");
-        //        foreach (const QString &clusterIdString, settings.childGroups()) {
-        //           settings.beginGroup(clusterIdString);
-        //           Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(clusterIdString.toInt());
+            int outputClustersCount = settings.beginReadArray("outputClusters");
+            for (int n = 0; n < outputClustersCount; n ++) {
+                settings.setArrayIndex(n);
+                Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(settings.value("clusterId", 0).toUInt());
+                ZigbeeCluster *cluster = new ZigbeeCluster(clusterId, ZigbeeCluster::Output, endpoint);
+                //qCDebug(dcZigbeeNetwork()) << "Created" << cluster;
+                endpoint->m_outputClusters.insert(clusterId, cluster);
+            }
+            settings.endArray(); // outputClusters
 
-        //           foreach (const QString &attributeIdString, settings.childGroups()) {
-        //               settings.beginGroup(attributeIdString);
-        //               quint16 id = static_cast<quint16>(attributeIdString.toInt());
-        //               Zigbee::DataType dataType = static_cast<Zigbee::DataType>(settings.value("dataType", 0).toInt());
-        //               QByteArray data = settings.value("data").toByteArray();
-        //               node->setClusterAttribute(clusterId, ZigbeeClusterAttribute(id, dataType, data));
-        //               settings.endGroup(); // attributeId
-        //           }
-        //           settings.endGroup(); // clusterId
-        //        }
-        //        settings.endGroup(); // outputCluster
+            node->m_endpoints.append(endpoint);
+        }
+
+        settings.endArray(); // endpoints
+
+        settings.endGroup(); // ieeeAddress
 
         node->setState(ZigbeeNode::StateInitialized);
         addNodeInternally(node);
-        settings.endGroup(); // ieeeAddress
     }
     settings.endGroup(); // Nodes
-
-    //qCDebug(dcZigbeeNetwork()) << "Extended PAN ID:" << m_extendedPanId << ZigbeeUtils::convertUint64ToHexString(m_extendedPanId);
-    //qCDebug(dcZigbeeNetwork()) << "Channel" << m_channel;
-    //qCDebug(dcZigbeeNetwork()) << QStringLiteral("Nodes: (%1)").arg(m_nodes.count());
-    //    foreach (ZigbeeNode *node, nodes()) {
-    //        qCDebug(dcZigbeeNetwork()) << "  - " << node;
-    //        qCDebug(dcZigbeeNetwork()) << "Output cluster:";
-    //        foreach (ZigbeeCluster *cluster, node->outputClusters()) {
-    //            qCDebug(dcZigbeeNetwork()) << "    " << cluster;
-    //            foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
-    //                qCDebug(dcZigbeeNetwork()) << "        " << attribute;
-    //            }
-    //        }
-
-    //        qCDebug(dcZigbeeNetwork()) << "Input cluster:";
-    //        foreach (ZigbeeCluster *cluster, node->inputClusters()) {
-    //            qCDebug(dcZigbeeNetwork()) << "    " << cluster;
-    //            foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
-    //                qCDebug(dcZigbeeNetwork()) << "        " << attribute;
-    //            }
-    //        }
-    //    }
 }
 
 void ZigbeeNetwork::clearSettings()
@@ -346,9 +340,9 @@ void ZigbeeNetwork::saveNode(ZigbeeNode *node)
     settings.beginGroup("Nodes");
 
     // Clear settings for this node before storing it
-    settings.beginGroup(node->extendedAddress().toString());
-    settings.remove("");
-    settings.endGroup();
+//    settings.beginGroup(node->extendedAddress().toString());
+//    settings.remove("");
+//    settings.endGroup();
 
     // Save this node
     settings.beginGroup(node->extendedAddress().toString());
@@ -357,39 +351,33 @@ void ZigbeeNetwork::saveNode(ZigbeeNode *node)
     settings.setValue("nodeDescriptorRawData", node->m_nodeDescriptorRawData);
     settings.setValue("powerDescriptorFlag", node->m_powerDescriptorFlag);
 
-    // TODO: store endpoints
+    settings.beginWriteArray("endpoints");
+    for (int i = 0; i < node->endpoints().count(); i++) {
+        ZigbeeNodeEndpoint *endpoint = node->endpoints().at(i);
+        settings.setArrayIndex(i);
+        settings.setValue("id", endpoint->endpointId());
+        settings.setValue("profile", endpoint->profile());
+        settings.setValue("deviceId", endpoint->deviceId());
+        settings.setValue("deviceVersion", endpoint->deviceVersion());
 
+        settings.beginWriteArray("inputClusters");
+        for (int n = 0; n < endpoint->inputClusters().count(); n++) {
+            ZigbeeCluster *cluster = endpoint->inputClusters().at(n);
+            settings.setArrayIndex(n);
+            settings.setValue("clusterId", cluster->clusterId());
+        }
+        settings.endArray(); // inputClusters
 
-    // TODO: save the rest of the node
+        settings.beginWriteArray("outputClusters");
+        for (int n = 0; n < endpoint->outputClusters().count(); n++) {
+            ZigbeeCluster *cluster = endpoint->outputClusters().at(n);
+            settings.setArrayIndex(n);
+            settings.setValue("clusterId", cluster->clusterId());
+        }
+        settings.endArray(); // outputClusters
+    }
 
-    //    // Input clusters
-    //    settings.beginGroup("inputCluster");
-    //    foreach (ZigbeeCluster *cluster, node->inputClusters()) {
-    //        settings.beginGroup(QString::number(static_cast<int>(cluster->clusterId())));
-    //        foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
-    //            settings.beginGroup(QString::number(static_cast<int>(attribute.id())));
-    //            settings.setValue("dataType", static_cast<int>(attribute.dataType()));
-    //            settings.setValue("data", attribute.data());
-    //            settings.endGroup(); // attributeId
-    //        }
-    //        settings.endGroup(); // clusterId
-    //    }
-    //    settings.endGroup(); // inputCluster
-
-
-    //    // Output clusters
-    //    settings.beginGroup("outputCluster");
-    //    foreach (ZigbeeCluster *cluster, node->outputClusters()) {
-    //        settings.beginGroup(QString::number(static_cast<int>(cluster->clusterId())));
-    //        foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
-    //            settings.beginGroup(QString::number(static_cast<int>(attribute.id())));
-    //            settings.setValue("dataType", static_cast<int>(attribute.dataType()));
-    //            settings.setValue("data", attribute.data());
-    //            settings.endGroup(); // attributeId
-    //        }
-    //        settings.endGroup(); // clusterId
-    //    }
-    //    settings.endGroup(); // inputCluster
+    settings.endArray(); // endpoints
 
     settings.endGroup(); // Node ieee address
 
@@ -405,7 +393,7 @@ void ZigbeeNetwork::removeNodeFromSettings(ZigbeeNode *node)
     // Clear settings for this node before storing it
     settings.beginGroup(node->extendedAddress().toString());
     settings.remove("");
-    settings.endGroup();
+    settings.endGroup(); // Node ieee address
 
     settings.endGroup(); // Nodes
 }
@@ -423,6 +411,7 @@ void ZigbeeNetwork::addUnitializedNode(ZigbeeNode *node)
         qCWarning(dcZigbeeNetwork()) << "The uninitialized node" << node << "has already been added.";
         return;
     }
+
     connect(node, &ZigbeeNode::stateChanged, this, &ZigbeeNetwork::onNodeStateChanged);
     m_uninitializedNodes.append(node);
 }
@@ -443,7 +432,10 @@ void ZigbeeNetwork::setState(ZigbeeNetwork::State state)
     m_state = state;
     emit stateChanged(m_state);
 
-    if (state == StateRunning) saveNetwork();
+    if (state == StateRunning) {
+        saveNetwork();
+        qCDebug(dcZigbeeNetwork()) << this;
+    }
 }
 
 void ZigbeeNetwork::setError(ZigbeeNetwork::Error error)
@@ -480,3 +472,56 @@ void ZigbeeNetwork::onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const 
     saveNode(node);
 }
 
+
+QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
+{
+    debug.nospace().noquote() << "ZigbeeNetwork (" << ZigbeeUtils::convertUint64ToHexString(network->extendedPanId())
+                              << ", Channel " << network->channel()
+                              << ")" << endl;
+    foreach (ZigbeeNode *node, network->nodes()) {
+        debug.nospace().noquote() << "    - " << node << endl;
+        debug.nospace().noquote() << "      Node type:" << node->nodeType() << endl;
+        debug.nospace().noquote() << "      Manufacturer code: " << ZigbeeUtils::convertUint16ToHexString(node->manufacturerCode()) << endl;
+        debug.nospace().noquote() << "      Maximum Rx size: " << ZigbeeUtils::convertUint16ToHexString(node->maximumRxSize()) << endl;
+        debug.nospace().noquote() << "      Maximum Tx size: " << ZigbeeUtils::convertUint16ToHexString(node->maximumTxSize()) << endl;
+        debug.nospace().noquote() << "      Maximum buffer size: " << ZigbeeUtils::convertByteToHexString(node->maximumBufferSize()) << endl;
+        debug.nospace().noquote() << "      Primary Trust center: " << node->isPrimaryTrustCenter() << endl;
+        debug.nospace().noquote() << "      Backup Trust center: " << node->isBackupTrustCenter() << endl;
+        debug.nospace().noquote() << "      Primary Binding cache: " << node->isPrimaryBindingCache() << endl;
+        debug.nospace().noquote() << "      Backup Binding cache: " << node->isBackupBindingCache() << endl;
+        debug.nospace().noquote() << "      Primary Discovery cache: " << node->isPrimaryDiscoveryCache() << endl;
+        debug.nospace().noquote() << "      Backup Discovery cache: " << node->isBackupDiscoveryCache() << endl;
+        debug.nospace().noquote() << "      Network Manager: " << node->isNetworkManager() << endl;
+        debug.nospace().noquote() << "      Extended active endpoint list available: " << node->extendedActiveEndpointListAvailable() << endl;
+        debug.nospace().noquote() << "      Extended simple descriptor list available: " << node->extendedSimpleDescriptorListAvailable() << endl;
+        debug.nospace().noquote() << "      Alternate PAN coordinator: " << node->alternatePanCoordinator() << endl;
+        debug.nospace().noquote() << "      Device type: " << node->deviceType() << endl;
+        debug.nospace().noquote() << "      Power source flag main power: " << node->powerSourceFlagMainPower() << endl;
+        debug.nospace().noquote() << "      Receiver on when idle: " << node->receiverOnWhenIdle() << endl;
+        debug.nospace().noquote() << "      Security capability: " << node->securityCapability() << endl;
+        debug.nospace().noquote() << "      Allocate address: " << node->allocateAddress() << endl;
+        debug.nospace().noquote() << "      Complex desciptor available: " << node->complexDescriptorAvailable() << endl;
+        debug.nospace().noquote() << "      User desciptor available: " << node->userDescriptorAvailable() << endl;
+        debug.nospace().noquote() << "      Power mode: " << node->powerMode() << endl;
+        debug.nospace().noquote() << "      Available power sources:" << endl;
+        foreach (const ZigbeeNode::PowerSource &source, node->availablePowerSources()) {
+            debug.nospace().noquote() << "       - " << source << endl;
+        }
+        debug.nospace().noquote() << "      Power source: " << node->powerSource() << endl;
+        debug.nospace().noquote() << "      Power level: " << node->powerLevel() << endl;
+        debug.nospace().noquote() << "      Endpoints: " << node->endpoints().count() << endl;
+        foreach (ZigbeeNodeEndpoint *endpoint, node->endpoints()) {
+            debug.nospace().noquote() << "      - " << endpoint << endl;
+            debug.nospace().noquote() << "        Input clusters:" << endl;
+            foreach (ZigbeeCluster *cluster, endpoint->inputClusters()) {
+                debug.nospace().noquote() << "        - " << cluster << endl;
+            }
+            debug.nospace().noquote() << "        Output clusters:" << endl;
+            foreach (ZigbeeCluster *cluster, endpoint->outputClusters()) {
+                debug.nospace().noquote() << "        - " << cluster << endl;
+            }
+        }
+    }
+
+    return debug.space();
+}

@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -30,6 +30,8 @@
 
 #include <QString>
 
+#include "zigbeenetworkkey.h"
+
 class ZigbeeSecurityConfiguration
 {
 public:
@@ -45,11 +47,11 @@ public:
     ZigbeeSecurityMode zigbeeSecurityMode() const;
     void setZigbeeSecurityMode(ZigbeeSecurityMode zigbeeSecurityMode);
 
-    QString networkKey() const;
-    void setNetworkKey(const QString &networkKey);
+    ZigbeeNetworkKey networkKey() const;
+    void setNetworkKey(const ZigbeeNetworkKey &networkKey);
 
-    QString globalTrustCenterLinkKey() const;
-    void setGlobalTrustCenterlinkKey(const QString & globalTrustCenterLinkKey);
+    ZigbeeNetworkKey globalTrustCenterLinkKey() const;
+    void setGlobalTrustCenterlinkKey(const ZigbeeNetworkKey &globalTrustCenterLinkKey);
 
     void clear();
 
@@ -61,10 +63,10 @@ private:
     ZigbeeSecurityMode m_zigbeeSecurityMode = ZigbeeSecurityModeNone;
 
     // This is the local network key
-    QString m_networkKey;
+    ZigbeeNetworkKey m_networkKey;
 
     // Note: this is the zigbee master key from (ZigBeeAlliance09)
-    QString m_globalTrustCenterLinkKey = "5A6967426565416C6C69616E63653039";
+    ZigbeeNetworkKey m_globalTrustCenterLinkKey = ZigbeeNetworkKey(QString("5A6967426565416C6C69616E63653039"));
 
 };
 

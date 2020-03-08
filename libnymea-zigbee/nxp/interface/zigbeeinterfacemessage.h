@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -31,7 +31,7 @@
 #include <QObject>
 #include <QDebug>
 
-#include "../../zigbee.h"
+#include "zigbee.h"
 
 class ZigbeeInterfaceMessage
 {

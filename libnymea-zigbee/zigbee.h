@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -33,14 +33,21 @@
 #include <QVariant>
 #include <QByteArray>
 
+// Note: a good source of data https://github.com/wireshark/wireshark/blob/master/epan/dissectors/packet-zbee.h
+
 class Zigbee
 {
     Q_GADGET
 
 public:
     enum ZigbeeProfile {
+        ZigbeeProfileIndustrialPlantMonitoring = 0x0101,
         ZigbeeProfileHomeAutomation = 0x0104,
-        ZigbeeProfileLightLink      = 0xC05E
+        ZigbeeProfileCommercialBuildingAutomation = 0x0105,
+        ZigbeeProfileTelecomAutomation = 0x0107,
+        ZigbeeProfilePersonalHomeHospitalCare = 0x0108,
+        ZigbeeProfileAdvancedMetering = 0x0109,
+        ZigbeeProfileLightLink = 0xC05E
     };
     Q_ENUM(ZigbeeProfile)
 
@@ -106,6 +113,11 @@ public:
         MessageTypeBind                                = 0x0030,
         MessageTypeBindResponse                        = 0x8030,
         MessageTypeUnbind                              = 0x0031,
+        MessageTypeBindGroup                           = 0x0032,
+        MessageTypeBindGroupResponse                   = 0x8032,
+        MessageTypeUnbindGroup                         = 0x0033,
+        MessageTypeUnbindGroupResponse                 = 0x8033,
+
         MessageTypeUnbindResponse                      = 0x8031,
         MessageTypeComplexDescriptorRequest            = 0x0034,
         MessageTypeComplexDescriptorResponse           = 0x8034,
@@ -135,6 +147,10 @@ public:
         MessageTypeDeviceAnnounce                      = 0x004D,
         MessageTypeManagementLqiRequest                = 0x004E,
         MessageTypeManagementLqiResponse               = 0x804E,
+
+        // Basic cluster
+        MessageBasicResetFactoryDefaults               = 0x0050,
+        MessageBasicResetFactoryDefaultsResponse       = 0x8050,
 
         // Group Cluster
         MessageTypeAddGroupRequest                     = 0x0060,
@@ -361,48 +377,71 @@ public:
 
     enum LightLinkDevice {
         // Lightning devices
-        LightLinkDeviceOnOffLight               = 0x0000,
-        LightLinkDeviceOnOffPlug                = 0x0010,
-        LightLinkDeviceDimmableLight            = 0x0100,
-        LightLinkDeviceDimmablePlug             = 0x0110,
-        LightLinkDeviceColourLight              = 0x0200,
-        LightLinkDeviceExtendedColourLight      = 0x0210,
-        LightLinkDeviceColourTemperatureLight   = 0x0220,
+        LightLinkDeviceOnOffLight                       = 0x0000,
+        LightLinkDeviceOnOffPlugin                      = 0x0010,
+        LightLinkDeviceDimmableLight                    = 0x0100,
+        LightLinkDeviceDimmablePlugin                   = 0x0110,
+        LightLinkDeviceColourLight                      = 0x0200,
+        LightLinkDeviceExtendedColourLight              = 0x0210,
+        LightLinkDeviceColourTemperatureLight           = 0x0220,
 
         // Controller devices
-        LightLinkDeviceColourController         = 0x0800,
-        LightLinkDeviceColourSceneController    = 0x0810,
-        LightLinkDeviceNonColourController      = 0x0820,
-        LightLinkDeviceNonColourSceneController = 0x8030,
-        LightLinkDeviceControlBridge            = 0x8040,
-        LightLinkDeviceOnOffSensor              = 0x8050
+        LightLinkDeviceColourController                 = 0x0800,
+        LightLinkDeviceColourSceneController            = 0x0810,
+        LightLinkDeviceNonColourController              = 0x0820,
+        LightLinkDeviceNonColourSceneController         = 0x0830,
+        LightLinkDeviceControlBridge                    = 0x0840,
+        LightLinkDeviceOnOffSensor                      = 0x0850
     };
     Q_ENUM(LightLinkDevice)
 
 
     enum HomeAutomationDevice {
         // Generic devices
-        HomeAutomationDeviceOnOffSwitch         = 0x0000,
-        HomeAutomationDeviceOnOffOutput         = 0x0002,
-        HomeAutomationDeviceRemoteControl       = 0x0006,
-        HomeAutomationDeviceDoorLock            = 0x000A,
-        HomeAutomationDeviceDoorLockController  = 0x000B,
-        HomeAutomationDeviceSimpleSensor        = 0x000C,
-        HomeAutomationDeviceSmartPlug           = 0x0051,
-        HomeAutomationDeviceControlBridge       = 0x0840,
+        HomeAutomationDeviceOnOffSwitch                 = 0x0000,
+        HomeAutomationDeviceLevelControlSwitch          = 0x0001,
+        HomeAutomationDeviceOnOffOutput                 = 0x0002,
+        HomeAutomationDeviceLevelControlableOutput      = 0x0003,
+        HomeAutomationDeviceSceneSelector               = 0x0004,
+        HomeAutomationDeviceConfigurationTool           = 0x0005,
+        HomeAutomationDeviceRemoteControl               = 0x0006,
+        HomeAutomationDeviceCombinedInterface           = 0x0007,
+        HomeAutomationDeviceRangeExtender               = 0x0008,
+        HomeAutomationDeviceMainPowerOutlet             = 0x0009,
+        HomeAutomationDeviceDoorLock                    = 0x000A,
+        HomeAutomationDeviceDoorLockController          = 0x000B,
+        HomeAutomationDeviceSimpleSensor                = 0x000C,
+        HomeAutomationDeviceConsumtionAwarenessDevice   = 0x000D,
+        HomeAutomationDeviceHomeGateway                 = 0x0050,
+        HomeAutomationDeviceSmartPlug                   = 0x0051,
+        HomeAutomationDeviceWhiteGoods                  = 0x0052,
+        HomeAutomationDeviceMeterInterface              = 0x0053,
+        HomeAutomationDeviceColourController            = 0x0800,
+        HomeAutomationDeviceColourSceneController       = 0x0810,
+        HomeAutomationDeviceNonColourController         = 0x0820,
+        HomeAutomationDeviceNonColourSceneController    = 0x0830,
+        HomeAutomationDeviceControlBridge               = 0x0840,
+        HomeAutomationDeviceOnOffSensor                 = 0x0850,
 
         // Lightning devices
-        HomeAutomationDeviceOnOffLight           = 0x0100,
-        HomeAutomationDeviceDimmableLight        = 0x0101,
-        HomeAutomationDeviceDimmableColorLight   = 0x0102,
-        HomeAutomationDeviceOnOffLightSwitch     = 0x0103,
-        HomeAutomationDeviceDimmableSwitch       = 0x0104,
-        HomeAutomationDeviceColourDimmerSwitch   = 0x0105,
-        HomeAutomationDeviceLightSensor          = 0x0106,
-        HomeAutomationDeviceOccupacySensor       = 0x0106,
+        HomeAutomationDeviceOnOffLight                  = 0x0100,
+        HomeAutomationDeviceDimmableLight               = 0x0101,
+        HomeAutomationDeviceDimmableColorLight          = 0x0102,
+        HomeAutomationDeviceOnOffLightSwitch            = 0x0103,
+        HomeAutomationDeviceDimmableSwitch              = 0x0104,
+        HomeAutomationDeviceColourDimmerSwitch          = 0x0105,
+        HomeAutomationDeviceLightSensor                 = 0x0106,
+        HomeAutomationDeviceOccupacySensor              = 0x0107,
+        HomeAutomationDeviceOnOffBallast                = 0x0108,
+        HomeAutomationDeviceDimmableBallast             = 0x0109,
+        HomeAutomationDeviceOnOffPlugin                 = 0x010A,
+        HomeAutomationDeviceDimmablePlugin              = 0x010B,
+        HomeAutomationDeviceColourTemperatureLight      = 0x010C,
+        HomeAutomationDeviceExtendedColourLight         = 0x010D,
+        HomeAutomationDeviceLightLevelSensor            = 0x010E,
 
         // Heating, Ventilation and Air-Conditioning (HVAC) devices
-        HomeAutomationDeviceThermostat           = 0x0301,
+        HomeAutomationDeviceThermostat                  = 0x0301,
 
         // Intruder Alarm System (IAS) devices
         HomeAutomationDeviceIsaControlEquipment             = 0x0400, // CIE
@@ -472,6 +511,23 @@ public:
     };
     Q_ENUM(DataType)
 
+    enum DestinationAddressMode {
+        DestinationAddressModeGroup = 0x01,
+        DestinationAddressModeUnicastIeee = 0x03
+    };
+    Q_ENUM(DestinationAddressMode)
+
+    enum ZigbeeZclStatus {
+
+    };
+    Q_ENUM(ZigbeeZclStatus)
+
+
+    enum ZigbeeZdpStatus {
+
+    };
+    Q_ENUM(ZigbeeZdpStatus)
+
     enum Manufacturer {
         // RF4CE
         PanasonicRF4CE          = 0x0001,
@@ -483,10 +539,11 @@ public:
         TiRF4CE                 = 0x0007,
 
         //  Manufacturer Codes for non RF4CE devices
-        Cirronet = 0x1000,
-        Chipcon = 0x1001,
-        Ember = 0x1003,
-
+        Cirronet                = 0x1000,
+        Chipcon                 = 0x1001,
+        Ember                   = 0x1003,
+        Ikea                    = 0x117C,
+        FeiBit                  = 0x117E
     };
     Q_ENUM(Manufacturer)
 
@@ -509,6 +566,45 @@ public:
         ZigbeeNwkLayerStatusBadCcmOutput = 0xce
     };
     Q_ENUM(ZigbeeNwkLayerStatus)
+
+    enum ZigbeeStatus {
+        ZigbeeStatusSuccess = 0x00,
+        ZigbeeStatusFailure = 0x01,
+        ZigbeeStatusNotAuthorized = 0x7e,
+        ZigbeeStatusReservedFieldNotZero = 0x7f,
+        ZigbeeStatusMalformedCommand = 0x80,
+        ZigbeeStatusUnsupportedClusterCommand = 0x81,
+        ZigbeeStatusUnsupportedGeneralCommand = 0x82,
+        ZigbeeStatusUnsupportedManufacturerClusterCommand = 0x83,
+        ZigbeeStatusUnsupportedManufacturerGeneralCommand = 0x84,
+        ZigbeeStatusInvalidField = 0x85,
+        ZigbeeStatusUnsupportedAttribute = 0x86,
+        ZigbeeStatusInvalidValue = 0x87,
+        ZigbeeStatusReadOnly = 0x88,
+        ZigbeeStatusInsufficientSpace = 0x89,
+        ZigbeeStatusDuplicateExists = 0x8a,
+        ZigbeeStatusNotFound = 0x8b,
+        ZigbeeStatusUnreportableAttribute = 0x8c,
+        ZigbeeStatusInvalidDataType = 0x8d,
+        ZigbeeStatusInvalidSector = 0x8e,
+        ZigbeeStatusWriteOnly = 0x8f,
+        ZigbeeStatusInconsistentStartupState = 0x90,
+        ZigbeeStatusDefinedOutOfBand = 0x91,
+        ZigbeeStatusInconsistent = 0x92,
+        ZigbeeStatusActionDenied = 0x93,
+        ZigbeeStatusTimeout = 0x94,
+        ZigbeeStatusAbort = 0x95,
+        ZigbeeStatusInvalidImage = 0x96,
+        ZigbeeStatusWaitForData = 0x97,
+        ZigbeeStatusNoImageAvailable = 0x98,
+        ZigbeeStatusRequireMoreImage = 0x99,
+        ZigbeeStatusNotificationPending = 0x9a,
+        ZigbeeStatusHardwareFailure = 0xc0,
+        ZigbeeStatusSoftwareFailure = 0xc1,
+        ZigbeeStatusCalibrationError = 0xc2,
+        ZigbeeStatusUnsupportedCluster = 0xc3
+    };
+    Q_ENUM(ZigbeeStatus)
 
     ///* Manufacturer Codes */
     ///* Codes less than 0x1000 were issued for RF4CE */

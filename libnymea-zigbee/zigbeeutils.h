@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -28,6 +28,7 @@
 #ifndef ZIGBEEUTILS_H
 #define ZIGBEEUTILS_H
 
+#include <QColor>
 #include <QObject>
 #include <QString>
 #include <QByteArray>
@@ -60,7 +61,10 @@ public:
     static QString clusterIdToString(const Zigbee::ClusterId &clusterId);
     static QString profileIdToString(const Zigbee::ZigbeeProfile &profileId);
 
+    // Generate random data
     static quint64 generateRandomPanId();
+
+    static QPointF convertColorToXY(const QColor &color);
 
 };
 
