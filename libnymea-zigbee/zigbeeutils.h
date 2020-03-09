@@ -31,6 +31,7 @@
 #include <QColor>
 #include <QObject>
 #include <QString>
+#include <QPointF>
 #include <QByteArray>
 #include <QBitArray>
 
@@ -64,7 +65,13 @@ public:
     // Generate random data
     static quint64 generateRandomPanId();
 
+    // Color converter
     static QPointF convertColorToXY(const QColor &color);
+    static QColor convertXYToColor(const QPointF &xyColor);
+    static QColor convertXYToColor(quint16 x, quint16 y);
+
+    // Color temperature interpolation
+    static QColor interpolateColorFromColorTemperature(int colorTemperature, int minValue, int maxValue);
 
 };
 

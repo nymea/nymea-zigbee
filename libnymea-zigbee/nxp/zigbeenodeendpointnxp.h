@@ -50,8 +50,13 @@ public:
     ZigbeeNetworkReply *bindUnicast(Zigbee::ClusterId clusterId, const ZigbeeAddress &destinationAddress, quint8 destinationEndpoint) override;
     ZigbeeNetworkReply *sendOnOffClusterCommand(ZigbeeCluster::OnOffClusterCommand command) override;
     ZigbeeNetworkReply *addGroup(quint8 destinationEndpoint, quint16 groupAddress) override;
+
+    // Level control
     ZigbeeNetworkReply *sendLevelCommand(ZigbeeCluster::LevelClusterCommand command, quint8 level, bool triggersOnOff, quint16 transitionTime) override;
+
+    // Color control
     ZigbeeNetworkReply *sendMoveToColorTemperature(quint16 colourTemperature, quint16 transitionTime) override;
+    ZigbeeNetworkReply *sendMoveToColor(double x, double y, quint16 transitionTime) override;
     ZigbeeNetworkReply *sendMoveToHueSaturation(quint8 hue, quint8 saturation, quint16 transitionTime) override;
     ZigbeeNetworkReply *sendMoveToHue(quint8 hue, quint16 transitionTime) override;
     ZigbeeNetworkReply *sendMoveToSaturation(quint8 saturation, quint16 transitionTime) override;

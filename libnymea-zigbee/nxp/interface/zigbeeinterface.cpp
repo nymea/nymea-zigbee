@@ -274,6 +274,11 @@ void ZigbeeInterface::disable()
 
 void ZigbeeInterface::sendMessage(const ZigbeeInterfaceMessage &message)
 {
+    if (!available()) {
+        qCWarning(dcZigbeeInterface()) << "Could not send message. The serial port is not available.";
+        return;
+    }
+
     quint16 messageTypeValue = static_cast<quint16>(message.messageType());
     quint16 lengthValue = static_cast<quint16>(message.data().count());
     quint8 crcValue = calculateCrc(messageTypeValue, lengthValue, message.data());

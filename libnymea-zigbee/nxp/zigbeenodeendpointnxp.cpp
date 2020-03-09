@@ -210,6 +210,28 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToColorTemperature(quint16 co
     return nullptr;
 }
 
+ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToColor(double x, double y, quint16 transitionTime)
+{
+    qCDebug(dcZigbeeNode()) << "Move to color request" << node() << x << y << transitionTime;
+
+    quint16 normalizedX = static_cast<quint16>(qRound(x * 65536));
+    quint16 normalizedY = static_cast<quint16>(qRound(y * 65536));
+
+    ZigbeeInterfaceReply *reply = m_controller->commandMoveToColor(0x02, node()->shortAddress(), 0x01, endpointId(), normalizedX, normalizedY, transitionTime);
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+        reply->deleteLater();
+
+        if (reply->status() != ZigbeeInterfaceReply::Success) {
+            qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            return;
+        }
+
+        qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+    });
+
+    return nullptr;
+}
+
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToHueSaturation(quint8 hue, quint8 saturation, quint16 transitionTime)
 {
     qCDebug(dcZigbeeNode()) << "Move to hue saturation request" << node() << hue << saturation << transitionTime;

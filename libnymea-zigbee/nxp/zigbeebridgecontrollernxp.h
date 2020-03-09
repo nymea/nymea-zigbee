@@ -98,6 +98,7 @@ public:
 
     // Level
     ZigbeeInterfaceReply *commandMoveToColourTemperature(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint16 colourTemperature, quint16 transitionTime);
+    ZigbeeInterfaceReply *commandMoveToColor(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint16 x, quint16 y, quint16 transitionTime);
     ZigbeeInterfaceReply *commandMoveToHueSaturation(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint8 hue, quint8 saturation, quint16 transitionTime);
     ZigbeeInterfaceReply *commandMoveToHue(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint8 hue, quint16 transitionTime);
     ZigbeeInterfaceReply *commandMoveToSaturation(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint8 saturation, quint16 transitionTime);

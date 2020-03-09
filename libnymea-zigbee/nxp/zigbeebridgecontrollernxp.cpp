@@ -585,6 +585,25 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToColourTemperature(
     return sendRequest(request);
 }
 
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToColor(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint16 x, quint16 y, quint16 transitionTime)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << addressMode;
+    stream << targetShortAddress;
+    stream << sourceEndpoint;
+    stream << destinationEndpoint;
+    stream << x << y;
+    stream << transitionTime;
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToColor, data));
+    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setDescription(QString("Move to colour %1, %2").arg(x).arg(y));
+    request.setTimoutIntervall(5000);
+
+    return sendRequest(request);
+}
+
 ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToHueSaturation(quint8 addressMode, quint16 targetShortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint8 hue, quint8 saturation, quint16 transitionTime)
 {
     QByteArray data;

@@ -95,6 +95,7 @@ public:
 
     // Color commands
     virtual ZigbeeNetworkReply *sendMoveToColorTemperature(quint16 colourTemperature, quint16 transitionTime) = 0;
+    virtual ZigbeeNetworkReply *sendMoveToColor(double x, double y, quint16 transitionTime) = 0;
     virtual ZigbeeNetworkReply *sendMoveToHueSaturation(quint8 hue, quint8 saturation, quint16 transitionTime) = 0;
     virtual ZigbeeNetworkReply *sendMoveToHue(quint8 hue, quint16 transitionTime) = 0;
     virtual ZigbeeNetworkReply *sendMoveToSaturation(quint8 saturation, quint16 transitionTime) = 0;
