@@ -1,1 +1,0 @@
-python SerialLink.py -p COM12
