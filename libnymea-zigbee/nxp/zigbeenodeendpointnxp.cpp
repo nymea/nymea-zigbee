@@ -57,12 +57,12 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::readAttribute(ZigbeeCluster *cluster,
     return nullptr;
 }
 
-ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::configureReporting(ZigbeeCluster *cluster, QList<quint16> attributes)
+ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations)
 {
-    qCDebug(dcZigbeeNode()) << "Configure reporting" << node() << cluster << attributes;
-    ZigbeeInterfaceReply *reply = m_controller->commandConfigureReportingRequest(0x00, node()->shortAddress(), 0x01,
-                                                                            endpointId(), cluster, attributes,
-                                                                            false, node()->manufacturerCode());
+    qCDebug(dcZigbeeNode()) << "Configure reporting" << node();
+    ZigbeeInterfaceReply *reply = m_controller->commandConfigureReportingRequest(0x02, node()->shortAddress(), 0x01,
+                                                                            endpointId(), cluster, 0x01,
+                                                                            false, node()->manufacturerCode(), reportConfigurations);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
         reply->deleteLater();
 
@@ -81,6 +81,24 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::identify(quint16 seconds)
 {
     qCDebug(dcZigbeeNode()) << "Identify" << node() << seconds << seconds;
     ZigbeeInterfaceReply *reply = m_controller->commandIdentify(0x02, node()->shortAddress(), 0x01, endpointId(), seconds);
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+        reply->deleteLater();
+
+        if (reply->status() != ZigbeeInterfaceReply::Success) {
+            qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            return;
+        }
+
+        qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+    });
+
+    return nullptr;
+}
+
+ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::factoryReset()
+{
+    qCDebug(dcZigbeeNode()) << "Factory reset" << this;
+    ZigbeeInterfaceReply *reply = m_controller->commandFactoryResetNode(node()->shortAddress(), 0x01, endpointId());
     connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
         reply->deleteLater();
 
@@ -291,10 +309,31 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToSaturation(quint8 saturatio
 
 void ZigbeeNodeEndpointNxp::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
 {
-    foreach (ZigbeeCluster *cluster, m_inputClusters) {
-        if (cluster->clusterId() == clusterId) {
-            cluster->setAttribute(attribute);
-            emit clusterAttributeChanged(cluster, attribute);
-        }
+    // Check if this cluster is an input cluster
+    if (hasInputCluster(clusterId)) {
+        ZigbeeCluster *cluster = getInputCluster(clusterId);
+        cluster->setAttribute(attribute);
+        emit clusterAttributeChanged(cluster, attribute);
+        return;
     }
+
+    // Check if this cluster is an output cluster
+    if (hasOutputCluster(clusterId)) {
+        ZigbeeCluster *cluster = getOutputCluster(clusterId);
+        cluster->setAttribute(attribute);
+        emit clusterAttributeChanged(cluster, attribute);
+        return;
+    }
+
+    // There is no cluster yet. Create it as output cluster if this is not the basic cluster
+    ZigbeeCluster *cluster = nullptr;
+    if (clusterId == Zigbee::ClusterIdBasic) {
+        cluster = new ZigbeeCluster(clusterId, ZigbeeCluster::Input, this);
+        addInputCluster(cluster);
+    } else {
+        cluster = new ZigbeeCluster(clusterId, ZigbeeCluster::Output, this);
+        addOutputCluster(cluster);
+    }
+    cluster->setAttribute(attribute);
+    emit clusterAttributeChanged(cluster, attribute);
 }

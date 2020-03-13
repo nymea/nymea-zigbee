@@ -33,6 +33,27 @@
 #include "zigbee.h"
 #include "zigbeeclusterattribute.h"
 
+struct ZigbeeClusterReportConfigurationRecord {
+    quint8 direction;
+    Zigbee::DataType dataType;
+    quint16 attributeId;
+    quint16 minInterval;
+    quint16 maxInterval;
+    quint16 timeout;
+    quint8 change;
+};
+
+struct ZigbeeClusterAttributeReport {
+    quint16 sourceAddress;
+    quint8 endpointId;
+    Zigbee::ClusterId clusterId;
+    quint16 attributeId;
+    Zigbee::ZigbeeStatus attributeStatus;
+    Zigbee::DataType dataType;
+    QByteArray data;
+};
+
+
 class ZigbeeCluster : public QObject
 {
     Q_OBJECT

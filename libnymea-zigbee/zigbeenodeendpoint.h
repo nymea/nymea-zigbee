@@ -75,10 +75,13 @@ public:
 
     // Attribute methods
     virtual ZigbeeNetworkReply *readAttribute(ZigbeeCluster *cluster, QList<quint16> attributes) = 0;
-    virtual ZigbeeNetworkReply *configureReporting(ZigbeeCluster *cluster, QList<quint16> attributes) = 0;
+    virtual ZigbeeNetworkReply *configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations) = 0;
 
     // Identify
     virtual ZigbeeNetworkReply *identify(quint16 seconds) = 0;
+
+    // Reset
+    virtual ZigbeeNetworkReply *factoryReset() = 0;
 
     // Binding
     virtual ZigbeeNetworkReply *bindGroup(Zigbee::ClusterId clusterId, quint16 destinationAddress, quint8 destinationEndpoint) = 0;

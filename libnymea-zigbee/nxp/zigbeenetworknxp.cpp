@@ -131,7 +131,7 @@ void ZigbeeNetworkNxp::setStartingState(ZigbeeNetworkNxp::StartingState state)
         if (channel() == 0) {
             qCDebug(dcZigbeeNetwork()) << "Autoselect quitest channel for the zigbee network. FIXME: currently hardcoded to 13 due to firmware error.";
             quint32 channelMask = 0;
-            channelMask |= 1 << (13);
+            channelMask |= 1 << (14);
             reply = m_controller->commandSetChannelMask(channelMask);
         } else {
             quint32 channelMask = 0;
@@ -675,19 +675,22 @@ void ZigbeeNetworkNxp::processAttributeReport(const ZigbeeInterfaceMessage &mess
         break;
     }
 
-    ZigbeeNode *node = getZigbeeNode(sourceAddress);
+    ZigbeeNodeNxp *node = qobject_cast<ZigbeeNodeNxp *>(getZigbeeNode(sourceAddress));
     if (!node) {
         qCWarning(dcZigbeeNode()) << "Received an attribute report from an unknown node. Ignoring data.";
         return;
     }
 
-    ZigbeeNodeEndpointNxp *endpoint = qobject_cast<ZigbeeNodeEndpointNxp *>(node->getEndpoint(endpointId));
-    if (!endpoint) {
-        qCWarning(dcZigbeeNetwork()) << "There is no endpoint for this attribute report.";
-        return;
-    }
+    ZigbeeClusterAttributeReport attributeReport;
+    attributeReport.sourceAddress = sourceAddress;
+    attributeReport.endpointId = endpointId;
+    attributeReport.clusterId = static_cast<Zigbee::ClusterId>(clusterId);
+    attributeReport.attributeId = attributeId;
+    attributeReport.attributeStatus = static_cast<Zigbee::ZigbeeStatus>(attributeStatus);
+    attributeReport.dataType = dataType;
+    attributeReport.data = attributeData;
 
-    endpoint->setClusterAttribute(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeClusterAttribute(attributeId, dataType, attributeData));
+    node->setClusterAttributeReport(attributeReport);
 }
 
 void ZigbeeNetworkNxp::processReadAttributeResponse(const ZigbeeInterfaceMessage &message)
@@ -751,19 +754,23 @@ void ZigbeeNetworkNxp::processReadAttributeResponse(const ZigbeeInterfaceMessage
         break;
     }
 
-    ZigbeeNode *node = getZigbeeNode(sourceAddress);
+
+    ZigbeeNodeNxp *node = qobject_cast<ZigbeeNodeNxp *>(getZigbeeNode(sourceAddress));
     if (!node) {
         qCWarning(dcZigbeeNode()) << "Received an attribute report from an unknown node. Ignoring data.";
         return;
     }
 
-    ZigbeeNodeEndpointNxp *endpoint = qobject_cast<ZigbeeNodeEndpointNxp *>(node->getEndpoint(endpointId));
-    if (!endpoint) {
-        qCWarning(dcZigbeeNetwork()) << "There is no endpoint for this attribute report.";
-        return;
-    }
+    ZigbeeClusterAttributeReport attributeReport;
+    attributeReport.sourceAddress = sourceAddress;
+    attributeReport.endpointId = endpointId;
+    attributeReport.clusterId = static_cast<Zigbee::ClusterId>(clusterId);
+    attributeReport.attributeId = attributeId;
+    attributeReport.attributeStatus = static_cast<Zigbee::ZigbeeStatus>(attributeStatus);
+    attributeReport.dataType = dataType;
+    attributeReport.data = attributeData;
 
-    endpoint->setClusterAttribute(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeClusterAttribute(attributeId, dataType, attributeData));
+    node->setClusterAttributeReport(attributeReport);
 }
 
 void ZigbeeNetworkNxp::processLeaveIndication(const ZigbeeInterfaceMessage &message)

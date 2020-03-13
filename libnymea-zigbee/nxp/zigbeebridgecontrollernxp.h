@@ -77,8 +77,10 @@ public:
     ZigbeeInterfaceReply *commandPowerDescriptorRequest(quint16 shortAddress);
     ZigbeeInterfaceReply *commandUserDescriptorRequest(quint16 shortAddress, quint16 address);
 
+    ZigbeeInterfaceReply *commandFactoryResetNode(quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint);
+
     ZigbeeInterfaceReply *commandReadAttributeRequest(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, ZigbeeCluster *cluster, QList<quint16> attributes, bool manufacturerSpecific, quint16 manufacturerId);
-    ZigbeeInterfaceReply *commandConfigureReportingRequest(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, ZigbeeCluster *cluster, QList<quint16> attributes, bool manufacturerSpecific, quint16 manufacturerId);
+    ZigbeeInterfaceReply *commandConfigureReportingRequest(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, ZigbeeCluster *cluster, quint8 direction, bool manufacturerSpecific, quint16 manufacturerId, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations);
     ZigbeeInterfaceReply *commandIdentify(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, quint16 duration);
 
     ZigbeeInterfaceReply *commandBindGroup(const ZigbeeAddress &sourceAddress, quint8 sourceEndpoint, quint16 clusterId, quint16 destinationAddress, quint8 destinationEndpoint);

@@ -44,8 +44,10 @@ public:
     explicit ZigbeeNodeEndpointNxp(ZigbeeBridgeControllerNxp *controller, ZigbeeNode *node, quint8 endpoint, QObject *parent = nullptr);
 
     ZigbeeNetworkReply *readAttribute(ZigbeeCluster *cluster, QList<quint16> attributes) override;
-    ZigbeeNetworkReply *configureReporting(ZigbeeCluster *cluster, QList<quint16> attributes) override;
+    ZigbeeNetworkReply *configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations) override;
+
     ZigbeeNetworkReply *identify(quint16 seconds) override;
+    ZigbeeNetworkReply *factoryReset() override;
     ZigbeeNetworkReply *bindGroup(Zigbee::ClusterId clusterId, quint16 destinationAddress, quint8 destinationEndpoint) override;
     ZigbeeNetworkReply *bindUnicast(Zigbee::ClusterId clusterId, const ZigbeeAddress &destinationAddress, quint8 destinationEndpoint) override;
     ZigbeeNetworkReply *sendOnOffClusterCommand(ZigbeeCluster::OnOffClusterCommand command) override;

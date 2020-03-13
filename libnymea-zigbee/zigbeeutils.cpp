@@ -416,8 +416,7 @@ QColor ZigbeeUtils::interpolateColorFromColorTemperature(int colorTemperature, i
     int intervalSize = maxValue - minValue;
     int intervalPosition = colorTemperature - minValue;
     double percentage = intervalPosition * 1.0 / intervalSize;
-    //qWarning() << "Interpolate color" << intervalSize << intervalPosition << percentage;
     int closestColorIndex = qRound((colorTemperatureScale.count() - 1) * (1.0 - percentage));
-    //qWarning() << "Colors size" << colorTemperatureScale.count() << "Color position according to percentage" << closestColorIndex;
+    // FIXME: interpolate between the selected index and the next color for more accuracy if required
     return colorTemperatureScale.at(closestColorIndex);
 }

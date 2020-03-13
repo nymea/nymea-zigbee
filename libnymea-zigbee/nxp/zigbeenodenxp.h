@@ -31,6 +31,7 @@
 #include <QObject>
 
 #include "zigbeenode.h"
+#include "zigbeenodeendpointnxp.h"
 #include "zigbeebridgecontrollernxp.h"
 
 class ZigbeeNodeNxp : public ZigbeeNode
@@ -59,6 +60,7 @@ private:
     QList<quint8> m_uninitializedEndpoints;
 
     void setInitState(InitState initState);
+    void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) override;
 
 protected:
     void startInitialization() override;

@@ -27,13 +27,14 @@
 
 #include "zigbeeutils.h"
 #include "zigbeecluster.h"
+#include "loggingcategory.h"
 
 ZigbeeCluster::ZigbeeCluster(Zigbee::ClusterId clusterId, Direction direction, QObject *parent) :
     QObject(parent),
     m_clusterId(clusterId),
     m_direction(direction)
 {
-
+    qCDebug(dcZigbeeCluster()) << "Create cluster" << ZigbeeUtils::convertUint16ToHexString(clusterId) << direction;
 }
 
 ZigbeeCluster::Direction ZigbeeCluster::direction() const
@@ -71,10 +72,12 @@ ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 id)
 
 void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
-    if (hasAttribute(attribute.id())) {
+    if (hasAttribute(attribute.id())) { 
+        qCDebug(dcZigbeeCluster()) << this << "update attribute" << attribute;
         m_attributes[attribute.id()] = attribute;
         emit attributeChanged(attribute);
     } else {
+        qCDebug(dcZigbeeCluster()) << this << "add attribute" << attribute;
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);
     }

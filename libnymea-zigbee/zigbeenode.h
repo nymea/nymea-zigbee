@@ -199,6 +199,8 @@ private:
     bool m_extendedActiveEndpointListAvailable = false;
     bool m_extendedSimpleDescriptorListAvailable = false;
 
+    virtual void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) = 0;
+
 protected:
     ZigbeeNode(QObject *parent = nullptr);
 
