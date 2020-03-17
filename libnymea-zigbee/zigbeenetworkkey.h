@@ -37,6 +37,7 @@ class ZigbeeNetworkKey
 
 public:
     ZigbeeNetworkKey();
+    ZigbeeNetworkKey(const ZigbeeNetworkKey &other);
     ZigbeeNetworkKey(const QString &key);
     ZigbeeNetworkKey(const QByteArray &keyString);
 

@@ -34,6 +34,11 @@ ZigbeeNetworkKey::ZigbeeNetworkKey()
 
 }
 
+ZigbeeNetworkKey::ZigbeeNetworkKey(const ZigbeeNetworkKey &other)
+{
+    m_key = other.toByteArray();
+}
+
 ZigbeeNetworkKey::ZigbeeNetworkKey(const QString &key)
 {
     QString rawKey = QString(key).remove(':');
