@@ -78,6 +78,7 @@ public:
     ZigbeeInterfaceReply *commandUserDescriptorRequest(quint16 shortAddress, quint16 address);
 
     ZigbeeInterfaceReply *commandFactoryResetNode(quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint);
+    ZigbeeInterfaceReply *commandManagementLeaveRequest(quint16 shortAddress, const ZigbeeAddress &ieeeAddress, bool rejoin = false, bool removeChildren = false);
 
     ZigbeeInterfaceReply *commandReadAttributeRequest(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, ZigbeeCluster *cluster, QList<quint16> attributes, bool manufacturerSpecific, quint16 manufacturerId);
     ZigbeeInterfaceReply *commandConfigureReportingRequest(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, ZigbeeCluster *cluster, quint8 direction, bool manufacturerSpecific, quint16 manufacturerId, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations);

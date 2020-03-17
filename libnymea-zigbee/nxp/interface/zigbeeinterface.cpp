@@ -143,7 +143,10 @@ void ZigbeeInterface::onReadyRead()
             m_lengthValue = 0;
             m_escapeDetected = false;
             m_data.clear();
-
+            if (!m_unhandledBuffer.isEmpty()) {
+                qCDebug(dcZigbeeInterfaceTraffic()) << "Controller debug message:" << QString::fromUtf8(m_unhandledBuffer);
+                m_unhandledBuffer.clear();
+            }
             setReadingState(WaitForTypeMsb);
             break;
         case 0x02:
@@ -185,7 +188,8 @@ void ZigbeeInterface::onReadyRead()
             // Read data bytes depending on the reading state
             switch (m_readingState) {
             case WaitForStart:
-                qCWarning(dcZigbeeInterfaceTraffic()) << "Wait for start but reviced data:" << byte;
+                qCDebug(dcZigbeeInterfaceTraffic()) << "Wait for start but reviced data:" << byte;
+                m_unhandledBuffer.append(static_cast<char>(byte));
                 break;
             case WaitForTypeMsb:
                 m_messageTypeValue = byte;

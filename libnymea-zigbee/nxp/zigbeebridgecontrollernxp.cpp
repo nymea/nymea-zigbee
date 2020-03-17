@@ -381,6 +381,23 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandFactoryResetNode(quint16
     return sendRequest(request);
 }
 
+ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandManagementLeaveRequest(quint16 shortAddress, const ZigbeeAddress &ieeeAddress, bool rejoin, bool removeChildren)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << shortAddress;
+    stream << ieeeAddress.toUInt64();
+    stream << (rejoin ? static_cast<quint8>(0x01) : static_cast<quint8>(0x00));
+    stream << (removeChildren ? static_cast<quint8>(0x01) : static_cast<quint8>(0x00));
+
+    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeManagementLeaveRequest, data));
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeManagementLeaveResponse);
+    request.setDescription("Leave node request " + ZigbeeUtils::convertUint16ToHexString(shortAddress));
+    request.setTimoutIntervall(10000);
+
+    return sendRequest(request);
+}
+
 ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandReadAttributeRequest(quint8 addressMode, quint16 shortAddress, quint8 sourceEndpoint, quint8 destinationEndpoint, ZigbeeCluster *cluster, QList<quint16> attributes, bool manufacturerSpecific, quint16 manufacturerId)
 {
     // Address mode: TODO
@@ -413,7 +430,9 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandReadAttributeRequest(qui
     }
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeReadAttributeRequest, data));
-    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeReadAttributeResponse);
+    if (attributes.count() == 1) {
+        request.setExpectedAdditionalMessageType(Zigbee::MessageTypeReadAttributeResponse);
+    }
     request.setDescription("Read attribute request for " + ZigbeeUtils::convertUint16ToHexString(shortAddress));
     request.setTimoutIntervall(12000);
 

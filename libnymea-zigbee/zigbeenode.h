@@ -147,6 +147,8 @@ public:
     QList<PowerSource> availablePowerSources() const;
     PowerLevel powerLevel() const;
 
+    virtual void leaveNetworkRequest(bool rejoin = false, bool removeChildren = false) = 0;
+
 private:
     bool m_connected = false;
     State m_state = StateUninitialized;

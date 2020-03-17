@@ -93,3 +93,16 @@ QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
 
     return debug.space();
 }
+
+QDebug operator<<(QDebug debug, const ZigbeeClusterAttributeReport &attributeReport)
+{
+    debug.nospace().noquote() << "AttributeReport("
+                              << attributeReport.clusterId << ", "
+                              << attributeReport.attributeId << ", "
+                              << attributeReport.attributeStatus << ", "
+                              << attributeReport.dataType << ", "
+                              << attributeReport.data << ", "
+                              << ")";
+
+    return debug.space();
+}

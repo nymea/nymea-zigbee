@@ -238,42 +238,6 @@ void ZigbeeNode::setConnected(bool connected)
     emit connectedChanged(m_connected);
 }
 
-
-//void ZigbeeNode::identify()
-//{
-//    QByteArray data;
-//    QDataStream stream(&data, QIODevice::WriteOnly);
-//    stream << m_shortAddress;
-//    stream << static_cast<quint8>(0);
-
-//    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeManagementLqiRequest, data));
-//    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeManagementLqiResponse);
-//    request.setDescription("Node link quality request for " + ZigbeeUtils::convertUint16ToHexString(m_shortAddress));
-//    request.setTimoutIntervall(10000);
-
-//    ZigbeeInterfaceReply *reply = controller()->sendRequest(request);
-    //    connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNode::onRequestLinkQuality);
-//}
-
-//void ZigbeeNode::toggle(int addressMode)
-//{
-//    QByteArray data;
-//    QDataStream stream(&data, QIODevice::WriteOnly);
-//    stream << static_cast<quint8>(addressMode); // adress mode
-//    stream << m_shortAddress;
-//    stream << static_cast<quint8>(1); // source endpoint
-//    stream << static_cast<quint8>(1); // destination endpoint
-//    stream << static_cast<quint8>(2); // command toggle
-
-//    ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeCluserOnOff, data));
-//    request.setDescription("Toggle request for " + ZigbeeUtils::convertUint16ToHexString(m_shortAddress));
-
-//    ZigbeeInterfaceReply *reply = controller()->sendRequest(request);
-//    connect(reply, &ZigbeeInterfaceReply::finished, this, &ZigbeeNode::onToggleFinished);
-//}
-
-
-
 void ZigbeeNode::setShortAddress(const quint16 &shortAddress)
 {
     m_shortAddress = shortAddress;
@@ -587,6 +551,7 @@ QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {
     debug.nospace().noquote() << "ZigbeeNode(" << ZigbeeUtils::convertUint16ToHexString(node->shortAddress());
     debug.nospace().noquote() << ", " << node->extendedAddress().toString();
+    debug.nospace().noquote() << ", " << node->nodeType();
     debug.nospace().noquote() << ")";
     return debug.space();
 }

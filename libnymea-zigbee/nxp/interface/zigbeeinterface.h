@@ -60,6 +60,7 @@ private:
     QTimer *m_reconnectTimer = nullptr;
     QSerialPort *m_serialPort = nullptr;
     QByteArray m_messageBuffer;
+    QByteArray m_unhandledBuffer;
     bool m_available = false;
 
     // Message parsing

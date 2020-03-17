@@ -47,7 +47,8 @@ public:
         ZigbeeProfileTelecomAutomation = 0x0107,
         ZigbeeProfilePersonalHomeHospitalCare = 0x0108,
         ZigbeeProfileAdvancedMetering = 0x0109,
-        ZigbeeProfileLightLink = 0xC05E
+        ZigbeeProfileLightLink = 0xC05E,
+        ZigbeeProfileGreenPower = 0xA1E0
     };
     Q_ENUM(ZigbeeProfile)
 
@@ -306,6 +307,10 @@ public:
         // Over the air uppgrade (OTA)
         ClusterIdOtaUpgrade             = 0x0019,
 
+        // Poll controll
+        ClusterIdPollControl            = 0x0020,
+
+
         // Closures
         ClusterIdShadeConfiguration     = 0x0100,
 
@@ -342,9 +347,6 @@ public:
         ClusterIdLoadControl    = 0x0701,
         ClusterIdSimpleMetering = 0x0702,
 
-        // Electrical Measurement
-        ClusterIdElectricalMeasurement = 0x0B04,
-
         // ZLL
         ClusterIdTouchlinkCommissioning = 0x1000,
 
@@ -352,7 +354,15 @@ public:
         ClusterIdApplianceControl           = 0x001B,
         ClusterIdApplianceIdentification    = 0x0B00,
         ClusterIdApplianceEventsAlerts      = 0x0B02,
-        ClusterIdApplianceStatistics        = 0x0B03
+        ClusterIdApplianceStatistics        = 0x0B03,
+
+        // Electrical Measurement
+        ClusterIdElectricalMeasurement      = 0x0B04,
+        ClusterIdDiagnostics                = 0x0B05,
+
+        // Zigbee green power
+        ClusterIdGreenPower                 = 0x0021
+
     };
     Q_ENUM(ClusterId)
 
@@ -450,6 +460,18 @@ public:
         HomeAutomationDeviceIsaWarningDevice                = 0x0401  // WD
     };
     Q_ENUM(HomeAutomationDevice)
+
+
+    enum GreenPowerDevice {
+        GreenPowerDeviceProxy = 0x0060,
+        GreenPowerDeviceProxyMinimum = 0x0061,
+        GreenPowerDeviceProxyTargetPlus = 0x0062,
+        GreenPowerDeviceProxyTarget = 0x0063,
+        GreenPowerDeviceProxyCommissioningTool = 0x0064,
+        GreenPowerDeviceProxyCombo = 0x0065,
+        GreenPowerDeviceProxyComboMinimum = 0x0066
+    };
+    Q_ENUM(GreenPowerDevice)
 
     enum DataType {
         NoData          = 0x00,

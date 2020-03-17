@@ -47,17 +47,20 @@ public:
         InitStatePowerDescriptor,
         InitStateActiveEndpoints,
         InitStateSimpleDescriptors,
-        InitStateReadClusterAttributes
+        InitStateReadBasicClusterAttributes
     };
     Q_ENUM(InitState)
 
     explicit ZigbeeNodeNxp(ZigbeeBridgeControllerNxp *controller, QObject *parent = nullptr);
+
+    void leaveNetworkRequest(bool rejoin = false, bool removeChildren = false) override;
 
 private:
     ZigbeeBridgeControllerNxp *m_controller = nullptr;
     InitState m_initState = InitStateNone;
 
     QList<quint8> m_uninitializedEndpoints;
+    QList<quint16> m_uninitalizedBasicClusterAttributes;
 
     void setInitState(InitState initState);
     void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) override;

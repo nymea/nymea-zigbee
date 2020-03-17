@@ -43,7 +43,7 @@ struct ZigbeeClusterReportConfigurationRecord {
     quint8 change;
 };
 
-struct ZigbeeClusterAttributeReport {
+typedef struct ZigbeeClusterAttributeReport {
     quint16 sourceAddress;
     quint8 endpointId;
     Zigbee::ClusterId clusterId;
@@ -51,8 +51,7 @@ struct ZigbeeClusterAttributeReport {
     Zigbee::ZigbeeStatus attributeStatus;
     Zigbee::DataType dataType;
     QByteArray data;
-};
-
+} ZigbeeClusterAttributeReport;
 
 class ZigbeeCluster : public QObject
 {
@@ -218,5 +217,6 @@ signals:
 };
 
 QDebug operator<<(QDebug debug, ZigbeeCluster *cluster);
+QDebug operator<<(QDebug debug, const ZigbeeClusterAttributeReport &attributeReport);
 
 #endif // ZIGBEECLUSTER_H

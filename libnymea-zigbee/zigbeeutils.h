@@ -36,6 +36,7 @@
 #include <QBitArray>
 
 #include "zigbee.h"
+#include "zigbeecluster.h"
 
 class ZigbeeUtils
 {
@@ -72,6 +73,8 @@ public:
 
     // Color temperature interpolation
     static QColor interpolateColorFromColorTemperature(int colorTemperature, int minValue, int maxValue);
+
+    static ZigbeeClusterAttributeReport parseAttributeReport(const QByteArray &data);
 
 };
 

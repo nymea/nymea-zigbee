@@ -43,7 +43,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::readAttribute(ZigbeeCluster *cluster,
     ZigbeeInterfaceReply *reply = m_controller->commandReadAttributeRequest(0x02, node()->shortAddress(), 0x01,
                                                                             endpointId(), cluster, attributes,
                                                                             false, node()->manufacturerCode());
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
@@ -52,6 +52,10 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::readAttribute(ZigbeeCluster *cluster,
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        if (!reply->additionalMessage().data().isEmpty()) {
+            ZigbeeClusterAttributeReport report = ZigbeeUtils::parseAttributeReport(reply->additionalMessage().data());
+            setClusterAttribute(report.clusterId, ZigbeeClusterAttribute(report.attributeId, report.dataType, report.data));
+        }
     });
 
     return nullptr;
@@ -60,8 +64,11 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::readAttribute(ZigbeeCluster *cluster,
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations)
 {
     qCDebug(dcZigbeeNode()) << "Configure reporting" << node();
+
+    // FIXME: check the report configuration and the direction field according to specs
+
     ZigbeeInterfaceReply *reply = m_controller->commandConfigureReportingRequest(0x02, node()->shortAddress(), 0x01,
-                                                                            endpointId(), cluster, 0x01,
+                                                                            endpointId(), cluster, 0x00,
                                                                             false, node()->manufacturerCode(), reportConfigurations);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
         reply->deleteLater();
@@ -336,4 +343,5 @@ void ZigbeeNodeEndpointNxp::setClusterAttribute(Zigbee::ClusterId clusterId, con
     }
     cluster->setAttribute(attribute);
     emit clusterAttributeChanged(cluster, attribute);
+
 }

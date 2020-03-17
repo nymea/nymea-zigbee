@@ -70,6 +70,21 @@ void ZigbeeNodeEndpoint::setDeviceVersion(quint8 deviceVersion)
     m_deviceVersion = deviceVersion;
 }
 
+QString ZigbeeNodeEndpoint::manufacturerName() const
+{
+    return m_manufacturerName;
+}
+
+QString ZigbeeNodeEndpoint::modelIdentifier() const
+{
+    return m_modelIdentifier;
+}
+
+QString ZigbeeNodeEndpoint::softwareBuildId() const
+{
+    return m_softwareBuildId;
+}
+
 QList<ZigbeeCluster *> ZigbeeNodeEndpoint::inputClusters() const
 {
     return m_inputClusters.values();
@@ -151,8 +166,10 @@ QDebug operator<<(QDebug debug, ZigbeeNodeEndpoint *endpoint)
     debug.nospace().noquote() << ", " << endpoint->profile();
     if (endpoint->profile() == Zigbee::ZigbeeProfileLightLink) {
         debug.nospace().noquote() << ", " << static_cast<Zigbee::LightLinkDevice>(endpoint->deviceId());
-    } else {
+    } else if (endpoint->profile() == Zigbee::ZigbeeProfileHomeAutomation) {
         debug.nospace().noquote() << ", " << static_cast<Zigbee::HomeAutomationDevice>(endpoint->deviceId());
+    } else if (endpoint->profile() == Zigbee::ZigbeeProfileGreenPower) {
+        debug.nospace().noquote() << ", " << static_cast<Zigbee::GreenPowerDevice>(endpoint->deviceId());
     }
 
     debug.nospace().noquote() << ")";

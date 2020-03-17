@@ -280,7 +280,9 @@ void ZigbeeNetwork::loadNetwork()
             endpoint->m_profile = static_cast<Zigbee::ZigbeeProfile>(settings.value("profile", 0).toUInt());
             endpoint->m_deviceId = static_cast<quint16>(settings.value("deviceId", 0).toUInt());
             endpoint->m_deviceVersion = static_cast<quint8>(settings.value("deviceId", 0).toUInt());
-            //qCDebug(dcZigbeeNetwork()) << "Created" << endpoint;
+            endpoint->m_manufacturerName = settings.value("manufacturerName").toString();
+            endpoint->m_modelIdentifier = settings.value("modelIdentifier").toString();
+            endpoint->m_softwareBuildId = settings.value("softwareBuildId").toString();
 
             int inputClustersCount = settings.beginReadArray("inputClusters");
             for (int n = 0; n < inputClustersCount; n ++) {
@@ -339,11 +341,6 @@ void ZigbeeNetwork::saveNode(ZigbeeNode *node)
     QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
     settings.beginGroup("Nodes");
 
-    // Clear settings for this node before storing it
-//    settings.beginGroup(node->extendedAddress().toString());
-//    settings.remove("");
-//    settings.endGroup();
-
     // Save this node
     settings.beginGroup(node->extendedAddress().toString());
     settings.setValue("nwkAddress", node->shortAddress());
@@ -359,6 +356,9 @@ void ZigbeeNetwork::saveNode(ZigbeeNode *node)
         settings.setValue("profile", endpoint->profile());
         settings.setValue("deviceId", endpoint->deviceId());
         settings.setValue("deviceVersion", endpoint->deviceVersion());
+        settings.setValue("manufacturerName", endpoint->manufacturerName());
+        settings.setValue("modelIdentifier", endpoint->modelIdentifier());
+        settings.setValue("softwareBuildId", endpoint->softwareBuildId());
 
         settings.beginWriteArray("inputClusters");
         for (int n = 0; n < endpoint->inputClusters().count(); n++) {
