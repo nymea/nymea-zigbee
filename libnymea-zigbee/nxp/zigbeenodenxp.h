@@ -43,6 +43,7 @@ class ZigbeeNodeNxp : public ZigbeeNode
 public:
     enum InitState {
         InitStateNone,
+        InitStateError,
         InitStateNodeDescriptor,
         InitStatePowerDescriptor,
         InitStateActiveEndpoints,
@@ -58,6 +59,7 @@ public:
 private:
     ZigbeeBridgeControllerNxp *m_controller = nullptr;
     InitState m_initState = InitStateNone;
+    int m_initStateRetry = 0;
 
     QList<quint8> m_uninitializedEndpoints;
     QList<quint16> m_uninitalizedBasicClusterAttributes;

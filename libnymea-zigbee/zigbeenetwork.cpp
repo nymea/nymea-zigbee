@@ -324,6 +324,11 @@ void ZigbeeNetwork::clearSettings()
         removeNode(node);
     }
 
+    foreach (ZigbeeNode *node, m_uninitializedNodes) {
+        m_uninitializedNodes.removeAll(node);
+        node->deleteLater();
+    }
+
     qCDebug(dcZigbeeNetwork()) << "Clear network settings" << m_settingsFileName;
     QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
     settings.clear();

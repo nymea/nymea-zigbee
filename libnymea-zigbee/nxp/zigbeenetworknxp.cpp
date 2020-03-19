@@ -1073,7 +1073,7 @@ void ZigbeeNetworkNxp::startNetwork()
     // FIXME: define if router or coordinator
     qCDebug(dcZigbeeNetwork()) << "Start network...";
 
-    if (state() == StateUninitialized)
+    if (state() == StateUninitialized && !m_factoryResetting)
         loadNetwork();
 
     // Do a factory reset if there are no network configuration and create a new one from scratch
@@ -1150,9 +1150,9 @@ void ZigbeeNetworkNxp::reset()
 void ZigbeeNetworkNxp::factoryResetNetwork()
 {
     qCDebug(dcZigbeeNetwork()) << "Factory reset network and forget all information. This cannot be undone.";
-    m_factoryResetting = true;
     clearSettings();
     setState(StateUninitialized);
+    m_factoryResetting = true;
     qCDebug(dcZigbeeNetwork()) << "The factory reset is finished. Start restart with a fresh network.";
     startNetwork();
 }

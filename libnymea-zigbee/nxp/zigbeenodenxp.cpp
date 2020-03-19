@@ -73,6 +73,10 @@ void ZigbeeNodeNxp::setInitState(ZigbeeNodeNxp::InitState initState)
 
     switch (m_initState) {
     case InitStateNone:
+        m_initStateRetry = 0;
+        break;
+    case InitStateError:
+
         break;
     case InitStateNodeDescriptor: {
         qCDebug(dcZigbeeNode()) << "Request node descriptor for" << this;
@@ -82,8 +86,18 @@ void ZigbeeNodeNxp::setInitState(ZigbeeNodeNxp::InitState initState)
 
             if (reply->status() != ZigbeeInterfaceReply::Success) {
                 qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+                m_initStateRetry++;
+                if (m_initStateRetry > 3) {
+                    qCWarning(dcZigbeeNode()) << "Failed to get node descriptor after 3 retries. This node will not be added to the network.";
+                    setInitState(InitStateError);
+                    return;
+                } else {
+                    setInitState(InitStateNodeDescriptor);
+                    return;
+                }
             }
 
+            m_initStateRetry = 0;
             setNodeDescriptorRawData(reply->additionalMessage().data());
             setInitState(InitStatePowerDescriptor);
         });
@@ -97,7 +111,18 @@ void ZigbeeNodeNxp::setInitState(ZigbeeNodeNxp::InitState initState)
 
             if (reply->status() != ZigbeeInterfaceReply::Success) {
                 qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+                m_initStateRetry++;
+                if (m_initStateRetry > 3) {
+                    qCWarning(dcZigbeeNode()) << "Failed to get power descriptor after 3 retries. This node will not be added to the network.";
+                    setInitState(InitStateError);
+                    return;
+                } else {
+                    setInitState(InitStatePowerDescriptor);
+                    return;
+                }
             }
+
+            m_initStateRetry = 0;
 
             QByteArray data = reply->additionalMessage().data();
             quint8 sequenceNumber = 0;
@@ -119,27 +144,38 @@ void ZigbeeNodeNxp::setInitState(ZigbeeNodeNxp::InitState initState)
 
             if (reply->status() != ZigbeeInterfaceReply::Success) {
                 qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
-            } else {
-                QByteArray data = reply->additionalMessage().data();
-                quint8 sequenceNumber = 0;
-                quint8 status = 0;
-                quint16 shortAddress = 0;
-                quint8 endpointCount = 0;
-
-                QDataStream stream(&data, QIODevice::ReadOnly);
-                stream >> sequenceNumber >> status >> shortAddress >> endpointCount;
-
-                qCDebug(dcZigbeeNode()) << "Active endpoint list received:";
-                qCDebug(dcZigbeeNode()) << "Sequence number" << sequenceNumber;
-                qCDebug(dcZigbeeNode()) << "Status:" << status;
-                qCDebug(dcZigbeeNode()) << "Short address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
-                qCDebug(dcZigbeeNode()) << "Endpoint count:" << endpointCount;
-                for (int i = 0; i < endpointCount; i++) {
-                    quint8 endpointId = 0;
-                    stream >> endpointId;
-                    m_uninitializedEndpoints.append(endpointId);
-                    qCDebug(dcZigbeeNode()) << " - " << ZigbeeUtils::convertByteToHexString(endpointId);
+                m_initStateRetry++;
+                if (m_initStateRetry > 3) {
+                    qCWarning(dcZigbeeNode()) << "Failed to get active endpoints after 3 retries. This node will not be added to the network.";
+                    setInitState(InitStateError);
+                    return;
+                } else {
+                    setInitState(InitStateActiveEndpoints);
+                    return;
                 }
+            }
+
+            m_initStateRetry = 0;
+
+            QByteArray data = reply->additionalMessage().data();
+            quint8 sequenceNumber = 0;
+            quint8 status = 0;
+            quint16 shortAddress = 0;
+            quint8 endpointCount = 0;
+
+            QDataStream stream(&data, QIODevice::ReadOnly);
+            stream >> sequenceNumber >> status >> shortAddress >> endpointCount;
+
+            qCDebug(dcZigbeeNode()) << "Active endpoint list received:";
+            qCDebug(dcZigbeeNode()) << "Sequence number" << sequenceNumber;
+            qCDebug(dcZigbeeNode()) << "Status:" << status;
+            qCDebug(dcZigbeeNode()) << "Short address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+            qCDebug(dcZigbeeNode()) << "Endpoint count:" << endpointCount;
+            for (int i = 0; i < endpointCount; i++) {
+                quint8 endpointId = 0;
+                stream >> endpointId;
+                m_uninitializedEndpoints.append(endpointId);
+                qCDebug(dcZigbeeNode()) << " - " << ZigbeeUtils::convertByteToHexString(endpointId);
             }
             setInitState(InitStateSimpleDescriptors);
         });
@@ -257,9 +293,8 @@ void ZigbeeNodeNxp::setInitState(ZigbeeNodeNxp::InitState initState)
 
             ZigbeeCluster *basicCluster = endpoint->getInputCluster(Zigbee::ClusterIdBasic);
             if (!basicCluster) {
-                qCWarning(dcZigbeeNode()) << "Failed to fetch basic cluster from" << endpoint;
-                setState(StateInitialized);
-                return;
+                qCDebug(dcZigbeeNode()) << "This endpoint has no basic cluster" << endpoint;
+                continue;
             }
 
             m_uninitializedEndpoints.clear();

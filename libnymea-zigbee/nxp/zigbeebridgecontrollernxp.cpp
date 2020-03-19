@@ -71,7 +71,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandErasePersistantData()
 {
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeErasePersistentData, QByteArray()));
     request.setDescription("Erase persistent data");
-
+    request.setTimoutIntervall(5000);
     return sendRequest(request);
 }
 

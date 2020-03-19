@@ -335,7 +335,7 @@ public:
         ClusterIdPressureMeasurement            = 0x0403,
         ClusterIdFlowMeasurement                = 0x0404,
         ClusterIdRelativeHumidityMeasurement    = 0x0405,
-        ClusterIdOccapancySensing               = 0x0406,
+        ClusterIdOccupancySensing               = 0x0406,
 
         // Security and Safty
         ClusterIdIasZone = 0x0500,
