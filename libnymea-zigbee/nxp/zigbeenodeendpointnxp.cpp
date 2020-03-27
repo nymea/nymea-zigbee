@@ -84,6 +84,8 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::configureReporting(ZigbeeCluster *clu
             return;
         }
 
+        // Fixme: read configure response
+
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         finishNetworkReply(networkReply);
     });
@@ -125,6 +127,8 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::factoryReset()
             finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
+
+        // Fixme: read default response
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         finishNetworkReply(networkReply);
@@ -234,6 +238,8 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendLevelCommand(ZigbeeCluster::Level
             return;
         }
 
+        // Fixme: read default response
+
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         finishNetworkReply(networkReply);
     });
@@ -254,6 +260,8 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToColorTemperature(quint16 co
             finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
+
+        // Fixme: read default response
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         finishNetworkReply(networkReply);
@@ -280,6 +288,8 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToColor(double x, double y, q
             return;
         }
 
+        // Fixme: read default response
+
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         finishNetworkReply(networkReply);
     });
@@ -300,6 +310,8 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToHueSaturation(quint8 hue, q
             finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
+
+        // Fixme: read default response
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         finishNetworkReply(networkReply);
@@ -322,6 +334,8 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToHue(quint8 hue, quint16 tra
             return;
         }
 
+        // Fixme: read default response
+
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         finishNetworkReply(networkReply);
     });
@@ -342,6 +356,8 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToSaturation(quint8 saturatio
             finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
+
+        // Fixme: read default response
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         finishNetworkReply(networkReply);

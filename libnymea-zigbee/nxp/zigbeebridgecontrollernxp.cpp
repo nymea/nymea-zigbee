@@ -555,6 +555,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandOnOffNoEffects(quint8 ad
     stream << static_cast<quint8>(command);
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeCluserOnOff, data));
+    request.setExpectedAdditionalMessageType(Zigbee::InterfaceMessageType::MessageTypeDefaultResponse);
     request.setDescription("Send on/off cluster command");
     request.setTimoutIntervall(5000);
 
@@ -592,7 +593,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToLevel(quint8 addre
     stream << transitionTime;
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToLevelOnOff, data));
-    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
     request.setDescription(QString("Move to level on/off %1").arg(level));
     request.setTimoutIntervall(5000);
 
@@ -611,7 +612,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToColourTemperature(
     stream << transitionTime;
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToColorTemperature, data));
-    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
     request.setDescription(QString("Move to colour temperature %1").arg(colourTemperature));
     request.setTimoutIntervall(5000);
 
@@ -630,7 +631,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToColor(quint8 addre
     stream << transitionTime;
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToColor, data));
-    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
     request.setDescription(QString("Move to colour %1, %2").arg(x).arg(y));
     request.setTimoutIntervall(5000);
 
@@ -649,7 +650,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToHueSaturation(quin
     stream << transitionTime;
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToHueSaturation, data));
-    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
     request.setDescription(QString("Move to hue %1 saturation %2").arg(hue).arg(saturation));
     request.setTimoutIntervall(5000);
 
@@ -668,7 +669,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToHue(quint8 address
     stream << transitionTime;
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToHue, data));
-    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
     request.setDescription(QString("Move to hue %1").arg(hue));
     request.setTimoutIntervall(5000);
 
@@ -687,7 +688,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandMoveToSaturation(quint8 
     stream << transitionTime;
 
     ZigbeeInterfaceRequest request(ZigbeeInterfaceMessage(Zigbee::MessageTypeMoveToSaturation, data));
-    //request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
+    request.setExpectedAdditionalMessageType(Zigbee::MessageTypeDefaultResponse);
     request.setDescription(QString("Move to saturation %1").arg(saturation));
     request.setTimoutIntervall(5000);
 

@@ -157,7 +157,10 @@ void ZigbeeNodeEndpoint::addOutputCluster(ZigbeeCluster *cluster)
 
 ZigbeeNetworkReply *ZigbeeNodeEndpoint::createNetworkReply()
 {
-    return new ZigbeeNetworkReply(this);
+    ZigbeeNetworkReply *reply = new ZigbeeNetworkReply(this);
+    // Make sure the reply will be deleted
+    connect(reply, &ZigbeeNetworkReply::finished, reply, &ZigbeeNetworkReply::deleteLater);
+    return reply;
 }
 
 void ZigbeeNodeEndpoint::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error, Zigbee::ZigbeeStatus zigbeeStatus)
