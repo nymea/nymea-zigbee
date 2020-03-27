@@ -30,13 +30,34 @@
 
 #include <QObject>
 
+#include "zigbee.h"
+
 class ZigbeeNetworkReply : public QObject
 {
     Q_OBJECT
+
+    friend class ZigbeeNodeEndpoint;
+
 public:
+    enum Error {
+        ErrorNoError,
+        ErrorZigbeeStatusError,
+        ErrorNetworkOffline,
+        ErrorUnknown
+    };
+    Q_ENUM(Error)
+
+    Error error() const;
+    Zigbee::ZigbeeStatus zigbeeStatus() const;
+
+private:
     explicit ZigbeeNetworkReply(QObject *parent = nullptr);
+    bool m_finished = false;
+    Error m_error = ErrorNoError;
+    Zigbee::ZigbeeStatus m_zigbeeStatus = Zigbee::ZigbeeStatusSuccess;
 
 signals:
+    void finished();
 
 };
 

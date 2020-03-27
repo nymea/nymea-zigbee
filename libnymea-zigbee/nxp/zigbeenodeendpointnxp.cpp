@@ -40,14 +40,16 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::readAttribute(ZigbeeCluster *cluster,
 {
     qCDebug(dcZigbeeNode()) << "Read" << node() << cluster << attributes;
 
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandReadAttributeRequest(0x02, node()->shortAddress(), 0x01,
                                                                             endpointId(), cluster, attributes,
                                                                             false, node()->manufacturerCode());
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
@@ -56,9 +58,11 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::readAttribute(ZigbeeCluster *cluster,
             ZigbeeClusterAttributeReport report = ZigbeeUtils::parseAttributeReport(reply->additionalMessage().data());
             setClusterAttribute(report.clusterId, ZigbeeClusterAttribute(report.attributeId, report.dataType, report.data));
         }
+
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations)
@@ -67,172 +71,195 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::configureReporting(ZigbeeCluster *clu
 
     // FIXME: check the report configuration and the direction field according to specs
 
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandConfigureReportingRequest(0x02, node()->shortAddress(), 0x01,
                                                                             endpointId(), cluster, 0x00,
                                                                             false, node()->manufacturerCode(), reportConfigurations);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::identify(quint16 seconds)
 {
     qCDebug(dcZigbeeNode()) << "Identify" << node() << seconds << seconds;
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandIdentify(0x02, node()->shortAddress(), 0x01, endpointId(), seconds);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::factoryReset()
 {
     qCDebug(dcZigbeeNode()) << "Factory reset" << this;
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandFactoryResetNode(node()->shortAddress(), 0x01, endpointId());
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::bindGroup(Zigbee::ClusterId clusterId, quint16 destinationAddress, quint8 destinationEndpoint)
 {
     qCDebug(dcZigbeeNode()) << "Bind group" << node() << clusterId << ZigbeeUtils::convertUint16ToHexString(destinationAddress) << ZigbeeUtils::convertByteToHexString(destinationEndpoint);
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandBindGroup(node()->extendedAddress(), endpointId(), clusterId, destinationAddress, destinationEndpoint);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         qCDebug(dcZigbeeController()) << reply->additionalMessage().data();
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::bindUnicast(Zigbee::ClusterId clusterId, const ZigbeeAddress &destinationAddress, quint8 destinationEndpoint)
 {
     qCDebug(dcZigbeeNode()) << "Bind unicast" << node() << clusterId << destinationAddress.toString() << ZigbeeUtils::convertByteToHexString(destinationEndpoint);
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandBindUnicast(node()->extendedAddress(), endpointId(), clusterId, destinationAddress, destinationEndpoint);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         qCDebug(dcZigbeeController()) << reply->additionalMessage().data();
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendOnOffClusterCommand(ZigbeeCluster::OnOffClusterCommand command)
 {
     qCDebug(dcZigbeeNode()) << "Send on/off cluster command" << node() << command;
-
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandOnOffNoEffects(0x02, node()->shortAddress(), 0x01, endpointId(), command);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::addGroup(quint8 destinationEndpoint, quint16 groupAddress)
 {
     qCDebug(dcZigbeeNode()) << "Add group request" << node() << destinationEndpoint << groupAddress;
-
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandAddGroup(0x02, node()->shortAddress(), 0x01, endpointId(), groupAddress);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
         qCDebug(dcZigbeeController()) << reply->additionalMessage().data();
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendLevelCommand(ZigbeeCluster::LevelClusterCommand command, quint8 level, bool triggersOnOff, quint16 transitionTime)
 {
     qCDebug(dcZigbeeNode()) << "Move to level request" << node() << command << level;
-
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandMoveToLevel(0x02, node()->shortAddress(), 0x01, endpointId(), triggersOnOff, level, transitionTime);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToColorTemperature(quint16 colourTemperature, quint16 transitionTime)
 {
     qCDebug(dcZigbeeNode()) << "Move to level request" << node() << colourTemperature << transitionTime;
-
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandMoveToColourTemperature(0x02, node()->shortAddress(), 0x01, endpointId(), colourTemperature, transitionTime);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToColor(double x, double y, quint16 transitionTime)
@@ -242,76 +269,85 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToColor(double x, double y, q
     quint16 normalizedX = static_cast<quint16>(qRound(x * 65536));
     quint16 normalizedY = static_cast<quint16>(qRound(y * 65536));
 
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandMoveToColor(0x02, node()->shortAddress(), 0x01, endpointId(), normalizedX, normalizedY, transitionTime);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToHueSaturation(quint8 hue, quint8 saturation, quint16 transitionTime)
 {
     qCDebug(dcZigbeeNode()) << "Move to hue saturation request" << node() << hue << saturation << transitionTime;
-
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandMoveToHueSaturation(0x02, node()->shortAddress(), 0x01, endpointId(), hue, saturation, transitionTime);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToHue(quint8 hue, quint16 transitionTime)
 {
     qCDebug(dcZigbeeNode()) << "Move to hue request" << node() << hue << transitionTime;
-
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandMoveToHue(0x02, node()->shortAddress(), 0x01, endpointId(), hue, transitionTime);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToSaturation(quint8 saturation, quint16 transitionTime)
 {
     qCDebug(dcZigbeeNode()) << "Move to saturation request" << node() << saturation << transitionTime;
-
+    ZigbeeNetworkReply *networkReply = createNetworkReply();
     ZigbeeInterfaceReply *reply = m_controller->commandMoveToSaturation(0x02, node()->shortAddress(), 0x01, endpointId(), saturation, transitionTime);
-    connect(reply, &ZigbeeInterfaceReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
         if (reply->status() != ZigbeeInterfaceReply::Success) {
             qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
+            finishNetworkReply(networkReply, ZigbeeNetworkReply::ErrorUnknown);
             return;
         }
 
         qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
+        finishNetworkReply(networkReply);
     });
 
-    return nullptr;
+    return networkReply;
 }
 
 void ZigbeeNodeEndpointNxp::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)

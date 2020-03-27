@@ -27,6 +27,16 @@
 
 #include "zigbeenetworkreply.h"
 
+ZigbeeNetworkReply::Error ZigbeeNetworkReply::error() const
+{
+    return m_error;
+}
+
+Zigbee::ZigbeeStatus ZigbeeNetworkReply::zigbeeStatus() const
+{
+    return m_zigbeeStatus;
+}
+
 ZigbeeNetworkReply::ZigbeeNetworkReply(QObject *parent) : QObject(parent)
 {
 

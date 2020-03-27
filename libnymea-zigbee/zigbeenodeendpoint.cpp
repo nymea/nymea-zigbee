@@ -155,6 +155,18 @@ void ZigbeeNodeEndpoint::addOutputCluster(ZigbeeCluster *cluster)
     m_outputClusters.insert(cluster->clusterId(), cluster);
 }
 
+ZigbeeNetworkReply *ZigbeeNodeEndpoint::createNetworkReply()
+{
+    return new ZigbeeNetworkReply(this);
+}
+
+void ZigbeeNodeEndpoint::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error, Zigbee::ZigbeeStatus zigbeeStatus)
+{
+    reply->m_error = error;
+    reply->m_zigbeeStatus = zigbeeStatus;
+    reply->finished();
+}
+
 ZigbeeCluster *ZigbeeNodeEndpoint::getOutputCluster(Zigbee::ClusterId clusterId) const
 {
     return m_outputClusters.value(clusterId);

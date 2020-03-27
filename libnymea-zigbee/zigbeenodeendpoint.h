@@ -130,6 +130,10 @@ protected:
     void addInputCluster(ZigbeeCluster *cluster);
     void addOutputCluster(ZigbeeCluster *cluster);
 
+    // Network reply methods
+    ZigbeeNetworkReply *createNetworkReply();
+    void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError, Zigbee::ZigbeeStatus zigbeeStatus = Zigbee::ZigbeeStatusSuccess);
+
 signals:
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
     void manufacturerNameChanged(const QString &manufacturerName);

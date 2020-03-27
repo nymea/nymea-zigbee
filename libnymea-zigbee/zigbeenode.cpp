@@ -463,30 +463,6 @@ void ZigbeeNode::startInitialization()
     qCWarning(dcZigbeeNode()) << "Start initialization is not implemented for this backend.";
 }
 
-//void ZigbeeNode::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
-//{
-//    qCDebug(dcZigbeeNode()) << this << "cluster attribute changed" << clusterId << attribute;
-////    ZigbeeCluster *cluster = m_outputClusters.value(clusterId);
-
-////    // Note: create the cluster if not there yet
-////    bool clusterCreated = false;
-////    if (!cluster) {
-////        cluster = new ZigbeeCluster(clusterId, this);
-////        qCDebug(dcZigbeeNode()) << "Created cluster" << cluster;
-////        connect(cluster, &ZigbeeCluster::attributeChanged, this, &ZigbeeNode::onClusterAttributeChanged);
-////        m_outputClusters.insert(clusterId, cluster);
-////        clusterCreated = true;
-////    }
-
-////    // Set the attribute if valid
-////    if (attribute.isValid())
-////        cluster->setAttribute(attribute);
-
-////    if (clusterCreated)
-////        emit clusterAdded(cluster);
-
-//}
-
 void ZigbeeNode::onClusterAttributeChanged(const ZigbeeClusterAttribute &attribute)
 {
     ZigbeeCluster *cluster = static_cast<ZigbeeCluster *>(sender());
@@ -529,23 +505,6 @@ void ZigbeeNode::onClusterAttributeChanged(const ZigbeeClusterAttribute &attribu
 //    qCDebug(dcZigbeeNode()) << "    Data:" << data;
 //}
 
-//void ZigbeeNode::onToggleFinished()
-//{
-//    ZigbeeInterfaceReply *reply = static_cast<ZigbeeInterfaceReply *>(sender());
-//    reply->deleteLater();
-
-//    if (reply->status() != ZigbeeInterfaceReply::Success) {
-//        qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
-//        return;
-//    }
-
-//    qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
-//}
-
-//void ZigbeeNode::onIdentifyFinished()
-//{
-    
-//}
 
 QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {
