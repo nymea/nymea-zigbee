@@ -803,6 +803,7 @@ void ZigbeeNetworkNxp::processDefaultResponse(const ZigbeeInterfaceMessage &mess
     qCDebug(dcZigbeeNetwork()) << "    Command:" << ZigbeeUtils::convertByteToHexString(commandId);
     qCDebug(dcZigbeeNetwork()) << "    Command status:" << static_cast<Zigbee::ZigbeeStatus>(commandStatus);
 
+    // FIXME: check if this is related to a current reply
 }
 
 void ZigbeeNetworkNxp::onMessageReceived(const ZigbeeInterfaceMessage &message)

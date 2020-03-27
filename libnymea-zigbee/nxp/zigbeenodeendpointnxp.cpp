@@ -41,7 +41,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::readAttribute(ZigbeeCluster *cluster,
     qCDebug(dcZigbeeNode()) << "Read" << node() << cluster << attributes;
 
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandReadAttributeRequest(0x02, node()->shortAddress(), 0x01,
+    ZigbeeInterfaceReply *reply = m_controller->commandReadAttributeRequest(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01,
                                                                             endpointId(), cluster, attributes,
                                                                             false, node()->manufacturerCode());
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
@@ -72,7 +72,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::configureReporting(ZigbeeCluster *clu
     // FIXME: check the report configuration and the direction field according to specs
 
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandConfigureReportingRequest(0x02, node()->shortAddress(), 0x01,
+    ZigbeeInterfaceReply *reply = m_controller->commandConfigureReportingRequest(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01,
                                                                             endpointId(), cluster, 0x00,
                                                                             false, node()->manufacturerCode(), reportConfigurations);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
@@ -97,7 +97,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::identify(quint16 seconds)
 {
     qCDebug(dcZigbeeNode()) << "Identify" << node() << seconds << seconds;
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandIdentify(0x02, node()->shortAddress(), 0x01, endpointId(), seconds);
+    ZigbeeInterfaceReply *reply = m_controller->commandIdentify(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01, endpointId(), seconds);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
@@ -185,7 +185,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendOnOffClusterCommand(ZigbeeCluster
 {
     qCDebug(dcZigbeeNode()) << "Send on/off cluster command" << node() << command;
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandOnOffNoEffects(0x02, node()->shortAddress(), 0x01, endpointId(), command);
+    ZigbeeInterfaceReply *reply = m_controller->commandOnOffNoEffects(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01, endpointId(), command);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
@@ -206,7 +206,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::addGroup(quint8 destinationEndpoint, 
 {
     qCDebug(dcZigbeeNode()) << "Add group request" << node() << destinationEndpoint << groupAddress;
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandAddGroup(0x02, node()->shortAddress(), 0x01, endpointId(), groupAddress);
+    ZigbeeInterfaceReply *reply = m_controller->commandAddGroup(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01, endpointId(), groupAddress);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
@@ -228,7 +228,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendLevelCommand(ZigbeeCluster::Level
 {
     qCDebug(dcZigbeeNode()) << "Move to level request" << node() << command << level;
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandMoveToLevel(0x02, node()->shortAddress(), 0x01, endpointId(), triggersOnOff, level, transitionTime);
+    ZigbeeInterfaceReply *reply = m_controller->commandMoveToLevel(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01, endpointId(), triggersOnOff, level, transitionTime);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
@@ -251,7 +251,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToColorTemperature(quint16 co
 {
     qCDebug(dcZigbeeNode()) << "Move to level request" << node() << colourTemperature << transitionTime;
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandMoveToColourTemperature(0x02, node()->shortAddress(), 0x01, endpointId(), colourTemperature, transitionTime);
+    ZigbeeInterfaceReply *reply = m_controller->commandMoveToColourTemperature(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01, endpointId(), colourTemperature, transitionTime);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
@@ -278,7 +278,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToColor(double x, double y, q
     quint16 normalizedY = static_cast<quint16>(qRound(y * 65536));
 
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandMoveToColor(0x02, node()->shortAddress(), 0x01, endpointId(), normalizedX, normalizedY, transitionTime);
+    ZigbeeInterfaceReply *reply = m_controller->commandMoveToColor(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01, endpointId(), normalizedX, normalizedY, transitionTime);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
@@ -301,7 +301,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToHueSaturation(quint8 hue, q
 {
     qCDebug(dcZigbeeNode()) << "Move to hue saturation request" << node() << hue << saturation << transitionTime;
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandMoveToHueSaturation(0x02, node()->shortAddress(), 0x01, endpointId(), hue, saturation, transitionTime);
+    ZigbeeInterfaceReply *reply = m_controller->commandMoveToHueSaturation(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01, endpointId(), hue, saturation, transitionTime);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
@@ -324,7 +324,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToHue(quint8 hue, quint16 tra
 {
     qCDebug(dcZigbeeNode()) << "Move to hue request" << node() << hue << transitionTime;
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandMoveToHue(0x02, node()->shortAddress(), 0x01, endpointId(), hue, transitionTime);
+    ZigbeeInterfaceReply *reply = m_controller->commandMoveToHue(Zigbee::DestinationAddressModeShortAddress, node()->shortAddress(), 0x01, endpointId(), hue, transitionTime);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 
@@ -347,7 +347,7 @@ ZigbeeNetworkReply *ZigbeeNodeEndpointNxp::sendMoveToSaturation(quint8 saturatio
 {
     qCDebug(dcZigbeeNode()) << "Move to saturation request" << node() << saturation << transitionTime;
     ZigbeeNetworkReply *networkReply = createNetworkReply();
-    ZigbeeInterfaceReply *reply = m_controller->commandMoveToSaturation(0x02, node()->shortAddress(), 0x01, endpointId(), saturation, transitionTime);
+    ZigbeeInterfaceReply *reply = m_controller->commandMoveToSaturation(Zigbee::DestinationAddressModeShortAddress  , node()->shortAddress(), 0x01, endpointId(), saturation, transitionTime);
     connect(reply, &ZigbeeInterfaceReply::finished, this, [this, reply, networkReply](){
         reply->deleteLater();
 

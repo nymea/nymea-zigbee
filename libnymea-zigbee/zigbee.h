@@ -535,6 +535,7 @@ public:
 
     enum DestinationAddressMode {
         DestinationAddressModeGroup = 0x01,
+        DestinationAddressModeShortAddress = 0x02,
         DestinationAddressModeUnicastIeee = 0x03
     };
     Q_ENUM(DestinationAddressMode)
