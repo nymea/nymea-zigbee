@@ -34,23 +34,24 @@
 
 #include <math.h>
 
+// Disabling 1000 to 2500 K, as we never want to go into full red for color temp
 static QList<QColor> colorTemperatureScale = {
-    QColor(255, 56, 0),     // 1000 K
-    QColor(255, 71, 0),
-    QColor(255, 83, 0),
-    QColor(255, 93, 0),
-    QColor(255, 101, 0),
-    QColor(255, 109, 0),
-    QColor(255, 115, 0),
-    QColor(255, 121, 0),
-    QColor(255, 126, 0),
-    QColor(255, 131, 0),
-    QColor(255, 138, 18),
-    QColor(255, 142, 33),
-    QColor(255, 147, 44),
-    QColor(255, 152, 54),
-    QColor(255, 157, 63),
-    QColor(255, 161, 72),
+//    QColor(255, 56, 0),     // 1000 K
+//    QColor(255, 71, 0),
+//    QColor(255, 83, 0),
+//    QColor(255, 93, 0),
+//    QColor(255, 101, 0),
+//    QColor(255, 109, 0),
+//    QColor(255, 115, 0),
+//    QColor(255, 121, 0),
+//    QColor(255, 126, 0),
+//    QColor(255, 131, 0),
+//    QColor(255, 138, 18),
+//    QColor(255, 142, 33),
+//    QColor(255, 147, 44),
+//    QColor(255, 152, 54),
+//    QColor(255, 157, 63),
+//    QColor(255, 161, 72),    // 2500K
     QColor(255, 165, 79),
     QColor(255, 169, 87),
     QColor(255, 173, 94),
