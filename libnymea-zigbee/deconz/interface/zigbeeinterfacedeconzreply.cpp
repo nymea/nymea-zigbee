@@ -25,40 +25,32 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEENETWORKKEY_H
-#define ZIGBEENETWORKKEY_H
+#include "zigbeeinterfacedeconzreply.h"
 
-#include <QDebug>
-#include <QString>
-#include <QByteArray>
+Deconz::Command ZigbeeInterfaceDeconzReply::command() const
+{
+    return m_command;
+}
 
-class ZigbeeNetworkKey
+quint8 ZigbeeInterfaceDeconzReply::sequenceNumber() const
+{
+    return m_sequenceNumber;
+}
+
+QByteArray ZigbeeInterfaceDeconzReply::responseData() const
+{
+    return m_responseData;
+}
+
+Deconz::StatusCode ZigbeeInterfaceDeconzReply::statusCode() const
+{
+    return m_statusCode;
+}
+
+ZigbeeInterfaceDeconzReply::ZigbeeInterfaceDeconzReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent) :
+    QObject(parent),
+    m_command(command),
+    m_sequenceNumber(sequenceNumber)
 {
 
-public:
-    ZigbeeNetworkKey();
-    ZigbeeNetworkKey(const ZigbeeNetworkKey &other);
-    ZigbeeNetworkKey(const QString &keyString);
-    ZigbeeNetworkKey(const QByteArray &key);
-
-    bool isValid() const;
-    bool isNull() const;
-
-    QString toString() const;
-    QByteArray toByteArray() const;
-
-    static ZigbeeNetworkKey generateKey();
-
-    ZigbeeNetworkKey &operator=(const ZigbeeNetworkKey &other);
-    bool operator==(const ZigbeeNetworkKey &other) const;
-    bool operator!=(const ZigbeeNetworkKey &other) const;
-
-private:
-    QByteArray m_key;
-
-};
-
-QDebug operator<<(QDebug debug, const ZigbeeNetworkKey &key);
-
-
-#endif // ZIGBEENETWORKKEY_H
+}

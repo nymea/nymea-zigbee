@@ -25,40 +25,42 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEENETWORKKEY_H
-#define ZIGBEENETWORKKEY_H
+#ifndef ZIGBEEINTERFACEDECONZREPLY_H
+#define ZIGBEEINTERFACEDECONZREPLY_H
 
-#include <QDebug>
-#include <QString>
-#include <QByteArray>
+#include <QObject>
 
-class ZigbeeNetworkKey
+#include "deconz.h"
+
+class ZigbeeInterfaceDeconzReply : public QObject
 {
+    Q_OBJECT
+
+    friend class ZigbeeBridgeControllerDeconz;
 
 public:
-    ZigbeeNetworkKey();
-    ZigbeeNetworkKey(const ZigbeeNetworkKey &other);
-    ZigbeeNetworkKey(const QString &keyString);
-    ZigbeeNetworkKey(const QByteArray &key);
+    // Request content
+    Deconz::Command command() const;
+    quint8 sequenceNumber() const;
+    QByteArray responseData() const;
 
-    bool isValid() const;
-    bool isNull() const;
-
-    QString toString() const;
-    QByteArray toByteArray() const;
-
-    static ZigbeeNetworkKey generateKey();
-
-    ZigbeeNetworkKey &operator=(const ZigbeeNetworkKey &other);
-    bool operator==(const ZigbeeNetworkKey &other) const;
-    bool operator!=(const ZigbeeNetworkKey &other) const;
+    // Response content
+    Deconz::StatusCode statusCode() const;
 
 private:
-    QByteArray m_key;
+    explicit ZigbeeInterfaceDeconzReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent = nullptr);
+
+    // Request content
+    Deconz::Command m_command;
+    quint8 m_sequenceNumber = 0;
+
+    // Response content
+    Deconz::StatusCode m_statusCode = Deconz::StatusCodeError;
+    QByteArray m_responseData;
+
+signals:
+    void finished();
 
 };
 
-QDebug operator<<(QDebug debug, const ZigbeeNetworkKey &key);
-
-
-#endif // ZIGBEENETWORKKEY_H
+#endif // ZIGBEEINTERFACEDECONZREPLY_H

@@ -36,7 +36,8 @@ class ZigbeeNetworkManager
 {
 public:
     enum BackendType {
-        BackendTypeNxp
+        BackendTypeNxp,
+        BackendTypeDeconz
     };
 
     static ZigbeeNetwork *createZigbeeNetwork(BackendType backend, QObject *parent = nullptr);

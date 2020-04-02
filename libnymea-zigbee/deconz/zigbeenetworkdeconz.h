@@ -25,40 +25,39 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEENETWORKKEY_H
-#define ZIGBEENETWORKKEY_H
+#ifndef ZIGBEENETWORKDECONZ_H
+#define ZIGBEENETWORKDECONZ_H
 
-#include <QDebug>
-#include <QString>
-#include <QByteArray>
+#include <QObject>
+#include "zigbeenetwork.h"
 
-class ZigbeeNetworkKey
+#include "zigbeebridgecontrollerdeconz.h"
+
+class ZigbeeNetworkDeconz : public ZigbeeNetwork
 {
-
+    Q_OBJECT
 public:
-    ZigbeeNetworkKey();
-    ZigbeeNetworkKey(const ZigbeeNetworkKey &other);
-    ZigbeeNetworkKey(const QString &keyString);
-    ZigbeeNetworkKey(const QByteArray &key);
+    explicit ZigbeeNetworkDeconz(QObject *parent = nullptr);
 
-    bool isValid() const;
-    bool isNull() const;
-
-    QString toString() const;
-    QByteArray toByteArray() const;
-
-    static ZigbeeNetworkKey generateKey();
-
-    ZigbeeNetworkKey &operator=(const ZigbeeNetworkKey &other);
-    bool operator==(const ZigbeeNetworkKey &other) const;
-    bool operator!=(const ZigbeeNetworkKey &other) const;
+    ZigbeeBridgeController *bridgeController() const override;
 
 private:
-    QByteArray m_key;
+    ZigbeeBridgeControllerDeconz *m_controller = nullptr;
+    bool m_networkRunning = false;
+
+protected:
+    ZigbeeNode *createNode(QObject *parent) override;
+    void setPermitJoiningInternal(bool permitJoining) override;
+
+private slots:
+    void onControllerAvailableChanged(bool available);
+
+public slots:
+    void startNetwork() override;
+    void stopNetwork() override;
+    void reset() override;
+    void factoryResetNetwork() override;
 
 };
 
-QDebug operator<<(QDebug debug, const ZigbeeNetworkKey &key);
-
-
-#endif // ZIGBEENETWORKKEY_H
+#endif // ZIGBEENETWORKDECONZ_H

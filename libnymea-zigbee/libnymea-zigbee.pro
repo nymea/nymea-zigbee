@@ -4,6 +4,10 @@ TARGET = nymea-zigbee1
 TEMPLATE = lib
 
 SOURCES += \
+    deconz/interface/zigbeeinterfacedeconz.cpp \
+    deconz/interface/zigbeeinterfacedeconzreply.cpp \
+    deconz/zigbeebridgecontrollerdeconz.cpp \
+    deconz/zigbeenetworkdeconz.cpp \
     nxp/interface/zigbeeinterface.cpp \
     nxp/interface/zigbeeinterfacemessage.cpp \
     nxp/interface/zigbeeinterfacerequest.cpp \
@@ -29,6 +33,11 @@ SOURCES += \
     zigbeeaddress.cpp \
 
 HEADERS += \
+    deconz/interface/deconz.h \
+    deconz/interface/zigbeeinterfacedeconz.h \
+    deconz/interface/zigbeeinterfacedeconzreply.h \
+    deconz/zigbeebridgecontrollerdeconz.h \
+    deconz/zigbeenetworkdeconz.h \
     nxp/interface/zigbeeinterface.h \
     nxp/interface/zigbeeinterfacemessage.h \
     nxp/interface/zigbeeinterfacerequest.h \

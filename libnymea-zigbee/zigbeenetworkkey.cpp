@@ -39,9 +39,9 @@ ZigbeeNetworkKey::ZigbeeNetworkKey(const ZigbeeNetworkKey &other)
     m_key = other.toByteArray();
 }
 
-ZigbeeNetworkKey::ZigbeeNetworkKey(const QString &key)
+ZigbeeNetworkKey::ZigbeeNetworkKey(const QString &keyString)
 {
-    QString rawKey = QString(key).remove(':');
+    QString rawKey = QString(keyString).remove(':');
     if (rawKey.isEmpty())
         return;
 
@@ -49,8 +49,8 @@ ZigbeeNetworkKey::ZigbeeNetworkKey(const QString &key)
     m_key = QByteArray::fromHex(rawKey.toLatin1());
 }
 
-ZigbeeNetworkKey::ZigbeeNetworkKey(const QByteArray &keyString) :
-    m_key(keyString)
+ZigbeeNetworkKey::ZigbeeNetworkKey(const QByteArray &key) :
+    m_key(key)
 {
     Q_ASSERT_X(isValid(), "ZigbeeNetworkKey", "invalid key length in ZigbeeNetworkKey(QByteArray).");
 }

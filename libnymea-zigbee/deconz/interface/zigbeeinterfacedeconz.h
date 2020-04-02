@@ -25,40 +25,58 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEENETWORKKEY_H
-#define ZIGBEENETWORKKEY_H
+#ifndef ZIGBEEINTERFACEDECONZ_H
+#define ZIGBEEINTERFACEDECONZ_H
 
-#include <QDebug>
-#include <QString>
-#include <QByteArray>
+#include <QObject>
+#include <QTimer>
+#include <QSerialPort>
 
-class ZigbeeNetworkKey
+class ZigbeeInterfaceDeconz : public QObject
 {
-
+    Q_OBJECT
 public:
-    ZigbeeNetworkKey();
-    ZigbeeNetworkKey(const ZigbeeNetworkKey &other);
-    ZigbeeNetworkKey(const QString &keyString);
-    ZigbeeNetworkKey(const QByteArray &key);
+    enum ProtocolByte {
+        ProtocolByteEnd = 0xC0,
+        ProtocolByteEsc = 0xDB,
+        ProtocolByteTransposedEnd = 0xDC,
+        ProtocolByteTransposedEsc = 0xDD
+    };
+    Q_ENUM(ProtocolByte)
 
-    bool isValid() const;
-    bool isNull() const;
+    explicit ZigbeeInterfaceDeconz(QObject *parent = nullptr);
+    ~ZigbeeInterfaceDeconz();
 
-    QString toString() const;
-    QByteArray toByteArray() const;
-
-    static ZigbeeNetworkKey generateKey();
-
-    ZigbeeNetworkKey &operator=(const ZigbeeNetworkKey &other);
-    bool operator==(const ZigbeeNetworkKey &other) const;
-    bool operator!=(const ZigbeeNetworkKey &other) const;
+    bool available() const;
+    QString serialPort() const;
 
 private:
-    QByteArray m_key;
+    QTimer *m_reconnectTimer = nullptr;
+    QSerialPort *m_serialPort = nullptr;
+    bool m_available = false;
+    QByteArray m_dataBuffer;
+
+    quint16 calculateCrc(const QByteArray &data);
+    QByteArray unescapeData(const QByteArray &data);
+    QByteArray escapeData(const QByteArray &data);
+
+    void setAvailable(bool available);
+
+signals:
+    void availableChanged(bool available);
+    void packageReceived(const QByteArray &package);
+
+private slots:
+    void onReconnectTimeout();
+    void onReadyRead();
+    void onError(const QSerialPort::SerialPortError &error);
+
+public slots:
+    void sendPackage(const QByteArray &package);
+
+    bool enable(const QString &serialPort = "/dev/ttyS0", qint32 baudrate = 115200);
+    void disable();
 
 };
 
-QDebug operator<<(QDebug debug, const ZigbeeNetworkKey &key);
-
-
-#endif // ZIGBEENETWORKKEY_H
+#endif // ZIGBEEINTERFACEDECONZ_H
