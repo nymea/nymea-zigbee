@@ -32,6 +32,7 @@
 #include <QSettings>
 
 #include "zigbeenode.h"
+#include "zigbeechannelmask.h"
 #include "zigbeebridgecontroller.h"
 #include "zigbeesecurityconfiguration.h"
 
@@ -81,6 +82,9 @@ public:
     quint32 channel() const;
     void setChannel(quint32 channel);
 
+    ZigbeeChannelMask channelMask() const;
+    void setChannelMask(const ZigbeeChannelMask &channelMask);
+
     ZigbeeSecurityConfiguration securityConfiguration() const;
     void setSecurityConfiguration(const ZigbeeSecurityConfiguration &securityConfiguration);
 
@@ -107,6 +111,7 @@ private:
     // Network configurations
     quint64 m_extendedPanId = 0;
     quint32 m_channel = 0;
+    ZigbeeChannelMask m_channelMask = ZigbeeChannelMask(ZigbeeChannelMask::ChannelConfigurationAllChannels);
     ZigbeeNode::NodeType m_nodeType = ZigbeeNode::NodeTypeCoordinator;
 
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
@@ -148,6 +153,7 @@ signals:
 
     void extendedPanIdChanged(quint64 extendedPanId);
     void channelChanged(uint channel);
+    void channelMaskChanged(const ZigbeeChannelMask &channelMask);
     void securityConfigurationChanged(const ZigbeeSecurityConfiguration &securityConfiguration);
 
     void nodeAdded(ZigbeeNode *node);

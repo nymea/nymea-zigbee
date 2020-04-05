@@ -505,7 +505,6 @@ void ZigbeeNode::onClusterAttributeChanged(const ZigbeeClusterAttribute &attribu
 //    qCDebug(dcZigbeeNode()) << "    Data:" << data;
 //}
 
-
 QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {
     debug.nospace().noquote() << "ZigbeeNode(" << ZigbeeUtils::convertUint16ToHexString(node->shortAddress());

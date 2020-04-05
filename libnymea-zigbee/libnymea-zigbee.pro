@@ -17,6 +17,7 @@ SOURCES += \
     nxp/zigbeenodeendpointnxp.cpp \
     nxp/zigbeenodenxp.cpp \
     zigbeebridgecontroller.cpp \
+    zigbeechannelmask.cpp \
     zigbeecluster.cpp \
     zigbeeclusterattribute.cpp \
     zigbeemanufacturer.cpp \
@@ -47,6 +48,7 @@ HEADERS += \
     nxp/zigbeenodeendpointnxp.h \
     nxp/zigbeenodenxp.h \
     zigbeebridgecontroller.h \
+    zigbeechannelmask.h \
     zigbeecluster.h \
     zigbeeclusterattribute.h \
     zigbeemanufacturer.h \

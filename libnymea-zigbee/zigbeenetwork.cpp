@@ -115,6 +115,20 @@ void ZigbeeNetwork::setChannel(quint32 channel)
     emit channelChanged(m_channel);
 }
 
+ZigbeeChannelMask ZigbeeNetwork::channelMask() const
+{
+    return m_channelMask;
+}
+
+void ZigbeeNetwork::setChannelMask(const ZigbeeChannelMask &channelMask)
+{
+    if (m_channelMask == channelMask)
+        return;
+
+    m_channelMask = channelMask;
+    emit channelMaskChanged(m_channelMask);
+}
+
 ZigbeeSecurityConfiguration ZigbeeNetwork::securityConfiguration() const
 {
     return m_securityConfiguration;

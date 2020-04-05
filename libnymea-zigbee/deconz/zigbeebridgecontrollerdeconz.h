@@ -41,22 +41,35 @@
 #include "interface/zigbeeinterfacedeconz.h"
 #include "interface/zigbeeinterfacedeconzreply.h"
 
+// This struct describes the current deCONZ network configuration parameters
 typedef struct DeconzNetworkConfiguration {
     ZigbeeAddress ieeeAddress; // R
-    quint16 panId; // R
-    quint16 shortAddress; // R
-    quint64 extendedPanId; // R
-    Deconz::NodeType nodeType; // RW
-    quint32 channelMask; // RW
-    quint64 apsExtendedPanId; // RW
+    quint16 panId = 0; // R
+    quint16 shortAddress = 0; // R
+    quint64 extendedPanId = 0; // R
+    Deconz::NodeType nodeType = Deconz::NodeTypeCoordinator; // RW
+    quint32 channelMask = 0; // RW
+    quint64 apsExtendedPanId = 0; // RW
     ZigbeeAddress trustCenterAddress; // RW
-    Deconz::SecurityMode securityMode; // RW
+    Deconz::SecurityMode securityMode = Deconz::SecurityModeNoMasterButTrustCenterKey; // RW
     ZigbeeNetworkKey networkKey; // RW
-    quint8 currentChannel; // R
-    quint16 protocolVersion; // R
-    quint8 networkUpdateId; // RW
-    quint32 watchdogTimeout; // RW
+    quint8 currentChannel = 0; // R
+    quint16 protocolVersion = 0; // R
+    quint8 networkUpdateId = 0; // RW
+    quint32 watchdogTimeout = 85; // RW
 } DeconzNetworkConfiguration;
+
+
+
+// This struct describes the deCONZ device state
+typedef struct DeconzDeviceState {
+    Deconz::NetworkState networkState = Deconz::NetworkStateOffline;
+    bool aspDataConfirm = false;
+    bool aspDataIndication = false;
+    bool configurationChanged = false;
+    bool aspDataRequestFreeSlots = false;
+} DeconzDeviceState;
+
 
 
 class ZigbeeBridgeControllerDeconz : public ZigbeeBridgeController
@@ -69,11 +82,16 @@ public:
     explicit ZigbeeBridgeControllerDeconz(QObject *parent = nullptr);
     ~ZigbeeBridgeControllerDeconz() override;
 
+    DeconzNetworkConfiguration networkConfiguration() const;
+    void setFirmwareVersionString(const QString &firmwareVersion);
+
     ZigbeeInterfaceDeconzReply *requestVersion();
     ZigbeeInterfaceDeconzReply *requestDeviceState();
     ZigbeeInterfaceDeconzReply *requestReadParameter(Deconz::Parameter parameter);
     ZigbeeInterfaceDeconzReply *requestWriteParameter(Deconz::Parameter parameter, const QByteArray &data);
-    ZigbeeInterfaceDeconzReply *requestStartJoinNetwork();
+    ZigbeeInterfaceDeconzReply *requestChangeNetworkState(Deconz::NetworkState networkState);
+    ZigbeeInterfaceDeconzReply *requestReadReceivedDataIndication(Deconz::SourceAddressMode sourceAddressMode = Deconz::SourceAddressModeShortSourceAddress);
+
 
 private:
     ZigbeeInterfaceDeconz *m_interface = nullptr;
@@ -92,15 +110,18 @@ private:
     // The data can be fetched from m_networkConfiguration on success.
     ZigbeeInterfaceDeconzReply *readNetworkParameters();
 
-    ZigbeeInterfaceDeconzReply *resetWatchdog();
+    DeconzDeviceState parseDeviceStateFlag(quint8 deviceStateFlag);
+
+    void processDeviceState(DeconzDeviceState deviceState);
 
 signals:
+    void networkConfigurationParameterChanged(const DeconzNetworkConfiguration &networkConfiguration);
 
 private slots:
     void onInterfaceAvailableChanged(bool available);
     void onInterfacePackageReceived(const QByteArray &package);
 
-    void onWatchdogTimerTimeout();
+    void resetControllerWatchdog();
 
 public slots:
     bool enable(const QString &serialPort, qint32 baudrate);

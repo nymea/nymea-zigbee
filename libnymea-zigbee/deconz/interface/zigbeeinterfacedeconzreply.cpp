@@ -47,6 +47,17 @@ Deconz::StatusCode ZigbeeInterfaceDeconzReply::statusCode() const
     return m_statusCode;
 }
 
+bool ZigbeeInterfaceDeconzReply::aborted() const
+{
+    return m_aborted;
+}
+
+void ZigbeeInterfaceDeconzReply::abort()
+{
+    m_aborted = true;
+    emit finished();
+}
+
 ZigbeeInterfaceDeconzReply::ZigbeeInterfaceDeconzReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent) :
     QObject(parent),
     m_command(command),

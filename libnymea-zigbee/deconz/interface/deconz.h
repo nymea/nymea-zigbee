@@ -93,6 +93,16 @@ public:
     };
     Q_ENUM(NodeType)
 
+    enum SourceAddressMode {
+        SourceAddressModeNone = 0x00,
+        SourceAddressModeShortSourceAddress = 0x01,
+        SourceAddressModeAddLastHoppAddress = 0x02, // since 0x0108
+        SourceAddressModeIeeeSourceAddress = 0x03,
+        SourceAddressModeShortAndIeeeSourceAddress = 0x04 // since 0x010B
+    };
+    Q_ENUM(SourceAddressMode)
+
+
     enum SecurityMode {
         SecurityModeNoSecurity = 0x00,
         SecurityModePreconfiguredNetworkKey = 0x01,
@@ -108,5 +118,6 @@ public:
     Q_ENUM(Platform)
 
 };
+
 
 #endif // DECONZ_H

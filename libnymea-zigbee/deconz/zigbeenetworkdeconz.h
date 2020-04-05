@@ -30,7 +30,7 @@
 
 #include <QObject>
 #include "zigbeenetwork.h"
-
+#include "zigbeechannelmask.h"
 #include "zigbeebridgecontrollerdeconz.h"
 
 class ZigbeeNetworkDeconz : public ZigbeeNetwork
@@ -44,10 +44,13 @@ public:
 private:
     ZigbeeBridgeControllerDeconz *m_controller = nullptr;
     bool m_networkRunning = false;
+    bool m_createNewNetwork = false;
 
 protected:
     ZigbeeNode *createNode(QObject *parent) override;
     void setPermitJoiningInternal(bool permitJoining) override;
+
+    void startNetworkInternally();
 
 private slots:
     void onControllerAvailableChanged(bool available);

@@ -25,47 +25,47 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEEINTERFACEDECONZREPLY_H
-#define ZIGBEEINTERFACEDECONZREPLY_H
+#ifndef ZIGBEECHANNELMASK_H
+#define ZIGBEECHANNELMASK_H
 
+#include <QDebug>
 #include <QObject>
 
-#include "deconz.h"
+#include "zigbee.h"
 
-class ZigbeeInterfaceDeconzReply : public QObject
+class ZigbeeChannelMask
 {
-    Q_OBJECT
-
-    friend class ZigbeeBridgeControllerDeconz;
+    Q_GADGET
 
 public:
-    // Request content
-    Deconz::Command command() const;
-    quint8 sequenceNumber() const;
-    QByteArray responseData() const;
+    enum ChannelConfiguration {
+        ChannelConfigurationNoChannel = 0x00000000,
+        ChannelConfigurationPrimaryLightLink = 0x02108800,
+        ChannelConfigurationAllChannels = 0x07fff800
+    };
+    Q_ENUM(ChannelConfiguration)
 
-    // Response content
-    Deconz::StatusCode statusCode() const;
+    ZigbeeChannelMask();
+    ZigbeeChannelMask(quint32 channelMask);
+    ZigbeeChannelMask(Zigbee::ZigbeeChannels channels);
 
-    bool aborted() const;
-    void abort();
+    quint32 toUInt32() const;
+
+    Zigbee::ZigbeeChannels channels() const;
+
+    bool isSet(Zigbee::ZigbeeChannel channel) const;
+    void setChannel(Zigbee::ZigbeeChannel channel);
+    void unsetChannel(Zigbee::ZigbeeChannel channel);
+
+    ZigbeeChannelMask &operator=(const ZigbeeChannelMask &other);
+    bool operator==(const ZigbeeChannelMask &other) const;
+    bool operator!=(const ZigbeeChannelMask &other) const;
 
 private:
-    explicit ZigbeeInterfaceDeconzReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent = nullptr);
-
-    bool m_aborted = false;
-
-    // Request content
-    Deconz::Command m_command;
-    quint8 m_sequenceNumber = 0;
-
-    // Response content
-    Deconz::StatusCode m_statusCode = Deconz::StatusCodeError;
-    QByteArray m_responseData;
-
-signals:
-    void finished();
+    quint32 m_channelMask = 0;
 
 };
 
-#endif // ZIGBEEINTERFACEDECONZREPLY_H
+QDebug operator<<(QDebug debug, const ZigbeeChannelMask &channelMaks);
+
+#endif // ZIGBEECHANNELMASK_H
