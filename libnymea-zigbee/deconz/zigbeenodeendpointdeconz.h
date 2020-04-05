@@ -25,44 +25,19 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEENETWORKDECONZ_H
-#define ZIGBEENETWORKDECONZ_H
+#ifndef ZIGBEENODEENDPOINTDECONZ_H
+#define ZIGBEENODEENDPOINTDECONZ_H
 
 #include <QObject>
-#include "zigbeenetwork.h"
-#include "zigbeechannelmask.h"
-#include "zigbeebridgecontrollerdeconz.h"
 
-class ZigbeeNetworkDeconz : public ZigbeeNetwork
+class ZigbeeNodeEndpointDeconz : public QObject
 {
     Q_OBJECT
 public:
-    explicit ZigbeeNetworkDeconz(QObject *parent = nullptr);
+    explicit ZigbeeNodeEndpointDeconz(QObject *parent = nullptr);
 
-    ZigbeeBridgeController *bridgeController() const override;
-
-private:
-    ZigbeeBridgeControllerDeconz *m_controller = nullptr;
-    bool m_networkRunning = false;
-    bool m_createNewNetwork = false;
-
-protected:
-    ZigbeeNode *createNode(QObject *parent) override;
-    void setPermitJoiningInternal(bool permitJoining) override;
-
-    void startNetworkInternally();
-
-    void createNetwork();
-
-private slots:
-    void onControllerAvailableChanged(bool available);
-
-public slots:
-    void startNetwork() override;
-    void stopNetwork() override;
-    void reset() override;
-    void factoryResetNetwork() override;
+signals:
 
 };
 
-#endif // ZIGBEENETWORKDECONZ_H
+#endif // ZIGBEENODEENDPOINTDECONZ_H

@@ -516,7 +516,7 @@ ZigbeeInterfaceReply *ZigbeeBridgeControllerNxp::commandBindUnicast(const Zigbee
     stream << sourceAddress.toUInt64();
     stream << sourceEndpoint;
     stream << clusterId;
-    stream << static_cast<quint8>(Zigbee::DestinationAddressModeUnicastIeee);
+    stream << static_cast<quint8>(Zigbee::DestinationAddressModeIeeeAddress);
     stream << destinationAddress.toUInt64();
     stream << destinationEndpoint;
 

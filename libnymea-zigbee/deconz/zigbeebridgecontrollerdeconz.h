@@ -85,12 +85,21 @@ public:
     DeconzNetworkConfiguration networkConfiguration() const;
     void setFirmwareVersionString(const QString &firmwareVersion);
 
+    Deconz::NetworkState networkState() const;
+
     ZigbeeInterfaceDeconzReply *requestVersion();
     ZigbeeInterfaceDeconzReply *requestDeviceState();
     ZigbeeInterfaceDeconzReply *requestReadParameter(Deconz::Parameter parameter);
     ZigbeeInterfaceDeconzReply *requestWriteParameter(Deconz::Parameter parameter, const QByteArray &data);
     ZigbeeInterfaceDeconzReply *requestChangeNetworkState(Deconz::NetworkState networkState);
+
     ZigbeeInterfaceDeconzReply *requestReadReceivedDataIndication(Deconz::SourceAddressMode sourceAddressMode = Deconz::SourceAddressModeShortSourceAddress);
+    ZigbeeInterfaceDeconzReply *requestQuerySendDataConfirm();
+
+    // Send data
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
 
 
 private:
@@ -100,7 +109,10 @@ private:
     int m_watchdogResetTimout = 60;
     QHash<quint8, ZigbeeInterfaceDeconzReply *> m_pendingReplies;
     DeconzNetworkConfiguration m_networkConfiguration;
+    Deconz::NetworkState m_networkState = Deconz::NetworkStateOffline;
     QTimer *m_watchdogTimer = nullptr;
+
+    bool m_aspFreeSlotsAvailable = false;
 
     quint8 generateSequenceNumber();
 
@@ -110,11 +122,12 @@ private:
     // The data can be fetched from m_networkConfiguration on success.
     ZigbeeInterfaceDeconzReply *readNetworkParameters();
 
+    // Device state helper
     DeconzDeviceState parseDeviceStateFlag(quint8 deviceStateFlag);
-
     void processDeviceState(DeconzDeviceState deviceState);
 
 signals:
+    void networkStateChanged(Deconz::NetworkState networkState);
     void networkConfigurationParameterChanged(const DeconzNetworkConfiguration &networkConfiguration);
 
 private slots:

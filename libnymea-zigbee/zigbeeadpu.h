@@ -25,44 +25,46 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEENETWORKDECONZ_H
-#define ZIGBEENETWORKDECONZ_H
+#ifndef ZIGBEEADPU_H
+#define ZIGBEEADPU_H
 
 #include <QObject>
-#include "zigbeenetwork.h"
-#include "zigbeechannelmask.h"
-#include "zigbeebridgecontrollerdeconz.h"
 
-class ZigbeeNetworkDeconz : public ZigbeeNetwork
+typedef struct FrameControl {
+
+} FrameControl;
+
+class ZigbeeAdpu : public QObject
 {
     Q_OBJECT
 public:
-    explicit ZigbeeNetworkDeconz(QObject *parent = nullptr);
 
-    ZigbeeBridgeController *bridgeController() const override;
+    // Note: zigbee Pro Specification 2.2.5.1 General APDU Frame Format
 
-private:
-    ZigbeeBridgeControllerDeconz *m_controller = nullptr;
-    bool m_networkRunning = false;
-    bool m_createNewNetwork = false;
+    /* Frame control */
+    enum FrameType {
+        FrameTypeData = 0x00,
+        FrameTypeCommand = 0x40,
+        FrameTypeAck = 0x80,
+        FrameTypeInterPanAps = 0xC0
+    };
+    Q_ENUM(FrameType)
 
-protected:
-    ZigbeeNode *createNode(QObject *parent) override;
-    void setPermitJoiningInternal(bool permitJoining) override;
+    enum DeliveryMode {
+        DeliveryModeNormalUnicast = 0x00,
+        DeliveryModeBroadcast = 0x20,
+        DeliveryModeGroupAddressing = 0x30,
+    };
+    Q_ENUM(DeliveryMode)
 
-    void startNetworkInternally();
 
-    void createNetwork();
 
-private slots:
-    void onControllerAvailableChanged(bool available);
+    explicit ZigbeeAdpu(QObject *parent = nullptr);
 
-public slots:
-    void startNetwork() override;
-    void stopNetwork() override;
-    void reset() override;
-    void factoryResetNetwork() override;
+    quint8 buildFrameControl(FrameType frameType, DeliveryMode deliveryMode, bool apsAckFormat, bool securitySubField, bool acknowledgementRequest, bool extendedHeaderPresent);
+
+signals:
 
 };
 
-#endif // ZIGBEENETWORKDECONZ_H
+#endif // ZIGBEEADPU_H

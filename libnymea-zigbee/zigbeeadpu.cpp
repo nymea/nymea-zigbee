@@ -25,44 +25,32 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEENETWORKDECONZ_H
-#define ZIGBEENETWORKDECONZ_H
+#include "zigbeeadpu.h"
 
-#include <QObject>
-#include "zigbeenetwork.h"
-#include "zigbeechannelmask.h"
-#include "zigbeebridgecontrollerdeconz.h"
-
-class ZigbeeNetworkDeconz : public ZigbeeNetwork
+ZigbeeAdpu::ZigbeeAdpu(QObject *parent) : QObject(parent)
 {
-    Q_OBJECT
-public:
-    explicit ZigbeeNetworkDeconz(QObject *parent = nullptr);
 
-    ZigbeeBridgeController *bridgeController() const override;
+}
 
-private:
-    ZigbeeBridgeControllerDeconz *m_controller = nullptr;
-    bool m_networkRunning = false;
-    bool m_createNewNetwork = false;
+quint8 ZigbeeAdpu::buildFrameControl(ZigbeeAdpu::FrameType frameType, ZigbeeAdpu::DeliveryMode deliveryMode, bool apsAckFormat, bool securitySubField, bool acknowledgementRequest, bool extendedHeaderPresent)
+{
+    quint8 frameControl = 0;
+    frameControl &= static_cast<quint8>(frameType); // Bit 0 - 1
+    frameControl &= static_cast<quint8>(deliveryMode); // Bit 2 - 3
+    if (apsAckFormat)
+        frameControl &= static_cast<quint8>(0x08); // Bit 4
 
-protected:
-    ZigbeeNode *createNode(QObject *parent) override;
-    void setPermitJoiningInternal(bool permitJoining) override;
+    if (securitySubField)
+        frameControl &= static_cast<quint8>(0x04); // Bit 5
 
-    void startNetworkInternally();
+    if (securitySubField)
+        frameControl &= static_cast<quint8>(0x04); // Bit 6
 
-    void createNetwork();
+    if (acknowledgementRequest)
+        frameControl &= static_cast<quint8>(0x02); // Bit 7
 
-private slots:
-    void onControllerAvailableChanged(bool available);
+    if (extendedHeaderPresent)
+        frameControl &= static_cast<quint8>(0x01); // Bit 8
 
-public slots:
-    void startNetwork() override;
-    void stopNetwork() override;
-    void reset() override;
-    void factoryResetNetwork() override;
-
-};
-
-#endif // ZIGBEENETWORKDECONZ_H
+    return frameControl;
+}

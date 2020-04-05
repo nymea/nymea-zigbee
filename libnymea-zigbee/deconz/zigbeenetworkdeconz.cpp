@@ -130,30 +130,46 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
 
                 qCDebug(dcZigbeeNetwork()) << "Read device state finished successfully";
                 QDataStream stream(reply->responseData());
+                stream.setByteOrder(QDataStream::LittleEndian);
+                quint8 deviceStateFlag = 0;
+                stream >> deviceStateFlag;
+                // Update the device state in the controller
+                m_controller->processDeviceState(m_controller->parseDeviceStateFlag(deviceStateFlag));
 
+                if (m_createNewNetwork) {
+                    // Write the configurations which need to be changed
+                    createNetwork();
+
+                    // Initialize coordinator node
+
+
+                } else {
+                    // Get the network state and start the network if required
+                    if (m_controller->networkState() == Deconz::NetworkStateConnected) {
+                        qCDebug(dcZigbeeNetwork()) << "The network is already running.";
+                        setState(StateRunning);
+                    }
+
+
+
+
+                }
 
             });
 
 
 
-            if (m_createNewNetwork) {
-                // Write the configurations which need to be changed
 
-
-                // Initialize coordinator node
-
-
-            } else {
-                // Get the network state and start the network if required
-
-
-
-            }
 
 
 
         });
     });
+}
+
+void ZigbeeNetworkDeconz::createNetwork()
+{
+
 }
 
 void ZigbeeNetworkDeconz::onControllerAvailableChanged(bool available)

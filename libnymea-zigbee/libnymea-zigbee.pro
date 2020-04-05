@@ -8,6 +8,8 @@ SOURCES += \
     deconz/interface/zigbeeinterfacedeconzreply.cpp \
     deconz/zigbeebridgecontrollerdeconz.cpp \
     deconz/zigbeenetworkdeconz.cpp \
+    deconz/zigbeenodedeconz.cpp \
+    deconz/zigbeenodeendpointdeconz.cpp \
     nxp/interface/zigbeeinterface.cpp \
     nxp/interface/zigbeeinterfacemessage.cpp \
     nxp/interface/zigbeeinterfacerequest.cpp \
@@ -16,6 +18,7 @@ SOURCES += \
     nxp/zigbeebridgecontrollernxp.cpp \
     nxp/zigbeenodeendpointnxp.cpp \
     nxp/zigbeenodenxp.cpp \
+    zigbeeadpu.cpp \
     zigbeebridgecontroller.cpp \
     zigbeechannelmask.cpp \
     zigbeecluster.cpp \
@@ -39,6 +42,8 @@ HEADERS += \
     deconz/interface/zigbeeinterfacedeconzreply.h \
     deconz/zigbeebridgecontrollerdeconz.h \
     deconz/zigbeenetworkdeconz.h \
+    deconz/zigbeenodedeconz.h \
+    deconz/zigbeenodeendpointdeconz.h \
     nxp/interface/zigbeeinterface.h \
     nxp/interface/zigbeeinterfacemessage.h \
     nxp/interface/zigbeeinterfacerequest.h \
@@ -47,6 +52,7 @@ HEADERS += \
     nxp/zigbeebridgecontrollernxp.h \
     nxp/zigbeenodeendpointnxp.h \
     nxp/zigbeenodenxp.h \
+    zigbeeadpu.h \
     zigbeebridgecontroller.h \
     zigbeechannelmask.h \
     zigbeecluster.h \

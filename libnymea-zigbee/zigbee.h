@@ -537,7 +537,7 @@ public:
     enum DestinationAddressMode {
         DestinationAddressModeGroup = 0x01,
         DestinationAddressModeShortAddress = 0x02,
-        DestinationAddressModeUnicastIeee = 0x03
+        DestinationAddressModeIeeeAddress = 0x03
     };
     Q_ENUM(DestinationAddressMode)
 
@@ -558,6 +558,16 @@ public:
 
     };
     Q_ENUM(ZigbeeZdpStatus)
+
+    enum ZigbeeTxOption {
+        ZigbeeTxOptionSecurityEnabled = 0x01,
+        ZigbeeTxOptionUseNetworkKey = 0x02,
+        ZigbeeTxOptionAckTransmission = 0x04,
+        ZigbeeTxOptionFragmentationPermitted = 0x08,
+        ZigbeeTxOptionIncludeExtendedNonceInSecurityFrame = 0x10
+    };
+    Q_ENUM(ZigbeeTxOption)
+    Q_DECLARE_FLAGS(ZigbeeTxOptions, ZigbeeTxOption)
 
     enum Manufacturer {
         // RF4CE
@@ -1332,5 +1342,6 @@ public:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Zigbee::ZigbeeChannels)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Zigbee::ZigbeeTxOptions)
 
 #endif // ZIGBEE_H

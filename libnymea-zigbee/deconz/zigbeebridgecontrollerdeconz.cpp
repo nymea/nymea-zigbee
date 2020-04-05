@@ -60,6 +60,11 @@ void ZigbeeBridgeControllerDeconz::setFirmwareVersionString(const QString &firmw
     emit firmwareVersionChanged(m_firmwareVersion);
 }
 
+Deconz::NetworkState ZigbeeBridgeControllerDeconz::networkState() const
+{
+    return m_networkState;
+}
+
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestVersion()
 {
     quint8 sequenceNumber = generateSequenceNumber();
@@ -193,6 +198,148 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestReadReceivedDat
     m_interface->sendPackage(message);
 
     return createReply(Deconz::CommandApsDataIndication, sequenceNumber, this);
+}
+
+ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestQuerySendDataConfirm()
+{
+    quint8 sequenceNumber = generateSequenceNumber();
+    qCDebug(dcZigbeeController()) << "Request query send data confirm. SQN:" << sequenceNumber;
+
+    QByteArray message;
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Deconz::CommandApsDataConfirm);
+    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // Reserverd
+    stream << static_cast<quint16>(7); // Frame length
+    stream << static_cast<quint16>(0); // Payload length
+
+    m_interface->sendPackage(message);
+
+    return createReply(Deconz::CommandApsDataConfirm, sequenceNumber, this);
+}
+
+ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius)
+{
+    quint8 sequenceNumber = generateSequenceNumber();
+    qCDebug(dcZigbeeController()) << "Request enqueue send data to group" << ZigbeeUtils::convertUint16ToHexString(groupAddress)
+                                  << "SQN:" << sequenceNumber
+                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
+                                  << profileId << clusterId
+                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+
+    Q_ASSERT_X(asdu.length() <= 127, "ASDU", "ASDU package length has to <= 127 bytes");
+
+    // Note: 15 protocol bytes + asdu package length
+    quint16 payloadLength = static_cast<quint16>(15 + asdu.length());
+
+    QByteArray message;
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Deconz::CommandApsDataRequest);
+    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // Reserverd
+    stream << static_cast<quint16>(7 + payloadLength); // Frame length
+    stream << static_cast<quint16>(payloadLength);
+    stream << requestId;
+    stream << static_cast<quint8>(0); // Flags
+    stream << static_cast<quint8>(Zigbee::DestinationAddressModeGroup);
+    stream << groupAddress << destinationEndpoint;
+    stream << static_cast<quint16>(profileId);
+    stream << static_cast<quint16>(clusterId);
+    stream << sourceEndpoint;
+    stream << static_cast<quint16>(asdu.length());
+    for (int i = 0; i < asdu.length(); i++) {
+        stream << static_cast<quint8>(asdu.at(i));
+    }
+    stream << static_cast<quint8>(0x04); // TX Options: Use ASP ACKs
+    stream << radius;
+
+    m_interface->sendPackage(message);
+
+    return createReply(Deconz::CommandApsDataRequest, sequenceNumber, this);
+}
+
+ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius)
+{
+    quint8 sequenceNumber = generateSequenceNumber();
+    qCDebug(dcZigbeeController()) << "Request enqueue send data to short address" << ZigbeeUtils::convertUint16ToHexString(shortAddress)
+                                  << "SQN:" << sequenceNumber
+                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
+                                  << profileId << clusterId
+                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+
+    Q_ASSERT_X(asdu.length() <= 127, "ASDU", "ASDU package length has to <= 127 bytes");
+
+    // Note: 15 protocol bytes + asdu package length
+    quint16 payloadLength = static_cast<quint16>(15 + asdu.length());
+
+    QByteArray message;
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Deconz::CommandApsDataRequest);
+    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // Reserverd
+    stream << static_cast<quint16>(7 + payloadLength); // Frame length
+    stream << static_cast<quint16>(payloadLength);
+    stream << requestId;
+    stream << static_cast<quint8>(0); // Flags
+    stream << static_cast<quint8>(Zigbee::DestinationAddressModeShortAddress);
+    stream << shortAddress << destinationEndpoint;
+    stream << static_cast<quint16>(profileId);
+    stream << static_cast<quint16>(clusterId);
+    stream << sourceEndpoint;
+    stream << static_cast<quint16>(asdu.length());
+    for (int i = 0; i < asdu.length(); i++) {
+        stream << static_cast<quint8>(asdu.at(i));
+    }
+    stream << static_cast<quint8>(0x04); // TX Options: Use ASP ACKs
+    stream << radius;
+
+    m_interface->sendPackage(message);
+
+    return createReply(Deconz::CommandApsDataRequest, sequenceNumber, this);
+}
+
+ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius)
+{
+    quint8 sequenceNumber = generateSequenceNumber();
+    qCDebug(dcZigbeeController()) << "Request enqueue send data to IEEE address" << ieeeAddress.toString()
+                                  << "SQN:" << sequenceNumber
+                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
+                                  << profileId << clusterId
+                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+
+    Q_ASSERT_X(asdu.length() <= 127, "ASDU", "ASDU package length has to <= 127 bytes");
+
+    // Note: 21 protocol bytes + asdu package length
+    quint16 payloadLength = static_cast<quint16>(21 + asdu.length());
+
+    QByteArray message;
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Deconz::CommandApsDataRequest);
+    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // Reserverd
+    stream << static_cast<quint16>(7 + payloadLength); // Frame length
+    stream << static_cast<quint16>(payloadLength);
+    stream << requestId;
+    stream << static_cast<quint8>(0); // Flags
+    stream << static_cast<quint8>(Zigbee::DestinationAddressModeIeeeAddress);
+    stream << ieeeAddress.toUInt64() << destinationEndpoint;
+    stream << static_cast<quint16>(profileId);
+    stream << static_cast<quint16>(clusterId);
+    stream << sourceEndpoint;
+    stream << static_cast<quint16>(asdu.length());
+    for (int i = 0; i < asdu.length(); i++) {
+        stream << static_cast<quint8>(asdu.at(i));
+    }
+    stream << static_cast<quint8>(0x04); // TX Options: Use ASP ACKs
+    stream << radius;
+
+    m_interface->sendPackage(message);
+
+    return createReply(Deconz::CommandApsDataRequest, sequenceNumber, this);
 }
 
 quint8 ZigbeeBridgeControllerDeconz::generateSequenceNumber()
@@ -573,6 +720,20 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
                                   << "configuration changed:" << deviceState.configurationChanged
                                   << "ASPDE-DATA.request free slots:" << deviceState.aspDataRequestFreeSlots;
 
+    if (m_networkState != deviceState.networkState) {
+        qCDebug(dcZigbeeController()) << "Network state changed" << deviceState.networkState;
+        m_networkState = deviceState.networkState;
+        emit networkStateChanged(m_networkState);
+    }
+
+    if (m_aspFreeSlotsAvailable != deviceState.aspDataRequestFreeSlots) {
+        m_aspFreeSlotsAvailable = deviceState.aspDataRequestFreeSlots;
+
+        // FIXME: if true, send next asp request
+
+    }
+
+
     // Check if we have to fech new data
     if (deviceState.aspDataConfirm) {
         ZigbeeInterfaceDeconzReply *reply = requestReadReceivedDataIndication();
@@ -584,7 +745,6 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
             }
 
             // ASP data indication received
-
             QDataStream stream(reply->responseData());
             stream.setByteOrder(QDataStream::LittleEndian);
             quint16 payloadLenght = 0; quint8 deviceStateFlag = 0; quint8 destinationAddressModeFlag = 0;
@@ -598,7 +758,7 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
             if (destinationAddressMode == Zigbee::DestinationAddressModeGroup || destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
                 stream >> destinationShortAddress;
 
-            if (destinationAddressMode == Zigbee::DestinationAddressModeUnicastIeee)
+            if (destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
                 stream >> destinationIeeeAddress;
 
             stream >> destinationEndpoint >> sourceAddressModeFlag;
@@ -630,7 +790,7 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
             if (destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
                 qCDebug(dcZigbeeController()) << "  Destination short address:" << ZigbeeUtils::convertUint16ToHexString(destinationShortAddress);
 
-            if (destinationAddressMode == Zigbee::DestinationAddressModeUnicastIeee)
+            if (destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
                 qCDebug(dcZigbeeController()) << "  Destination IEEE address:" << ZigbeeAddress(destinationIeeeAddress).toString();
 
             qCDebug(dcZigbeeController()) << "  Destination endpoint" << ZigbeeUtils::convertByteToHexString(destinationEndpoint);
