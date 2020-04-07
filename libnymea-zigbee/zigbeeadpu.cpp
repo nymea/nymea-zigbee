@@ -32,25 +32,44 @@ ZigbeeAdpu::ZigbeeAdpu(QObject *parent) : QObject(parent)
 
 }
 
-quint8 ZigbeeAdpu::buildFrameControl(ZigbeeAdpu::FrameType frameType, ZigbeeAdpu::DeliveryMode deliveryMode, bool apsAckFormat, bool securitySubField, bool acknowledgementRequest, bool extendedHeaderPresent)
+ZigbeeAdpu::FrameControl ZigbeeAdpu::frameControl() const
 {
-    quint8 frameControl = 0;
-    frameControl &= static_cast<quint8>(frameType); // Bit 0 - 1
-    frameControl &= static_cast<quint8>(deliveryMode); // Bit 2 - 3
-    if (apsAckFormat)
-        frameControl &= static_cast<quint8>(0x08); // Bit 4
+    return m_frameControl;
+}
 
-    if (securitySubField)
-        frameControl &= static_cast<quint8>(0x04); // Bit 5
+void ZigbeeAdpu::setFrameControl(ZigbeeAdpu::FrameControl frameControl)
+{
+    m_frameControl = frameControl;
+}
 
-    if (securitySubField)
-        frameControl &= static_cast<quint8>(0x04); // Bit 6
+quint8 ZigbeeAdpu::buildFrameControlByte(FrameControl frameControl)
+{
+    quint8 frameControlByte = 0;
+    frameControlByte |= static_cast<quint8>(frameControl.frameType); // Bit 0 - 1
+    frameControlByte |= static_cast<quint8>(frameControl.deliveryMode); // Bit 2 - 3
+    if (frameControl.apsAckFormat)
+        frameControlByte |= static_cast<quint8>(0x10); // Bit 4
 
-    if (acknowledgementRequest)
-        frameControl &= static_cast<quint8>(0x02); // Bit 7
+    if (frameControl.security)
+        frameControlByte |= static_cast<quint8>(0x20); // Bit 5
 
-    if (extendedHeaderPresent)
-        frameControl &= static_cast<quint8>(0x01); // Bit 8
+    if (frameControl.acknowledgementRequest)
+        frameControlByte |= static_cast<quint8>(0x40); // Bit 6
 
+    if (frameControl.extendedHeader)
+        frameControlByte |= static_cast<quint8>(0x80); // Bit 7
+
+    return frameControlByte;
+}
+
+ZigbeeAdpu::FrameControl ZigbeeAdpu::readFrameControlByte(quint8 frameControlByte)
+{
+    FrameControl frameControl;
+    frameControl.frameType = static_cast<FrameType>(frameControlByte | 0x03);
+    frameControl.deliveryMode = static_cast<DeliveryMode>(frameControlByte | 0x0C);
+    frameControl.apsAckFormat = frameControlByte | 0x10;
+    frameControl.security = frameControlByte | 0x20;
+    frameControl.acknowledgementRequest = frameControlByte | 0x40;
+    frameControl.extendedHeader = frameControlByte | 0x80;
     return frameControl;
 }

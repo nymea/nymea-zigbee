@@ -27,8 +27,42 @@
 
 #include "zigbeenodedeconz.h"
 
-ZigbeeNodeDeconz::ZigbeeNodeDeconz(QObject *parent) :
-    ZigbeeNode(parent)
+ZigbeeNodeDeconz::ZigbeeNodeDeconz(ZigbeeBridgeControllerDeconz *controller, QObject *parent) :
+    ZigbeeNode(parent),
+    m_controller(controller)
 {
 
+}
+
+void ZigbeeNodeDeconz::leaveNetworkRequest(bool rejoin, bool removeChildren)
+{
+    Q_UNUSED(rejoin)
+    Q_UNUSED(removeChildren)
+}
+
+void ZigbeeNodeDeconz::setClusterAttributeReport(const ZigbeeClusterAttributeReport &report)
+{
+    Q_UNUSED(report)
+}
+
+void ZigbeeNodeDeconz::startInitialization()
+{
+    /* Node initialisation steps (sequentially)
+     * - Node descriptor
+     * - Power descriptor
+     * - Active endpoints
+     * - for each endpoint do:
+     *    - Simple descriptor request
+     *    - for each endpoint
+     *      - read basic cluster
+     */
+
+
+}
+
+ZigbeeNodeEndpoint *ZigbeeNodeDeconz::createNodeEndpoint(quint8 endpointId, QObject *parent)
+{
+    Q_UNUSED(endpointId)
+    Q_UNUSED(parent)
+    return nullptr;
 }

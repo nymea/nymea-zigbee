@@ -25,67 +25,64 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEEADPU_H
-#define ZIGBEEADPU_H
+#ifndef ZIGBEENETWORKREQUEST_H
+#define ZIGBEENETWORKREQUEST_H
 
 #include <QObject>
 
+#include "zigbee.h"
+#include "zigbeeaddress.h"
 
-class ZigbeeAdpu : public QObject
+class ZigbeeNetworkRequest
 {
-    Q_OBJECT
 public:
-    // Note: zigbee Pro Specification 2.2.5.1 General APDU Frame Format
+    ZigbeeNetworkRequest();
 
-    /* Frame control */
-    enum FrameType {
-        FrameTypeData = 0x00,
-        FrameTypeCommand = 0x01,
-        FrameTypeAck = 0x02,
-        FrameTypeInterPanAps = 0x03
-    };
-    Q_ENUM(FrameType)
+    quint8 requestId() const;
+    void setRequestId(quint8 requestId);
 
-    enum DeliveryMode {
-        DeliveryModeNormalUnicast = 0x00,
-        DeliveryModeBroadcast = 0x08,
-        DeliveryModeGroupAddressing = 0x0C,
-    };
-    Q_ENUM(DeliveryMode)
+    Zigbee::DestinationAddressMode destinationAddressMode() const;
+    void setDestinationAddressMode(Zigbee::DestinationAddressMode destinationAddressMode);
 
+    quint16 destinationShortAddress() const;
+    void setDestinationShortAddress(quint16 destinationShortAddress);
 
-    typedef struct FrameControl {
-        FrameType frameType = FrameTypeData;
-        DeliveryMode deliveryMode = DeliveryModeNormalUnicast;
-        bool security = false;
-        bool apsAckFormat = false;
-        bool acknowledgementRequest = true;
-        bool extendedHeader = false;
-    } FrameControl;
-
-    explicit ZigbeeAdpu(QObject *parent = nullptr);
-
-    FrameControl frameControl() const;
-    void setFrameControl(FrameControl frameControl);
+    ZigbeeAddress destinationIeeeAddress() const;
+    void setDestinationIeeeAddress(const ZigbeeAddress &destinationIeeeAddress);
 
     quint8 destinationEndpoint() const;
     void setDestinationEndpoint(quint8 destinationEndpoint);
 
-    quint16 groupAddress() const;
-    void setGroupAddress(quint16 groupAddress);
+    quint16 profileId() const;
+    void setProfileId(quint16 profileId);
 
     quint16 clusterId() const;
     void setClusterId(quint16 clusterId);
 
+    quint8 sourceEndpoint() const;
+    void setSourceEndpoint(quint8 sourceEndpoint);
+
+    QByteArray asdu() const;
+    void setAsdu(const QByteArray &asdu);
+
+    Zigbee::ZigbeeTxOptions txOptions() const;
+    void setTxOptions(Zigbee::ZigbeeTxOptions txOptions);
+
+    quint8 radius() const;
+    void setRadius(quint8 radius);
+
 private:
-    FrameControl m_frameControl;
-    quint8 m_destinationEndpoint;
-
-
-    quint8 buildFrameControlByte(FrameControl frameControl);
-    FrameControl readFrameControlByte(quint8 frameControlByte);
-signals:
-
+    quint8 m_requestId = 0;
+    Zigbee::DestinationAddressMode m_destinationAddressMode = Zigbee::DestinationAddressModeShortAddress;
+    quint16 m_destinationShortAddress = 0;
+    ZigbeeAddress m_destinationIeeeAddress;
+    quint8 m_destinationEndpoint = 0;
+    quint16 m_profileId = 0;
+    quint16 m_clusterId = 0;
+    quint8 m_sourceEndpoint = 0;
+    QByteArray m_asdu;
+    Zigbee::ZigbeeTxOptions m_txOptions = Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission);
+    quint8 m_radius = 0;
 };
 
-#endif // ZIGBEEADPU_H
+#endif // ZIGBEENETWORKREQUEST_H

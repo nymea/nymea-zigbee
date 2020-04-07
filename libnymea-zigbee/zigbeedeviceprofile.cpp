@@ -25,26 +25,4 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeenetworkreply.h"
-
-ZigbeeNetworkReply::Error ZigbeeNetworkReply::error() const
-{
-    return m_error;
-}
-
-ZigbeeNetworkRequest ZigbeeNetworkReply::request() const
-{
-    return m_request;
-}
-
-Zigbee::ZigbeeStatus ZigbeeNetworkReply::zigbeeStatus() const
-{
-    return m_zigbeeStatus;
-}
-
-ZigbeeNetworkReply::ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent) :
-    QObject(parent),
-    m_request(request)
-{
-
-}
+#include "zigbeedeviceprofile.h"

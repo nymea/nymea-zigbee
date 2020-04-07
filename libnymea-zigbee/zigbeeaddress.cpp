@@ -111,6 +111,6 @@ bool ZigbeeAddress::operator!=(const ZigbeeAddress &other) const
 
 QDebug operator<<(QDebug debug, const ZigbeeAddress &address)
 {
-    debug << address.toString();
-    return debug;
+    debug.nospace() << address.toString();
+    return debug.space();
 }

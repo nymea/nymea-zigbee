@@ -38,6 +38,16 @@
 #include "zigbee.h"
 #include "zigbeecluster.h"
 
+template<class TYPE> inline TYPE ZigbeeBit(const TYPE & x)
+{
+    return TYPE(1) << x;
+}
+
+template<class TYPE> inline bool ZigbeeIsBitSet(const TYPE & x, const TYPE & y)
+{
+    return (x & y) != 0;
+}
+
 class ZigbeeUtils
 {
     Q_GADGET
@@ -46,6 +56,7 @@ public:
     // Data utils
     QBitArray convertByteArrayToBitArray(const QByteArray &byteArray);
     QByteArray convertBitArrayToByteArray(const QBitArray &bitArray);
+    static bool checkBitUint8(const quint8 &value, const int &bitNumber);
     static bool checkBitUint16(const quint16 &value, const int &bitNumber);
 
     static quint16 convertByteArrayToUint16(const QByteArray &data);

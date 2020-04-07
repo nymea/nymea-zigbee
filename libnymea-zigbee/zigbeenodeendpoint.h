@@ -131,7 +131,7 @@ protected:
     void addOutputCluster(ZigbeeCluster *cluster);
 
     // Network reply methods
-    ZigbeeNetworkReply *createNetworkReply();
+    ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());
     void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError, Zigbee::ZigbeeStatus zigbeeStatus = Zigbee::ZigbeeStatusSuccess);
 
 signals:

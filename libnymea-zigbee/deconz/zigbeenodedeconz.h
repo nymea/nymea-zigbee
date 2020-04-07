@@ -32,6 +32,7 @@
 
 #include "zigbee.h"
 #include "zigbeenode.h"
+#include "zigbeebridgecontrollerdeconz.h"
 
 class ZigbeeNodeDeconz : public ZigbeeNode
 {
@@ -40,9 +41,21 @@ class ZigbeeNodeDeconz : public ZigbeeNode
     friend class ZigbeeNetworkDeconz;
 
 public:
-    explicit ZigbeeNodeDeconz(QObject *parent = nullptr);
+    explicit ZigbeeNodeDeconz(ZigbeeBridgeControllerDeconz *controller, QObject *parent = nullptr);
 
-signals:
+    void leaveNetworkRequest(bool rejoin = false, bool removeChildren = false) override;
+
+private:
+    ZigbeeBridgeControllerDeconz *m_controller = nullptr;
+
+    void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) override;
+
+protected:
+    void startInitialization() override;
+    ZigbeeNodeEndpoint *createNodeEndpoint(quint8 endpointId, QObject *parent) override;
+
+private slots:
+
 
 };
 

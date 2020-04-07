@@ -76,6 +76,9 @@ public:
     void setSerialBaudrate(qint32 baudrate);
 
     // Network configurations
+    quint16 panId();
+    void setPanId(quint16 panId);
+
     quint64 extendedPanId() const;
     void setExtendedPanId(quint64 extendedPanId);
 
@@ -109,6 +112,7 @@ private:
     qint32 m_serialBaudrate = 115200;
 
     // Network configurations
+    quint16 m_panId = 0;
     quint64 m_extendedPanId = 0;
     quint32 m_channel = 0;
     ZigbeeChannelMask m_channelMask = ZigbeeChannelMask(ZigbeeChannelMask::ChannelConfigurationAllChannels);
@@ -151,6 +155,7 @@ signals:
     void serialPortNameChanged(const QString &serialPortName);
     void serialBaudrateChanged(qint32 serialBaudrate);
 
+    void panIdChanged(quint16 panId);
     void extendedPanIdChanged(quint64 extendedPanId);
     void channelChanged(uint channel);
     void channelMaskChanged(const ZigbeeChannelMask &channelMask);

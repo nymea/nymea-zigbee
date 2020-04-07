@@ -70,8 +70,6 @@ typedef struct DeconzDeviceState {
     bool aspDataRequestFreeSlots = false;
 } DeconzDeviceState;
 
-
-
 class ZigbeeBridgeControllerDeconz : public ZigbeeBridgeController
 {
     Q_OBJECT
@@ -93,6 +91,7 @@ public:
     ZigbeeInterfaceDeconzReply *requestWriteParameter(Deconz::Parameter parameter, const QByteArray &data);
     ZigbeeInterfaceDeconzReply *requestChangeNetworkState(Deconz::NetworkState networkState);
 
+    // Receive data
     ZigbeeInterfaceDeconzReply *requestReadReceivedDataIndication(Deconz::SourceAddressMode sourceAddressMode = Deconz::SourceAddressModeShortSourceAddress);
     ZigbeeInterfaceDeconzReply *requestQuerySendDataConfirm();
 
@@ -100,7 +99,6 @@ public:
     ZigbeeInterfaceDeconzReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
     ZigbeeInterfaceDeconzReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
     ZigbeeInterfaceDeconzReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
-
 
 private:
     ZigbeeInterfaceDeconz *m_interface = nullptr;
@@ -126,6 +124,9 @@ private:
     DeconzDeviceState parseDeviceStateFlag(quint8 deviceStateFlag);
     void processDeviceState(DeconzDeviceState deviceState);
 
+    void processDataIndication(const QByteArray &data);
+    void processDataConfirm(const QByteArray &data);
+
 signals:
     void networkStateChanged(Deconz::NetworkState networkState);
     void networkConfigurationParameterChanged(const DeconzNetworkConfiguration &networkConfiguration);
@@ -140,5 +141,8 @@ public slots:
     bool enable(const QString &serialPort, qint32 baudrate);
     void disable();
 };
+
+QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState);
+
 
 #endif // ZIGBEEBRIDGECONTROLLERDECONZ_H

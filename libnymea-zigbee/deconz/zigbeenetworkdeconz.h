@@ -29,7 +29,9 @@
 #define ZIGBEENETWORKDECONZ_H
 
 #include <QObject>
+
 #include "zigbeenetwork.h"
+#include "zigbeenodedeconz.h"
 #include "zigbeechannelmask.h"
 #include "zigbeebridgecontrollerdeconz.h"
 
@@ -37,17 +39,34 @@ class ZigbeeNetworkDeconz : public ZigbeeNetwork
 {
     Q_OBJECT
 public:
+    enum CreateNetworkState {
+        CreateNetworkStateIdle,
+        CreateNetworkStateStopNetwork,
+        CreateNetworkStateWriteConfiguration,
+        CreateNetworkStateStartNetwork,
+        CreateNetworkStateReadConfiguration,
+        CreateNetworkStateInitializeCoordinatorNode
+    };
+    Q_ENUM(CreateNetworkState)
+
     explicit ZigbeeNetworkDeconz(QObject *parent = nullptr);
 
     ZigbeeBridgeController *bridgeController() const override;
 
+
+
 private:
     ZigbeeBridgeControllerDeconz *m_controller = nullptr;
     bool m_networkRunning = false;
+    CreateNetworkState m_createState = CreateNetworkStateIdle;
     bool m_createNewNetwork = false;
+
+    QTimer *m_pollNetworkStateTimer = nullptr;
+    void setCreateNetworkState(CreateNetworkState state);
 
 protected:
     ZigbeeNode *createNode(QObject *parent) override;
+
     void setPermitJoiningInternal(bool permitJoining) override;
 
     void startNetworkInternally();
@@ -56,6 +75,7 @@ protected:
 
 private slots:
     void onControllerAvailableChanged(bool available);
+    void onPollNetworkStateTimeout();
 
 public slots:
     void startNetwork() override;

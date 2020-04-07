@@ -173,6 +173,11 @@ QByteArray ZigbeeUtils::convertBitArrayToByteArray(const QBitArray &bitArray)
     return byteArray;
 }
 
+bool ZigbeeUtils::checkBitUint8(const quint8 &value, const int &bitNumber)
+{
+    return value & (1 << bitNumber);
+}
+
 bool ZigbeeUtils::checkBitUint16(const quint16 &value, const int &bitNumber)
 {
     return value & (1 << bitNumber);

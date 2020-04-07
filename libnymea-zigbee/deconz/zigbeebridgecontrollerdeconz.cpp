@@ -714,11 +714,7 @@ DeconzDeviceState ZigbeeBridgeControllerDeconz::parseDeviceStateFlag(quint8 devi
 
 void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceState)
 {
-    qCDebug(dcZigbeeController()) << "Device state changed notification:" << deviceState.networkState
-                                  << "ASPDE-DATA.confirm:" << deviceState.aspDataConfirm
-                                  << "ASPDE-DATA.indication:" << deviceState.aspDataIndication
-                                  << "configuration changed:" << deviceState.configurationChanged
-                                  << "ASPDE-DATA.request free slots:" << deviceState.aspDataRequestFreeSlots;
+    qCDebug(dcZigbeeController()) << deviceState;
 
     if (m_networkState != deviceState.networkState) {
         qCDebug(dcZigbeeController()) << "Network state changed" << deviceState.networkState;
@@ -729,13 +725,15 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
     if (m_aspFreeSlotsAvailable != deviceState.aspDataRequestFreeSlots) {
         m_aspFreeSlotsAvailable = deviceState.aspDataRequestFreeSlots;
 
-        // FIXME: if true, send next asp request
+        // FIXME: if changed to true, send next asp data request
 
     }
 
+    if (m_networkState != Deconz::NetworkStateConnected)
+        return;
 
-    // Check if we have to fech new data
-    if (deviceState.aspDataConfirm) {
+    // Check if we have to read a data indication message
+    if (deviceState.aspDataIndication) {
         ZigbeeInterfaceDeconzReply *reply = requestReadReceivedDataIndication();
         connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
             if (reply->statusCode() != Deconz::StatusCodeSuccess) {
@@ -744,77 +742,133 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
                 return;
             }
 
-            // ASP data indication received
-            QDataStream stream(reply->responseData());
-            stream.setByteOrder(QDataStream::LittleEndian);
-            quint16 payloadLenght = 0; quint8 deviceStateFlag = 0; quint8 destinationAddressModeFlag = 0;
-            quint16 destinationShortAddress = 0; quint64 destinationIeeeAddress = 0; quint8 destinationEndpoint = 0;
-            quint8 sourceAddressModeFlag = 0; quint16 sourceShortAddress = 0; quint64 sourceIeeeAddress = 0; quint8 sourceEndpoint = 0;
-            quint16 profileId = 0; quint16 clusterId = 0; quint16 asduLength = 0; QByteArray asdu; quint8 reserved = 0;
-            quint8 lqi = 0; qint8 rssi = 0;
-
-            stream >> payloadLenght >> deviceStateFlag >> destinationAddressModeFlag;
-            Zigbee::DestinationAddressMode destinationAddressMode = static_cast<Zigbee::DestinationAddressMode>(destinationAddressModeFlag);
-            if (destinationAddressMode == Zigbee::DestinationAddressModeGroup || destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
-                stream >> destinationShortAddress;
-
-            if (destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
-                stream >> destinationIeeeAddress;
-
-            stream >> destinationEndpoint >> sourceAddressModeFlag;
-
-            Zigbee::SourceAddressMode sourceAddressMode = static_cast<Zigbee::SourceAddressMode>(sourceAddressModeFlag);
-            if (sourceAddressMode == Zigbee::SourceAddressModeShortAddress || sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
-                stream >> sourceShortAddress;
-
-            if (sourceAddressMode == Zigbee::SourceAddressModeIeeeAddress || sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
-                stream >> sourceIeeeAddress;
-
-            stream >> sourceEndpoint >> profileId >> clusterId >> asduLength;
-
-            // Fill asdu data
-            for (int i = 0; i < asduLength; i++) {
-                quint8 byte = 0;
-                stream >> byte;
-                asdu.append(static_cast<char>(byte));
-            }
-
-            stream >> reserved >> reserved >> lqi >> reserved >> reserved >> reserved >> reserved >> rssi;
-
-
-            qCDebug(dcZigbeeController()) << "Data indication received:";
-            qCDebug(dcZigbeeController()) << "  Destination address mode:" << destinationAddressMode;
-            if (destinationAddressMode == Zigbee::DestinationAddressModeGroup)
-                qCDebug(dcZigbeeController()) << "  Destination address (group):" << ZigbeeUtils::convertUint16ToHexString(destinationShortAddress);
-
-            if (destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
-                qCDebug(dcZigbeeController()) << "  Destination short address:" << ZigbeeUtils::convertUint16ToHexString(destinationShortAddress);
-
-            if (destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
-                qCDebug(dcZigbeeController()) << "  Destination IEEE address:" << ZigbeeAddress(destinationIeeeAddress).toString();
-
-            qCDebug(dcZigbeeController()) << "  Destination endpoint" << ZigbeeUtils::convertByteToHexString(destinationEndpoint);
-
-            qCDebug(dcZigbeeController()) << "  Source address mode:" << sourceAddressMode;
-            if (sourceAddressMode == Zigbee::SourceAddressModeShortAddress || sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
-                qCDebug(dcZigbeeController()) << "  Source address:" << ZigbeeUtils::convertUint16ToHexString(sourceShortAddress);
-
-            if (sourceAddressMode == Zigbee::SourceAddressModeIeeeAddress || sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
-                qCDebug(dcZigbeeController()) << "  Source IEEE address:" << ZigbeeAddress(sourceIeeeAddress).toString();
-
-
-            qCDebug(dcZigbeeController()) << "  Source endpoint:" << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
-            qCDebug(dcZigbeeController()) << "  Profile:" << static_cast<Zigbee::ZigbeeProfile>(profileId);
-            qCDebug(dcZigbeeController()) << "  Cluster:" << static_cast<Zigbee::ClusterId>(clusterId);
-            qCDebug(dcZigbeeController()) << "  ASDU:" << ZigbeeUtils::convertByteArrayToHexString(asdu);
-            qCDebug(dcZigbeeController()) << "  LQI:" << lqi;
-            qCDebug(dcZigbeeController()) << "  RSSI:" << rssi << "dBm";
-
-            processDeviceState(parseDeviceStateFlag(deviceStateFlag));
+            // ASP data indication received, process the content
+            qCDebug(dcZigbeeController()) << "Reading data indication finished successfully";
+            processDataIndication(reply->responseData());
         });
     }
 
+    // Check if we have a response to read for a request
+    if (deviceState.aspDataConfirm) {
+        ZigbeeInterfaceDeconzReply *reply = requestQuerySendDataConfirm();
+        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+            if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+                qCWarning(dcZigbeeController()) << "Could not read data indication." << reply->statusCode();
+                // FIXME: set an appropriate error
+                return;
+            }
 
+            // ASP data indication received, process the content
+            qCDebug(dcZigbeeController()) << "Reading data confirm finished successfully";
+            processDataConfirm(reply->responseData());
+        });
+    }
+
+}
+
+void ZigbeeBridgeControllerDeconz::processDataIndication(const QByteArray &data)
+{
+    // ASP data indication
+    QDataStream stream(data);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    quint16 payloadLenght = 0; quint8 deviceStateFlag = 0; quint8 destinationAddressModeFlag = 0;
+    quint16 destinationShortAddress = 0; quint64 destinationIeeeAddress = 0; quint8 destinationEndpoint = 0;
+    quint8 sourceAddressModeFlag = 0; quint16 sourceShortAddress = 0; quint64 sourceIeeeAddress = 0; quint8 sourceEndpoint = 0;
+    quint16 profileId = 0; quint16 clusterId = 0; quint16 asduLength = 0; QByteArray asdu; quint8 reserved = 0;
+    quint8 lqi = 0; qint8 rssi = 0;
+
+    stream >> payloadLenght >> deviceStateFlag >> destinationAddressModeFlag;
+    Zigbee::DestinationAddressMode destinationAddressMode = static_cast<Zigbee::DestinationAddressMode>(destinationAddressModeFlag);
+    if (destinationAddressMode == Zigbee::DestinationAddressModeGroup || destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
+        stream >> destinationShortAddress;
+
+    if (destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
+        stream >> destinationIeeeAddress;
+
+    stream >> destinationEndpoint >> sourceAddressModeFlag;
+
+    Zigbee::SourceAddressMode sourceAddressMode = static_cast<Zigbee::SourceAddressMode>(sourceAddressModeFlag);
+    if (sourceAddressMode == Zigbee::SourceAddressModeShortAddress || sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
+        stream >> sourceShortAddress;
+
+    if (sourceAddressMode == Zigbee::SourceAddressModeIeeeAddress || sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
+        stream >> sourceIeeeAddress;
+
+    stream >> sourceEndpoint >> profileId >> clusterId >> asduLength;
+
+    // Fill asdu data
+    for (int i = 0; i < asduLength; i++) {
+        quint8 byte = 0;
+        stream >> byte;
+        asdu.append(static_cast<char>(byte));
+    }
+
+    stream >> reserved >> reserved >> lqi >> reserved >> reserved >> reserved >> reserved >> rssi;
+
+    // Print the information for debugging
+    qCDebug(dcZigbeeController()) << "Data indication received:";
+    qCDebug(dcZigbeeController()) << "  Destination address mode:" << destinationAddressMode;
+    if (destinationAddressMode == Zigbee::DestinationAddressModeGroup)
+        qCDebug(dcZigbeeController()) << "  Destination address (group):" << ZigbeeUtils::convertUint16ToHexString(destinationShortAddress);
+
+    if (destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
+        qCDebug(dcZigbeeController()) << "  Destination short address:" << ZigbeeUtils::convertUint16ToHexString(destinationShortAddress);
+
+    if (destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
+        qCDebug(dcZigbeeController()) << "  Destination IEEE address:" << ZigbeeAddress(destinationIeeeAddress).toString();
+
+    qCDebug(dcZigbeeController()) << "  Destination endpoint" << ZigbeeUtils::convertByteToHexString(destinationEndpoint);
+
+    qCDebug(dcZigbeeController()) << "  Source address mode:" << sourceAddressMode;
+    if (sourceAddressMode == Zigbee::SourceAddressModeShortAddress || sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
+        qCDebug(dcZigbeeController()) << "  Source address:" << ZigbeeUtils::convertUint16ToHexString(sourceShortAddress);
+
+    if (sourceAddressMode == Zigbee::SourceAddressModeIeeeAddress || sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
+        qCDebug(dcZigbeeController()) << "  Source IEEE address:" << ZigbeeAddress(sourceIeeeAddress).toString();
+
+
+    qCDebug(dcZigbeeController()) << "  Source endpoint:" << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+    qCDebug(dcZigbeeController()) << "  Profile:" << static_cast<Zigbee::ZigbeeProfile>(profileId);
+    qCDebug(dcZigbeeController()) << "  Cluster:" << static_cast<Zigbee::ClusterId>(clusterId);
+    qCDebug(dcZigbeeController()) << "  ASDU:" << ZigbeeUtils::convertByteArrayToHexString(asdu);
+    qCDebug(dcZigbeeController()) << "  LQI:" << lqi;
+    qCDebug(dcZigbeeController()) << "  RSSI:" << rssi << "dBm";
+
+    processDeviceState(parseDeviceStateFlag(deviceStateFlag));
+}
+
+void ZigbeeBridgeControllerDeconz::processDataConfirm(const QByteArray &data)
+{
+    QDataStream stream(data);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    quint16 payloadLenght = 0; quint8 deviceStateFlag = 0; quint8 requestId = 0; quint8 destinationAddressMode = 0;
+    quint16 destinationShortAddress = 0; quint64 destinationIeeeAddress = 0; quint8 destinationEndpoint = 0;
+    quint8 sourceEndpoint = 0; quint8 zigbeeConfirmStatus = 0;
+
+    stream >> payloadLenght >> deviceStateFlag >> requestId >> destinationAddressMode;
+    if (destinationAddressMode == Zigbee::DestinationAddressModeGroup || destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
+        stream >> destinationShortAddress;
+
+    if (destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
+        stream >> destinationIeeeAddress;
+
+    stream >> destinationEndpoint >> sourceEndpoint >> zigbeeConfirmStatus;
+
+    // Print the information for debugging
+    qCDebug(dcZigbeeController()) << "Data confirm received: Request" << requestId;
+    qCDebug(dcZigbeeController()) << "  Destination address mode:" << destinationAddressMode;
+    if (destinationAddressMode == Zigbee::DestinationAddressModeGroup)
+        qCDebug(dcZigbeeController()) << "  Destination address (group):" << ZigbeeUtils::convertUint16ToHexString(destinationShortAddress);
+
+    if (destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
+        qCDebug(dcZigbeeController()) << "  Destination short address:" << ZigbeeUtils::convertUint16ToHexString(destinationShortAddress);
+
+    if (destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
+        qCDebug(dcZigbeeController()) << "  Destination IEEE address:" << ZigbeeAddress(destinationIeeeAddress).toString();
+
+    qCDebug(dcZigbeeController()) << "  Destination endpoint" << ZigbeeUtils::convertByteToHexString(destinationEndpoint);
+    qCDebug(dcZigbeeController()) << "  Source endpoint" << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+    qCDebug(dcZigbeeController()) << "  Confirm status" << static_cast<Zigbee::ZigbeeStatus>(zigbeeConfirmStatus);
 }
 
 void ZigbeeBridgeControllerDeconz::onInterfaceAvailableChanged(bool available)
@@ -902,4 +956,29 @@ bool ZigbeeBridgeControllerDeconz::enable(const QString &serialPort, qint32 baud
 void ZigbeeBridgeControllerDeconz::disable()
 {
     m_interface->disable();
+}
+
+QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState)
+{
+    debug.nospace() << "DeviceState(";
+    switch (deviceState.networkState) {
+    case Deconz::NetworkStateJoining:
+        debug.nospace() << "Joining, ";
+        break;
+    case Deconz::NetworkStateLeaving:
+        debug.nospace() << "Leaving, ";
+        break;
+    case Deconz::NetworkStateOffline:
+        debug.nospace() << "Offline, ";
+        break;
+    case Deconz::NetworkStateConnected:
+        debug.nospace() << "Connected, ";
+        break;
+    }
+
+    debug.nospace() << "Confirm=" << static_cast<int>(deviceState.aspDataConfirm) << ", ";
+    debug.nospace() << "Indication=" << static_cast<int>(deviceState.aspDataIndication) << ", ";
+    debug.nospace() << "ConfigChanged=" << static_cast<int>(deviceState.configurationChanged) << ", ";
+    debug.nospace() << "CanSend=" << deviceState.aspDataRequestFreeSlots << ")";
+    return debug.space();
 }

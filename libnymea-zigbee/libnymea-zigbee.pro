@@ -23,6 +23,8 @@ SOURCES += \
     zigbeechannelmask.cpp \
     zigbeecluster.cpp \
     zigbeeclusterattribute.cpp \
+    zigbeedeviceobject.cpp \
+    zigbeedeviceprofile.cpp \
     zigbeemanufacturer.cpp \
     zigbeenetwork.cpp \
     zigbeenetworkkey.cpp \
@@ -30,6 +32,7 @@ SOURCES += \
     zigbee.cpp \
     loggingcategory.cpp \
     zigbeenetworkreply.cpp \
+    zigbeenetworkrequest.cpp \
     zigbeenodeendpoint.cpp \
     zigbeesecurityconfiguration.cpp \
     zigbeeutils.cpp \
@@ -57,6 +60,8 @@ HEADERS += \
     zigbeechannelmask.h \
     zigbeecluster.h \
     zigbeeclusterattribute.h \
+    zigbeedeviceobject.h \
+    zigbeedeviceprofile.h \
     zigbeemanufacturer.h \
     zigbeenetwork.h \
     zigbeenetworkkey.h \
@@ -64,6 +69,7 @@ HEADERS += \
     zigbee.h \
     loggingcategory.h \
     zigbeenetworkreply.h \
+    zigbeenetworkrequest.h \
     zigbeenodeendpoint.h \
     zigbeesecurityconfiguration.h \
     zigbeeutils.h \

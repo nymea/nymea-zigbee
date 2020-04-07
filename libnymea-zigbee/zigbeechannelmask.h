@@ -53,6 +53,8 @@ public:
 
     Zigbee::ZigbeeChannels channels() const;
 
+    QList<int> channelArray() const;
+
     bool isSet(Zigbee::ZigbeeChannel channel) const;
     void setChannel(Zigbee::ZigbeeChannel channel);
     void unsetChannel(Zigbee::ZigbeeChannel channel);

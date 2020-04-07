@@ -41,6 +41,7 @@ class Zigbee
 
 public:
     enum ZigbeeProfile {
+        ZigbeeProfileDevice = 0x0000,
         ZigbeeProfileIndustrialPlantMonitoring = 0x0101,
         ZigbeeProfileHomeAutomation = 0x0104,
         ZigbeeProfileCommercialBuildingAutomation = 0x0105,

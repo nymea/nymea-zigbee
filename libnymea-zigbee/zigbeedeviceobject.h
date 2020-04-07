@@ -25,67 +25,19 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEEADPU_H
-#define ZIGBEEADPU_H
+#ifndef ZIGBEEDEVICEOBJECT_H
+#define ZIGBEEDEVICEOBJECT_H
 
 #include <QObject>
 
-
-class ZigbeeAdpu : public QObject
+class ZigbeeDeviceObject : public QObject
 {
     Q_OBJECT
 public:
-    // Note: zigbee Pro Specification 2.2.5.1 General APDU Frame Format
+    explicit ZigbeeDeviceObject(QObject *parent = nullptr);
 
-    /* Frame control */
-    enum FrameType {
-        FrameTypeData = 0x00,
-        FrameTypeCommand = 0x01,
-        FrameTypeAck = 0x02,
-        FrameTypeInterPanAps = 0x03
-    };
-    Q_ENUM(FrameType)
-
-    enum DeliveryMode {
-        DeliveryModeNormalUnicast = 0x00,
-        DeliveryModeBroadcast = 0x08,
-        DeliveryModeGroupAddressing = 0x0C,
-    };
-    Q_ENUM(DeliveryMode)
-
-
-    typedef struct FrameControl {
-        FrameType frameType = FrameTypeData;
-        DeliveryMode deliveryMode = DeliveryModeNormalUnicast;
-        bool security = false;
-        bool apsAckFormat = false;
-        bool acknowledgementRequest = true;
-        bool extendedHeader = false;
-    } FrameControl;
-
-    explicit ZigbeeAdpu(QObject *parent = nullptr);
-
-    FrameControl frameControl() const;
-    void setFrameControl(FrameControl frameControl);
-
-    quint8 destinationEndpoint() const;
-    void setDestinationEndpoint(quint8 destinationEndpoint);
-
-    quint16 groupAddress() const;
-    void setGroupAddress(quint16 groupAddress);
-
-    quint16 clusterId() const;
-    void setClusterId(quint16 clusterId);
-
-private:
-    FrameControl m_frameControl;
-    quint8 m_destinationEndpoint;
-
-
-    quint8 buildFrameControlByte(FrameControl frameControl);
-    FrameControl readFrameControlByte(quint8 frameControlByte);
 signals:
 
 };
 
-#endif // ZIGBEEADPU_H
+#endif // ZIGBEEDEVICEOBJECT_H

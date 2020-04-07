@@ -31,6 +31,7 @@
 #include <QObject>
 
 #include "zigbee.h"
+#include "zigbeenetworkrequest.h"
 
 class ZigbeeNetworkReply : public QObject
 {
@@ -48,10 +49,13 @@ public:
     Q_ENUM(Error)
 
     Error error() const;
+    ZigbeeNetworkRequest request() const;
     Zigbee::ZigbeeStatus zigbeeStatus() const;
 
 private:
-    explicit ZigbeeNetworkReply(QObject *parent = nullptr);
+    explicit ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent = nullptr);
+    ZigbeeNetworkRequest m_request;
+
     bool m_finished = false;
     Error m_error = ErrorNoError;
     Zigbee::ZigbeeStatus m_zigbeeStatus = Zigbee::ZigbeeStatusSuccess;

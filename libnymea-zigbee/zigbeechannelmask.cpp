@@ -54,6 +54,60 @@ Zigbee::ZigbeeChannels ZigbeeChannelMask::channels() const
     return static_cast<Zigbee::ZigbeeChannels>(m_channelMask);
 }
 
+QList<int> ZigbeeChannelMask::channelArray() const
+{
+    QList<int> array;
+    if (channels().testFlag(Zigbee::ZigbeeChannel11))
+        array.append(11);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel12))
+        array.append(12);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel13))
+        array.append(13);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel14))
+        array.append(14);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel15))
+        array.append(15);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel16))
+        array.append(16);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel17))
+        array.append(17);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel18))
+        array.append(18);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel19))
+        array.append(19);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel20))
+        array.append(20);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel21))
+        array.append(21);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel22))
+        array.append(22);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel23))
+        array.append(23);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel24))
+        array.append(24);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel25))
+        array.append(25);
+
+    if (channels().testFlag(Zigbee::ZigbeeChannel26))
+        array.append(26);
+
+    return array;
+}
+
 bool ZigbeeChannelMask::isSet(Zigbee::ZigbeeChannel channel) const
 {
     return channels().testFlag(channel);
@@ -90,17 +144,7 @@ bool ZigbeeChannelMask::operator!=(const ZigbeeChannelMask &other) const
 QDebug operator<<(QDebug debug, const ZigbeeChannelMask &channelMaks)
 {
     debug.nospace() << "ChannelMask(" << ZigbeeUtils::convertUint32ToHexString(channelMaks.toUInt32());
-    debug.nospace() << ", [";
-    for (int i = 11; i <= 25; i++) {
-        if (channelMaks.isSet(static_cast<Zigbee::ZigbeeChannel>(i))) {
-            if (i < 25) {
-                debug.nospace() << i << ", ";
-            } else {
-                debug.nospace() << i;
-            }
-        }
-    }
-
-    debug.nospace() << "])";
+    debug.nospace() << ", " << channelMaks.channelArray();
+    debug.nospace() << ")";
     return debug.space();
 }

@@ -87,6 +87,20 @@ void ZigbeeNetwork::setSerialBaudrate(qint32 baudrate)
     emit serialBaudrateChanged(m_serialBaudrate);
 }
 
+quint16 ZigbeeNetwork::panId()
+{
+    return m_panId;
+}
+
+void ZigbeeNetwork::setPanId(quint16 panId)
+{
+    if (m_panId == panId)
+        return;
+
+    m_panId = panId;
+    emit panIdChanged(m_panId);
+}
+
 quint64 ZigbeeNetwork::extendedPanId() const
 {
     return m_extendedPanId;
@@ -243,7 +257,7 @@ void ZigbeeNetwork::saveNetwork()
     qCDebug(dcZigbeeNetwork()) << "Save current network configuration to" << m_settingsFileName;
     QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
     settings.beginGroup("Network");
-    settings.setValue("panId", extendedPanId());
+    settings.setValue("panId", panId());
     settings.setValue("channel", channel());
     settings.setValue("networkKey", securityConfiguration().networkKey().toString());
     settings.setValue("trustCenterLinkKey", securityConfiguration().globalTrustCenterLinkKey().toString());
@@ -260,8 +274,8 @@ void ZigbeeNetwork::loadNetwork()
     QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
 
     settings.beginGroup("Network");
-    quint64 extendedPanId = static_cast<quint64>(settings.value("panId", 0).toULongLong());
-    setExtendedPanId(extendedPanId);
+    quint16 panId = static_cast<quint16>(settings.value("panId", 0).toUInt());
+    setPanId(panId);
     setChannel(settings.value("channel", 0).toUInt());
     ZigbeeNetworkKey netKey(settings.value("networkKey", QString()).toString());
     if (netKey.isValid())
@@ -420,6 +434,11 @@ void ZigbeeNetwork::removeNodeFromSettings(ZigbeeNode *node)
 void ZigbeeNetwork::addNode(ZigbeeNode *node)
 {
     qCDebug(dcZigbeeNetwork()) << "Add node" << node;
+    if (hasNode(node->extendedAddress())) {
+        qCWarning(dcZigbeeNetwork()) << "Not adding node to the system since already added" << node;
+        return;
+    }
+
     addNodeInternally(node);
     saveNode(node);
 }
