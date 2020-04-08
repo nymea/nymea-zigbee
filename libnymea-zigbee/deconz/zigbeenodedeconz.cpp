@@ -26,10 +26,15 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "zigbeenodedeconz.h"
+#include "zigbeedeviceprofile.h"
+#include "zigbeenetworkdeconz.h"
+#include "loggingcategory.h"
 
-ZigbeeNodeDeconz::ZigbeeNodeDeconz(ZigbeeBridgeControllerDeconz *controller, QObject *parent) :
+#include <QDataStream>
+
+ZigbeeNodeDeconz::ZigbeeNodeDeconz(ZigbeeNetworkDeconz *network, QObject *parent) :
     ZigbeeNode(parent),
-    m_controller(controller)
+    m_network(network)
 {
 
 }
@@ -47,6 +52,40 @@ void ZigbeeNodeDeconz::setClusterAttributeReport(const ZigbeeClusterAttributeRep
 
 void ZigbeeNodeDeconz::startInitialization()
 {
+    setState(StateInitializing);
+
+    // Get the node descriptor
+    ZigbeeNetworkRequest request;
+    request.setRequestId(m_network->generateSequenceNumber());
+    request.setDestinationAddressMode(Zigbee::DestinationAddressModeShortAddress);
+    request.setDestinationShortAddress(shortAddress());
+    request.setDestinationEndpoint(0); // ZDO
+    request.setProfileId(Zigbee::ZigbeeProfileDevice); // ZDP
+    request.setClusterId(ZigbeeDeviceProfile::NodeDescriptorRequest);
+    request.setSourceEndpoint(0); // ZDO
+
+    // Build ASDU
+    QByteArray asdu;
+    QDataStream stream(&asdu, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << request.requestId() << request.destinationShortAddress();
+    request.setAsdu(asdu);
+
+    ZigbeeNetworkReply *reply = m_network->sendRequest(request);
+    connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply](){
+        // TODO: check reply error
+
+        ZigbeeDeviceProfileAdpu adpu = ZigbeeDeviceProfile::parseAdpu(reply->responseData());
+        qCDebug(dcZigbeeNode()) << "Node descriptor request finished" << adpu;
+        setNodeDescriptorRawData(reply->responseData());
+
+        QDataStream stream(adpu.payload);
+        stream.setByteOrder(QDataStream::LittleEndian);
+
+
+
+    });
+
     /* Node initialisation steps (sequentially)
      * - Node descriptor
      * - Power descriptor

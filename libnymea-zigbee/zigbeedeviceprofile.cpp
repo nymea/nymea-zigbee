@@ -26,3 +26,28 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "zigbeedeviceprofile.h"
+#include "zigbeeutils.h"
+
+#include <QDataStream>
+
+ZigbeeDeviceProfileAdpu ZigbeeDeviceProfile::parseAdpu(const QByteArray &adpu)
+{
+    QDataStream stream(adpu);
+    stream.setByteOrder(QDataStream::LittleEndian);
+
+    ZigbeeDeviceProfileAdpu deviceAdpu;
+    quint8 statusFlag = 0;
+    stream >> deviceAdpu.sequenceNumber >> statusFlag >> deviceAdpu.addressOfInterest;
+    deviceAdpu.status = static_cast<Zigbee::ZigbeeStatus>(statusFlag);
+    deviceAdpu.payload = adpu.right(adpu.length() - 4);
+    return deviceAdpu;
+}
+
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfileAdpu &deviceAdpu)
+{
+    debug.nospace() << "DeviceAdpu(SQN: " << deviceAdpu.sequenceNumber << ", ";
+    debug.nospace() << deviceAdpu.status << ", ";
+    debug.nospace() << ZigbeeUtils::convertUint16ToHexString(deviceAdpu.addressOfInterest) << ", ";
+    debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(deviceAdpu.payload) << ")";
+    return debug.space();
+}

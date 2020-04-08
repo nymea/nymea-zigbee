@@ -265,6 +265,13 @@ void ZigbeeNetworkNxp::readPermitJoinStatus()
     });
 }
 
+ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &request)
+{
+    Q_UNUSED(request)
+    qCCritical(dcZigbeeNetwork()) << "Cannot send request. Not implemented for this backend";
+    return nullptr;
+}
+
 ZigbeeNode *ZigbeeNetworkNxp::createNode(QObject *parent)
 {
     return new ZigbeeNodeNxp(m_controller, parent);

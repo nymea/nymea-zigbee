@@ -42,6 +42,11 @@ Zigbee::ZigbeeStatus ZigbeeNetworkReply::zigbeeStatus() const
     return m_zigbeeStatus;
 }
 
+QByteArray ZigbeeNetworkReply::responseData() const
+{
+    return m_responseData;
+}
+
 ZigbeeNetworkReply::ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent) :
     QObject(parent),
     m_request(request)

@@ -28,14 +28,23 @@
 #ifndef ZIGBEEDEVICEPROFILE_H
 #define ZIGBEEDEVICEPROFILE_H
 
+#include <QDebug>
 #include <QObject>
+
+#include "zigbee.h"
+
+typedef struct ZigbeeDeviceProfileAdpu {
+    quint8 sequenceNumber = 0;
+    Zigbee::ZigbeeStatus status = Zigbee::ZigbeeStatusSuccess;
+    quint16 addressOfInterest = 0;
+    QByteArray payload;
+} ZigbeeDeviceProfileAdpu;
 
 class ZigbeeDeviceProfile
 {
     Q_GADGET
 
 public:
-
     enum ZdoCommand {
         /* Requests */
         /*Device and service discovery */
@@ -136,9 +145,11 @@ public:
         MgmtCacheResponse = 0x8037,
         MgmtNetworkUpdateResponse = 0x8038
     };
+    Q_ENUM(ZdoCommand)
 
-
-
+    static ZigbeeDeviceProfileAdpu parseAdpu(const QByteArray &adpu);
 };
+
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfileAdpu &deviceAdpu);
 
 #endif // ZIGBEEDEVICEPROFILE_H

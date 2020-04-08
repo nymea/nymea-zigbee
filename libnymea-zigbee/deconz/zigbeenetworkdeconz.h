@@ -53,7 +53,9 @@ public:
 
     ZigbeeBridgeController *bridgeController() const override;
 
+    ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) override;
 
+    quint8 generateSequenceNumber();
 
 private:
     ZigbeeBridgeControllerDeconz *m_controller = nullptr;
@@ -61,8 +63,15 @@ private:
     CreateNetworkState m_createState = CreateNetworkStateIdle;
     bool m_createNewNetwork = false;
 
+    QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
+
+    quint8 m_sequenceNumber = 0;
+
     QTimer *m_pollNetworkStateTimer = nullptr;
     void setCreateNetworkState(CreateNetworkState state);
+
+    void handleZigbeeDeviceProfileIndication(const DeconzApsDataIndication &indication);
+
 
 protected:
     ZigbeeNode *createNode(QObject *parent) override;
@@ -71,11 +80,14 @@ protected:
 
     void startNetworkInternally();
 
-    void createNetwork();
-
 private slots:
     void onControllerAvailableChanged(bool available);
     void onPollNetworkStateTimeout();
+
+    void onAspDataConfirmReceived(const DeconzApsDataConfirm &confirm);
+    void onAspDataIndicationReceived(const DeconzApsDataIndication &indication);
+
+    void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
 
 public slots:
     void startNetwork() override;

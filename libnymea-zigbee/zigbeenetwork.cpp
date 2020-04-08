@@ -378,6 +378,9 @@ void ZigbeeNetwork::saveNode(ZigbeeNode *node)
     settings.beginGroup(node->extendedAddress().toString());
     settings.setValue("nwkAddress", node->shortAddress());
     settings.setValue("macCapabilitiesFlag", node->m_macCapabilitiesFlag);
+    settings.setValue("manufacturerCode", node->m_manufacturerCode);
+
+
     settings.setValue("nodeDescriptorRawData", node->m_nodeDescriptorRawData);
     settings.setValue("powerDescriptorFlag", node->m_powerDescriptorFlag);
 
@@ -489,6 +492,26 @@ void ZigbeeNetwork::setError(ZigbeeNetwork::Error error)
 bool ZigbeeNetwork::networkConfigurationAvailable() const
 {
     return m_extendedPanId != 0 && m_channel != 0;
+}
+
+ZigbeeNetworkReply *ZigbeeNetwork::createNetworkReply(const ZigbeeNetworkRequest &request)
+{
+    ZigbeeNetworkReply *reply = new ZigbeeNetworkReply(request, this);
+    // Make sure the reply will be deleted
+    connect(reply, &ZigbeeNetworkReply::finished, reply, &ZigbeeNetworkReply::deleteLater);
+    return reply;
+}
+
+void ZigbeeNetwork::setReplyResponseData(ZigbeeNetworkReply *reply, const QByteArray &responseData)
+{
+    reply->m_responseData = responseData;
+}
+
+void ZigbeeNetwork::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error, Zigbee::ZigbeeStatus zigbeeStatus)
+{
+    reply->m_error = error;
+    reply->m_zigbeeStatus = zigbeeStatus;
+    reply->finished();
 }
 
 void ZigbeeNetwork::onNodeStateChanged(ZigbeeNode::State state)

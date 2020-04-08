@@ -60,8 +60,18 @@ void ZigbeeInterfaceDeconzReply::abort()
 
 ZigbeeInterfaceDeconzReply::ZigbeeInterfaceDeconzReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent) :
     QObject(parent),
+    m_timer(new QTimer(this)),
     m_command(command),
     m_sequenceNumber(sequenceNumber)
 {
+    m_timer->setInterval(2000);
+    m_timer->setSingleShot(true);
+    connect(m_timer, &QTimer::timeout, this, &ZigbeeInterfaceDeconzReply::onTimeout);
+}
 
+void ZigbeeInterfaceDeconzReply::onTimeout()
+{
+    m_timeout = true;
+    emit timeout();
+    emit finished();
 }

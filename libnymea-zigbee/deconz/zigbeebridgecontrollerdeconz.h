@@ -35,6 +35,7 @@
 #include "zigbee.h"
 #include "zigbeeaddress.h"
 #include "zigbeenetworkkey.h"
+#include "zigbeenetworkrequest.h"
 #include "zigbeebridgecontroller.h"
 
 #include "interface/deconz.h"
@@ -70,6 +71,34 @@ typedef struct DeconzDeviceState {
     bool aspDataRequestFreeSlots = false;
 } DeconzDeviceState;
 
+
+// Basic struct for interface data. Default Response
+typedef  struct DeconzApsDataConfirm {
+    quint8 requestId = 0;
+    quint8 destinationAddressMode = Zigbee::DestinationAddressModeShortAddress;
+    quint16 destinationShortAddress = 0;
+    quint64 destinationIeeeAddress;
+    quint8 destinationEndpoint = 0;
+    quint8 sourceEndpoint = 0;
+    quint8 zigbeeStatusCode = 0;
+} DeconzApsDataConfirm;
+
+typedef  struct DeconzApsDataIndication {
+    quint8 destinationAddressMode = 0;
+    quint16 destinationShortAddress = 0;
+    quint64 destinationIeeeAddress = 0;
+    quint8 destinationEndpoint = 0;
+    quint8 sourceAddressMode = 0;
+    quint16 sourceShortAddress = 0;
+    quint64 sourceIeeeAddress = 0;
+    quint8 sourceEndpoint = 0;
+    quint16 profileId = 0;
+    quint16 clusterId = 0;
+    QByteArray asdu;
+    quint8 lqi = 0;
+    qint8 rssi = 0;
+} DeconzApsDataIndication;
+
 class ZigbeeBridgeControllerDeconz : public ZigbeeBridgeController
 {
     Q_OBJECT
@@ -96,9 +125,11 @@ public:
     ZigbeeInterfaceDeconzReply *requestQuerySendDataConfirm();
 
     // Send data
-    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
-    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
-    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, Zigbee::ZigbeeProfile profileId, Zigbee::ClusterId clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestSendRequest(const ZigbeeNetworkRequest &request);
+
 
 private:
     ZigbeeInterfaceDeconz *m_interface = nullptr;
@@ -122,14 +153,20 @@ private:
 
     // Device state helper
     DeconzDeviceState parseDeviceStateFlag(quint8 deviceStateFlag);
-    void processDeviceState(DeconzDeviceState deviceState);
 
+    void readDataIndication();
+    void readDataConfirm();
+
+    void processDeviceState(DeconzDeviceState deviceState);
     void processDataIndication(const QByteArray &data);
     void processDataConfirm(const QByteArray &data);
 
 signals:
     void networkStateChanged(Deconz::NetworkState networkState);
     void networkConfigurationParameterChanged(const DeconzNetworkConfiguration &networkConfiguration);
+
+    void aspDataConfirmReceived(const DeconzApsDataConfirm &confirm);
+    void aspDataIndicationReceived(const DeconzApsDataIndication &indication);
 
 private slots:
     void onInterfaceAvailableChanged(bool available);
@@ -143,6 +180,8 @@ public slots:
 };
 
 QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState);
+QDebug operator<<(QDebug debug, const DeconzApsDataConfirm &confirm);
+QDebug operator<<(QDebug debug, const DeconzApsDataIndication &indication);
 
 
 #endif // ZIGBEEBRIDGECONTROLLERDECONZ_H

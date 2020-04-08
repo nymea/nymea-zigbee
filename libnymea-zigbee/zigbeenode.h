@@ -156,20 +156,6 @@ private:
     quint16 m_shortAddress = 0;
     ZigbeeAddress m_extendedAddress;
 
-    // Node descriptor information
-    QByteArray m_nodeDescriptorRawData;
-    NodeType m_nodeType = NodeTypeRouter;
-    FrequencyBand m_frequencyBand = FrequencyBand2400Mhz;
-    Relationship m_relationship = Parent;
-    quint16 m_manufacturerCode = 0;
-
-    bool m_complexDescriptorAvailable = false;
-    bool m_userDescriptorAvailable = false;
-
-    quint16 m_maximumRxSize = 0;
-    quint16 m_maximumTxSize = 0;
-    quint8 m_maximumBufferSize = 0;
-
     // Server Mask
     quint16 m_serverMask = 0;
     bool m_isPrimaryTrustCenter = false;
@@ -207,6 +193,20 @@ protected:
     ZigbeeNode(QObject *parent = nullptr);
 
     QList<ZigbeeNodeEndpoint *> m_endpoints;
+
+    // Node descriptor information
+    QByteArray m_nodeDescriptorRawData;
+    NodeType m_nodeType = NodeTypeRouter;
+    FrequencyBand m_frequencyBand = FrequencyBand2400Mhz;
+    Relationship m_relationship = Parent;
+    quint16 m_manufacturerCode = 0;
+
+    bool m_complexDescriptorAvailable = false;
+    bool m_userDescriptorAvailable = false;
+
+    quint16 m_maximumRxSize = 0;
+    quint16 m_maximumTxSize = 0;
+    quint8 m_maximumBufferSize = 0;
 
     void setState(State state);
     void setConnected(bool connected);

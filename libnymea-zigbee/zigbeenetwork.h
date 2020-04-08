@@ -94,6 +94,8 @@ public:
     bool permitJoining() const;
     void setPermitJoining(bool permitJoining);
 
+
+    // Network nodes
     QList<ZigbeeNode *> nodes() const;
 
     ZigbeeNode *coordinatorNode() const;
@@ -149,6 +151,13 @@ protected:
     void setError(Error error);
 
     bool networkConfigurationAvailable() const;
+
+    virtual ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) = 0;
+
+    // Network reply methods
+    ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());
+    void setReplyResponseData(ZigbeeNetworkReply *reply, const QByteArray &responseData);
+    void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError, Zigbee::ZigbeeStatus zigbeeStatus = Zigbee::ZigbeeStatusSuccess);
 
 signals:
     void settingsFileNameChanged(const QString &settingsFileName);

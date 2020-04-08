@@ -62,6 +62,9 @@ private:
     void readControllerVersion();
     void readPermitJoinStatus();
 
+
+    ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) override;
+
 protected:
     ZigbeeNode *createNode(QObject *parent) override;
     void setPermitJoiningInternal(bool permitJoining) override;

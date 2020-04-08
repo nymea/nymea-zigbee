@@ -23,7 +23,6 @@ SOURCES += \
     zigbeechannelmask.cpp \
     zigbeecluster.cpp \
     zigbeeclusterattribute.cpp \
-    zigbeedeviceobject.cpp \
     zigbeedeviceprofile.cpp \
     zigbeemanufacturer.cpp \
     zigbeenetwork.cpp \
@@ -60,7 +59,6 @@ HEADERS += \
     zigbeechannelmask.h \
     zigbeecluster.h \
     zigbeeclusterattribute.h \
-    zigbeedeviceobject.h \
     zigbeedeviceprofile.h \
     zigbeemanufacturer.h \
     zigbeenetwork.h \

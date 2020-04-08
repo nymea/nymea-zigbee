@@ -29,6 +29,7 @@
 #define ZIGBEEINTERFACEDECONZREPLY_H
 
 #include <QObject>
+#include <QTimer>
 
 #include "deconz.h"
 
@@ -47,12 +48,14 @@ public:
     // Response content
     Deconz::StatusCode statusCode() const;
 
+    bool timeout() const;
     bool aborted() const;
     void abort();
 
 private:
     explicit ZigbeeInterfaceDeconzReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent = nullptr);
-
+    QTimer *m_timer = nullptr;
+    bool m_timeout = false;
     bool m_aborted = false;
 
     // Request content
@@ -63,7 +66,11 @@ private:
     Deconz::StatusCode m_statusCode = Deconz::StatusCodeError;
     QByteArray m_responseData;
 
+private slots:
+    void onTimeout();
+
 signals:
+    void timeout();
     void finished();
 
 };
