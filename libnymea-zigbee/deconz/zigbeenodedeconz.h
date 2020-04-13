@@ -44,10 +44,18 @@ class ZigbeeNodeDeconz : public ZigbeeNode
 public:
     explicit ZigbeeNodeDeconz(ZigbeeNetworkDeconz *network, QObject *parent = nullptr);
 
+    ZigbeeNetworkReply *requestNodeDescriptor();
+    ZigbeeNetworkReply *requestPowerDescriptor();
+    ZigbeeNetworkReply *requestActiveEndpoints();
+    ZigbeeNetworkReply *requestSimpleDescriptor(quint8 endpoint);
+
     void leaveNetworkRequest(bool rejoin = false, bool removeChildren = false) override;
 
 private:
     ZigbeeNetworkDeconz *m_network = nullptr;
+
+    QList<quint8> m_uninitializedEndpoints;
+    QList<quint16> m_uninitalizedBasicClusterAttributes;
 
     void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) override;
 

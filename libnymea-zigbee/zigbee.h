@@ -535,6 +535,13 @@ public:
     };
     Q_ENUM(DataType)
 
+    enum BroadcastAddress {
+        BroadcastAddressAllNodes = 0xffff,
+        BroadcastAddressAllNonSleepingNodes = 0xfffd,
+        BroadcastAddressAllRouters = 0xfffc
+    };
+    Q_ENUM(BroadcastAddress)
+
     enum DestinationAddressMode {
         DestinationAddressModeGroup = 0x01,
         DestinationAddressModeShortAddress = 0x02,

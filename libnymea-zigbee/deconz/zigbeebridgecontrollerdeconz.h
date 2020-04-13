@@ -125,9 +125,9 @@ public:
     ZigbeeInterfaceDeconzReply *requestQuerySendDataConfirm();
 
     // Send data
-    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
-    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
-    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
     ZigbeeInterfaceDeconzReply *requestSendRequest(const ZigbeeNetworkRequest &request);
 
 
@@ -182,6 +182,7 @@ public slots:
 QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState);
 QDebug operator<<(QDebug debug, const DeconzApsDataConfirm &confirm);
 QDebug operator<<(QDebug debug, const DeconzApsDataIndication &indication);
+QDebug operator<<(QDebug debug, const DeconzNetworkConfiguration &configuration);
 
 
 #endif // ZIGBEEBRIDGECONTROLLERDECONZ_H

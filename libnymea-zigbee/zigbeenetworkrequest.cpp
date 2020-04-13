@@ -26,6 +26,8 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "zigbeenetworkrequest.h"
+#include "zigbeedeviceprofile.h"
+#include "zigbeeutils.h"
 
 ZigbeeNetworkRequest::ZigbeeNetworkRequest()
 {
@@ -140,4 +142,52 @@ quint8 ZigbeeNetworkRequest::radius() const
 void ZigbeeNetworkRequest::setRadius(quint8 radius)
 {
     m_radius = radius;
+}
+
+bool ZigbeeNetworkRequest::expectIndication() const
+{
+    return m_expectIndication;
+}
+
+void ZigbeeNetworkRequest::setExpectIndication(bool expectIndication)
+{
+    m_expectIndication = expectIndication;
+}
+
+bool ZigbeeNetworkRequest::expectConfirmation() const
+{
+    return m_expectConfirmation;
+}
+
+void ZigbeeNetworkRequest::setExpectConfirmation(bool expectConfirmation)
+{
+    m_expectConfirmation = expectConfirmation;
+}
+
+QDebug operator<<(QDebug debug, const ZigbeeNetworkRequest &request)
+{
+    debug.nospace() << "Request(ID:" << request.requestId() << ", ";
+    debug.nospace() << static_cast<Zigbee::ZigbeeProfile>(request.profileId()) << ", ";
+    if (request.profileId() == Zigbee::ZigbeeProfileDevice) {
+        debug.nospace() << static_cast<ZigbeeDeviceProfile::ZdoCommand>(request.clusterId()) << ", ";
+    } else {
+        debug.nospace() << static_cast<Zigbee::ClusterId>(request.clusterId()) << ", ";
+    }
+
+    if (request.destinationAddressMode() == Zigbee::DestinationAddressModeGroup)
+        debug.nospace() << "Group address:" << ZigbeeUtils::convertUint16ToHexString(request.destinationShortAddress()) << ", ";
+
+    if (request.destinationAddressMode() == Zigbee::DestinationAddressModeShortAddress)
+        debug.nospace() << "NWK address:" << ZigbeeUtils::convertUint16ToHexString(request.destinationShortAddress()) << ", ";
+
+    if (request.destinationAddressMode() == Zigbee::DestinationAddressModeIeeeAddress)
+        debug.nospace() << "IEEE address:" << ZigbeeAddress(request.destinationIeeeAddress()).toString() << ", ";
+
+    debug.nospace() << "Destination EP:" << ZigbeeUtils::convertByteToHexString(request.destinationEndpoint()) << ", ";
+    debug.nospace() << "Source EP:" << ZigbeeUtils::convertByteToHexString(request.sourceEndpoint()) << ", ";
+    debug.nospace() << "Radius:" << request.radius() << ", ";
+    debug.nospace() << request.txOptions() << ", ";
+    debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(request.asdu()) << ", ";
+    debug.nospace() << ")";
+    return debug.space();
 }

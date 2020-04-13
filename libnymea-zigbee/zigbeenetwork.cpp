@@ -295,8 +295,21 @@ void ZigbeeNetwork::loadNetwork()
         ZigbeeNode *node = createNode(this);
         node->setExtendedAddress(ZigbeeAddress(ieeeAddressString));
         node->setShortAddress(static_cast<quint16>(settings.value("nwkAddress", 0).toUInt()));
+
+        // Node descriptor
+        node->m_nodeType = static_cast<ZigbeeNode::NodeType>(settings.value("nodeType", 0).toUInt());
+        node->m_complexDescriptorAvailable = settings.value("complexDescriptor", false).toBool();
+        node->m_userDescriptorAvailable = settings.value("userDescriptor", false).toBool();
+        node->m_frequencyBand = static_cast<ZigbeeNode::FrequencyBand>(settings.value("frequencyBand", 0).toUInt());
         node->setMacCapabilitiesFlag(static_cast<quint8>(settings.value("macCapabilitiesFlag", 0).toUInt()));
-        node->setNodeDescriptorRawData(settings.value("nodeDescriptorRawData", QByteArray()).toByteArray());
+        node->m_manufacturerCode = static_cast<quint16>(settings.value("manufacturerCode", 0).toUInt());
+        node->m_maximumBufferSize = static_cast<quint8>(settings.value("maximumBufferSize", 0).toUInt());
+        node->m_maximumRxSize = static_cast<quint16>(settings.value("maximumRxSize", 0).toUInt());
+        node->m_maximumTxSize = static_cast<quint16>(settings.value("maximumTxSize", 0).toUInt());
+        node->setServerMask(static_cast<quint16>(settings.value("serverMask", 0).toUInt()));
+        node->setDescriptorFlag(static_cast<quint8>(settings.value("descriptorCapabilities", 0).toUInt()));
+
+        // Power descriptor
         node->setPowerDescriptorFlag(static_cast<quint16>(settings.value("powerDescriptorFlag", 0).toUInt()));
 
         int endpointsCount = settings.beginReadArray("endpoints");
@@ -377,11 +390,21 @@ void ZigbeeNetwork::saveNode(ZigbeeNode *node)
     // Save this node
     settings.beginGroup(node->extendedAddress().toString());
     settings.setValue("nwkAddress", node->shortAddress());
+
+    // Node descriptor
+    settings.setValue("nodeType", node->m_nodeType);
+    settings.setValue("complexDescriptor", node->complexDescriptorAvailable());
+    settings.setValue("userDescriptor", node->userDescriptorAvailable());
+    settings.setValue("frequencyBand", node->frequencyBand());
     settings.setValue("macCapabilitiesFlag", node->m_macCapabilitiesFlag);
     settings.setValue("manufacturerCode", node->m_manufacturerCode);
+    settings.setValue("maximumBufferSize", node->m_maximumBufferSize);
+    settings.setValue("maximumRxSize", node->m_maximumRxSize);
+    settings.setValue("maximumTxSize", node->m_maximumTxSize);
+    settings.setValue("serverMask", node->m_serverMask);
+    settings.setValue("descriptorCapabilities", node->m_descriptorFlag);
 
-
-    settings.setValue("nodeDescriptorRawData", node->m_nodeDescriptorRawData);
+    // Power descriptor
     settings.setValue("powerDescriptorFlag", node->m_powerDescriptorFlag);
 
     settings.beginWriteArray("endpoints");
@@ -505,12 +528,33 @@ ZigbeeNetworkReply *ZigbeeNetwork::createNetworkReply(const ZigbeeNetworkRequest
 void ZigbeeNetwork::setReplyResponseData(ZigbeeNetworkReply *reply, const QByteArray &responseData)
 {
     reply->m_responseData = responseData;
+    if (reply->isComplete()) {
+        if (reply->m_zigbeeStatus == Zigbee::ZigbeeStatusSuccess) {
+            finishNetworkReply(reply);
+        } else {
+            finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeStatusError);
+        }
+    }
 }
 
-void ZigbeeNetwork::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error, Zigbee::ZigbeeStatus zigbeeStatus)
+void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeStatus zigbeeStatus)
 {
-    reply->m_error = error;
     reply->m_zigbeeStatus = zigbeeStatus;
+    reply->m_zigbeeConfirmArrived = true;
+
+    if (reply->isComplete()) {
+        if (reply->m_zigbeeStatus == Zigbee::ZigbeeStatusSuccess) {
+            finishNetworkReply(reply);
+        } else {
+            finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeStatusError);
+        }
+    }
+}
+
+void ZigbeeNetwork::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error)
+{
+    qCDebug(dcZigbeeNetwork()) << "Reply finished" << error << reply->request();
+    reply->m_error = error;
     reply->finished();
 }
 

@@ -64,7 +64,10 @@ public:
         CommandVersion = 0x0D,
         CommandApsDataRequest = 0x12,
         CommandApsDataConfirm = 0x04,
-        CommandApsDataIndication = 0x17
+        CommandApsDataIndication = 0x17,
+        CommandGreenPower = 0x19,
+        CommandMacPoll = 0x1C,
+        CommandSimplifiedBeacon = 0x1F
     };
     Q_ENUM(Command)
 

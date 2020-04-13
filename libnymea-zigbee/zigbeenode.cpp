@@ -307,9 +307,9 @@ void ZigbeeNode::setNodeDescriptorRawData(const QByteArray nodeDescriptorRawData
     m_userDescriptorAvailable = (bitField >> 4) & 0x0001;
 
     qCDebug(dcZigbeeNode()) << "Node descriptor:";
-    qCDebug(dcZigbeeNode()) << "    Node type:" << nodeType();
     qCDebug(dcZigbeeNode()) << "    Sequence number:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
     qCDebug(dcZigbeeNode()) << "    Status:" << ZigbeeUtils::convertByteToHexString(status);
+    qCDebug(dcZigbeeNode()) << "    Node type:" << nodeType();
     qCDebug(dcZigbeeNode()) << "    Short address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
     qCDebug(dcZigbeeNode()) << "    Manufacturer code:" << ZigbeeUtils::convertUint16ToHexString(manufacturerCode);
     qCDebug(dcZigbeeNode()) << "    Maximum Rx size:" << ZigbeeUtils::convertUint16ToHexString(maximumRxSize());

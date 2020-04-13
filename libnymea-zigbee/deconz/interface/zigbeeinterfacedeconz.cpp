@@ -172,6 +172,7 @@ void ZigbeeInterfaceDeconz::onReadyRead()
                 }
 
                 // Checksum verified, we got valid data
+                qCDebug(dcZigbeeInterface()) << "Received frame" << ZigbeeUtils::convertByteArrayToHexString(frame);
                 emit packageReceived(package);
             }
             m_dataBuffer.clear();
@@ -205,6 +206,8 @@ void ZigbeeInterfaceDeconz::sendPackage(const QByteArray &package)
     QDataStream frameStream(&frame, QIODevice::WriteOnly  | QIODevice::Append);
     frameStream.setByteOrder(QDataStream::LittleEndian);
     frameStream << checksum;
+
+    qCDebug(dcZigbeeInterface()) << "Send frame" << ZigbeeUtils::convertByteArrayToHexString(frame);
 
     // Escape data according to SLIP for transfere
     QByteArray serializedData = escapeData(frame);

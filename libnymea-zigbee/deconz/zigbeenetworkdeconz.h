@@ -55,6 +55,8 @@ public:
 
     ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) override;
 
+    ZigbeeNetworkReply *setPermitJoin(quint16 shortAddress, quint8 duration);
+
     quint8 generateSequenceNumber();
 
 private:
@@ -62,6 +64,8 @@ private:
     bool m_networkRunning = false;
     CreateNetworkState m_createState = CreateNetworkStateIdle;
     bool m_createNewNetwork = false;
+
+    QTimer *m_permitJoinRefreshTimer = nullptr;
 
     QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
 
@@ -83,6 +87,7 @@ protected:
 private slots:
     void onControllerAvailableChanged(bool available);
     void onPollNetworkStateTimeout();
+    void onPermitJoinRefreshTimout();
 
     void onAspDataConfirmReceived(const DeconzApsDataConfirm &confirm);
     void onAspDataIndicationReceived(const DeconzApsDataIndication &indication);

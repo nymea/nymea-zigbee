@@ -47,6 +47,26 @@ QByteArray ZigbeeNetworkReply::responseData() const
     return m_responseData;
 }
 
+bool ZigbeeNetworkReply::isComplete() const
+{
+    // If we expect indication and confirmation
+    if (m_request.expectConfirmation() && m_request.expectIndication()) {
+        if (m_zigbeeConfirmArrived && !m_responseData.isEmpty()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // If we expect only a confirmation
+    if (m_request.expectConfirmation() && !m_request.expectIndication()) {
+        return m_zigbeeConfirmArrived;
+    }
+
+    // If we don't expect any response...
+    return true;
+}
+
 ZigbeeNetworkReply::ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent) :
     QObject(parent),
     m_request(request)
