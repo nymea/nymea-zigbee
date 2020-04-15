@@ -29,12 +29,30 @@
 #define ZIGBEENODEENDPOINTDECONZ_H
 
 #include <QObject>
+#include "zigbeenodeendpoint.h"
 
-class ZigbeeNodeEndpointDeconz : public QObject
+class ZigbeeNodeDeconz;
+class ZigbeeNetworkDeconz;
+
+class ZigbeeNodeEndpointDeconz : public ZigbeeNodeEndpoint
 {
     Q_OBJECT
+
+    friend class ZigbeeNodeDeconz;
+
 public:
-    explicit ZigbeeNodeEndpointDeconz(QObject *parent = nullptr);
+    explicit ZigbeeNodeEndpointDeconz(ZigbeeNetworkDeconz *network, ZigbeeNode *node, quint8 endpointId, QObject *parent = nullptr);
+
+    ZigbeeNetworkReply *readAttribute(ZigbeeCluster *cluster, QList<quint16> attributes) override;
+    ZigbeeNetworkReply *configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations) override;
+
+protected:
+    // Cluster commands
+    void setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute = ZigbeeClusterAttribute()) override;
+
+private:
+    ZigbeeNetworkDeconz *m_network = nullptr;
+    ZigbeeNode *m_node = nullptr;
 
 signals:
 

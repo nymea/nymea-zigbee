@@ -74,8 +74,14 @@ private:
     QTimer *m_pollNetworkStateTimer = nullptr;
     void setCreateNetworkState(CreateNetworkState state);
 
+    // ZDO
     void handleZigbeeDeviceProfileIndication(const DeconzApsDataIndication &indication);
 
+    // ZZL
+
+    // HA
+
+    // GP
 
 protected:
     ZigbeeNode *createNode(QObject *parent) override;

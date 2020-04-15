@@ -42,7 +42,7 @@ ZigbeeBridgeControllerDeconz::ZigbeeBridgeControllerDeconz(QObject *parent) :
 
     m_watchdogTimer = new QTimer(this);
     m_watchdogTimer->setSingleShot(false);
-    m_watchdogTimer->setInterval(m_watchdogResetTimout * 1000); // Set the watchdog to 85 seconds, reset every 60 s
+    m_watchdogTimer->setInterval(m_watchdogResetTimout * 1000);
     connect(m_watchdogTimer, &QTimer::timeout, this, &ZigbeeBridgeControllerDeconz::resetControllerWatchdog);
 }
 
@@ -684,6 +684,9 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                                             return;
                                                         }
 
+                                                        // Reset the watchdog in any case
+                                                        resetControllerWatchdog();
+
                                                         // Read watchdog timeout
                                                         ZigbeeInterfaceDeconzReply *replyWatchdogTimeout = requestReadParameter(Deconz::ParameterWatchdogTtl);
                                                         connect(replyWatchdogTimeout, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyWatchdogTimeout](){
@@ -703,11 +706,6 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                                             qCDebug(dcZigbeeController()) << "Request" << replyWatchdogTimeout->command() << static_cast<Deconz::Parameter>(parameter)
                                                                                           << "finished successfully";
                                                             qCDebug(dcZigbeeController()) << "Watchdog timeout:" << m_networkConfiguration.watchdogTimeout;
-
-                                                            // Note: this value describes how much seconds are left until the watchdog triggers. Reset it right the way
-                                                            if (watchdogTimeout < 15) {
-                                                                resetControllerWatchdog();
-                                                            }
 
                                                             // Finished reading all parameters. Finish the independent reply in order to indicate the process has finished
                                                             emit networkConfigurationParameterChanged(m_networkConfiguration);
@@ -887,10 +885,8 @@ void ZigbeeBridgeControllerDeconz::processDataConfirm(const QByteArray &data)
 
 void ZigbeeBridgeControllerDeconz::onInterfaceAvailableChanged(bool available)
 {
-    if (available) {
-        // FIXME: only start if the protocol version is >= 0x0108
-        m_watchdogTimer->start();
-    } else {
+    qCDebug(dcZigbeeController()) << "Interface available changed" << available;
+    if (!available) {
         // Clean up any pending replies
         foreach (quint8 id, m_pendingReplies.keys()) {
             ZigbeeInterfaceDeconzReply *reply = m_pendingReplies.take(id);
@@ -940,6 +936,7 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
     }
     case Deconz::CommandMacPoll: {
         // FIXME: parse the data and print info
+
         break;
     }
     case Deconz::CommandSimplifiedBeacon: {
@@ -961,12 +958,13 @@ void ZigbeeBridgeControllerDeconz::resetControllerWatchdog()
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << m_watchdogTimeout;
     ZigbeeInterfaceDeconzReply *reply = requestWriteParameter(Deconz::ParameterWatchdogTtl, parameterData);
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [reply](){
+    connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
             qCWarning(dcZigbeeController()) << "Could not reset the application watchdog on the deCONZ controller." << reply->statusCode();
             return;
         }
         qCDebug(dcZigbeeController()) << "Reset application watchdog on the deCONZ controller successfully";
+        m_watchdogTimer->start();
     });
 }
 

@@ -134,8 +134,8 @@ public:
 private:
     ZigbeeInterfaceDeconz *m_interface = nullptr;
     quint8 m_sequenceNumber = 0;
-    quint32 m_watchdogTimeout = 85;
-    int m_watchdogResetTimout = 60;
+    quint32 m_watchdogTimeout = 300;
+    int m_watchdogResetTimout = 280;
     QHash<quint8, ZigbeeInterfaceDeconzReply *> m_pendingReplies;
     DeconzNetworkConfiguration m_networkConfiguration;
     Deconz::NetworkState m_networkState = Deconz::NetworkStateOffline;

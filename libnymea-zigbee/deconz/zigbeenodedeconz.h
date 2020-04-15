@@ -33,6 +33,7 @@
 #include "zigbee.h"
 #include "zigbeenode.h"
 
+class ZigbeeNodeEndpoint;
 class ZigbeeNetworkDeconz;
 
 class ZigbeeNodeDeconz : public ZigbeeNode
@@ -53,6 +54,12 @@ public:
 
 private:
     ZigbeeNetworkDeconz *m_network = nullptr;
+
+    // Init methods
+    void initNodeDescriptor();
+    void initPowerDescriptor();
+    void initEndpoints();
+    void initBasicCluster();
 
     QList<quint8> m_uninitializedEndpoints;
     QList<quint16> m_uninitalizedBasicClusterAttributes;

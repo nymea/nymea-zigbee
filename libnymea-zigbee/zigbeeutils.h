@@ -38,15 +38,6 @@
 #include "zigbee.h"
 #include "zigbeecluster.h"
 
-template<class TYPE> inline TYPE ZigbeeBit(const TYPE & x)
-{
-    return TYPE(1) << x;
-}
-
-template<class TYPE> inline bool ZigbeeIsBitSet(const TYPE & x, const TYPE & y)
-{
-    return (x & y) != 0;
-}
 
 class ZigbeeUtils
 {

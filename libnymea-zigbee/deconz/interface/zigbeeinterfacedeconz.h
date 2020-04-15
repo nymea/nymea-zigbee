@@ -75,6 +75,7 @@ public slots:
     void sendPackage(const QByteArray &package);
 
     bool enable(const QString &serialPort = "/dev/ttyS0", qint32 baudrate = 115200);
+    void reconnectController();
     void disable();
 
 };

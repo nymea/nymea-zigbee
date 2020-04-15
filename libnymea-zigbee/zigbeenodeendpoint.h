@@ -78,30 +78,30 @@ public:
     virtual ZigbeeNetworkReply *configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations) = 0;
 
     // Identify
-    virtual ZigbeeNetworkReply *identify(quint16 seconds) = 0;
+    virtual ZigbeeNetworkReply *identify(quint16 seconds);
 
     // Reset
-    virtual ZigbeeNetworkReply *factoryReset() = 0;
+    virtual ZigbeeNetworkReply *factoryReset();
 
     // Binding
-    virtual ZigbeeNetworkReply *bindGroup(Zigbee::ClusterId clusterId, quint16 destinationAddress, quint8 destinationEndpoint) = 0;
-    virtual ZigbeeNetworkReply *bindUnicast(Zigbee::ClusterId clusterId, const ZigbeeAddress &destinationAddress, quint8 destinationEndpoint) = 0;
+    virtual ZigbeeNetworkReply *bindGroup(Zigbee::ClusterId clusterId, quint16 destinationAddress, quint8 destinationEndpoint);
+    virtual ZigbeeNetworkReply *bindUnicast(Zigbee::ClusterId clusterId, const ZigbeeAddress &destinationAddress, quint8 destinationEndpoint);
 
     // Cluster commands
-    virtual ZigbeeNetworkReply *sendOnOffClusterCommand(ZigbeeCluster::OnOffClusterCommand command) = 0;
+    virtual ZigbeeNetworkReply *sendOnOffClusterCommand(ZigbeeCluster::OnOffClusterCommand command);
 
     // Group commands
-    virtual ZigbeeNetworkReply *addGroup(quint8 destinationEndpoint, quint16 groupAddress) = 0;
+    virtual ZigbeeNetworkReply *addGroup(quint8 destinationEndpoint, quint16 groupAddress);
 
     // Level commands
-    virtual ZigbeeNetworkReply *sendLevelCommand(ZigbeeCluster::LevelClusterCommand command, quint8 level, bool triggersOnOff, quint16 transitionTime) = 0;
+    virtual ZigbeeNetworkReply *sendLevelCommand(ZigbeeCluster::LevelClusterCommand command, quint8 level, bool triggersOnOff, quint16 transitionTime);
 
     // Color commands
-    virtual ZigbeeNetworkReply *sendMoveToColorTemperature(quint16 colourTemperature, quint16 transitionTime) = 0;
-    virtual ZigbeeNetworkReply *sendMoveToColor(double x, double y, quint16 transitionTime) = 0;
-    virtual ZigbeeNetworkReply *sendMoveToHueSaturation(quint8 hue, quint8 saturation, quint16 transitionTime) = 0;
-    virtual ZigbeeNetworkReply *sendMoveToHue(quint8 hue, quint16 transitionTime) = 0;
-    virtual ZigbeeNetworkReply *sendMoveToSaturation(quint8 saturation, quint16 transitionTime) = 0;
+    virtual ZigbeeNetworkReply *sendMoveToColorTemperature(quint16 colourTemperature, quint16 transitionTime);
+    virtual ZigbeeNetworkReply *sendMoveToColor(double x, double y, quint16 transitionTime);
+    virtual ZigbeeNetworkReply *sendMoveToHueSaturation(quint8 hue, quint8 saturation, quint16 transitionTime);
+    virtual ZigbeeNetworkReply *sendMoveToHue(quint8 hue, quint16 transitionTime);
+    virtual ZigbeeNetworkReply *sendMoveToSaturation(quint8 saturation, quint16 transitionTime);
 
 private:
     ZigbeeNode *m_node = nullptr;

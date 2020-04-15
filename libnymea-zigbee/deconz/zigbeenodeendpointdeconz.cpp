@@ -26,8 +26,32 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "zigbeenodeendpointdeconz.h"
+#include "zigbeenodeendpoint.h"
 
-ZigbeeNodeEndpointDeconz::ZigbeeNodeEndpointDeconz(QObject *parent) : QObject(parent)
+ZigbeeNodeEndpointDeconz::ZigbeeNodeEndpointDeconz(ZigbeeNetworkDeconz *network, ZigbeeNode *node, quint8 endpointId, QObject *parent) :
+    ZigbeeNodeEndpoint(node, endpointId, parent),
+    m_network(network),
+    m_node(node)
 {
 
+}
+
+ZigbeeNetworkReply *ZigbeeNodeEndpointDeconz::readAttribute(ZigbeeCluster *cluster, QList<quint16> attributes)
+{
+    Q_UNUSED(cluster)
+    Q_UNUSED(attributes)
+    return nullptr;
+}
+
+ZigbeeNetworkReply *ZigbeeNodeEndpointDeconz::configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations)
+{
+    Q_UNUSED(cluster)
+    Q_UNUSED(reportConfigurations)
+    return nullptr;
+}
+
+void ZigbeeNodeEndpointDeconz::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
+{
+    Q_UNUSED(clusterId)
+    Q_UNUSED(attribute)
 }

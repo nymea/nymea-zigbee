@@ -38,7 +38,7 @@ ZigbeeInterfaceDeconz::ZigbeeInterfaceDeconz(QObject *parent) : QObject(parent)
 {
     m_reconnectTimer = new QTimer(this);
     m_reconnectTimer->setSingleShot(true);
-    m_reconnectTimer->setInterval(2000);
+    m_reconnectTimer->setInterval(5000);
 
     connect(m_reconnectTimer, &QTimer::timeout, this, &ZigbeeInterfaceDeconz::onReconnectTimeout);
 }
@@ -122,11 +122,12 @@ void ZigbeeInterfaceDeconz::setAvailable(bool available)
     if (m_available == available)
         return;
 
+    // Clear the data buffer in any case
+    if (m_available)
+        m_dataBuffer.clear();
+
     m_available = available;
     emit availableChanged(m_available);
-
-    // Clear the data buffer in any case
-    m_dataBuffer.clear();
 }
 
 void ZigbeeInterfaceDeconz::onReconnectTimeout()
@@ -137,7 +138,6 @@ void ZigbeeInterfaceDeconz::onReconnectTimeout()
             m_reconnectTimer->start();
         } else {
             qCDebug(dcZigbeeInterface()) << "Interface reconnected successfully on" << m_serialPort->portName() << m_serialPort->baudRate();
-            m_serialPort->clear();
             setAvailable(true);
         }
     }
@@ -232,12 +232,12 @@ void ZigbeeInterfaceDeconz::sendPackage(const QByteArray &package)
 
 bool ZigbeeInterfaceDeconz::enable(const QString &serialPort, qint32 baudrate)
 {
+    qCDebug(dcZigbeeInterface()) << "Start UART interface " << serialPort << baudrate;
+
     if (m_serialPort) {
         delete m_serialPort;
         m_serialPort = nullptr;
     }
-
-    setAvailable(false);
 
     m_serialPort = new QSerialPort(serialPort, this);
     m_serialPort->setBaudRate(baudrate);
@@ -258,6 +258,20 @@ bool ZigbeeInterfaceDeconz::enable(const QString &serialPort, qint32 baudrate)
     qCDebug(dcZigbeeInterface()) << "Interface enabled successfully on" << serialPort << baudrate;
     setAvailable(true);
     return true;
+}
+
+void ZigbeeInterfaceDeconz::reconnectController()
+{
+    if (!m_serialPort)
+        return;
+
+    if (m_serialPort->isOpen())
+        m_serialPort->close();
+
+    delete m_serialPort;
+    m_serialPort = nullptr;
+    setAvailable(false);
+    m_reconnectTimer->start();
 }
 
 void ZigbeeInterfaceDeconz::disable()
