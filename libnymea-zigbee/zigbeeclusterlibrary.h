@@ -31,10 +31,13 @@
 #include <QObject>
 #include <QDebug>
 
+#include "zigbee.h"
+
 class ZigbeeClusterLibrary
 {
     Q_GADGET
 public:
+    /* General ZCL commans */
     enum Command {
         CommandReadAttributes = 0x00,
         CommandReadAttributesResponse = 0x01,
@@ -90,6 +93,7 @@ public:
     } ZclHeader;
 
     typedef struct Frame {
+        Zigbee::ClusterId clusterId;
         Header header;
         QByteArray payload;
     } Frame;
@@ -100,7 +104,7 @@ public:
 
     static QByteArray buildHeader(const Header &header);
 
-    static Frame parseFrameData(const QByteArray &frameData);
+    static Frame parseFrameData(Zigbee::ClusterId clusterId, const QByteArray &frameData);
     static QByteArray buildFrame(const Frame &frame);
 };
 

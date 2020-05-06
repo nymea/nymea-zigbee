@@ -10,23 +10,29 @@ SOURCES += \
     deconz/zigbeenetworkdeconz.cpp \
     deconz/zigbeenodedeconz.cpp \
     deconz/zigbeenodeendpointdeconz.cpp \
-    nxp/interface/zigbeeinterface.cpp \
-    nxp/interface/zigbeeinterfacemessage.cpp \
-    nxp/interface/zigbeeinterfacerequest.cpp \
-    nxp/interface/zigbeeinterfacereply.cpp \
-    nxp/zigbeenetworknxp.cpp \
-    nxp/zigbeebridgecontrollernxp.cpp \
-    nxp/zigbeenodeendpointnxp.cpp \
-    nxp/zigbeenodenxp.cpp \
+#    nxp/interface/zigbeeinterface.cpp \
+#    nxp/interface/zigbeeinterfacemessage.cpp \
+#    nxp/interface/zigbeeinterfacerequest.cpp \
+#    nxp/interface/zigbeeinterfacereply.cpp \
+#    nxp/zigbeenetworknxp.cpp \
+#    nxp/zigbeebridgecontrollernxp.cpp \
+#    nxp/zigbeenodeendpointnxp.cpp \
+#    nxp/zigbeenodenxp.cpp \
+    zcl/zigbeeclusterbasic.cpp \
+    zdo/zigbeedeviceobject.cpp \
+    zdo/zigbeedeviceobjectreply.cpp \
+    zdo/zigbeedeviceprofilehandler.cpp \
+    zdo/zigbeedeviceprofile.cpp \
     zigbeeadpu.cpp \
     zigbeebridgecontroller.cpp \
     zigbeechannelmask.cpp \
     zigbeecluster.cpp \
     zigbeeclusterattribute.cpp \
     zigbeeclusterlibrary.cpp \
-    zigbeedeviceprofile.cpp \
+    zigbeeclusterlibraryreply.cpp \
     zigbeemanufacturer.cpp \
     zigbeenetwork.cpp \
+    zigbeenetworkdatabase.cpp \
     zigbeenetworkkey.cpp \
     zigbeenetworkmanager.cpp \
     zigbee.cpp \
@@ -39,6 +45,7 @@ SOURCES += \
     zigbeenode.cpp \
     zigbeeaddress.cpp \
 
+
 HEADERS += \
     deconz/interface/deconz.h \
     deconz/interface/zigbeeinterfacedeconz.h \
@@ -47,23 +54,29 @@ HEADERS += \
     deconz/zigbeenetworkdeconz.h \
     deconz/zigbeenodedeconz.h \
     deconz/zigbeenodeendpointdeconz.h \
-    nxp/interface/zigbeeinterface.h \
-    nxp/interface/zigbeeinterfacemessage.h \
-    nxp/interface/zigbeeinterfacerequest.h \
-    nxp/interface/zigbeeinterfacereply.h \
-    nxp/zigbeenetworknxp.h \
-    nxp/zigbeebridgecontrollernxp.h \
-    nxp/zigbeenodeendpointnxp.h \
-    nxp/zigbeenodenxp.h \
+#    nxp/interface/zigbeeinterface.h \
+#    nxp/interface/zigbeeinterfacemessage.h \
+#    nxp/interface/zigbeeinterfacerequest.h \
+#    nxp/interface/zigbeeinterfacereply.h \
+#    nxp/zigbeenetworknxp.h \
+#    nxp/zigbeebridgecontrollernxp.h \
+#    nxp/zigbeenodeendpointnxp.h \
+#    nxp/zigbeenodenxp.h \
+    zcl/zigbeeclusterbasic.h \
+    zdo/zigbeedeviceobject.h \
+    zdo/zigbeedeviceobjectreply.h \
+    zdo/zigbeedeviceprofilehandler.h \
+    zdo/zigbeedeviceprofile.h \
     zigbeeadpu.h \
     zigbeebridgecontroller.h \
     zigbeechannelmask.h \
     zigbeecluster.h \
     zigbeeclusterattribute.h \
     zigbeeclusterlibrary.h \
-    zigbeedeviceprofile.h \
+    zigbeeclusterlibraryreply.h \
     zigbeemanufacturer.h \
     zigbeenetwork.h \
+    zigbeenetworkdatabase.h \
     zigbeenetworkkey.h \
     zigbeenetworkmanager.h \
     zigbee.h \
@@ -75,6 +88,7 @@ HEADERS += \
     zigbeeutils.h \
     zigbeenode.h \
     zigbeeaddress.h \
+
 
 # install header file with relative subdirectory
 for (header, HEADERS) {

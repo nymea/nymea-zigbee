@@ -50,6 +50,8 @@ public:
     ZigbeeNetworkReply *requestActiveEndpoints();
     ZigbeeNetworkReply *requestSimpleDescriptor(quint8 endpoint);
 
+    ZigbeeNetworkReply *requestLeaveNetwork(bool rejoin = false, bool removeChildren = false);
+
     void leaveNetworkRequest(bool rejoin = false, bool removeChildren = false) override;
 
 private:

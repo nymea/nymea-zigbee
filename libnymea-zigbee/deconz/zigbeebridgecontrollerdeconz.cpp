@@ -28,7 +28,7 @@
 #include "zigbeeutils.h"
 #include "loggingcategory.h"
 #include "zigbeechannelmask.h"
-#include "zigbeedeviceprofile.h"
+#include "zdo/zigbeedeviceprofile.h"
 #include "zigbeebridgecontrollerdeconz.h"
 
 #include <QDataStream>

@@ -26,11 +26,20 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "zigbeeutils.h"
+#include "zigbeenetwork.h"
 #include "zigbeecluster.h"
 #include "loggingcategory.h"
+#include "zigbeenetworkreply.h"
+#include "zigbeeclusterlibrary.h"
+#include "zigbeenetworkrequest.h"
 
-ZigbeeCluster::ZigbeeCluster(Zigbee::ClusterId clusterId, Direction direction, QObject *parent) :
+#include <QDataStream>
+
+ZigbeeCluster::ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Zigbee::ClusterId clusterId, Direction direction, QObject *parent) :
     QObject(parent),
+    m_network(network),
+    m_node(node),
+    m_endpoint(endpoint),
     m_clusterId(clusterId),
     m_direction(direction)
 {
@@ -81,6 +90,50 @@ void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);
     }
+}
+
+ZigbeeNetworkReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
+{
+    // Build the request
+    ZigbeeNetworkRequest request;
+    request.setRequestId(m_network->generateSequenceNumber());
+    request.setDestinationAddressMode(Zigbee::DestinationAddressModeShortAddress);
+    request.setDestinationShortAddress(static_cast<quint16>(m_node->shortAddress()));
+    request.setProfileId(m_endpoint->profile());
+    request.setClusterId(m_clusterId);
+    request.setSourceEndpoint(m_endpoint->endpointId());
+    request.setRadius(10);
+
+    // Build ZCL frame
+    ZigbeeClusterLibrary::FrameControl frameControl;
+    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeGlobal; // Note: for general commands always use global
+    frameControl.disableDefaultResponse = true;
+
+    // ZCL header
+    ZigbeeClusterLibrary::Header header;
+    header.frameControl = frameControl;
+    header.command = ZigbeeClusterLibrary::CommandReadAttributes;
+    header.transactionSequenceNumber = m_network->generateTranactionSequenceNumber();
+
+    // ZCL payload
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    foreach (quint16 attribute, attributes) {
+        stream << attribute;
+    }
+
+    // Put them together
+    ZigbeeClusterLibrary::Frame frame;
+    frame.clusterId = m_clusterId;
+    frame.header = header;
+    frame.payload = payload;
+
+    request.setTxOptions(Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission));
+    request.setAsdu(ZigbeeClusterLibrary::buildFrame(frame));
+
+    qCDebug(dcZigbeeCluster()) << "Send read attributes request" << m_node << m_endpoint << this << attributes;
+    return m_network->sendRequest(request);
 }
 
 QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)

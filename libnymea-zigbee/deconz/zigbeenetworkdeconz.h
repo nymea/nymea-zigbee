@@ -33,6 +33,7 @@
 #include "zigbeenetwork.h"
 #include "zigbeenodedeconz.h"
 #include "zigbeechannelmask.h"
+#include "zigbeeclusterlibrary.h"
 #include "zigbeebridgecontrollerdeconz.h"
 
 class ZigbeeNetworkDeconz : public ZigbeeNetwork
@@ -57,8 +58,6 @@ public:
 
     ZigbeeNetworkReply *setPermitJoin(quint16 shortAddress, quint8 duration);
 
-    quint8 generateSequenceNumber();
-
 private:
     ZigbeeBridgeControllerDeconz *m_controller = nullptr;
     bool m_networkRunning = false;
@@ -69,8 +68,6 @@ private:
 
     QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
 
-    quint8 m_sequenceNumber = 0;
-
     QTimer *m_pollNetworkStateTimer = nullptr;
     void setCreateNetworkState(CreateNetworkState state);
 
@@ -80,6 +77,7 @@ private:
     // ZZL
 
     // HA
+    void handleZigbeeHomeAutomationIndication(const DeconzApsDataIndication &indication);
 
     // GP
 

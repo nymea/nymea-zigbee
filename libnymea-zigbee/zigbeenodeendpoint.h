@@ -73,36 +73,6 @@ public:
     ZigbeeCluster *getOutputCluster(Zigbee::ClusterId clusterId) const;
     bool hasOutputCluster(Zigbee::ClusterId clusterId) const;
 
-    // Attribute methods
-    virtual ZigbeeNetworkReply *readAttribute(ZigbeeCluster *cluster, QList<quint16> attributes) = 0;
-    virtual ZigbeeNetworkReply *configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations) = 0;
-
-    // Identify
-    virtual ZigbeeNetworkReply *identify(quint16 seconds);
-
-    // Reset
-    virtual ZigbeeNetworkReply *factoryReset();
-
-    // Binding
-    virtual ZigbeeNetworkReply *bindGroup(Zigbee::ClusterId clusterId, quint16 destinationAddress, quint8 destinationEndpoint);
-    virtual ZigbeeNetworkReply *bindUnicast(Zigbee::ClusterId clusterId, const ZigbeeAddress &destinationAddress, quint8 destinationEndpoint);
-
-    // Cluster commands
-    virtual ZigbeeNetworkReply *sendOnOffClusterCommand(ZigbeeCluster::OnOffClusterCommand command);
-
-    // Group commands
-    virtual ZigbeeNetworkReply *addGroup(quint8 destinationEndpoint, quint16 groupAddress);
-
-    // Level commands
-    virtual ZigbeeNetworkReply *sendLevelCommand(ZigbeeCluster::LevelClusterCommand command, quint8 level, bool triggersOnOff, quint16 transitionTime);
-
-    // Color commands
-    virtual ZigbeeNetworkReply *sendMoveToColorTemperature(quint16 colourTemperature, quint16 transitionTime);
-    virtual ZigbeeNetworkReply *sendMoveToColor(double x, double y, quint16 transitionTime);
-    virtual ZigbeeNetworkReply *sendMoveToHueSaturation(quint8 hue, quint8 saturation, quint16 transitionTime);
-    virtual ZigbeeNetworkReply *sendMoveToHue(quint8 hue, quint16 transitionTime);
-    virtual ZigbeeNetworkReply *sendMoveToSaturation(quint8 saturation, quint16 transitionTime);
-
 private:
     ZigbeeNode *m_node = nullptr;
     quint8 m_endpointId = 0;
@@ -139,6 +109,7 @@ signals:
     void manufacturerNameChanged(const QString &manufacturerName);
     void modelIdentifierChanged(const QString &modelIdentifier);
     void softwareBuildIdChanged(const QString &softwareBuildId);
+
 };
 
 QDebug operator<<(QDebug debug, ZigbeeNodeEndpoint *endpoint);

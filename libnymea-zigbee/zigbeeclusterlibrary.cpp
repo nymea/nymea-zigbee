@@ -93,7 +93,7 @@ QByteArray ZigbeeClusterLibrary::buildHeader(const ZigbeeClusterLibrary::Header 
     return headerData;
 }
 
-ZigbeeClusterLibrary::Frame ZigbeeClusterLibrary::parseFrameData(const QByteArray &frameData)
+ZigbeeClusterLibrary::Frame ZigbeeClusterLibrary::parseFrameData(Zigbee::ClusterId clusterId, const QByteArray &frameData)
 {
     QDataStream stream(frameData);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -116,7 +116,6 @@ ZigbeeClusterLibrary::Frame ZigbeeClusterLibrary::parseFrameData(const QByteArra
     stream >> header.transactionSequenceNumber;
     offset += 1;
 
-
     stream >> commandByte;
     offset += 1;
 
@@ -124,8 +123,9 @@ ZigbeeClusterLibrary::Frame ZigbeeClusterLibrary::parseFrameData(const QByteArra
     offset += 1;
 
     Frame frame;
+    frame.clusterId = clusterId;
     frame.header = header;
-    frame.payload = frameData.right(frameData.length() - offset);
+    frame.payload = frameData.right(frameData.length() - offset - 1);
     return frame;
 }
 
@@ -169,7 +169,7 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Header &header)
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Frame &frame)
 {
-    debug.nospace() << "Zigbee Cluster Library Frame(";
+    debug.nospace() << "Zigbee Cluster Library Frame(" << frame.clusterId << ", ";
     debug.nospace() << frame.header;
     debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(frame.payload) << ")";
     return debug.space();

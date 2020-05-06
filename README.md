@@ -18,3 +18,17 @@ Depending on your available hardware following gateway modules are supported
 * RaspBee
 * ConBee II
 * RaspBee II
+
+
+## Structure
+
+ZigbeeNetwork
+  - ZDO handler
+  - ZCL handler
+    - ZHA handler
+    - ZLL handler
+    - GP handler
+
+  - [ZigbeeNode]
+    - [ZigbeeNodeEndpoints]
+        - Profile

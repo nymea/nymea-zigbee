@@ -25,19 +25,18 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeenodeendpointdeconz.h"
-#include "zigbeenodeendpoint.h"
+#include "zigbeenetworkdatabase.h"
+#include "loggingcategory.h"
 
-ZigbeeNodeEndpointDeconz::ZigbeeNodeEndpointDeconz(ZigbeeNetworkDeconz *network, ZigbeeNode *node, quint8 endpointId, QObject *parent) :
-    ZigbeeNodeEndpoint(node, endpointId, parent),
-    m_network(network),
-    m_node(node)
+ZigbeeNetworkDatabase::ZigbeeNetworkDatabase(const QString &databaseName, QObject *parent) : QObject(parent)
 {
+    m_db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), "zigbee");
+    m_db.setDatabaseName(databaseName);
+    qCDebug(dcZigbeeNetworkDatabase()) << "Opening zigbee network database" << m_db.databaseName();
 
-}
-
-void ZigbeeNodeEndpointDeconz::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
-{
-    Q_UNUSED(clusterId)
-    Q_UNUSED(attribute)
+    if (!m_db.isValid()) {
+        qCWarning(dcZigbeeNetworkDatabase()) << "The zigbee network database is not valid" << m_db.databaseName();
+        // FIXME: create a new one
+        return;
+    }
 }

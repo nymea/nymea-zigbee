@@ -27,14 +27,16 @@
 
 #include "zigbeenode.h"
 #include "zigbeeutils.h"
+#include "zigbeenetwork.h"
 #include "loggingcategory.h"
 
 #include <QDataStream>
 
-ZigbeeNode::ZigbeeNode(QObject *parent) :
-    QObject(parent)
+ZigbeeNode::ZigbeeNode(ZigbeeNetwork *network, QObject *parent) :
+    QObject(parent),
+    m_network(network)
 {
-
+    m_deviceObject = new ZigbeeDeviceObject(m_network, this);
 }
 
 ZigbeeNode::State ZigbeeNode::state() const
@@ -45,6 +47,11 @@ ZigbeeNode::State ZigbeeNode::state() const
 bool ZigbeeNode::connected() const
 {
     return m_connected;
+}
+
+ZigbeeDeviceObject *ZigbeeNode::deviceObject() const
+{
+    return m_deviceObject;
 }
 
 quint16 ZigbeeNode::shortAddress() const
@@ -248,95 +255,90 @@ void ZigbeeNode::setExtendedAddress(const ZigbeeAddress &extendedAddress)
     m_extendedAddress = extendedAddress;
 }
 
-QByteArray ZigbeeNode::nodeDescriptorRawData() const
-{
-    return m_nodeDescriptorRawData;
-}
+//void ZigbeeNode::setNodeDescriptorRawData(const QByteArray nodeDescriptorRawData)
+//{
+//    m_nodeDescriptorRawData = nodeDescriptorRawData;
 
-void ZigbeeNode::setNodeDescriptorRawData(const QByteArray nodeDescriptorRawData)
-{
-    m_nodeDescriptorRawData = nodeDescriptorRawData;
+//    // Parse the raw data
+//    quint8 sequenceNumber = 0;
+//    quint8 status = 0;
+//    quint16 shortAddress = 0;
+//    quint16 manufacturerCode = 0;
+//    quint16 maximalRxSize = 0;
+//    quint16 maximalTxSize = 0;
+//    quint16 serverMask = 0;
+//    quint8 descriptorFlag = 0;
+//    quint8 macFlags = 0;
+//    quint8 maxBufferSize = 0;
+//    quint16 bitField = 0;
 
-    // Parse the raw data
-    quint8 sequenceNumber = 0;
-    quint8 status = 0;
-    quint16 shortAddress = 0;
-    quint16 manufacturerCode = 0;
-    quint16 maximalRxSize = 0;
-    quint16 maximalTxSize = 0;
-    quint16 serverMask = 0;
-    quint8 descriptorFlag = 0;
-    quint8 macFlags = 0;
-    quint8 maxBufferSize = 0;
-    quint16 bitField = 0;
+//    QDataStream stream(&m_nodeDescriptorRawData, QIODevice::ReadOnly);
+//    stream >> sequenceNumber;
+//    stream >> status;
+//    stream >> shortAddress;
+//    stream >> manufacturerCode;
+//    stream >> maximalRxSize;
+//    stream >> maximalTxSize;
+//    stream >> serverMask;
+//    stream >> descriptorFlag;
+//    stream >> macFlags;
+//    stream >> maxBufferSize;
+//    stream >> bitField;
 
-    QDataStream stream(&m_nodeDescriptorRawData, QIODevice::ReadOnly);
-    stream >> sequenceNumber;
-    stream >> status;
-    stream >> shortAddress;
-    stream >> manufacturerCode;
-    stream >> maximalRxSize;
-    stream >> maximalTxSize;
-    stream >> serverMask;
-    stream >> descriptorFlag;
-    stream >> macFlags;
-    stream >> maxBufferSize;
-    stream >> bitField;
+//    // Set node data
+//    m_manufacturerCode = manufacturerCode;
+//    m_maximumRxSize = maximalRxSize;
+//    m_maximumTxSize = maximalTxSize;
+//    m_maximumBufferSize = maxBufferSize;
 
-    // Set node data
-    m_manufacturerCode = manufacturerCode;
-    m_maximumRxSize = maximalRxSize;
-    m_maximumTxSize = maximalTxSize;
-    m_maximumBufferSize = maxBufferSize;
+//    setServerMask(serverMask);
+//    setMacCapabilitiesFlag(macFlags);
+//    setDescriptorFlag(descriptorFlag);
 
-    setServerMask(serverMask);
-    setMacCapabilitiesFlag(macFlags);
-    setDescriptorFlag(descriptorFlag);
+//    // Parse bit field
+//    // 0-2 Bit = logical type, 0 = coordinator, 1 = router, 2 = end device
+//    if (!ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
+//        m_nodeType = NodeTypeCoordinator;
+//    } else if (!ZigbeeUtils::checkBitUint16(bitField, 0) && ZigbeeUtils::checkBitUint16(bitField, 1)) {
+//        m_nodeType = NodeTypeRouter;
+//    } else if (ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
+//        m_nodeType = NodeTypeEndDevice;
+//    }
 
-    // Parse bit field
-    // 0-2 Bit = logical type, 0 = coordinator, 1 = router, 2 = end device
-    if (!ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
-        m_nodeType = NodeTypeCoordinator;
-    } else if (!ZigbeeUtils::checkBitUint16(bitField, 0) && ZigbeeUtils::checkBitUint16(bitField, 1)) {
-        m_nodeType = NodeTypeRouter;
-    } else if (ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
-        m_nodeType = NodeTypeEndDevice;
-    }
+//    m_complexDescriptorAvailable = (bitField >> 3) & 0x0001;
+//    m_userDescriptorAvailable = (bitField >> 4) & 0x0001;
 
-    m_complexDescriptorAvailable = (bitField >> 3) & 0x0001;
-    m_userDescriptorAvailable = (bitField >> 4) & 0x0001;
-
-    qCDebug(dcZigbeeNode()) << "Node descriptor:";
-    qCDebug(dcZigbeeNode()) << "    Sequence number:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
-    qCDebug(dcZigbeeNode()) << "    Status:" << ZigbeeUtils::convertByteToHexString(status);
-    qCDebug(dcZigbeeNode()) << "    Node type:" << nodeType();
-    qCDebug(dcZigbeeNode()) << "    Short address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
-    qCDebug(dcZigbeeNode()) << "    Manufacturer code:" << ZigbeeUtils::convertUint16ToHexString(manufacturerCode);
-    qCDebug(dcZigbeeNode()) << "    Maximum Rx size:" << ZigbeeUtils::convertUint16ToHexString(maximumRxSize());
-    qCDebug(dcZigbeeNode()) << "    Maximum Tx size:" << ZigbeeUtils::convertUint16ToHexString(maximumTxSize());
-    qCDebug(dcZigbeeNode()) << "    Maximum buffer size:" << ZigbeeUtils::convertByteToHexString(maximumBufferSize());
-    qCDebug(dcZigbeeNode()) << "    Server mask:" << ZigbeeUtils::convertUint16ToHexString(serverMask);
-    qCDebug(dcZigbeeNode()) << "        Primary Trust center:" << isPrimaryTrustCenter();
-    qCDebug(dcZigbeeNode()) << "        Backup Trust center:" << isBackupTrustCenter();
-    qCDebug(dcZigbeeNode()) << "        Primary Binding cache:" << isPrimaryBindingCache();
-    qCDebug(dcZigbeeNode()) << "        Backup Binding cache:" << isBackupBindingCache();
-    qCDebug(dcZigbeeNode()) << "        Primary Discovery cache:" << isPrimaryDiscoveryCache();
-    qCDebug(dcZigbeeNode()) << "        Backup Discovery cache:" << isBackupDiscoveryCache();
-    qCDebug(dcZigbeeNode()) << "        Network Manager:" << isNetworkManager();
-    qCDebug(dcZigbeeNode()) << "    Descriptor flag:" << ZigbeeUtils::convertByteToHexString(descriptorFlag);
-    qCDebug(dcZigbeeNode()) << "        Extended active endpoint list available:" << extendedActiveEndpointListAvailable();
-    qCDebug(dcZigbeeNode()) << "        Extended simple descriptor list available:" << extendedSimpleDescriptorListAvailable();
-    qCDebug(dcZigbeeNode()) << "    MAC flags:" << ZigbeeUtils::convertByteToHexString(macFlags);
-    qCDebug(dcZigbeeNode()) << "        Alternate PAN coordinator:" << alternatePanCoordinator();
-    qCDebug(dcZigbeeNode()) << "        Device type:" << deviceType();
-    qCDebug(dcZigbeeNode()) << "        Power source flag main power:" << powerSourceFlagMainPower();
-    qCDebug(dcZigbeeNode()) << "        Receiver on when idle:" << receiverOnWhenIdle();
-    qCDebug(dcZigbeeNode()) << "        Security capability:" << securityCapability();
-    qCDebug(dcZigbeeNode()) << "        Allocate address:" << allocateAddress();
-    qCDebug(dcZigbeeNode()) << "    Bit field:" << ZigbeeUtils::convertUint16ToHexString(bitField);
-    qCDebug(dcZigbeeNode()) << "        Complex desciptor available:" << complexDescriptorAvailable();
-    qCDebug(dcZigbeeNode()) << "        User desciptor available:" << userDescriptorAvailable();
-}
+//    qCDebug(dcZigbeeNode()) << "Node descriptor:";
+//    qCDebug(dcZigbeeNode()) << "    Sequence number:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
+//    qCDebug(dcZigbeeNode()) << "    Status:" << ZigbeeUtils::convertByteToHexString(status);
+//    qCDebug(dcZigbeeNode()) << "    Node type:" << nodeType();
+//    qCDebug(dcZigbeeNode()) << "    Short address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+//    qCDebug(dcZigbeeNode()) << "    Manufacturer code:" << ZigbeeUtils::convertUint16ToHexString(manufacturerCode);
+//    qCDebug(dcZigbeeNode()) << "    Maximum Rx size:" << ZigbeeUtils::convertUint16ToHexString(maximumRxSize());
+//    qCDebug(dcZigbeeNode()) << "    Maximum Tx size:" << ZigbeeUtils::convertUint16ToHexString(maximumTxSize());
+//    qCDebug(dcZigbeeNode()) << "    Maximum buffer size:" << ZigbeeUtils::convertByteToHexString(maximumBufferSize());
+//    qCDebug(dcZigbeeNode()) << "    Server mask:" << ZigbeeUtils::convertUint16ToHexString(serverMask);
+//    qCDebug(dcZigbeeNode()) << "        Primary Trust center:" << isPrimaryTrustCenter();
+//    qCDebug(dcZigbeeNode()) << "        Backup Trust center:" << isBackupTrustCenter();
+//    qCDebug(dcZigbeeNode()) << "        Primary Binding cache:" << isPrimaryBindingCache();
+//    qCDebug(dcZigbeeNode()) << "        Backup Binding cache:" << isBackupBindingCache();
+//    qCDebug(dcZigbeeNode()) << "        Primary Discovery cache:" << isPrimaryDiscoveryCache();
+//    qCDebug(dcZigbeeNode()) << "        Backup Discovery cache:" << isBackupDiscoveryCache();
+//    qCDebug(dcZigbeeNode()) << "        Network Manager:" << isNetworkManager();
+//    qCDebug(dcZigbeeNode()) << "    Descriptor flag:" << ZigbeeUtils::convertByteToHexString(descriptorFlag);
+//    qCDebug(dcZigbeeNode()) << "        Extended active endpoint list available:" << extendedActiveEndpointListAvailable();
+//    qCDebug(dcZigbeeNode()) << "        Extended simple descriptor list available:" << extendedSimpleDescriptorListAvailable();
+//    qCDebug(dcZigbeeNode()) << "    MAC flags:" << ZigbeeUtils::convertByteToHexString(macFlags);
+//    qCDebug(dcZigbeeNode()) << "        Alternate PAN coordinator:" << alternatePanCoordinator();
+//    qCDebug(dcZigbeeNode()) << "        Device type:" << deviceType();
+//    qCDebug(dcZigbeeNode()) << "        Power source flag main power:" << powerSourceFlagMainPower();
+//    qCDebug(dcZigbeeNode()) << "        Receiver on when idle:" << receiverOnWhenIdle();
+//    qCDebug(dcZigbeeNode()) << "        Security capability:" << securityCapability();
+//    qCDebug(dcZigbeeNode()) << "        Allocate address:" << allocateAddress();
+//    qCDebug(dcZigbeeNode()) << "    Bit field:" << ZigbeeUtils::convertUint16ToHexString(bitField);
+//    qCDebug(dcZigbeeNode()) << "        Complex desciptor available:" << complexDescriptorAvailable();
+//    qCDebug(dcZigbeeNode()) << "        User desciptor available:" << userDescriptorAvailable();
+//}
 
 quint16 ZigbeeNode::serverMask() const
 {
@@ -448,14 +450,14 @@ void ZigbeeNode::setPowerDescriptorFlag(quint16 powerDescriptorFlag)
         m_powerLevel = PowerLevelFull;
     }
 
-    qCDebug(dcZigbeeNode()) << "Node power descriptor (" << ZigbeeUtils::convertUint16ToHexString(m_powerDescriptorFlag) << "):";
-    qCDebug(dcZigbeeNode()) << "    Power mode:" << m_powerMode;
-    qCDebug(dcZigbeeNode()) << "    Available power sources:";
-    foreach (const PowerSource &source, m_availablePowerSources) {
-        qCDebug(dcZigbeeNode()) << "        " << source;
-    }
-    qCDebug(dcZigbeeNode()) << "    Power source:" << m_powerSource;
-    qCDebug(dcZigbeeNode()) << "    Power level:" << m_powerLevel;
+//    qCDebug(dcZigbeeNode()) << "Node power descriptor (" << ZigbeeUtils::convertUint16ToHexString(m_powerDescriptorFlag) << "):";
+//    qCDebug(dcZigbeeNode()) << "    Power mode:" << m_powerMode;
+//    qCDebug(dcZigbeeNode()) << "    Available power sources:";
+//    foreach (const PowerSource &source, m_availablePowerSources) {
+//        qCDebug(dcZigbeeNode()) << "        " << source;
+//    }
+//    qCDebug(dcZigbeeNode()) << "    Power source:" << m_powerSource;
+//    qCDebug(dcZigbeeNode()) << "    Power level:" << m_powerLevel;
 }
 
 void ZigbeeNode::startInitialization()

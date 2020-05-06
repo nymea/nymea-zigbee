@@ -31,6 +31,8 @@
 #include <QObject>
 #include <QSettings>
 
+#include <QSqlDatabase>
+
 #include "zigbeenode.h"
 #include "zigbeechannelmask.h"
 #include "zigbeebridgecontroller.h"
@@ -94,6 +96,8 @@ public:
     bool permitJoining() const;
     void setPermitJoining(bool permitJoining);
 
+    quint8 generateSequenceNumber();
+    quint8 generateTranactionSequenceNumber();
 
     // Network nodes
     QList<ZigbeeNode *> nodes() const;
@@ -106,12 +110,17 @@ public:
     bool hasNode(quint16 shortAddress) const;
     bool hasNode(const ZigbeeAddress &address) const;
 
+    virtual ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) = 0;
+
 private:
     State m_state = StateUninitialized;
 
     // Serial port configuration
     QString m_serialPortName = "/dev/ttyUSB0";
     qint32 m_serialBaudrate = 115200;
+
+    quint8 m_sequenceNumber = 0;
+    quint8 m_transactionSequenceNumber = 0;
 
     // Network configurations
     quint16 m_panId = 0;
@@ -120,9 +129,15 @@ private:
     ZigbeeChannelMask m_channelMask = ZigbeeChannelMask(ZigbeeChannelMask::ChannelConfigurationAllChannels);
     ZigbeeNode::NodeType m_nodeType = ZigbeeNode::NodeTypeCoordinator;
 
+    // Network storage
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
+
+    QSqlDatabase m_db;
+
+private:
+    bool initDB();
 
     void addNodeInternally(ZigbeeNode *node);
     void removeNodeInternally(ZigbeeNode *node);
@@ -151,8 +166,6 @@ protected:
     void setError(Error error);
 
     bool networkConfigurationAvailable() const;
-
-    virtual ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) = 0;
 
     // Network reply methods
     ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());

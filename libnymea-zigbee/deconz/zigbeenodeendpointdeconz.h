@@ -30,6 +30,7 @@
 
 #include <QObject>
 #include "zigbeenodeendpoint.h"
+#include "zigbeeclusterlibrary.h"
 
 class ZigbeeNodeDeconz;
 class ZigbeeNetworkDeconz;
@@ -42,9 +43,6 @@ class ZigbeeNodeEndpointDeconz : public ZigbeeNodeEndpoint
 
 public:
     explicit ZigbeeNodeEndpointDeconz(ZigbeeNetworkDeconz *network, ZigbeeNode *node, quint8 endpointId, QObject *parent = nullptr);
-
-    ZigbeeNetworkReply *readAttribute(ZigbeeCluster *cluster, QList<quint16> attributes) override;
-    ZigbeeNetworkReply *configureReporting(ZigbeeCluster *cluster, QList<ZigbeeClusterReportConfigurationRecord> reportConfigurations) override;
 
 protected:
     // Cluster commands

@@ -26,7 +26,7 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "zigbeenetworkrequest.h"
-#include "zigbeedeviceprofile.h"
+#include "zdo/zigbeedeviceprofile.h"
 #include "zigbeeutils.h"
 
 ZigbeeNetworkRequest::ZigbeeNetworkRequest()

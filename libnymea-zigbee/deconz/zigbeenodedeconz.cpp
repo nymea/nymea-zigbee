@@ -27,7 +27,7 @@
 
 #include "zigbeeutils.h"
 #include "zigbeenodedeconz.h"
-#include "zigbeedeviceprofile.h"
+#include "zdo/zigbeedeviceprofile.h"
 #include "zigbeenetworkdeconz.h"
 #include "zigbeenodeendpointdeconz.h"
 
@@ -36,7 +36,7 @@
 #include <QDataStream>
 
 ZigbeeNodeDeconz::ZigbeeNodeDeconz(ZigbeeNetworkDeconz *network, QObject *parent) :
-    ZigbeeNode(parent),
+    ZigbeeNode(network, parent),
     m_network(network)
 {
 
@@ -138,10 +138,45 @@ ZigbeeNetworkReply *ZigbeeNodeDeconz::requestSimpleDescriptor(quint8 endpoint)
     return m_network->sendRequest(request);
 }
 
+ZigbeeNetworkReply *ZigbeeNodeDeconz::requestLeaveNetwork(bool rejoin, bool removeChildren)
+{
+    ZigbeeNetworkRequest request;
+    request.setRequestId(m_network->generateSequenceNumber());
+    request.setDestinationAddressMode(Zigbee::DestinationAddressModeShortAddress);
+    request.setDestinationShortAddress(shortAddress());
+    request.setDestinationEndpoint(0); // ZDO
+    request.setProfileId(Zigbee::ZigbeeProfileDevice); // ZDP
+    request.setClusterId(ZigbeeDeviceProfile::MgmtLeaveRequest);
+    request.setSourceEndpoint(0); // ZDO
+
+    // Build ASDU
+    QByteArray asdu;
+    quint8 leaveFlag = 0;
+    if (rejoin) {
+        leaveFlag |= 0x01;
+    }
+
+    if (removeChildren) {
+        leaveFlag |= 0x02;
+    }
+
+    QDataStream stream(&asdu, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << request.requestId() << extendedAddress().toUInt64() << leaveFlag;
+    request.setAsdu(asdu);
+
+    // We expect an indication with the response and the confirmation
+    request.setExpectIndication(true);
+    return m_network->sendRequest(request);
+}
+
 void ZigbeeNodeDeconz::leaveNetworkRequest(bool rejoin, bool removeChildren)
 {
-    Q_UNUSED(rejoin)
-    Q_UNUSED(removeChildren)
+    ZigbeeNetworkReply *reply = requestLeaveNetwork(rejoin, removeChildren);
+    connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply](){
+        // TODO: check reply error
+
+    });
 }
 
 void ZigbeeNodeDeconz::initNodeDescriptor()
@@ -309,7 +344,7 @@ void ZigbeeNodeDeconz::initEndpoints()
                 // Create endpoint
                 ZigbeeNodeEndpointDeconz *endpoint = nullptr;
                 if (!hasEndpoint(endpointId)) {
-                    ZigbeeNodeEndpointDeconz *endpoint = qobject_cast<ZigbeeNodeEndpointDeconz *>(createNodeEndpoint(endpointId, this));
+                    endpoint = qobject_cast<ZigbeeNodeEndpointDeconz *>(createNodeEndpoint(endpointId, this));
                     m_endpoints.append(endpoint);
                 } else {
                     endpoint = qobject_cast<ZigbeeNodeEndpointDeconz *>(getEndpoint(endpointId));
@@ -323,7 +358,7 @@ void ZigbeeNodeDeconz::initEndpoints()
                     quint16 clusterId = 0;
                     stream >> clusterId;
                     if (!endpoint->hasInputCluster(static_cast<Zigbee::ClusterId>(clusterId))) {
-                        endpoint->addInputCluster(new ZigbeeCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Input, endpoint));
+                        endpoint->addInputCluster(new ZigbeeCluster(m_network, this, endpoint, static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Input, endpoint));
                     }
                     qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
 
@@ -335,7 +370,7 @@ void ZigbeeNodeDeconz::initEndpoints()
                     quint16 clusterId = 0;
                     stream >> clusterId;
                     if (!endpoint->hasOutputCluster(static_cast<Zigbee::ClusterId>(clusterId))) {
-                        endpoint->addOutputCluster(new ZigbeeCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Output, endpoint));
+                        endpoint->addOutputCluster(new ZigbeeCluster(m_network, this, endpoint, static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Output, endpoint));
                     }
                     qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
                 }
@@ -354,10 +389,9 @@ void ZigbeeNodeDeconz::initEndpoints()
 void ZigbeeNodeDeconz::initBasicCluster()
 {
 
-
+    // TODO
 
     setState(StateInitialized);
-
 }
 
 void ZigbeeNodeDeconz::setClusterAttributeReport(const ZigbeeClusterAttributeReport &report)

@@ -25,19 +25,25 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeenodeendpointdeconz.h"
-#include "zigbeenodeendpoint.h"
+#ifndef ZIGBEENETWORKDATABASE_H
+#define ZIGBEENETWORKDATABASE_H
 
-ZigbeeNodeEndpointDeconz::ZigbeeNodeEndpointDeconz(ZigbeeNetworkDeconz *network, ZigbeeNode *node, quint8 endpointId, QObject *parent) :
-    ZigbeeNodeEndpoint(node, endpointId, parent),
-    m_network(network),
-    m_node(node)
+#include <QObject>
+#include <QSqlDatabase>
+
+
+class ZigbeeNetworkDatabase : public QObject
 {
+    Q_OBJECT
+public:
+    explicit ZigbeeNetworkDatabase(const QString &databaseName, QObject *parent = nullptr);
 
-}
+private:
+    QSqlDatabase m_db;
 
-void ZigbeeNodeEndpointDeconz::setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute)
-{
-    Q_UNUSED(clusterId)
-    Q_UNUSED(attribute)
-}
+
+signals:
+
+};
+
+#endif // ZIGBEENETWORKDATABASE_H

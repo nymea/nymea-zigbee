@@ -29,9 +29,16 @@
 #include "zigbeenetwork.h"
 #include "loggingcategory.h"
 
+#include <QSqlQuery>
+
 ZigbeeNetwork::ZigbeeNetwork(QObject *parent) :
     QObject(parent)
 {
+    m_db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), "zigbee");
+    m_db.setDatabaseName("");
+    qCDebug(dcZigbeeNetwork()) << "Opening zigbee network database" << m_db.databaseName();
+
+
 
 }
 
@@ -165,6 +172,16 @@ bool ZigbeeNetwork::permitJoining() const
 void ZigbeeNetwork::setPermitJoining(bool permitJoining)
 {
     setPermitJoiningInternal(permitJoining);
+}
+
+quint8 ZigbeeNetwork::generateSequenceNumber()
+{
+    return m_sequenceNumber++;
+}
+
+quint8 ZigbeeNetwork::generateTranactionSequenceNumber()
+{
+    return m_transactionSequenceNumber++;
 }
 
 QList<ZigbeeNode *> ZigbeeNetwork::nodes() const
@@ -329,7 +346,7 @@ void ZigbeeNetwork::loadNetwork()
             for (int n = 0; n < inputClustersCount; n ++) {
                 settings.setArrayIndex(n);
                 Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(settings.value("clusterId", 0).toUInt());
-                ZigbeeCluster *cluster = new ZigbeeCluster(clusterId, ZigbeeCluster::Input, endpoint);
+                ZigbeeCluster *cluster = new ZigbeeCluster(this, node, endpoint, clusterId, ZigbeeCluster::Input, endpoint);
                 //qCDebug(dcZigbeeNetwork()) << "Created" << cluster;
                 endpoint->m_inputClusters.insert(clusterId, cluster);
             }
@@ -339,7 +356,7 @@ void ZigbeeNetwork::loadNetwork()
             for (int n = 0; n < outputClustersCount; n ++) {
                 settings.setArrayIndex(n);
                 Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(settings.value("clusterId", 0).toUInt());
-                ZigbeeCluster *cluster = new ZigbeeCluster(clusterId, ZigbeeCluster::Output, endpoint);
+                ZigbeeCluster *cluster = new ZigbeeCluster(this, node, endpoint, clusterId, ZigbeeCluster::Output, endpoint);
                 //qCDebug(dcZigbeeNetwork()) << "Created" << cluster;
                 endpoint->m_outputClusters.insert(clusterId, cluster);
             }

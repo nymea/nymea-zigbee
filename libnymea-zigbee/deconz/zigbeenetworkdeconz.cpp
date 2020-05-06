@@ -25,8 +25,8 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+#include "zdo/zigbeedeviceprofile.h"
 #include "zigbeenetworkdeconz.h"
-#include "zigbeedeviceprofile.h"
 #include "loggingcategory.h"
 #include "zigbeeutils.h"
 
@@ -107,11 +107,6 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::setPermitJoin(quint16 shortAddress, qui
 
     qCDebug(dcZigbeeNetwork()) << "Send permit join request" << ZigbeeUtils::convertUint16ToHexString(request.destinationShortAddress()) << duration << "s";
     return sendRequest(request);
-}
-
-quint8 ZigbeeNetworkDeconz::generateSequenceNumber()
-{
-    return m_sequenceNumber++;
 }
 
 void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetworkState state)
@@ -322,8 +317,8 @@ void ZigbeeNetworkDeconz::handleZigbeeDeviceProfileIndication(const DeconzApsDat
         return;
     }
 
-    // Check if this is a response for a ZDO request
     foreach (ZigbeeNetworkReply *reply, m_pendingReplies.values()) {
+        // Check if this is a response for a ZDO request
         if (reply->request().profileId() == Zigbee::ZigbeeProfileDevice) {
             // We have a reply which is waiting for a ZDO response, lets check if they match
             // Check if this is the response to the sent request command
@@ -347,6 +342,16 @@ void ZigbeeNetworkDeconz::handleZigbeeDeviceProfileIndication(const DeconzApsDat
     }
 
     qCWarning(dcZigbeeNetwork()) << "FIXME: Unhandled ZDO indication" << indication;
+}
+
+void ZigbeeNetworkDeconz::handleZigbeeHomeAutomationIndication(const DeconzApsDataIndication &indication)
+{
+    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(static_cast<Zigbee::ClusterId>(indication.clusterId), indication.asdu);
+    qCDebug(dcZigbeeNetwork()) << "ZCL HA" << indication << frame;
+
+
+
+
 }
 
 ZigbeeNode *ZigbeeNetworkDeconz::createNode(QObject *parent)
@@ -412,21 +417,7 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
     // Check if we have to create a pan ID and select the channel
     if (panId() == 0) {
         m_createNewNetwork = true;
-        //setExtendedPanId(ZigbeeUtils::generateRandomPanId());
-        //qCDebug(dcZigbeeNetwork()) << "Created new PAN ID:" << extendedPanId();
     }
-
-    // Note: we cannot read or write the network key here.
-
-    //    if (securityConfiguration().networkKey().isNull()) {
-    //        m_createNewNetwork = true;
-    //        qCDebug(dcZigbeeNetwork()) << "Create a new network key";
-    //        ZigbeeNetworkKey key = ZigbeeNetworkKey::generateKey();
-    //        m_securityConfiguration.setNetworkKey(key);
-    //    }
-
-    //qCDebug(dcZigbeeNetwork()) << "Using" << securityConfiguration().networkKey() << "network link key";
-    //qCDebug(dcZigbeeNetwork()) << "Using" << securityConfiguration().globalTrustCenterLinkKey() << "global trust center link key";
 
     // - Read the firmware version
     // - Read the network configuration parameters
@@ -630,6 +621,15 @@ void ZigbeeNetworkDeconz::onAspDataIndicationReceived(const DeconzApsDataIndicat
         return;
     }
 
+    if (indication.profileId == Zigbee::ZigbeeProfileLightLink) {
+
+    }
+
+    if (indication.profileId == Zigbee::ZigbeeProfileHomeAutomation) {
+        handleZigbeeHomeAutomationIndication(indication);
+        return;
+    }
+
     // FIXME: handle it
 
     qCDebug(dcZigbeeNetwork()) << "Unhandled indication" << indication;
@@ -660,7 +660,7 @@ void ZigbeeNetworkDeconz::startNetwork()
         m_permitJoining = false;
         emit permitJoiningChanged(m_permitJoining);
         setState(StateOffline);
-        //setStartingState(StartingStateNone);
+        setCreateNetworkState(CreateNetworkStateIdle);
         setError(ErrorHardwareUnavailable);
         return;
     }

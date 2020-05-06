@@ -31,6 +31,7 @@
 #include <QObject>
 
 #include "zigbee.h"
+#include "zigbeeclusterlibrary.h"
 #include "zigbeeclusterattribute.h"
 
 struct ZigbeeClusterReportConfigurationRecord {
@@ -52,6 +53,12 @@ typedef struct ZigbeeClusterAttributeReport {
     Zigbee::DataType dataType;
     QByteArray data;
 } ZigbeeClusterAttributeReport;
+
+
+class ZigbeeNode;
+class ZigbeeNetwork;
+class ZigbeeNodeEndpoint;
+class ZigbeeNetworkReply;
 
 class ZigbeeCluster : public QObject
 {
@@ -189,7 +196,7 @@ public:
     Q_ENUM(ColorControlClusterColorMode)
 
 
-    explicit ZigbeeCluster(Zigbee::ClusterId clusterId, Direction direction, QObject *parent = nullptr);
+    explicit ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Zigbee::ClusterId clusterId, Direction direction, QObject *parent = nullptr);
 
     Direction direction() const;
 
@@ -204,12 +211,17 @@ public:
     // FIXME: this should not be public
     void setAttribute(const ZigbeeClusterAttribute &attribute);
 
-private:
+    // ZCL global commands
+    ZigbeeNetworkReply *readAttributes(QList<quint16> attributes);
+
+protected:
+    ZigbeeNetwork *m_network = nullptr;
+    ZigbeeNode *m_node = nullptr;
+    ZigbeeNodeEndpoint *m_endpoint= nullptr;
+
     Zigbee::ClusterId m_clusterId = Zigbee::ClusterIdUnknown;
     Direction m_direction = Input;
     QHash<quint16, ZigbeeClusterAttribute> m_attributes;
-
-protected:
 
 signals:
     void attributeChanged(const ZigbeeClusterAttribute &attribute);

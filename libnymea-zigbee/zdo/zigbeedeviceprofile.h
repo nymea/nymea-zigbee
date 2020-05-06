@@ -45,6 +45,13 @@ class ZigbeeDeviceProfile
     Q_GADGET
 
 public:
+    enum Status {
+        StatusSuccess = 0x00,
+        StatusInvalidRequestType = 0x01,
+        StatusDeviceNotFound = 0x02
+    };
+    Q_ENUM(Status)
+
     enum ZdoCommand {
         /* Requests */
         /*Device and service discovery */

@@ -33,6 +33,9 @@
 #include "zigbee.h"
 #include "zigbeeaddress.h"
 #include "zigbeenodeendpoint.h"
+#include "zdo/zigbeedeviceobject.h"
+
+class ZigbeeNetwork;
 
 class ZigbeeNode : public QObject
 {
@@ -99,6 +102,8 @@ public:
 
     State state() const;
     bool connected() const;
+
+    ZigbeeDeviceObject *deviceObject() const;
 
     quint16 shortAddress() const;
     ZigbeeAddress extendedAddress() const;
@@ -190,8 +195,10 @@ private:
     virtual void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) = 0;
 
 protected:
-    ZigbeeNode(QObject *parent = nullptr);
+    ZigbeeNode(ZigbeeNetwork *network, QObject *parent = nullptr);
 
+    ZigbeeNetwork *m_network;
+    ZigbeeDeviceObject *m_deviceObject = nullptr;
     QList<ZigbeeNodeEndpoint *> m_endpoints;
 
     // Node descriptor information
@@ -213,10 +220,6 @@ protected:
 
     void setShortAddress(const quint16 &shortAddress);
     void setExtendedAddress(const ZigbeeAddress &extendedAddress);
-
-    // Note: node descriptor properties (raw data for settings)
-    QByteArray nodeDescriptorRawData() const;
-    void setNodeDescriptorRawData(const QByteArray nodeDescriptorRawData);
 
     quint16 serverMask() const;
     void setServerMask(quint16 serverMask);
