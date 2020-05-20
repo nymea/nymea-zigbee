@@ -81,10 +81,8 @@ private:
     FrameControl m_frameControl;
     quint8 m_destinationEndpoint;
 
-
     quint8 buildFrameControlByte(FrameControl frameControl);
     FrameControl readFrameControlByte(quint8 frameControlByte);
-signals:
 
 };
 

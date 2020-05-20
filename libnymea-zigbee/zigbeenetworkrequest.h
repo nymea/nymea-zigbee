@@ -72,13 +72,6 @@ public:
     quint8 radius() const;
     void setRadius(quint8 radius);
 
-    // Response expectations
-    bool expectIndication() const;
-    void setExpectIndication(bool expectIndication);
-
-    bool expectConfirmation() const;
-    void setExpectConfirmation(bool expectConfirmation);
-
 private:
     quint8 m_requestId = 0;
     Zigbee::DestinationAddressMode m_destinationAddressMode = Zigbee::DestinationAddressModeShortAddress;
@@ -92,8 +85,6 @@ private:
     Zigbee::ZigbeeTxOptions m_txOptions = Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission);
     quint8 m_radius = 0;
 
-    bool m_expectIndication = false;
-    bool m_expectConfirmation = true;
 };
 
 QDebug operator<<(QDebug debug, const ZigbeeNetworkRequest &request);

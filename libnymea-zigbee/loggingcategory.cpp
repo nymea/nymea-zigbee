@@ -29,8 +29,10 @@
 
 Q_LOGGING_CATEGORY(dcZigbeeNetwork, "ZigbeeNetwork")
 Q_LOGGING_CATEGORY(dcZigbeeNode, "ZigbeeNode")
+Q_LOGGING_CATEGORY(dcZigbeeAps, "ZigbeeAps")
 Q_LOGGING_CATEGORY(dcZigbeeCluster, "ZigbeeCluster")
 Q_LOGGING_CATEGORY(dcZigbeeInterface, "ZigbeeInterface")
 Q_LOGGING_CATEGORY(dcZigbeeController, "ZigbeeController")
+Q_LOGGING_CATEGORY(dcZigbeeDeviceObject, "ZigbeeDeviceObject")
 Q_LOGGING_CATEGORY(dcZigbeeNetworkDatabase, "ZigbeeNetworkDatabase")
 Q_LOGGING_CATEGORY(dcZigbeeInterfaceTraffic, "ZigbeeInterfaceTraffic")

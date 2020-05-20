@@ -144,26 +144,6 @@ void ZigbeeNetworkRequest::setRadius(quint8 radius)
     m_radius = radius;
 }
 
-bool ZigbeeNetworkRequest::expectIndication() const
-{
-    return m_expectIndication;
-}
-
-void ZigbeeNetworkRequest::setExpectIndication(bool expectIndication)
-{
-    m_expectIndication = expectIndication;
-}
-
-bool ZigbeeNetworkRequest::expectConfirmation() const
-{
-    return m_expectConfirmation;
-}
-
-void ZigbeeNetworkRequest::setExpectConfirmation(bool expectConfirmation)
-{
-    m_expectConfirmation = expectConfirmation;
-}
-
 QDebug operator<<(QDebug debug, const ZigbeeNetworkRequest &request)
 {
     debug.nospace() << "Request(ID:" << request.requestId() << ", ";
@@ -187,7 +167,7 @@ QDebug operator<<(QDebug debug, const ZigbeeNetworkRequest &request)
     debug.nospace() << "Source EP:" << ZigbeeUtils::convertByteToHexString(request.sourceEndpoint()) << ", ";
     debug.nospace() << "Radius:" << request.radius() << ", ";
     debug.nospace() << request.txOptions() << ", ";
-    debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(request.asdu()) << ", ";
+    debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(request.asdu());
     debug.nospace() << ")";
     return debug.space();
 }

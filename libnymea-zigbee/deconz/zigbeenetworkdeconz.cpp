@@ -38,8 +38,8 @@ ZigbeeNetworkDeconz::ZigbeeNetworkDeconz(QObject *parent) :
     m_controller = new ZigbeeBridgeControllerDeconz(this);
     //connect(m_controller, &ZigbeeBridgeControllerDeconz::messageReceived, this, &ZigbeeNetworkDeconz::onMessageReceived);
     connect(m_controller, &ZigbeeBridgeControllerDeconz::availableChanged, this, &ZigbeeNetworkDeconz::onControllerAvailableChanged);
-    connect(m_controller, &ZigbeeBridgeControllerDeconz::aspDataConfirmReceived, this, &ZigbeeNetworkDeconz::onAspDataConfirmReceived);
-    connect(m_controller, &ZigbeeBridgeControllerDeconz::aspDataIndicationReceived, this, &ZigbeeNetworkDeconz::onAspDataIndicationReceived);
+    connect(m_controller, &ZigbeeBridgeControllerDeconz::apsDataConfirmReceived, this, &ZigbeeNetworkDeconz::onApsDataConfirmReceived);
+    connect(m_controller, &ZigbeeBridgeControllerDeconz::apsDataIndicationReceived, this, &ZigbeeNetworkDeconz::onApsDataIndicationReceived);
 
     m_pollNetworkStateTimer = new QTimer(this);
     m_pollNetworkStateTimer->setInterval(1000);
@@ -70,7 +70,12 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::sendRequest(const ZigbeeNetworkRequest 
         m_pendingReplies.remove(request.requestId());
     });
 
-    qCDebug(dcZigbeeNetwork()) << "Send request" << request;
+    // Finish the reply right the way if the network is offline
+    if (!m_controller->available()) {
+        finishNetworkReply(reply, ZigbeeNetworkReply::ErrorNetworkOffline);
+        return reply;
+    }
+
     ZigbeeInterfaceDeconzReply *interfaceReply = m_controller->requestSendRequest(request);
     connect(interfaceReply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply, interfaceReply](){
         if (interfaceReply->statusCode() != Deconz::StatusCodeSuccess) {
@@ -285,13 +290,11 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
             return;
         }
 
-        ZigbeeNodeDeconz *coordinatorNode = qobject_cast<ZigbeeNodeDeconz *>(createNode(this));
-        coordinatorNode->setShortAddress(m_controller->networkConfiguration().shortAddress);
-        coordinatorNode->setExtendedAddress(m_controller->networkConfiguration().ieeeAddress);
+        ZigbeeNode *coordinatorNode = createNode(m_controller->networkConfiguration().shortAddress, m_controller->networkConfiguration().ieeeAddress, this);
         m_coordinatorNode = coordinatorNode;
 
         // Network creation done when coordinator node is initialized
-        connect(coordinatorNode, &ZigbeeNodeDeconz::stateChanged, this, [this, coordinatorNode](ZigbeeNode::State state){
+        connect(coordinatorNode, &ZigbeeNode::stateChanged, this, [this, coordinatorNode](ZigbeeNode::State state){
             if (state == ZigbeeNode::StateInitialized) {
                 qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
                 setState(StateRunning);
@@ -317,31 +320,39 @@ void ZigbeeNetworkDeconz::handleZigbeeDeviceProfileIndication(const DeconzApsDat
         return;
     }
 
-    foreach (ZigbeeNetworkReply *reply, m_pendingReplies.values()) {
-        // Check if this is a response for a ZDO request
-        if (reply->request().profileId() == Zigbee::ZigbeeProfileDevice) {
-            // We have a reply which is waiting for a ZDO response, lets check if they match
-            // Check if this is the response to the sent request command
-            if (indication.clusterId == (reply->request().clusterId() | 0x8000)) {
-                // Now check if the id matches, if so set the ADPU as response to the reply, otherwise this is not the message for this reply
-                ZigbeeDeviceProfileAdpu deviceAdpu = ZigbeeDeviceProfile::parseAdpu(indication.asdu);
-                if (deviceAdpu.sequenceNumber == reply->request().requestId()) {
-                    // We found the correct reply
-
-                    // Set the response payload of the
-                    qCDebug(dcZigbeeNetwork()) << "Indication response for ZDO request received"
-                                               << static_cast<ZigbeeDeviceProfile::ZdoCommand>(reply->request().clusterId())
-                                               << "-->"
-                                               << static_cast<ZigbeeDeviceProfile::ZdoCommand>(indication.clusterId)
-                                               << deviceAdpu;
-                    setReplyResponseData(reply, indication.asdu);
-                    return;
-                }
-            }
-        }
+    ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZDO indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
+        return;
     }
 
-    qCWarning(dcZigbeeNetwork()) << "FIXME: Unhandled ZDO indication" << indication;
+    node->deviceObject()->processApsDataIndication(indication.destinationEndpoint, indication.sourceEndpoint, indication.clusterId, indication.asdu, indication.lqi, indication.rssi);
+
+//    foreach (ZigbeeNetworkReply *reply, m_pendingReplies.values()) {
+//        // Check if this is a reply if for a ZDO request
+//        if (reply->request().profileId() == Zigbee::ZigbeeProfileDevice) {
+//            // We have a reply which is waiting for a ZDO response, lets check if they match
+//            // Check if this is the response to the sent request command
+//            if (indication.clusterId == (reply->request().clusterId() | 0x8000)) {
+//                // Now check if the id matches, if so set the ADPU as response to the reply, otherwise this is not the message for this reply
+//                ZigbeeDeviceProfile::Adpu deviceAdpu = ZigbeeDeviceProfile::parseAdpu(indication.asdu);
+//                if (deviceAdpu.transactionSequenceNumber == reply->request().requestId()) {
+//                    // We found the correct reply
+
+//                    // Set the response payload of the
+//                    qCDebug(dcZigbeeNetwork()) << "Indication response for ZDO request received"
+//                                               << static_cast<ZigbeeDeviceProfile::ZdoCommand>(reply->request().clusterId())
+//                                               << "-->"
+//                                               << static_cast<ZigbeeDeviceProfile::ZdoCommand>(indication.clusterId)
+//                                               << deviceAdpu;
+//                    setReplyResponseData(reply, indication.asdu);
+//                    return;
+//                }
+//            }
+//        }
+//    }
+
+    //qCWarning(dcZigbeeNetwork()) << "FIXME: Unhandled ZDO indication" << indication;
 }
 
 void ZigbeeNetworkDeconz::handleZigbeeHomeAutomationIndication(const DeconzApsDataIndication &indication)
@@ -352,11 +363,6 @@ void ZigbeeNetworkDeconz::handleZigbeeHomeAutomationIndication(const DeconzApsDa
 
 
 
-}
-
-ZigbeeNode *ZigbeeNetworkDeconz::createNode(QObject *parent)
-{
-    return new ZigbeeNodeDeconz(this, parent);
 }
 
 void ZigbeeNetworkDeconz::setPermitJoiningInternal(bool permitJoining)
@@ -371,7 +377,7 @@ void ZigbeeNetworkDeconz::setPermitJoiningInternal(bool permitJoining)
 
     ZigbeeNetworkReply *reply = setPermitJoin(Zigbee::BroadcastAddressAllRouters, duration);
     connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply, permitJoining, duration](){
-        if (reply->zigbeeStatus() != Zigbee::ZigbeeStatusSuccess) {
+        if (reply->zigbeeApsStatus() != Zigbee::ZigbeeApsStatusSuccess) {
             qCDebug(dcZigbeeNetwork()) << "Could not set permit join to" << duration;
             m_permitJoining = false;
             emit permitJoiningChanged(m_permitJoining);
@@ -598,23 +604,19 @@ void ZigbeeNetworkDeconz::onPermitJoinRefreshTimout()
     setPermitJoiningInternal(true);
 }
 
-void ZigbeeNetworkDeconz::onAspDataConfirmReceived(const DeconzApsDataConfirm &confirm)
+void ZigbeeNetworkDeconz::onApsDataConfirmReceived(const DeconzApsDataConfirm &confirm)
 {
-    qCDebug(dcZigbeeNetwork()) << confirm;
-
     ZigbeeNetworkReply *reply = m_pendingReplies.value(confirm.requestId);
     if (!reply) {
         qCWarning(dcZigbeeNetwork()) << "Received confirmation but could not find any reply. Ignoring the confirmation";
         return;
     }
 
-    setReplyResponseError(reply, static_cast<Zigbee::ZigbeeStatus>(confirm.zigbeeStatusCode));
+    setReplyResponseError(reply, static_cast<Zigbee::ZigbeeApsStatus>(confirm.zigbeeStatusCode));
 }
 
-void ZigbeeNetworkDeconz::onAspDataIndicationReceived(const DeconzApsDataIndication &indication)
+void ZigbeeNetworkDeconz::onApsDataIndicationReceived(const DeconzApsDataIndication &indication)
 {
-    qCDebug(dcZigbeeNetwork()) << indication;
-
     // Check if this indocation is related to any pending reply
     if (indication.profileId == Zigbee::ZigbeeProfileDevice) {
         handleZigbeeDeviceProfileIndication(indication);
@@ -644,10 +646,7 @@ void ZigbeeNetworkDeconz::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress 
         return;
     }
 
-    ZigbeeNodeDeconz *node = static_cast<ZigbeeNodeDeconz *>(createNode(this));
-    node->setExtendedAddress(ieeeAddress);
-    node->setShortAddress(shortAddress);
-    node->setMacCapabilitiesFlag(macCapabilities);
+    ZigbeeNode *node = createNode(shortAddress, ieeeAddress, macCapabilities, this);
     addUnitializedNode(node);
     node->startInitialization();
 }

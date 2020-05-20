@@ -61,7 +61,7 @@ public:
     static QString convertUint64ToHexString(const quint64 &value);
 
     // Enum prittify print methods
-    static QString messageTypeToString(const Zigbee::InterfaceMessageType &type);
+    //static QString messageTypeToString(const Zigbee::InterfaceMessageType &type);
     static QString clusterIdToString(const Zigbee::ClusterId &clusterId);
     static QString profileIdToString(const Zigbee::ZigbeeProfile &profileId);
 

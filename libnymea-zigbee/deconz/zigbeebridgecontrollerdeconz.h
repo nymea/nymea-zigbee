@@ -61,14 +61,13 @@ typedef struct DeconzNetworkConfiguration {
 } DeconzNetworkConfiguration;
 
 
-
 // This struct describes the deCONZ device state
 typedef struct DeconzDeviceState {
     Deconz::NetworkState networkState = Deconz::NetworkStateOffline;
-    bool aspDataConfirm = false;
-    bool aspDataIndication = false;
+    bool apsDataConfirm = false;
+    bool apsDataIndication = false;
     bool configurationChanged = false;
-    bool aspDataRequestFreeSlots = false;
+    bool apsDataRequestFreeSlots = false;
 } DeconzDeviceState;
 
 
@@ -141,7 +140,7 @@ private:
     Deconz::NetworkState m_networkState = Deconz::NetworkStateOffline;
     QTimer *m_watchdogTimer = nullptr;
 
-    bool m_aspFreeSlotsAvailable = false;
+    bool m_apsFreeSlotsAvailable = false;
 
     quint8 generateSequenceNumber();
 
@@ -165,8 +164,8 @@ signals:
     void networkStateChanged(Deconz::NetworkState networkState);
     void networkConfigurationParameterChanged(const DeconzNetworkConfiguration &networkConfiguration);
 
-    void aspDataConfirmReceived(const DeconzApsDataConfirm &confirm);
-    void aspDataIndicationReceived(const DeconzApsDataIndication &indication);
+    void apsDataConfirmReceived(const DeconzApsDataConfirm &confirm);
+    void apsDataIndicationReceived(const DeconzApsDataIndication &indication);
 
 private slots:
     void onInterfaceAvailableChanged(bool available);

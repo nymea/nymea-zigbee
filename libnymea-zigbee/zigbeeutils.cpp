@@ -260,15 +260,15 @@ QString ZigbeeUtils::convertUint64ToHexString(const quint64 &value)
     return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
 }
 
-QString ZigbeeUtils::messageTypeToString(const Zigbee::InterfaceMessageType &type)
-{
-    QMetaObject metaObject = Zigbee::staticMetaObject;
-    QMetaEnum metaEnum = metaObject.enumerator(metaObject.indexOfEnumerator("InterfaceMessageType"));
+//QString ZigbeeUtils::messageTypeToString(const Zigbee::InterfaceMessageType &type)
+//{
+//    QMetaObject metaObject = Zigbee::staticMetaObject;
+//    QMetaEnum metaEnum = metaObject.enumerator(metaObject.indexOfEnumerator("InterfaceMessageType"));
 
-    QString enumString = metaEnum.valueToKey(type);
+//    QString enumString = metaEnum.valueToKey(type);
 
-    return enumString.remove("Zigbee::InterfaceMessageType(MessageType").remove(")");
-}
+//    return enumString.remove("Zigbee::InterfaceMessageType(MessageType").remove(")");
+//}
 
 QString ZigbeeUtils::clusterIdToString(const Zigbee::ClusterId &clusterId)
 {

@@ -296,7 +296,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
     for (int i = 0; i < asdu.length(); i++) {
         stream << static_cast<quint8>(asdu.at(i));
     }
-    stream << static_cast<quint8>(txOptions); // TX Options: Use ASP ACKs
+    stream << static_cast<quint8>(txOptions); // TX Options: Use APS ACKs
     stream << radius;
 
     m_interface->sendPackage(message);
@@ -337,7 +337,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
     for (int i = 0; i < asdu.length(); i++) {
         stream << static_cast<quint8>(asdu.at(i));
     }
-    stream << static_cast<quint8>(txOptions); // TX Options: Use ASP ACKs
+    stream << static_cast<quint8>(txOptions); // TX Options: Use APS ACKs
     stream << radius;
 
     m_interface->sendPackage(message);
@@ -347,6 +347,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestSendRequest(const ZigbeeNetworkRequest &request)
 {
+    qCDebug(dcZigbeeAps()) << "APSDE-DATA.request" << request;
     ZigbeeInterfaceDeconzReply *interfaceReply = nullptr;
     switch (request.destinationAddressMode()) {
     case Zigbee::DestinationAddressModeGroup:
@@ -733,10 +734,10 @@ DeconzDeviceState ZigbeeBridgeControllerDeconz::parseDeviceStateFlag(quint8 devi
 {
     DeconzDeviceState state;
     state.networkState = static_cast<Deconz::NetworkState>(deviceStateFlag & 0x03);
-    state.aspDataConfirm = (deviceStateFlag & 0x04);
-    state.aspDataIndication = (deviceStateFlag & 0x08);
+    state.apsDataConfirm = (deviceStateFlag & 0x04);
+    state.apsDataIndication = (deviceStateFlag & 0x08);
     state.configurationChanged = (deviceStateFlag & 0x10);
-    state.aspDataRequestFreeSlots = (deviceStateFlag & 0x20);
+    state.apsDataRequestFreeSlots = (deviceStateFlag & 0x20);
     return state;
 }
 
@@ -750,7 +751,7 @@ void ZigbeeBridgeControllerDeconz::readDataIndication()
             return;
         }
 
-        // ASP data indication received, process the content
+        // APS data indication received, process the content
         qCDebug(dcZigbeeController()) << "Reading data indication finished successfully";
         processDataIndication(reply->responseData());
     });
@@ -766,7 +767,7 @@ void ZigbeeBridgeControllerDeconz::readDataConfirm()
             return;
         }
 
-        // ASP data indication received, process the content
+        // APS data confirm received, process the content
         qCDebug(dcZigbeeController()) << "Reading data confirm finished successfully";
         processDataConfirm(reply->responseData());
     });
@@ -782,10 +783,10 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
         emit networkStateChanged(m_networkState);
     }
 
-    if (m_aspFreeSlotsAvailable != deviceState.aspDataRequestFreeSlots) {
-        m_aspFreeSlotsAvailable = deviceState.aspDataRequestFreeSlots;
+    if (m_apsFreeSlotsAvailable != deviceState.apsDataRequestFreeSlots) {
+        m_apsFreeSlotsAvailable = deviceState.apsDataRequestFreeSlots;
 
-        // FIXME: if changed to true, send next asp data request
+        // FIXME: if changed to true, send next aps data request
 
     }
 
@@ -795,12 +796,12 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
     // Note: read a data indication before a confirmation since the confirmation arrives after a related indication normally
 
     // Check if we have to read a data indication message
-    if (deviceState.aspDataIndication) {
+    if (deviceState.apsDataIndication) {
         readDataIndication();
     }
 
     // Check if we have a response to read for a request
-    if (deviceState.aspDataConfirm) {
+    if (deviceState.apsDataConfirm) {
         readDataConfirm();
     }
 
@@ -808,7 +809,7 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
 
 void ZigbeeBridgeControllerDeconz::processDataIndication(const QByteArray &data)
 {
-    // ASP data indication
+    // APS data indication
     QDataStream stream(data);
     stream.setByteOrder(QDataStream::LittleEndian);
     quint16 payloadLenght = 0; quint8 deviceStateFlag = 0; quint8 reserved = 0; quint16 asduLength = 0;
@@ -843,13 +844,14 @@ void ZigbeeBridgeControllerDeconz::processDataIndication(const QByteArray &data)
     stream >> reserved >> reserved >> indication.lqi >> reserved >> reserved >> reserved >> reserved >> indication.rssi;
 
     // Print the information for debugging
+    qCDebug(dcZigbeeAps()) << "APSDE-DATA.indication" << indication;
     qCDebug(dcZigbeeController()) << indication;
 
-    emit aspDataIndicationReceived(indication);
+    emit apsDataIndicationReceived(indication);
 
     // Process the device state in order to check if we have to request another indication
     DeconzDeviceState deviceState = parseDeviceStateFlag(deviceStateFlag);
-    if (deviceState.aspDataIndication) {
+    if (deviceState.apsDataIndication) {
         readDataIndication();
     }
 }
@@ -873,12 +875,13 @@ void ZigbeeBridgeControllerDeconz::processDataConfirm(const QByteArray &data)
 
     // Print the information for debugging
     qCDebug(dcZigbeeController()) << confirm;
+    qCDebug(dcZigbeeAps()) << "APSDE-DATA.confirm" << confirm;
 
-    emit aspDataConfirmReceived(confirm);
+    emit apsDataConfirmReceived(confirm);
 
     // Process the device state in order to check if we have to request another indication
     DeconzDeviceState deviceState = parseDeviceStateFlag(deviceStateFlag);
-    if (deviceState.aspDataConfirm) {
+    if (deviceState.apsDataConfirm) {
         readDataConfirm();
     }
 }
@@ -996,16 +999,16 @@ QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState)
         break;
     }
 
-    debug.nospace() << "Confirm=" << static_cast<int>(deviceState.aspDataConfirm) << ", ";
-    debug.nospace() << "Indication=" << static_cast<int>(deviceState.aspDataIndication) << ", ";
+    debug.nospace() << "Confirm=" << static_cast<int>(deviceState.apsDataConfirm) << ", ";
+    debug.nospace() << "Indication=" << static_cast<int>(deviceState.apsDataIndication) << ", ";
     debug.nospace() << "ConfigChanged=" << static_cast<int>(deviceState.configurationChanged) << ", ";
-    debug.nospace() << "CanSend=" << deviceState.aspDataRequestFreeSlots << ")";
+    debug.nospace() << "CanSend=" << deviceState.apsDataRequestFreeSlots << ")";
     return debug.space();
 }
 
 QDebug operator<<(QDebug debug, const DeconzApsDataConfirm &confirm)
 {
-    debug.nospace() << "ASP.Confirm(";
+    debug.nospace() << "APSDE-DATA.confirm(";
     debug.nospace() << "Request ID: " << confirm.requestId << ", ";
 
     if (confirm.destinationAddressMode == Zigbee::DestinationAddressModeGroup)
@@ -1027,7 +1030,7 @@ QDebug operator<<(QDebug debug, const DeconzApsDataConfirm &confirm)
 
 QDebug operator<<(QDebug debug, const DeconzApsDataIndication &indication)
 {
-    debug.nospace() << "ASP.Indication(";
+    debug.nospace() << "APSDE-DATA.indication(";
     if (indication.destinationAddressMode == Zigbee::DestinationAddressModeGroup)
         debug.nospace() << "Group address:" << ZigbeeUtils::convertUint16ToHexString(indication.destinationShortAddress) << ", ";
 
@@ -1067,7 +1070,7 @@ QDebug operator<<(QDebug debug, const DeconzNetworkConfiguration &configuration)
     debug.nospace() << " - NWK address:" << ZigbeeUtils::convertUint16ToHexString(configuration.shortAddress) << endl;
     debug.nospace() << " - PAN ID:" << ZigbeeUtils::convertUint16ToHexString(configuration.panId) << endl;
     debug.nospace() << " - Extended PAN ID:" << ZigbeeUtils::convertUint64ToHexString(configuration.extendedPanId) << endl;
-    debug.nospace() << " - ASP Extended PAN ID:" << ZigbeeUtils::convertUint64ToHexString(configuration.apsExtendedPanId) << endl;
+    debug.nospace() << " - APS Extended PAN ID:" << ZigbeeUtils::convertUint64ToHexString(configuration.apsExtendedPanId) << endl;
     debug.nospace() << " - Trust center IEEE address:" << configuration.trustCenterAddress.toString() << endl;
     debug.nospace() << " - Channel mask:" << ZigbeeChannelMask(configuration.channelMask) << endl;
     debug.nospace() << " - Channel:" << configuration.currentChannel << endl;

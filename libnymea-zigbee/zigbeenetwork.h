@@ -34,6 +34,7 @@
 #include <QSqlDatabase>
 
 #include "zigbeenode.h"
+#include "zigbeenodeendpoint.h"
 #include "zigbeechannelmask.h"
 #include "zigbeebridgecontroller.h"
 #include "zigbeesecurityconfiguration.h"
@@ -134,11 +135,7 @@ private:
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
 
-    QSqlDatabase m_db;
-
 private:
-    bool initDB();
-
     void addNodeInternally(ZigbeeNode *node);
     void removeNodeInternally(ZigbeeNode *node);
 
@@ -148,7 +145,8 @@ protected:
     bool m_permitJoining = false;
     ZigbeeSecurityConfiguration m_securityConfiguration;
 
-    virtual ZigbeeNode *createNode(QObject *parent) = 0;
+    ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent);
+    ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, quint8 macCapabilities, QObject *parent);
     virtual void setPermitJoiningInternal(bool permitJoining) = 0;
 
     void saveNetwork();
@@ -169,8 +167,7 @@ protected:
 
     // Network reply methods
     ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());
-    void setReplyResponseData(ZigbeeNetworkReply *reply, const QByteArray &responseData);
-    void setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeStatus zigbeeStatus = Zigbee::ZigbeeStatusSuccess);
+    void setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeApsStatus zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess);
     void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError);
 
 signals:

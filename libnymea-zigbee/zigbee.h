@@ -74,210 +74,210 @@ public:
     Q_ENUM(ZigbeeChannel)
     Q_DECLARE_FLAGS(ZigbeeChannels, ZigbeeChannel)
 
-    enum InterfaceMessageType {
-        // Common Commands
-        MessageTypeNone                                = 0x0000,
-        MessageTypeStatus                              = 0x8000,
-        MessageTypeLogging                             = 0x8001,
+//    enum InterfaceMessageType {
+//        // Common Commands
+//        MessageTypeNone                                = 0x0000,
+//        MessageTypeStatus                              = 0x8000,
+//        MessageTypeLogging                             = 0x8001,
 
-        MessageTypeDataIndication                      = 0x8002,
+//        MessageTypeDataIndication                      = 0x8002,
 
-        MessageTypeNodeClusterList                     = 0x8003,
-        MessageTypeNodeAttributeList                   = 0x8004,
-        MessageTypeNodeCommandIdList                   = 0x8005,
-        MessageTypeRestartProvisioned                  = 0x8006,
-        MessageTypeFactoryNewRestart                   = 0x8007,
-        MessageTypeGetVersion                          = 0x0010,
-        MessageTypeVersionList                         = 0x8010,
+//        MessageTypeNodeClusterList                     = 0x8003,
+//        MessageTypeNodeAttributeList                   = 0x8004,
+//        MessageTypeNodeCommandIdList                   = 0x8005,
+//        MessageTypeRestartProvisioned                  = 0x8006,
+//        MessageTypeFactoryNewRestart                   = 0x8007,
+//        MessageTypeGetVersion                          = 0x0010,
+//        MessageTypeVersionList                         = 0x8010,
 
-        MessageTypeSetExtendetPanId                    = 0x0020,
-        MessageTypeSetChannelMask                      = 0x0021,
-        MessageTypeSetSecurity                         = 0x0022,
-        MessageTypeSetDeviceType                       = 0x0023,
-        MessageTypeStartNetwork                        = 0x0024,
-        MessageTypeStartScan                           = 0x0025,
-        MessageTypeNetworkJoinedFormed                 = 0x8024,
-        MessageTypeNetworkRemoveDevice                 = 0x0026,
-        MessageTypeNetworkWhitelistEnable              = 0x0027,
-        MessageTypeAuthenticateDeviceRequest           = 0x0028,
-        MessageTypeAuthenticateDeviceResponse          = 0x8028,
-        MessageTypeOutOfBandCommisioningDataRequest    = 0x0029,
-        MessageTypeOutOfBandCommisioningDataResponse   = 0x8029,
-        MessageTypeUserDescriptorSet                   = 0x002B,
-        MessageTypeUserDescriptorNotify                = 0x802B,
-        MessageTypeUserDescriptorRequest               = 0x002C,
-        MessageTypeUserDescriptorResponse              = 0x802C,
+//        MessageTypeSetExtendetPanId                    = 0x0020,
+//        MessageTypeSetChannelMask                      = 0x0021,
+//        MessageTypeSetSecurity                         = 0x0022,
+//        MessageTypeSetDeviceType                       = 0x0023,
+//        MessageTypeStartNetwork                        = 0x0024,
+//        MessageTypeStartScan                           = 0x0025,
+//        MessageTypeNetworkJoinedFormed                 = 0x8024,
+//        MessageTypeNetworkRemoveDevice                 = 0x0026,
+//        MessageTypeNetworkWhitelistEnable              = 0x0027,
+//        MessageTypeAuthenticateDeviceRequest           = 0x0028,
+//        MessageTypeAuthenticateDeviceResponse          = 0x8028,
+//        MessageTypeOutOfBandCommisioningDataRequest    = 0x0029,
+//        MessageTypeOutOfBandCommisioningDataResponse   = 0x8029,
+//        MessageTypeUserDescriptorSet                   = 0x002B,
+//        MessageTypeUserDescriptorNotify                = 0x802B,
+//        MessageTypeUserDescriptorRequest               = 0x002C,
+//        MessageTypeUserDescriptorResponse              = 0x802C,
 
-        MessageTypeReset                               = 0x0011,
-        MessageTypeErasePersistentData                 = 0x0012,
-        MessageTypeZllFactoryNew                       = 0x0013,
-        MessageTypeGetPermitJoining                    = 0x0014,
-        MessageTypeGetPermitJoiningResponse            = 0x8014,
-        MessageTypeBind                                = 0x0030,
-        MessageTypeBindResponse                        = 0x8030,
-        MessageTypeUnbind                              = 0x0031,
-        MessageTypeBindGroup                           = 0x0032,
-        MessageTypeBindGroupResponse                   = 0x8032,
-        MessageTypeUnbindGroup                         = 0x0033,
-        MessageTypeUnbindGroupResponse                 = 0x8033,
+//        MessageTypeReset                               = 0x0011,
+//        MessageTypeErasePersistentData                 = 0x0012,
+//        MessageTypeZllFactoryNew                       = 0x0013,
+//        MessageTypeGetPermitJoining                    = 0x0014,
+//        MessageTypeGetPermitJoiningResponse            = 0x8014,
+//        MessageTypeBind                                = 0x0030,
+//        MessageTypeBindResponse                        = 0x8030,
+//        MessageTypeUnbind                              = 0x0031,
+//        MessageTypeBindGroup                           = 0x0032,
+//        MessageTypeBindGroupResponse                   = 0x8032,
+//        MessageTypeUnbindGroup                         = 0x0033,
+//        MessageTypeUnbindGroupResponse                 = 0x8033,
 
-        MessageTypeUnbindResponse                      = 0x8031,
-        MessageTypeComplexDescriptorRequest            = 0x0034,
-        MessageTypeComplexDescriptorResponse           = 0x8034,
+//        MessageTypeUnbindResponse                      = 0x8031,
+//        MessageTypeComplexDescriptorRequest            = 0x0034,
+//        MessageTypeComplexDescriptorResponse           = 0x8034,
 
-        MessageTypeNetworkAdressRequest                = 0x0040,
-        MessageTypeNetworkAdressResponse               = 0x8040,
-        MessageTypeIeeeAddressResponse                 = 0x0041,
-        MessageTypeIeeeAddressRequest                  = 0x8041,
-        MessageTypeNodeDescriptorRequest               = 0x0042,
-        MessageTypeNodeDescriptorRsponse               = 0x8042,
-        MessageTypeSimpleDescriptorRequest             = 0x0043,
-        MessageTypeSimpleDescriptorResponse            = 0x8043,
-        MessageTypePowerDescriptorRequest              = 0x0044,
-        MessageTypePowerDescriptorResponse             = 0x8044,
-        MessageTypeActiveEndpointRequest               = 0x0045,
-        MessageTypeActiveEndpointResponse              = 0x8045,
-        MessageTypeMatchDescriptorRequest              = 0x0046,
-        MessageTypeMatchDescriptorResponse             = 0x8046,
-        MessageTypeManagementLeaveRequest              = 0x0047,
-        MessageTypeManagementLeaveResponse             = 0x8047,
-        MessageTypeLeaveIndication                     = 0x8048,
-        MessageTypePermitJoiningRequest                = 0x0049,
-        MessageTypeManagementNetworkUpdateRequest      = 0x004A,
-        MessageTypeManagementNetworkUpdateResponse     = 0x804A,
-        MessageTypeSystemServerDiscoveryRequest        = 0x004B,
-        MessageTypeSystemServerDiscoveryResponse       = 0x804B,
-        MessageTypeDeviceAnnounce                      = 0x004D,
-        MessageTypeManagementLqiRequest                = 0x004E,
-        MessageTypeManagementLqiResponse               = 0x804E,
+//        MessageTypeNetworkAdressRequest                = 0x0040,
+//        MessageTypeNetworkAdressResponse               = 0x8040,
+//        MessageTypeIeeeAddressResponse                 = 0x0041,
+//        MessageTypeIeeeAddressRequest                  = 0x8041,
+//        MessageTypeNodeDescriptorRequest               = 0x0042,
+//        MessageTypeNodeDescriptorRsponse               = 0x8042,
+//        MessageTypeSimpleDescriptorRequest             = 0x0043,
+//        MessageTypeSimpleDescriptorResponse            = 0x8043,
+//        MessageTypePowerDescriptorRequest              = 0x0044,
+//        MessageTypePowerDescriptorResponse             = 0x8044,
+//        MessageTypeActiveEndpointRequest               = 0x0045,
+//        MessageTypeActiveEndpointResponse              = 0x8045,
+//        MessageTypeMatchDescriptorRequest              = 0x0046,
+//        MessageTypeMatchDescriptorResponse             = 0x8046,
+//        MessageTypeManagementLeaveRequest              = 0x0047,
+//        MessageTypeManagementLeaveResponse             = 0x8047,
+//        MessageTypeLeaveIndication                     = 0x8048,
+//        MessageTypePermitJoiningRequest                = 0x0049,
+//        MessageTypeManagementNetworkUpdateRequest      = 0x004A,
+//        MessageTypeManagementNetworkUpdateResponse     = 0x804A,
+//        MessageTypeSystemServerDiscoveryRequest        = 0x004B,
+//        MessageTypeSystemServerDiscoveryResponse       = 0x804B,
+//        MessageTypeDeviceAnnounce                      = 0x004D,
+//        MessageTypeManagementLqiRequest                = 0x004E,
+//        MessageTypeManagementLqiResponse               = 0x804E,
 
-        // Basic cluster
-        MessageBasicResetFactoryDefaults               = 0x0050,
-        MessageBasicResetFactoryDefaultsResponse       = 0x8050,
+//        // Basic cluster
+//        MessageBasicResetFactoryDefaults               = 0x0050,
+//        MessageBasicResetFactoryDefaultsResponse       = 0x8050,
 
-        // Group Cluster
-        MessageTypeAddGroupRequest                     = 0x0060,
-        MessageTypeAddGroupResponse                    = 0x8060,
-        MessageTypeViewGroupRequest                    = 0x0061,
-        MessageTypeViewGroupResponse                   = 0x8061,
-        MessageTypeGetGroupMembershipRequest           = 0x0062,
-        MessageTypeGetGroupMembershipResponse          = 0x8062,
-        MessageTypeRemoveGroupRequest                  = 0x0063,
-        MessageTypeRemoveGroupResponse                 = 0x8063,
-        MessageTypeRemoveAllGroups                     = 0x0064,
-        MessageTypeGroupIfIdentify                     = 0x0065,
+//        // Group Cluster
+//        MessageTypeAddGroupRequest                     = 0x0060,
+//        MessageTypeAddGroupResponse                    = 0x8060,
+//        MessageTypeViewGroupRequest                    = 0x0061,
+//        MessageTypeViewGroupResponse                   = 0x8061,
+//        MessageTypeGetGroupMembershipRequest           = 0x0062,
+//        MessageTypeGetGroupMembershipResponse          = 0x8062,
+//        MessageTypeRemoveGroupRequest                  = 0x0063,
+//        MessageTypeRemoveGroupResponse                 = 0x8063,
+//        MessageTypeRemoveAllGroups                     = 0x0064,
+//        MessageTypeGroupIfIdentify                     = 0x0065,
 
-        // Identify Cluster
-        MessageTypeIdentifySend                        = 0x0070,
-        MessageTypeIdentifyQuery                       = 0x0071,
+//        // Identify Cluster
+//        MessageTypeIdentifySend                        = 0x0070,
+//        MessageTypeIdentifyQuery                       = 0x0071,
 
-        // Level Cluster
-        MessageTypeMoveToLevel                         = 0x0080,
-        MessageTypeMoveToLevelOnOff                    = 0x0081,
-        MessageTypeMoveStep                            = 0x0082,
-        MessageTypeMoveStopMove                        = 0x0083,
-        MessageTypeMoveStopMoveOnOff                   = 0x0084,
+//        // Level Cluster
+//        MessageTypeMoveToLevel                         = 0x0080,
+//        MessageTypeMoveToLevelOnOff                    = 0x0081,
+//        MessageTypeMoveStep                            = 0x0082,
+//        MessageTypeMoveStopMove                        = 0x0083,
+//        MessageTypeMoveStopMoveOnOff                   = 0x0084,
 
-        // Scenes Cluster
-        MessageTypeViewScene                           = 0x00A0,
-        MessageTypeViewSceneResponse                   = 0x80A0,
-        MessageTypeAddScene                            = 0x00A1,
-        MessageTypeAddSceneResponse                    = 0x80A1,
-        MessageTypeRemoveScene                         = 0x00A2,
-        MessageTypeRemoveSceneResponse                 = 0x80A2,
-        MessageTypeRemoveAllScenes                     = 0x00A3,
-        MessageTypeRemoveAllScenesResponse             = 0x80A3,
-        MessageTypeStoreScene                          = 0x00A4,
-        MessageTypeStoreSceneResponse                  = 0x80A4,
-        MessageTypeRecallScene                         = 0x00A5,
-        MessageTypeSceneMembershipRequest              = 0x00A6,
-        MessageTypeSceneMembershipResponse             = 0x80A6,
+//        // Scenes Cluster
+//        MessageTypeViewScene                           = 0x00A0,
+//        MessageTypeViewSceneResponse                   = 0x80A0,
+//        MessageTypeAddScene                            = 0x00A1,
+//        MessageTypeAddSceneResponse                    = 0x80A1,
+//        MessageTypeRemoveScene                         = 0x00A2,
+//        MessageTypeRemoveSceneResponse                 = 0x80A2,
+//        MessageTypeRemoveAllScenes                     = 0x00A3,
+//        MessageTypeRemoveAllScenesResponse             = 0x80A3,
+//        MessageTypeStoreScene                          = 0x00A4,
+//        MessageTypeStoreSceneResponse                  = 0x80A4,
+//        MessageTypeRecallScene                         = 0x00A5,
+//        MessageTypeSceneMembershipRequest              = 0x00A6,
+//        MessageTypeSceneMembershipResponse             = 0x80A6,
 
-        //Colour Cluster
-        MessageTypeMoveToHue                           = 0x00B0,
-        MessageTypeMoveHue                             = 0x00B1,
-        MessageTypeStepHue                             = 0x00B2,
-        MessageTypeMoveToSaturation                    = 0x00B3,
-        MessageTypeMoveSaturation                      = 0x00B4,
-        MessageTypeStepStaturation                     = 0x00B5,
-        MessageTypeMoveToHueSaturation                 = 0x00B6,
-        MessageTypeMoveToColor                         = 0x00B7,
-        MessageTypeMoveColor                           = 0x00B8,
-        MessageTypeStepColor                           = 0x00B9,
+//        //Colour Cluster
+//        MessageTypeMoveToHue                           = 0x00B0,
+//        MessageTypeMoveHue                             = 0x00B1,
+//        MessageTypeStepHue                             = 0x00B2,
+//        MessageTypeMoveToSaturation                    = 0x00B3,
+//        MessageTypeMoveSaturation                      = 0x00B4,
+//        MessageTypeStepStaturation                     = 0x00B5,
+//        MessageTypeMoveToHueSaturation                 = 0x00B6,
+//        MessageTypeMoveToColor                         = 0x00B7,
+//        MessageTypeMoveColor                           = 0x00B8,
+//        MessageTypeStepColor                           = 0x00B9,
 
-        // ZLL Commands
-        // Touchlink
-        MessageTypeInitiateTouchlink                   = 0x00D0,
-        MessageTypeTouchlinkStatus                     = 0x00D1,
-        MessageTypeTouchlinkFactoryReset               = 0x00D2,
+//        // ZLL Commands
+//        // Touchlink
+//        MessageTypeInitiateTouchlink                   = 0x00D0,
+//        MessageTypeTouchlinkStatus                     = 0x00D1,
+//        MessageTypeTouchlinkFactoryReset               = 0x00D2,
 
-        // Identify Cluster
-        MessageTypeIdentifyTriggerEffect               = 0x00E0,
+//        // Identify Cluster
+//        MessageTypeIdentifyTriggerEffect               = 0x00E0,
 
-        // On/Off Cluster
-        MessageTypeCluserOnOff                         = 0x0092,
-        MessageTypeCluserOnOffTimed                    = 0x0093,
-        MessageTypeCluserOnOffEffects                  = 0x0094,
-        MessageTypeCluserOnOffUpdate                   = 0x8095,
+//        // On/Off Cluster
+//        MessageTypeCluserOnOff                         = 0x0092,
+//        MessageTypeCluserOnOffTimed                    = 0x0093,
+//        MessageTypeCluserOnOffEffects                  = 0x0094,
+//        MessageTypeCluserOnOffUpdate                   = 0x8095,
 
-        // Scenes Cluster
-        MessageTypeAddEnhancedScene                    = 0x00A7,
-        MessageTypeViewEnhancedScene                   = 0x00A8,
-        MessageTypeCopyScene                           = 0x00A9,
+//        // Scenes Cluster
+//        MessageTypeAddEnhancedScene                    = 0x00A7,
+//        MessageTypeViewEnhancedScene                   = 0x00A8,
+//        MessageTypeCopyScene                           = 0x00A9,
 
-        // Colour Cluster
-        MessageTypeEnhancedMoveToHue                   = 0x00BA,
-        MessageTypeEnhancedMoveHue                     = 0x00BB,
-        MessageTypeEnhancedStepHue                     = 0x00BC,
-        MessageTypeEnhancedMoveToHueSaturation         = 0x00BD,
-        MessageTypeColourLoopSet                       = 0x00BE,
-        MessageTypeStopMoveStep                        = 0x00BF,
-        MessageTypeMoveToColorTemperature              = 0x00C0,
-        MessageTypeMoveColorTemperature                = 0x00C1,
-        MessageTypeStepColorTemperature                = 0x00C2,
+//        // Colour Cluster
+//        MessageTypeEnhancedMoveToHue                   = 0x00BA,
+//        MessageTypeEnhancedMoveHue                     = 0x00BB,
+//        MessageTypeEnhancedStepHue                     = 0x00BC,
+//        MessageTypeEnhancedMoveToHueSaturation         = 0x00BD,
+//        MessageTypeColourLoopSet                       = 0x00BE,
+//        MessageTypeStopMoveStep                        = 0x00BF,
+//        MessageTypeMoveToColorTemperature              = 0x00C0,
+//        MessageTypeMoveColorTemperature                = 0x00C1,
+//        MessageTypeStepColorTemperature                = 0x00C2,
 
-        // ZHA Commands
-        // Door Lock Cluster
-        MessageTypeLockUnlockDoor                      = 0x00F0,
+//        // ZHA Commands
+//        // Door Lock Cluster
+//        MessageTypeLockUnlockDoor                      = 0x00F0,
 
-        // Attributes
-        MessageTypeReadAttributeRequest                = 0x0100,
-        MessageTypeReadAttributeResponse               = 0x8100,
-        MessageTypeDefaultResponse                     = 0x8101,
-        MessageTypeAttributeReport                     = 0x8102,
-        MessageTypeWriteAttributeRequest               = 0x0110,
-        MessageTypeWriteAttributeResponse              = 0x8110,
-        MessageTypeConfigReportingRequest              = 0x0120,
-        MessageTypeConfigReportingResponse             = 0x8120,
-        MessageTypeReportAttributes                    = 0x8121,
-        MessageTypeAttributeDiscoveryRequest           = 0x0140,
-        MessageTypeAttributeDiscoveryResponse          = 0x8140,
+//        // Attributes
+//        MessageTypeReadAttributeRequest                = 0x0100,
+//        MessageTypeReadAttributeResponse               = 0x8100,
+//        MessageTypeDefaultResponse                     = 0x8101,
+//        MessageTypeAttributeReport                     = 0x8102,
+//        MessageTypeWriteAttributeRequest               = 0x0110,
+//        MessageTypeWriteAttributeResponse              = 0x8110,
+//        MessageTypeConfigReportingRequest              = 0x0120,
+//        MessageTypeConfigReportingResponse             = 0x8120,
+//        MessageTypeReportAttributes                    = 0x8121,
+//        MessageTypeAttributeDiscoveryRequest           = 0x0140,
+//        MessageTypeAttributeDiscoveryResponse          = 0x8140,
 
-        // Persistant data manager messages
-        MessageTypeDataManagerAvailableRequest         = 0x0300,
-        MessageTypeDataManagerAvailableResponse        = 0x8300,
-        MessageTypeDataManagerSaveRecordRequest        = 0x0200,
-        MessageTypeDataManagerSaveRecordResponse       = 0x8200,
-        MessageTypeDataManagerLoadRecordRequest        = 0x0201,
-        MessageTypeDataManagerLoadRecordResponse       = 0x8201,
-        MessageTypeDataManagerDeleteAllRecordsRequest  = 0x0202,
-        MessageTypeDataManagerDeleteAllRecordsResponse = 0x8202,
+//        // Persistant data manager messages
+//        MessageTypeDataManagerAvailableRequest         = 0x0300,
+//        MessageTypeDataManagerAvailableResponse        = 0x8300,
+//        MessageTypeDataManagerSaveRecordRequest        = 0x0200,
+//        MessageTypeDataManagerSaveRecordResponse       = 0x8200,
+//        MessageTypeDataManagerLoadRecordRequest        = 0x0201,
+//        MessageTypeDataManagerLoadRecordResponse       = 0x8201,
+//        MessageTypeDataManagerDeleteAllRecordsRequest  = 0x0202,
+//        MessageTypeDataManagerDeleteAllRecordsResponse = 0x8202,
 
-        // Appliance Statistics Cluster 0x0B03
-        // http://www.nxp.com/documents/user_manual/JN-UG-3076.pdf
-        MessageTypeStatisticsClusterLogMessage          = 0x0301,   // Was 0x0500, was 0x0301
-        MessageTypeStatisticsClusterLogMessageResponse  = 0x8301,
+//        // Appliance Statistics Cluster 0x0B03
+//        // http://www.nxp.com/documents/user_manual/JN-UG-3076.pdf
+//        MessageTypeStatisticsClusterLogMessage          = 0x0301,   // Was 0x0500, was 0x0301
+//        MessageTypeStatisticsClusterLogMessageResponse  = 0x8301,
 
-        // IAS Cluster
-        MessageTypeSendIasZoneEnroolResponse            = 0x0400,
-        MessageTypeIasZoneStatusChangeNotify            = 0x8401,
+//        // IAS Cluster
+//        MessageTypeSendIasZoneEnroolResponse            = 0x0400,
+//        MessageTypeIasZoneStatusChangeNotify            = 0x8401,
 
-        // Extended utils
-        MessageTypeRawApsDataRequest                    = 0x0530,
-        MessageTypeRouterDiscoveryConfirm               = 0x8701,
-        MessageTypeApsDataConfirmFail                   = 0x8702
-    };
-    Q_ENUM(InterfaceMessageType)
+//        // Extended utils
+//        MessageTypeRawApsDataRequest                    = 0x0530,
+//        MessageTypeRouterDiscoveryConfirm               = 0x8701,
+//        MessageTypeApsDataConfirmFail                   = 0x8702
+//    };
+//    Q_ENUM(InterfaceMessageType)
 
 
     enum ClusterId {
@@ -615,6 +615,28 @@ public:
         ZigbeeNwkLayerStatusBadCcmOutput = 0xce
     };
     Q_ENUM(ZigbeeNwkLayerStatus)
+
+    enum ZigbeeApsStatus {
+        ZigbeeApsStatusSuccess = 0x00,
+        ZigbeeApsStatusAsduTooLong = 0xa0,
+        ZigbeeApsStatusDefragDeferred = 0xa1,
+        ZigbeeApsStatusDefragUnsupported = 0xa2,
+        ZigbeeApsStatusIllegalRequest = 0xa3,
+        ZigbeeApsStatusInvalidBinding = 0xa4,
+        ZigbeeApsStatusInvalidGroup = 0xa5,
+        ZigbeeApsStatusInvalidParameter = 0xa6,
+        ZigbeeApsStatusNoAck = 0xa7,
+        ZigbeeApsStatusNoBoundDevice = 0xa8,
+        ZigbeeApsStatusNoShortAddress = 0xa9,
+        ZigbeeApsStatusNotSupported = 0xaa,
+        ZigbeeApsStatusSecuredLinkKey = 0xab,
+        ZigbeeApsStatusSecuredNwkKey = 0xac,
+        ZigbeeApsStatusSecurityFail = 0xad,
+        ZigbeeApsStatusTableFull = 0xae,
+        ZigbeeApsStatusUnsecured = 0xaf,
+        ZigbeeApsStatusUnsupportedAttribute = 0xb0
+    };
+    Q_ENUM(ZigbeeApsStatus)
 
     enum ZigbeeStatus {
         ZigbeeStatusSuccess = 0x00,

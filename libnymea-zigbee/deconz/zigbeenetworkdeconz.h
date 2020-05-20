@@ -31,7 +31,6 @@
 #include <QObject>
 
 #include "zigbeenetwork.h"
-#include "zigbeenodedeconz.h"
 #include "zigbeechannelmask.h"
 #include "zigbeeclusterlibrary.h"
 #include "zigbeebridgecontrollerdeconz.h"
@@ -54,6 +53,7 @@ public:
 
     ZigbeeBridgeController *bridgeController() const override;
 
+    // Sending an APSDE-DATA.request, will be finished on APSDE-DATA.confirm
     ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) override;
 
     ZigbeeNetworkReply *setPermitJoin(quint16 shortAddress, quint8 duration);
@@ -82,10 +82,7 @@ private:
     // GP
 
 protected:
-    ZigbeeNode *createNode(QObject *parent) override;
-
     void setPermitJoiningInternal(bool permitJoining) override;
-
     void startNetworkInternally();
 
 private slots:
@@ -93,8 +90,8 @@ private slots:
     void onPollNetworkStateTimeout();
     void onPermitJoinRefreshTimout();
 
-    void onAspDataConfirmReceived(const DeconzApsDataConfirm &confirm);
-    void onAspDataIndicationReceived(const DeconzApsDataIndication &indication);
+    void onApsDataConfirmReceived(const DeconzApsDataConfirm &confirm);
+    void onApsDataIndicationReceived(const DeconzApsDataIndication &indication);
 
     void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
 

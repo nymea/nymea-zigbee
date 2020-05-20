@@ -100,6 +100,45 @@ public:
     };
     Q_ENUM(PowerLevel)
 
+    typedef struct MacCapabilities {
+        bool alternatePanCoordinator = false;
+        DeviceType deviceType = DeviceTypeReducedFunction;
+        bool powerSourceFlagMainPower = false;
+        bool receiverOnWhenIdle = false;
+        bool securityCapability = false;
+        bool allocateAddress = false;
+    } MacCapabilities;
+
+    typedef struct DescriptorCapabilities {
+        bool extendedActiveEndpointListAvailable = false;
+        bool extendedSimpleDescriptorListAvailable = false;
+    } DescriptorCapabilities;
+
+    typedef struct ServerMask {
+        bool primaryTrustCenter = false;
+        bool backupTrustCenter = false;
+        bool primaryBindingCache = false;
+        bool backupBindingCache = false;
+        bool primaryDiscoveryCache = false;
+        bool backupDiscoveryCache = false;
+        bool networkManager = false;
+        quint8 stackComplianceVersion = 0;
+    } ServerMask;
+
+    typedef struct NodeDescriptor {
+        NodeType nodeType = NodeTypeRouter;
+        bool complexDescriptorAvailable = false;
+        bool userDescriptorAvailable = false;
+        FrequencyBand frequencyBand = FrequencyBand2400Mhz;
+        MacCapabilities macCapabilities;
+        quint16 manufacturerCode = 0;
+        quint8 maximumBufferSize = 0;
+        quint16 maximumRxSize = 0;
+        ServerMask serverMask;
+        quint16 maximumTxSize = 0;
+        DescriptorCapabilities descriptorCapabilities;
+    } NodeDescriptor;
+
     State state() const;
     bool connected() const;
 
@@ -152,50 +191,11 @@ public:
     QList<PowerSource> availablePowerSources() const;
     PowerLevel powerLevel() const;
 
-    virtual void leaveNetworkRequest(bool rejoin = false, bool removeChildren = false) = 0;
+    // This method starts the node initialization phase (read descriptors and endpoints)
+    void startInitialization();
 
 private:
-    bool m_connected = false;
-    State m_state = StateUninitialized;
-
-    quint16 m_shortAddress = 0;
-    ZigbeeAddress m_extendedAddress;
-
-    // Server Mask
-    quint16 m_serverMask = 0;
-    bool m_isPrimaryTrustCenter = false;
-    bool m_isBackupTrustCenter = false;
-    bool m_isPrimaryBindingCache = false;
-    bool m_isBackupBindingCache = false;
-    bool m_isPrimaryDiscoveryCache = false;
-    bool m_isBackupDiscoveryCache = false;
-    bool m_isNetworkManager = false;
-
-    // Power information
-    quint16 m_powerDescriptorFlag = 0;
-    PowerMode m_powerMode;
-    PowerSource m_powerSource;
-    QList<PowerSource> m_availablePowerSources;
-    PowerLevel m_powerLevel;
-
-    // Mac capabilities flag
-    quint8 m_macCapabilitiesFlag = 0;
-    bool m_alternatePanCoordinator = false;
-    DeviceType m_deviceType = DeviceTypeFullFunction;
-    bool m_powerSourceFlagMainPower = false;
-    bool m_receiverOnWhenIdle = false;
-    bool m_securityCapability = false;
-    bool m_allocateAddress = false;
-
-    // Descriptor capability
-    quint8 m_descriptorFlag = 0;
-    bool m_extendedActiveEndpointListAvailable = false;
-    bool m_extendedSimpleDescriptorListAvailable = false;
-
-    virtual void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) = 0;
-
-protected:
-    ZigbeeNode(ZigbeeNetwork *network, QObject *parent = nullptr);
+    ZigbeeNode(ZigbeeNetwork *network, quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent = nullptr);
 
     ZigbeeNetwork *m_network;
     ZigbeeDeviceObject *m_deviceObject = nullptr;
@@ -235,9 +235,55 @@ protected:
     quint16 powerDescriptorFlag() const;
     void setPowerDescriptorFlag(quint16 powerDescriptorFlag);
 
-    // This method starts the node initialization phase (read descriptors and endpoints)
-    virtual void startInitialization();
-    virtual ZigbeeNodeEndpoint *createNodeEndpoint(quint8 endpointId, QObject *parent) = 0;
+    bool m_connected = false;
+    State m_state = StateUninitialized;
+
+    quint16 m_shortAddress = 0;
+    ZigbeeAddress m_extendedAddress;
+
+    // Server Mask
+    quint16 m_serverMask = 0;
+    bool m_isPrimaryTrustCenter = false;
+    bool m_isBackupTrustCenter = false;
+    bool m_isPrimaryBindingCache = false;
+    bool m_isBackupBindingCache = false;
+    bool m_isPrimaryDiscoveryCache = false;
+    bool m_isBackupDiscoveryCache = false;
+    bool m_isNetworkManager = false;
+
+    // Power information
+    quint16 m_powerDescriptorFlag = 0;
+    PowerMode m_powerMode;
+    PowerSource m_powerSource;
+    QList<PowerSource> m_availablePowerSources;
+    PowerLevel m_powerLevel;
+
+    // Mac capabilities flag
+    quint8 m_macCapabilitiesFlag = 0;
+    bool m_alternatePanCoordinator = false;
+    DeviceType m_deviceType = DeviceTypeFullFunction;
+    bool m_powerSourceFlagMainPower = false;
+    bool m_receiverOnWhenIdle = false;
+    bool m_securityCapability = false;
+    bool m_allocateAddress = false;
+
+    // Descriptor capability
+    quint8 m_descriptorFlag = 0;
+    bool m_extendedActiveEndpointListAvailable = false;
+    bool m_extendedSimpleDescriptorListAvailable = false;
+
+    //virtual void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) = 0;
+
+    // Init methods
+    void initNodeDescriptor();
+    void initPowerDescriptor();
+    void initEndpoints();
+    void initEndpoint(quint8 endpointId);
+    void initBasicCluster();
+
+    QList<quint8> m_uninitializedEndpoints;
+    QList<quint16> m_uninitalizedBasicClusterAttributes;
+
 
 signals:
     void stateChanged(State state);

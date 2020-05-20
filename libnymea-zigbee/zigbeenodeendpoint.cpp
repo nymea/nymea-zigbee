@@ -110,8 +110,9 @@ bool ZigbeeNodeEndpoint::hasOutputCluster(Zigbee::ClusterId clusterId) const
     return m_outputClusters.keys().contains(clusterId);
 }
 
-ZigbeeNodeEndpoint::ZigbeeNodeEndpoint(ZigbeeNode *node, quint8 endpointId, QObject *parent) :
+ZigbeeNodeEndpoint::ZigbeeNodeEndpoint(ZigbeeNetwork *network, ZigbeeNode *node, quint8 endpointId, QObject *parent) :
     QObject(parent),
+    m_network(network),
     m_node(node),
     m_endpointId(endpointId)
 {
@@ -163,10 +164,10 @@ ZigbeeNetworkReply *ZigbeeNodeEndpoint::createNetworkReply(const ZigbeeNetworkRe
     return reply;
 }
 
-void ZigbeeNodeEndpoint::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error, Zigbee::ZigbeeStatus zigbeeStatus)
+void ZigbeeNodeEndpoint::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error, Zigbee::ZigbeeApsStatus zigbeeApsStatus)
 {
     reply->m_error = error;
-    reply->m_zigbeeStatus = zigbeeStatus;
+    reply->m_zigbeeApsStatus = zigbeeApsStatus;
     reply->finished();
 }
 

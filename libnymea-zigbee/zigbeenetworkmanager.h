@@ -36,7 +36,6 @@ class ZigbeeNetworkManager
 {
 public:
     enum BackendType {
-        BackendTypeNxp,
         BackendTypeDeconz
     };
 

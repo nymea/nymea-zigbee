@@ -34,11 +34,6 @@
 ZigbeeNetwork::ZigbeeNetwork(QObject *parent) :
     QObject(parent)
 {
-    m_db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), "zigbee");
-    m_db.setDatabaseName("");
-    qCDebug(dcZigbeeNetwork()) << "Opening zigbee network database" << m_db.databaseName();
-
-
 
 }
 
@@ -269,6 +264,18 @@ void ZigbeeNetwork::removeNodeInternally(ZigbeeNode *node)
     node->deleteLater();
 }
 
+ZigbeeNode *ZigbeeNetwork::createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent)
+{
+    return new ZigbeeNode(this, shortAddress, extendedAddress, parent);
+}
+
+ZigbeeNode *ZigbeeNetwork::createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, quint8 macCapabilities, QObject *parent)
+{
+    ZigbeeNode *node = createNode(shortAddress, extendedAddress, parent);
+    node->setMacCapabilitiesFlag(macCapabilities);
+    return node;
+}
+
 void ZigbeeNetwork::saveNetwork()
 {
     qCDebug(dcZigbeeNetwork()) << "Save current network configuration to" << m_settingsFileName;
@@ -308,10 +315,8 @@ void ZigbeeNetwork::loadNetwork()
     settings.beginGroup("Nodes");
     foreach (const QString ieeeAddressString, settings.childGroups()) {
         settings.beginGroup(ieeeAddressString);
-
-        ZigbeeNode *node = createNode(this);
-        node->setExtendedAddress(ZigbeeAddress(ieeeAddressString));
-        node->setShortAddress(static_cast<quint16>(settings.value("nwkAddress", 0).toUInt()));
+        quint16 shortAddress = static_cast<quint16>(settings.value("nwkAddress", 0).toUInt());
+        ZigbeeNode *node = createNode(shortAddress, ZigbeeAddress(ieeeAddressString), this);
 
         // Node descriptor
         node->m_nodeType = static_cast<ZigbeeNode::NodeType>(settings.value("nodeType", 0).toUInt());
@@ -334,7 +339,7 @@ void ZigbeeNetwork::loadNetwork()
         for (int i = 0; i < endpointsCount; i++) {
             settings.setArrayIndex(i);
             quint8 endpointId = static_cast<quint8>(settings.value("id", 0).toUInt());
-            ZigbeeNodeEndpoint *endpoint = node->createNodeEndpoint(endpointId, node);
+            ZigbeeNodeEndpoint *endpoint = new ZigbeeNodeEndpoint(this, node, endpointId, node);
             endpoint->m_profile = static_cast<Zigbee::ZigbeeProfile>(settings.value("profile", 0).toUInt());
             endpoint->m_deviceId = static_cast<quint16>(settings.value("deviceId", 0).toUInt());
             endpoint->m_deviceVersion = static_cast<quint8>(settings.value("deviceId", 0).toUInt());
@@ -542,29 +547,14 @@ ZigbeeNetworkReply *ZigbeeNetwork::createNetworkReply(const ZigbeeNetworkRequest
     return reply;
 }
 
-void ZigbeeNetwork::setReplyResponseData(ZigbeeNetworkReply *reply, const QByteArray &responseData)
+void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeApsStatus zigbeeApsStatus)
 {
-    reply->m_responseData = responseData;
-    if (reply->isComplete()) {
-        if (reply->m_zigbeeStatus == Zigbee::ZigbeeStatusSuccess) {
-            finishNetworkReply(reply);
-        } else {
-            finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeStatusError);
-        }
-    }
-}
+    reply->m_zigbeeApsStatus = zigbeeApsStatus;
 
-void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeStatus zigbeeStatus)
-{
-    reply->m_zigbeeStatus = zigbeeStatus;
-    reply->m_zigbeeConfirmArrived = true;
-
-    if (reply->isComplete()) {
-        if (reply->m_zigbeeStatus == Zigbee::ZigbeeStatusSuccess) {
-            finishNetworkReply(reply);
-        } else {
-            finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeStatusError);
-        }
+    if (reply->m_zigbeeApsStatus == Zigbee::ZigbeeApsStatusSuccess) {
+        finishNetworkReply(reply);
+    } else {
+        finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeApsStatusError);
     }
 }
 

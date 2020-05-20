@@ -37,34 +37,9 @@ ZigbeeNetworkRequest ZigbeeNetworkReply::request() const
     return m_request;
 }
 
-Zigbee::ZigbeeStatus ZigbeeNetworkReply::zigbeeStatus() const
+Zigbee::ZigbeeApsStatus ZigbeeNetworkReply::zigbeeApsStatus() const
 {
-    return m_zigbeeStatus;
-}
-
-QByteArray ZigbeeNetworkReply::responseData() const
-{
-    return m_responseData;
-}
-
-bool ZigbeeNetworkReply::isComplete() const
-{
-    // If we expect indication and confirmation
-    if (m_request.expectConfirmation() && m_request.expectIndication()) {
-        if (m_zigbeeConfirmArrived && !m_responseData.isEmpty()) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // If we expect only a confirmation
-    if (m_request.expectConfirmation() && !m_request.expectIndication()) {
-        return m_zigbeeConfirmArrived;
-    }
-
-    // If we don't expect any response...
-    return true;
+    return m_zigbeeApsStatus;
 }
 
 ZigbeeNetworkReply::ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent) :

@@ -33,13 +33,6 @@
 
 #include "zigbee.h"
 
-typedef struct ZigbeeDeviceProfileAdpu {
-    quint8 sequenceNumber = 0;
-    Zigbee::ZigbeeStatus status = Zigbee::ZigbeeStatusSuccess;
-    quint16 addressOfInterest = 0;
-    QByteArray payload;
-} ZigbeeDeviceProfileAdpu;
-
 class ZigbeeDeviceProfile
 {
     Q_GADGET
@@ -47,8 +40,20 @@ class ZigbeeDeviceProfile
 public:
     enum Status {
         StatusSuccess = 0x00,
-        StatusInvalidRequestType = 0x01,
-        StatusDeviceNotFound = 0x02
+        StatusInvalidRequestType = 0x80,
+        StatusDeviceNotFound = 0x81,
+        StatusInvalidEndpoint = 0x82,
+        StatusNotActive = 0x83,
+        StatusNotSupported = 0x84,
+        StatusTimeout = 0x85,
+        StatusNoMatch = 0x86,
+        StatusNoEntry = 0x88,
+        StatusNoDescriptor = 0x89,
+        StatusInsufficientSpace = 0x8a,
+        StatusNotPermitted = 0x8b,
+        StatusTableFull = 0x8c,
+        StatusNotAuthorized = 0x8d,
+        StatusDeviceBindingTableFull = 0x8e
     };
     Q_ENUM(Status)
 
@@ -154,9 +159,23 @@ public:
     };
     Q_ENUM(ZdoCommand)
 
-    static ZigbeeDeviceProfileAdpu parseAdpu(const QByteArray &adpu);
+    // For sending
+    typedef struct Frame {
+        quint8 transactionSequenceNumber = 0;
+        QByteArray payload;
+    } Frame;
+
+    // Receiving
+    typedef struct Adpu {
+        quint8 transactionSequenceNumber = 0;
+        ZigbeeDeviceProfile::Status status = ZigbeeDeviceProfile::StatusSuccess;
+        quint16 addressOfInterest = 0;
+        QByteArray payload;
+    } Adpu;
+
+    static ZigbeeDeviceProfile::Adpu parseAdpu(const QByteArray &adpu);
 };
 
-QDebug operator<<(QDebug debug, const ZigbeeDeviceProfileAdpu &deviceAdpu);
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &deviceAdpu);
 
 #endif // ZIGBEEDEVICEPROFILE_H

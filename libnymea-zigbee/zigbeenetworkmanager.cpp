@@ -28,7 +28,6 @@
 #include "zigbeenetworkmanager.h"
 #include "loggingcategory.h"
 
-#include "nxp/zigbeenetworknxp.h"
 #include "deconz/zigbeenetworkdeconz.h"
 
 #include <QDateTime>
@@ -39,8 +38,8 @@ ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(ZigbeeNetworkManager::B
     srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
 
     switch (backend) {
-    case BackendTypeNxp:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));
+//    case BackendTypeNxp:
+//        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));
     case BackendTypeDeconz:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(parent));
     }

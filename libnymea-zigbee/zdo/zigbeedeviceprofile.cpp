@@ -30,22 +30,22 @@
 
 #include <QDataStream>
 
-ZigbeeDeviceProfileAdpu ZigbeeDeviceProfile::parseAdpu(const QByteArray &adpu)
+ZigbeeDeviceProfile::Adpu ZigbeeDeviceProfile::parseAdpu(const QByteArray &adpu)
 {
     QDataStream stream(adpu);
     stream.setByteOrder(QDataStream::LittleEndian);
 
-    ZigbeeDeviceProfileAdpu deviceAdpu;
+    ZigbeeDeviceProfile::Adpu deviceAdpu;
     quint8 statusFlag = 0;
-    stream >> deviceAdpu.sequenceNumber >> statusFlag >> deviceAdpu.addressOfInterest;
-    deviceAdpu.status = static_cast<Zigbee::ZigbeeStatus>(statusFlag);
+    stream >> deviceAdpu.transactionSequenceNumber >> statusFlag >> deviceAdpu.addressOfInterest;
+    deviceAdpu.status = static_cast<ZigbeeDeviceProfile::Status>(statusFlag);
     deviceAdpu.payload = adpu.right(adpu.length() - 4);
     return deviceAdpu;
 }
 
-QDebug operator<<(QDebug debug, const ZigbeeDeviceProfileAdpu &deviceAdpu)
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &deviceAdpu)
 {
-    debug.nospace() << "DeviceAdpu(SQN: " << deviceAdpu.sequenceNumber << ", ";
+    debug.nospace() << "DeviceAdpu(SQN: " << deviceAdpu.transactionSequenceNumber << ", ";
     debug.nospace() << deviceAdpu.status << ", ";
     debug.nospace() << ZigbeeUtils::convertUint16ToHexString(deviceAdpu.addressOfInterest) << ", ";
     debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(deviceAdpu.payload) << ")";

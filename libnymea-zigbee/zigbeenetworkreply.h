@@ -43,30 +43,23 @@ class ZigbeeNetworkReply : public QObject
 public:
     enum Error {
         ErrorNoError,
-        ErrorZigbeeStatusError,
+        ErrorZigbeeApsStatusError,
         ErrorInterfaceError,
-        ErrorNetworkOffline,
-        ErrorNetworkNotImplemented,
-        ErrorUnknown
+        ErrorNetworkOffline
     };
     Q_ENUM(Error)
 
     Error error() const;
-    ZigbeeNetworkRequest request() const;
-    Zigbee::ZigbeeStatus zigbeeStatus() const;
-    QByteArray responseData() const;
 
-    bool isComplete() const;
+    ZigbeeNetworkRequest request() const;
+    Zigbee::ZigbeeApsStatus zigbeeApsStatus() const;
 
 private:
     explicit ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent = nullptr);
     ZigbeeNetworkRequest m_request;
 
-    bool m_finished = false;
     Error m_error = ErrorNoError;
-    bool m_zigbeeConfirmArrived = false;
-    Zigbee::ZigbeeStatus m_zigbeeStatus = Zigbee::ZigbeeStatusSuccess;
-    QByteArray m_responseData;
+    Zigbee::ZigbeeApsStatus m_zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess;
 
 signals:
     void finished();

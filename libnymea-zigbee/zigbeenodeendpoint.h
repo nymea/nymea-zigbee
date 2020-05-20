@@ -36,6 +36,7 @@
 #include "zigbeenetworkreply.h"
 
 class ZigbeeNode;
+class ZigbeeNetwork;
 
 class ZigbeeNodeEndpoint : public QObject
 {
@@ -74,14 +75,15 @@ public:
     bool hasOutputCluster(Zigbee::ClusterId clusterId) const;
 
 private:
+    explicit ZigbeeNodeEndpoint(ZigbeeNetwork *network, ZigbeeNode *node, quint8 endpointId, QObject *parent = nullptr);
+
+    ZigbeeNetwork *m_network = nullptr;
     ZigbeeNode *m_node = nullptr;
     quint8 m_endpointId = 0;
     Zigbee::ZigbeeProfile m_profile = Zigbee::ZigbeeProfileLightLink;
     quint16 m_deviceId = 0;
     quint8 m_deviceVersion = 0;
 
-protected:
-    explicit ZigbeeNodeEndpoint(ZigbeeNode *node, quint8 endpointId, QObject *parent = nullptr);
 
     QHash<Zigbee::ClusterId, ZigbeeCluster *> m_inputClusters;
     QHash<Zigbee::ClusterId, ZigbeeCluster *> m_outputClusters;
@@ -95,14 +97,14 @@ protected:
     void setSoftwareBuildId(const QString &softwareBuildId);
 
     // Cluster commands
-    virtual void setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute = ZigbeeClusterAttribute()) = 0;
+    //virtual void setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute = ZigbeeClusterAttribute()) = 0;
 
     void addInputCluster(ZigbeeCluster *cluster);
     void addOutputCluster(ZigbeeCluster *cluster);
 
     // Network reply methods
     ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());
-    void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError, Zigbee::ZigbeeStatus zigbeeStatus = Zigbee::ZigbeeStatusSuccess);
+    void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError, Zigbee::ZigbeeApsStatus zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess);
 
 signals:
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
