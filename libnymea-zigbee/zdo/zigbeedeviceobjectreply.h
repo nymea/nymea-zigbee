@@ -41,7 +41,7 @@ class ZigbeeDeviceObjectReply : public QObject
 
 public:
     enum Error {
-        ErrorNoError, // All OK, no error occured
+        ErrorNoError, // All OK, no error occured, the message was transported successfully
         ErrorTimeout, // The request timeouted
         ErrorZigbeeApsStatusError, // An APS transport error occured. See zigbeeApsStatus()
         ErrorInterfaceError, // A transport interface error occured. Could not communicate with the hardware.
@@ -80,7 +80,6 @@ private:
     ZigbeeDeviceProfile::ZdoCommand m_expectedResponse;
     QByteArray m_responseData;
     ZigbeeDeviceProfile::Adpu m_responseAdpu;
-
 
 signals:
     void finished();

@@ -65,6 +65,18 @@ public:
     };
     Q_ENUM(Command)
 
+    enum GlobalAttribute {
+        GlobalAttributeClusterRevision = 0xfffd,
+        GlobalAttributeAttributeReportingStatus = 0xfffe
+    };
+    Q_ENUM(GlobalAttribute)
+
+    enum AttributeReportingStatus {
+        AttributeReportingStatusPending = 0x00,
+        AttributeReportingStatusComplete = 0x01
+    };
+    Q_ENUM(AttributeReportingStatus)
+
     // Frame control field
     enum FrameType {
         FrameTypeGlobal = 0x00,
@@ -79,7 +91,7 @@ public:
     Q_ENUM(Direction)
 
     typedef struct FrameControl {
-        FrameType frameType = FrameTypeClusterSpecific;
+        FrameType frameType = FrameTypeGlobal;
         bool manufacturerSpecific = false;
         Direction direction = DirectionClientToServer;
         bool disableDefaultResponse = false;
@@ -93,10 +105,19 @@ public:
     } ZclHeader;
 
     typedef struct Frame {
-        Zigbee::ClusterId clusterId;
         Header header;
         QByteArray payload;
     } Frame;
+
+
+    // Read attribute
+    typedef struct ReadAttributeStatusRecord {
+        quint16 attributeId;
+        Zigbee::ZigbeeStatus attributeStatus;
+        Zigbee::DataType dataType;
+        QByteArray data;
+    } ReadAttributeStatusRecord;
+
 
     // General parse/build methods
     static quint8 buildFrameControlByte(const FrameControl &frameControl);
@@ -104,13 +125,19 @@ public:
 
     static QByteArray buildHeader(const Header &header);
 
-    static Frame parseFrameData(Zigbee::ClusterId clusterId, const QByteArray &frameData);
+    static QList<ReadAttributeStatusRecord> parseAttributeStatusRecords(const QByteArray &payload);
+
+    //static QByteArray readAttributeData(const QDataStream &stream, Zigbee::DataType dataType);
+
+
+    static Frame parseFrameData(const QByteArray &frameData);
     static QByteArray buildFrame(const Frame &frame);
 };
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::FrameControl &frameControl);
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Header &header);
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Frame &frame);
+QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::ReadAttributeStatusRecord &attributeStatusRecord);
 
 
 #endif // ZIGBEECLUSTERLIBRARY_H

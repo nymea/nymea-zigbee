@@ -28,7 +28,7 @@
 #include "zigbeenetworkmanager.h"
 #include "loggingcategory.h"
 
-#include "deconz/zigbeenetworkdeconz.h"
+#include "backends/deconz/zigbeenetworkdeconz.h"
 
 #include <QDateTime>
 

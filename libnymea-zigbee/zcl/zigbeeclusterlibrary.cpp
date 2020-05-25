@@ -26,6 +26,7 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "zigbeeclusterlibrary.h"
+#include "loggingcategory.h"
 #include "zigbeeutils.h"
 
 #include <QDataStream>
@@ -35,7 +36,7 @@ quint8 ZigbeeClusterLibrary::buildFrameControlByte(const ZigbeeClusterLibrary::F
     quint8 byte = 0x00;
 
     // Bit 0-1
-    byte |= FrameTypeClusterSpecific;
+    byte |= frameControl.frameType;
 
     // Bit 2
     if (frameControl.manufacturerSpecific)
@@ -93,7 +94,95 @@ QByteArray ZigbeeClusterLibrary::buildHeader(const ZigbeeClusterLibrary::Header 
     return headerData;
 }
 
-ZigbeeClusterLibrary::Frame ZigbeeClusterLibrary::parseFrameData(Zigbee::ClusterId clusterId, const QByteArray &frameData)
+QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> ZigbeeClusterLibrary::parseAttributeStatusRecords(const QByteArray &payload)
+{
+    // Read attribute status records
+    QList<ReadAttributeStatusRecord> attributeStatusRecords;
+
+    qCDebug(dcZigbeeClusterLibrary()) << "Parse attribute status records from" << ZigbeeUtils::convertByteArrayToHexString(payload);
+
+    QDataStream stream(payload);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    quint16 attributeId; quint8 statusInt; quint8 dataTypeInt; quint16 numberOfElenemts; quint8 elementType;
+    QByteArray data;
+
+    while (!stream.atEnd()) {
+        // Reset variables
+        attributeId = 0; statusInt = 0; dataTypeInt = 0; numberOfElenemts = 0; elementType = 0;
+        data.clear();
+
+        // Read attribute id and status
+        stream >> attributeId >> statusInt;
+        Zigbee::ZigbeeStatus status = static_cast<Zigbee::ZigbeeStatus>(statusInt);
+
+        qCDebug(dcZigbeeClusterLibrary()) << "Parse:" << ZigbeeUtils::convertUint16ToHexString(attributeId) << status;
+
+        if (status != Zigbee::ZigbeeStatusSuccess) {
+            qCWarning(dcZigbeeCluster()) << "Attribute status record" << ZigbeeUtils::convertUint16ToHexString(attributeId) << "finished with error" << status;
+            // If not success, we are done and can continue with the next status record
+            continue;
+        } else {
+            stream >> dataTypeInt;
+            Zigbee::DataType dataType = static_cast<Zigbee::DataType>(dataTypeInt);
+
+            qCDebug(dcZigbeeClusterLibrary()) << "Parse:" << dataType;
+
+            // Parse data depending on the type
+            if (dataType == Zigbee::Array || dataType == Zigbee::Set || dataType == Zigbee::Bag) {
+                stream >> elementType >> numberOfElenemts;
+                qCDebug(dcZigbeeClusterLibrary()) << "Parse (array, set, bag): Element type" << ZigbeeUtils::convertByteToHexString(elementType) << "Number of elements:" << numberOfElenemts;
+                if (numberOfElenemts == 0xffff) {
+                    qCWarning(dcZigbeeCluster()) << "ZigbeeStatusRecord contains invalid elements" << ZigbeeUtils::convertUint16ToHexString(attributeId) << dataType;
+                    continue;
+                } else {
+                    for (int i = 0; i < numberOfElenemts; i++) {
+                        quint8 element = 0;
+                        stream >> element;
+                        data.append(element);
+                    }
+                }
+            } else if (dataType == Zigbee::Structure) {
+                stream >> numberOfElenemts;
+                qCDebug(dcZigbeeClusterLibrary()) << "Parse (structure)" << "Number of elements:" << numberOfElenemts;
+                if (numberOfElenemts == 0xffff) {
+                    qCWarning(dcZigbeeCluster()) << "ZigbeeStatusRecord contains invalid elements" << ZigbeeUtils::convertUint16ToHexString(attributeId) << dataType;
+                    continue;
+                } else {
+                    stream >> elementType;
+                    qCDebug(dcZigbeeClusterLibrary()) << "Parse (structure)" << "Element type:" << ZigbeeUtils::convertByteToHexString(elementType);
+                    for (int i = 0; i < numberOfElenemts; i++) {
+                        quint8 element = 0;
+                        stream >> element;
+                        //qCDebug(dcZigbeeClusterLibrary()) << "Parse (structure)" << "Element value:" << ZigbeeUtils::convertByteToHexString(element);
+                        data.append(element);
+                    }
+                }
+            } else {
+                // Normal data type
+                quint8 length = 0;
+                stream >> length;
+                qCDebug(dcZigbeeClusterLibrary()) << "Parse (normal data type)" << "Number of elements:" << length;
+                for (int i = 0; i < length; i++) {
+                    quint8 element = 0;
+                    stream >> element;
+                    data.append(element);
+                }
+            }
+
+            ReadAttributeStatusRecord attributeRecord;
+            attributeRecord.attributeId = attributeId;
+            attributeRecord.attributeStatus = status;
+            attributeRecord.dataType = dataType;
+            attributeRecord.data = data;
+            qCDebug(dcZigbeeClusterLibrary()) << attributeRecord;
+            attributeStatusRecords.append(attributeRecord);
+        }
+    }
+
+    return attributeStatusRecords;
+}
+
+ZigbeeClusterLibrary::Frame ZigbeeClusterLibrary::parseFrameData(const QByteArray &frameData)
 {
     QDataStream stream(frameData);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -117,15 +206,12 @@ ZigbeeClusterLibrary::Frame ZigbeeClusterLibrary::parseFrameData(Zigbee::Cluster
     offset += 1;
 
     stream >> commandByte;
-    offset += 1;
-
     header.command = static_cast<Command>(commandByte);
     offset += 1;
 
     Frame frame;
-    frame.clusterId = clusterId;
     frame.header = header;
-    frame.payload = frameData.right(frameData.length() - offset - 1);
+    frame.payload = frameData.right(frameData.length() - offset);
     return frame;
 }
 
@@ -169,8 +255,20 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Header &header)
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Frame &frame)
 {
-    debug.nospace() << "Zigbee Cluster Library Frame(" << frame.clusterId << ", ";
+    debug.nospace() << "Frame(";
     debug.nospace() << frame.header;
     debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(frame.payload) << ")";
+    return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::ReadAttributeStatusRecord &attributeStatusRecord)
+{
+    debug.nospace().noquote() << "ReadAttributeStatusRecord("
+                              << ZigbeeUtils::convertUint16ToHexString(attributeStatusRecord.attributeId) << ", "
+                              << attributeStatusRecord.attributeStatus << ", "
+                              << attributeStatusRecord.dataType << ", "
+                              << attributeStatusRecord.data
+                              << ")";
+
     return debug.space();
 }

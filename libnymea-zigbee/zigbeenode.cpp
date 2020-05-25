@@ -257,91 +257,6 @@ void ZigbeeNode::setExtendedAddress(const ZigbeeAddress &extendedAddress)
     m_extendedAddress = extendedAddress;
 }
 
-//void ZigbeeNode::setNodeDescriptorRawData(const QByteArray nodeDescriptorRawData)
-//{
-//    m_nodeDescriptorRawData = nodeDescriptorRawData;
-
-//    // Parse the raw data
-//    quint8 sequenceNumber = 0;
-//    quint8 status = 0;
-//    quint16 shortAddress = 0;
-//    quint16 manufacturerCode = 0;
-//    quint16 maximalRxSize = 0;
-//    quint16 maximalTxSize = 0;
-//    quint16 serverMask = 0;
-//    quint8 descriptorFlag = 0;
-//    quint8 macFlags = 0;
-//    quint8 maxBufferSize = 0;
-//    quint16 bitField = 0;
-
-//    QDataStream stream(&m_nodeDescriptorRawData, QIODevice::ReadOnly);
-//    stream >> sequenceNumber;
-//    stream >> status;
-//    stream >> shortAddress;
-//    stream >> manufacturerCode;
-//    stream >> maximalRxSize;
-//    stream >> maximalTxSize;
-//    stream >> serverMask;
-//    stream >> descriptorFlag;
-//    stream >> macFlags;
-//    stream >> maxBufferSize;
-//    stream >> bitField;
-
-//    // Set node data
-//    m_manufacturerCode = manufacturerCode;
-//    m_maximumRxSize = maximalRxSize;
-//    m_maximumTxSize = maximalTxSize;
-//    m_maximumBufferSize = maxBufferSize;
-
-//    setServerMask(serverMask);
-//    setMacCapabilitiesFlag(macFlags);
-//    setDescriptorFlag(descriptorFlag);
-
-//    // Parse bit field
-//    // 0-2 Bit = logical type, 0 = coordinator, 1 = router, 2 = end device
-//    if (!ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
-//        m_nodeType = NodeTypeCoordinator;
-//    } else if (!ZigbeeUtils::checkBitUint16(bitField, 0) && ZigbeeUtils::checkBitUint16(bitField, 1)) {
-//        m_nodeType = NodeTypeRouter;
-//    } else if (ZigbeeUtils::checkBitUint16(bitField, 0) && !ZigbeeUtils::checkBitUint16(bitField, 1)) {
-//        m_nodeType = NodeTypeEndDevice;
-//    }
-
-//    m_complexDescriptorAvailable = (bitField >> 3) & 0x0001;
-//    m_userDescriptorAvailable = (bitField >> 4) & 0x0001;
-
-//    qCDebug(dcZigbeeNode()) << "Node descriptor:";
-//    qCDebug(dcZigbeeNode()) << "    Sequence number:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
-//    qCDebug(dcZigbeeNode()) << "    Status:" << ZigbeeUtils::convertByteToHexString(status);
-//    qCDebug(dcZigbeeNode()) << "    Node type:" << nodeType();
-//    qCDebug(dcZigbeeNode()) << "    Short address:" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
-//    qCDebug(dcZigbeeNode()) << "    Manufacturer code:" << ZigbeeUtils::convertUint16ToHexString(manufacturerCode);
-//    qCDebug(dcZigbeeNode()) << "    Maximum Rx size:" << ZigbeeUtils::convertUint16ToHexString(maximumRxSize());
-//    qCDebug(dcZigbeeNode()) << "    Maximum Tx size:" << ZigbeeUtils::convertUint16ToHexString(maximumTxSize());
-//    qCDebug(dcZigbeeNode()) << "    Maximum buffer size:" << ZigbeeUtils::convertByteToHexString(maximumBufferSize());
-//    qCDebug(dcZigbeeNode()) << "    Server mask:" << ZigbeeUtils::convertUint16ToHexString(serverMask);
-//    qCDebug(dcZigbeeNode()) << "        Primary Trust center:" << isPrimaryTrustCenter();
-//    qCDebug(dcZigbeeNode()) << "        Backup Trust center:" << isBackupTrustCenter();
-//    qCDebug(dcZigbeeNode()) << "        Primary Binding cache:" << isPrimaryBindingCache();
-//    qCDebug(dcZigbeeNode()) << "        Backup Binding cache:" << isBackupBindingCache();
-//    qCDebug(dcZigbeeNode()) << "        Primary Discovery cache:" << isPrimaryDiscoveryCache();
-//    qCDebug(dcZigbeeNode()) << "        Backup Discovery cache:" << isBackupDiscoveryCache();
-//    qCDebug(dcZigbeeNode()) << "        Network Manager:" << isNetworkManager();
-//    qCDebug(dcZigbeeNode()) << "    Descriptor flag:" << ZigbeeUtils::convertByteToHexString(descriptorFlag);
-//    qCDebug(dcZigbeeNode()) << "        Extended active endpoint list available:" << extendedActiveEndpointListAvailable();
-//    qCDebug(dcZigbeeNode()) << "        Extended simple descriptor list available:" << extendedSimpleDescriptorListAvailable();
-//    qCDebug(dcZigbeeNode()) << "    MAC flags:" << ZigbeeUtils::convertByteToHexString(macFlags);
-//    qCDebug(dcZigbeeNode()) << "        Alternate PAN coordinator:" << alternatePanCoordinator();
-//    qCDebug(dcZigbeeNode()) << "        Device type:" << deviceType();
-//    qCDebug(dcZigbeeNode()) << "        Power source flag main power:" << powerSourceFlagMainPower();
-//    qCDebug(dcZigbeeNode()) << "        Receiver on when idle:" << receiverOnWhenIdle();
-//    qCDebug(dcZigbeeNode()) << "        Security capability:" << securityCapability();
-//    qCDebug(dcZigbeeNode()) << "        Allocate address:" << allocateAddress();
-//    qCDebug(dcZigbeeNode()) << "    Bit field:" << ZigbeeUtils::convertUint16ToHexString(bitField);
-//    qCDebug(dcZigbeeNode()) << "        Complex desciptor available:" << complexDescriptorAvailable();
-//    qCDebug(dcZigbeeNode()) << "        User desciptor available:" << userDescriptorAvailable();
-//}
-
 quint16 ZigbeeNode::serverMask() const
 {
     return m_serverMask;
@@ -704,11 +619,11 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
             quint16 clusterId = 0;
             stream >> clusterId;
             if (!endpoint->hasInputCluster(static_cast<Zigbee::ClusterId>(clusterId))) {
-                endpoint->addInputCluster(new ZigbeeCluster(m_network, this, endpoint, static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Input, endpoint));
+                endpoint->addInputCluster(endpoint->createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Input));
             }
             qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
-
         }
+
         stream >> outputClusterCount;
 
         qCDebug(dcZigbeeNode()) << "    Output clusters: (" << outputClusterCount << ")";
@@ -716,7 +631,7 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
             quint16 clusterId = 0;
             stream >> clusterId;
             if (!endpoint->hasOutputCluster(static_cast<Zigbee::ClusterId>(clusterId))) {
-                endpoint->addOutputCluster(new ZigbeeCluster(m_network, this, endpoint, static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Output, endpoint));
+                endpoint->addOutputCluster(endpoint->createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Output));
             }
             qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
         }
@@ -725,19 +640,81 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
 
         if (m_uninitializedEndpoints.isEmpty()) {
 
-            //if (m_shortAddress == 0) {
-            setState(StateInitialized);
-            return;
-            //}
+            if (m_shortAddress == 0) {
+                setState(StateInitialized);
+                return;
+            }
 
             // Continue with the basic cluster attributes
-            //initBasicCluster();
+            initBasicCluster();
         }
     });
 }
 
 void ZigbeeNode::initBasicCluster()
 {
+    ZigbeeClusterBasic *basicCluster = m_endpoints.first()->inputCluster<ZigbeeClusterBasic>(Zigbee::ClusterIdBasic);
+
+    if (!basicCluster) {
+        qCWarning(dcZigbeeNode()) << this << "could not find basic server cluster";
+        setState(StateInitialized);
+        return;
+    }
+
+    ZigbeeClusterBasic::Attribute attributeId = ZigbeeClusterBasic::AttributeManufacturerName;
+    qCDebug(dcZigbeeNode()) << "Reading attribute" << attributeId;
+    ZigbeeClusterReply *reply = basicCluster->readAttributes({static_cast<quint16>(attributeId)});
+    connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
+        if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
+        } else {
+            qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
+            QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
+            if (!attributeStatusRecords.isEmpty()) {
+                qCDebug(dcZigbeeNode()) << attributeStatusRecords.first();
+                basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecords.first().dataType, attributeStatusRecords.first().data));
+                m_endpoints.first()->m_manufacturerName = QString::fromUtf8(attributeStatusRecords.first().data);
+            }
+        }
+
+        ZigbeeClusterBasic::Attribute attributeId = ZigbeeClusterBasic::AttributeModelIdentifier;
+        qCDebug(dcZigbeeNode()) << "Reading attribute" << attributeId;
+        ZigbeeClusterReply *reply = basicCluster->readAttributes({static_cast<quint16>(attributeId)});
+        connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
+            if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
+                qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
+            } else {
+                qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
+                QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
+                if (!attributeStatusRecords.isEmpty()) {
+                    qCDebug(dcZigbeeNode()) << attributeStatusRecords.first();
+                    basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecords.first().dataType, attributeStatusRecords.first().data));
+                    m_endpoints.first()->m_modelIdentifier = QString::fromUtf8(attributeStatusRecords.first().data);
+                }
+            }
+
+
+            ZigbeeClusterBasic::Attribute attributeId = ZigbeeClusterBasic::AttributeSwBuildId;
+            qCDebug(dcZigbeeNode()) << "Reading attribute" << attributeId;
+            ZigbeeClusterReply *reply = basicCluster->readAttributes({static_cast<quint16>(attributeId)});
+            connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
+                if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
+                    qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
+                } else {
+                    qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
+                    QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
+                    if (!attributeStatusRecords.isEmpty()) {
+                        qCDebug(dcZigbeeNode()) << attributeStatusRecords.first();
+                        basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecords.first().dataType, attributeStatusRecords.first().data));
+                        m_endpoints.first()->m_softwareBuildId = QString::fromUtf8(attributeStatusRecords.first().data);
+                    }
+                }
+
+                // Finished with reading basic cluster, the node is initialized. TODO: read other cluster information
+                setState(StateInitialized);
+            });
+        });
+    });
 
 }
 
@@ -747,41 +724,6 @@ void ZigbeeNode::onClusterAttributeChanged(const ZigbeeClusterAttribute &attribu
     qCDebug(dcZigbeeNode()) << "Cluster" << cluster << "attribute changed" << attribute;
     emit clusterAttributeChanged(cluster, attribute);
 }
-
-//void ZigbeeNode::onRequestUserDescriptorFinished()
-//{
-//    ZigbeeInterfaceReply *reply = static_cast<ZigbeeInterfaceReply *>(sender());
-//    reply->deleteLater();
-
-//    if (reply->status() != ZigbeeInterfaceReply::Success) {
-//        qCWarning(dcZigbeeController()) << "Could not" << reply->request().description() << reply->status() << reply->statusErrorMessage();
-//        return;
-//    }
-
-//    qCDebug(dcZigbeeController()) << reply->request().description() << "finished successfully";
-//    qCDebug(dcZigbeeController()) << reply->additionalMessage();
-
-//    quint8 sequenceNumber = static_cast<quint8>(reply->additionalMessage().data().at(0));
-//    quint8 status = static_cast<quint8>(reply->additionalMessage().data().at(1));
-
-//    quint16 nwkAddress = static_cast<quint16>(reply->additionalMessage().data().at(2));
-//    nwkAddress <<= 8;
-//    nwkAddress |= reply->additionalMessage().data().at(3);
-
-//    quint8 length = static_cast<quint8>(reply->additionalMessage().data().at(4));
-
-//    QByteArray data;
-//    if (length > 0) {
-//        data = reply->additionalMessage().data().mid(5, length);
-//    }
-
-//    qCDebug(dcZigbeeNode()) << "User descriptor:";
-//    qCDebug(dcZigbeeNode()) << "    Sequence number:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
-//    qCDebug(dcZigbeeNode()) << "    Status:" << ZigbeeUtils::convertByteToHexString(status);
-//    qCDebug(dcZigbeeNode()) << "    Attribute address:" << ZigbeeUtils::convertUint16ToHexString(nwkAddress);
-//    qCDebug(dcZigbeeNode()) << "    Lenght:" << ZigbeeUtils::convertByteToHexString(length);
-//    qCDebug(dcZigbeeNode()) << "    Data:" << data;
-//}
 
 QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {

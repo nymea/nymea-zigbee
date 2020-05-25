@@ -327,42 +327,70 @@ void ZigbeeNetworkDeconz::handleZigbeeDeviceProfileIndication(const DeconzApsDat
     }
 
     node->deviceObject()->processApsDataIndication(indication.destinationEndpoint, indication.sourceEndpoint, indication.clusterId, indication.asdu, indication.lqi, indication.rssi);
+}
 
-//    foreach (ZigbeeNetworkReply *reply, m_pendingReplies.values()) {
-//        // Check if this is a reply if for a ZDO request
-//        if (reply->request().profileId() == Zigbee::ZigbeeProfileDevice) {
-//            // We have a reply which is waiting for a ZDO response, lets check if they match
-//            // Check if this is the response to the sent request command
-//            if (indication.clusterId == (reply->request().clusterId() | 0x8000)) {
-//                // Now check if the id matches, if so set the ADPU as response to the reply, otherwise this is not the message for this reply
-//                ZigbeeDeviceProfile::Adpu deviceAdpu = ZigbeeDeviceProfile::parseAdpu(indication.asdu);
-//                if (deviceAdpu.transactionSequenceNumber == reply->request().requestId()) {
-//                    // We found the correct reply
+void ZigbeeNetworkDeconz::handleZigbeeLightLinkIndication(const DeconzApsDataIndication &indication)
+{
+    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(indication.asdu);
+    //qCDebug(dcZigbeeNetwork()) << "ZCL ZLL" << indication << frame;
 
-//                    // Set the response payload of the
-//                    qCDebug(dcZigbeeNetwork()) << "Indication response for ZDO request received"
-//                                               << static_cast<ZigbeeDeviceProfile::ZdoCommand>(reply->request().clusterId())
-//                                               << "-->"
-//                                               << static_cast<ZigbeeDeviceProfile::ZdoCommand>(indication.clusterId)
-//                                               << deviceAdpu;
-//                    setReplyResponseData(reply, indication.asdu);
-//                    return;
-//                }
-//            }
-//        }
-//    }
+    // Get the node
+    ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
+        return;
+    }
 
-    //qCWarning(dcZigbeeNetwork()) << "FIXME: Unhandled ZDO indication" << indication;
+    // Get the endpoint
+    ZigbeeNodeEndpoint *endpoint = node->getEndpoint(indication.sourceEndpoint);
+    if (!endpoint) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized endpoint. There is no such endpoint on" << node << ". Ignoring indication" << indication;
+        return;
+    }
+
+    // Get the cluster
+    ZigbeeCluster *cluster = endpoint->getOutputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
+    if (!cluster) {
+        cluster = endpoint->getInputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
+        if (!cluster) {
+            qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized cluster. There is no such cluster on" << node << endpoint << "in the system. Ignoring indication" << indication;
+            return;
+        }
+    }
+
+    cluster->processApsDataIndication(indication.asdu);
 }
 
 void ZigbeeNetworkDeconz::handleZigbeeHomeAutomationIndication(const DeconzApsDataIndication &indication)
 {
-    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(static_cast<Zigbee::ClusterId>(indication.clusterId), indication.asdu);
-    qCDebug(dcZigbeeNetwork()) << "ZCL HA" << indication << frame;
+    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(indication.asdu);
+    //qCDebug(dcZigbeeNetwork()) << "ZCL HA" << indication << frame;
 
+    // Get the node
+    ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
+        return;
+    }
 
+    // Get the endpoint
+    ZigbeeNodeEndpoint *endpoint = node->getEndpoint(indication.sourceEndpoint);
+    if (!endpoint) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized endpoint. There is no such endpoint on" << node << ". Ignoring indication" << indication;
+        return;
+    }
 
+    // Get the cluster
+    ZigbeeCluster *cluster = endpoint->getOutputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
+    if (!cluster) {
+        cluster = endpoint->getInputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
+        if (!cluster) {
+            qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized cluster. There is no such cluster on" << node << endpoint << "in the system. Ignoring indication" << indication;
+            return;
+        }
+    }
 
+    cluster->processApsDataIndication(indication.asdu);
 }
 
 void ZigbeeNetworkDeconz::setPermitJoiningInternal(bool permitJoining)

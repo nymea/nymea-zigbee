@@ -74,14 +74,14 @@ bool ZigbeeCluster::hasAttribute(quint16 attributeId) const
     return m_attributes.keys().contains(attributeId);
 }
 
-ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 id)
+ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 attributeId)
 {
-    return m_attributes.value(id);
+    return m_attributes.value(attributeId);
 }
 
 void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
-    if (hasAttribute(attribute.id())) { 
+    if (hasAttribute(attribute.id())) {
         qCDebug(dcZigbeeCluster()) << this << "update attribute" << attribute;
         m_attributes[attribute.id()] = attribute;
         emit attributeChanged(attribute);
@@ -92,28 +92,31 @@ void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
     }
 }
 
-ZigbeeNetworkReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
+ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
 {
+    qCDebug(dcZigbeeClusterLibrary()) << "Read attributes from" << m_node << m_endpoint << this << attributes;
+
     // Build the request
-    ZigbeeNetworkRequest request;
-    request.setRequestId(m_network->generateSequenceNumber());
-    request.setDestinationAddressMode(Zigbee::DestinationAddressModeShortAddress);
-    request.setDestinationShortAddress(static_cast<quint16>(m_node->shortAddress()));
-    request.setProfileId(m_endpoint->profile());
-    request.setClusterId(m_clusterId);
-    request.setSourceEndpoint(m_endpoint->endpointId());
-    request.setRadius(10);
+    ZigbeeNetworkRequest request = createGeneralRequest();
 
     // Build ZCL frame
+
+    // Note: for basic commands the frame control files has to be zero accoring to spec ZCL 2.4.1.1
     ZigbeeClusterLibrary::FrameControl frameControl;
-    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeGlobal; // Note: for general commands always use global
+    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeGlobal;
+    frameControl.manufacturerSpecific = false;
+    if (m_direction == Direction::Input) {
+        frameControl.direction = ZigbeeClusterLibrary::DirectionClientToServer;
+    } else {
+        frameControl.direction = ZigbeeClusterLibrary::DirectionServerToClient;
+    }
     frameControl.disableDefaultResponse = true;
 
     // ZCL header
     ZigbeeClusterLibrary::Header header;
     header.frameControl = frameControl;
     header.command = ZigbeeClusterLibrary::CommandReadAttributes;
-    header.transactionSequenceNumber = m_network->generateTranactionSequenceNumber();
+    header.transactionSequenceNumber = m_transactionSequenceNumber++;
 
     // ZCL payload
     QByteArray payload;
@@ -125,15 +128,108 @@ ZigbeeNetworkReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
 
     // Put them together
     ZigbeeClusterLibrary::Frame frame;
-    frame.clusterId = m_clusterId;
     frame.header = header;
     frame.payload = payload;
 
     request.setTxOptions(Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission));
     request.setAsdu(ZigbeeClusterLibrary::buildFrame(frame));
 
-    qCDebug(dcZigbeeCluster()) << "Send read attributes request" << m_node << m_endpoint << this << attributes;
-    return m_network->sendRequest(request);
+    ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
+    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
+    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
+        if (!verifyNetworkError(zclReply, networkReply)) {
+            qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request"
+                                                << m_node << networkReply->error()
+                                                << networkReply->zigbeeApsStatus();
+            finishZclReply(zclReply);
+            return;
+        }
+
+        // The request was successfully sent to the device
+        // Now check if the expected indication response received already
+        if (zclReply->isComplete()) {
+            finishZclReply(zclReply);
+            return;
+        }
+    });
+
+    return zclReply;
+}
+
+ZigbeeClusterReply *ZigbeeCluster::createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame)
+{
+    ZigbeeClusterReply *zclReply = new ZigbeeClusterReply(request, frame, this);
+    connect(zclReply, &ZigbeeClusterReply::finished, zclReply, &ZigbeeClusterReply::deleteLater);
+    zclReply->m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
+    m_pendingReplies.insert(zclReply->transactionSequenceNumber(), zclReply);
+    return zclReply;
+}
+
+ZigbeeNetworkRequest ZigbeeCluster::createGeneralRequest()
+{
+    // Build the request
+    ZigbeeNetworkRequest request;
+    request.setRequestId(m_network->generateSequenceNumber());
+    request.setDestinationAddressMode(Zigbee::DestinationAddressModeShortAddress);
+    request.setDestinationShortAddress(m_node->shortAddress());
+    request.setProfileId(Zigbee::ZigbeeProfileHomeAutomation); // Note: in Zigbee 3.0 this is the Application Profile (0x0104)
+    request.setClusterId(m_clusterId);
+    request.setSourceEndpoint(0x01);
+    request.setDestinationEndpoint(m_endpoint->endpointId());
+    request.setRadius(10);
+    request.setTxOptions(Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission));
+    return request;
+}
+
+bool ZigbeeCluster::verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetworkReply *networkReply)
+{
+    bool success = false;
+    switch (networkReply->error()) {
+    case ZigbeeNetworkReply::ErrorNoError:
+        // The request has been transported successfully to he destination, now
+        // wait for the expected indication or check if we already recieved it
+        zclReply->m_apsConfirmReceived = true;
+        zclReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
+        success = true;
+        break;
+    case ZigbeeNetworkReply::ErrorInterfaceError:
+        zclReply->m_error = ZigbeeClusterReply::ErrorInterfaceError;
+        break;
+    case ZigbeeNetworkReply::ErrorNetworkOffline:
+        zclReply->m_error = ZigbeeClusterReply::ErrorNetworkOffline;
+        break;
+    case ZigbeeNetworkReply::ErrorZigbeeApsStatusError:
+        zclReply->m_error = ZigbeeClusterReply::ErrorZigbeeApsStatusError;
+        zclReply->m_apsConfirmReceived = true;
+        zclReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
+        break;
+    }
+
+    return success;
+}
+
+void ZigbeeCluster::finishZclReply(ZigbeeClusterReply *zclReply)
+{
+    m_pendingReplies.remove(zclReply->transactionSequenceNumber());
+    zclReply->finished();
+}
+
+void ZigbeeCluster::processApsDataIndication(QByteArray payload)
+{
+    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(payload);
+    qCDebug(dcZigbeeClusterLibrary()) << this << "received data indication" << frame;
+
+    if (m_pendingReplies.contains(frame.header.transactionSequenceNumber)) {
+        ZigbeeClusterReply *reply = m_pendingReplies.value(frame.header.transactionSequenceNumber);
+        reply->m_responseData = payload;
+        reply->m_responseFrame = frame;
+        reply->m_zclIndicationReceived = true;
+
+        if (reply->isComplete())
+            finishZclReply(reply);
+    }
+
+
 }
 
 QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
@@ -143,7 +239,6 @@ QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
                               << cluster->clusterName() << ", "
                               << cluster->direction()
                               << ")";
-
     return debug.space();
 }
 
@@ -159,3 +254,4 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterAttributeReport &attributeRep
 
     return debug.space();
 }
+

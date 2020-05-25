@@ -30,6 +30,8 @@
 #include "zigbeenode.h"
 #include "loggingcategory.h"
 
+#include "zcl/general/zigbeeclusterbasic.h"
+
 quint8 ZigbeeNodeEndpoint::endpointId() const
 {
     return m_endpointId;
@@ -146,6 +148,17 @@ void ZigbeeNodeEndpoint::setSoftwareBuildId(const QString &softwareBuildId)
     emit softwareBuildIdChanged(m_softwareBuildId);
 }
 
+ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, ZigbeeCluster::Direction direction)
+{
+    switch (clusterId) {
+    case Zigbee::ClusterIdBasic:
+        return new ZigbeeClusterBasic(m_network, m_node, this, direction, this);
+        break;
+    default:
+        return new ZigbeeCluster(m_network, m_node, this, clusterId, direction, this);
+    }
+}
+
 void ZigbeeNodeEndpoint::addInputCluster(ZigbeeCluster *cluster)
 {
     m_inputClusters.insert(cluster->clusterId(), cluster);
@@ -154,21 +167,6 @@ void ZigbeeNodeEndpoint::addInputCluster(ZigbeeCluster *cluster)
 void ZigbeeNodeEndpoint::addOutputCluster(ZigbeeCluster *cluster)
 {
     m_outputClusters.insert(cluster->clusterId(), cluster);
-}
-
-ZigbeeNetworkReply *ZigbeeNodeEndpoint::createNetworkReply(const ZigbeeNetworkRequest &request)
-{
-    ZigbeeNetworkReply *reply = new ZigbeeNetworkReply(request, this);
-    // Make sure the reply will be deleted
-    connect(reply, &ZigbeeNetworkReply::finished, reply, &ZigbeeNetworkReply::deleteLater);
-    return reply;
-}
-
-void ZigbeeNodeEndpoint::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error, Zigbee::ZigbeeApsStatus zigbeeApsStatus)
-{
-    reply->m_error = error;
-    reply->m_zigbeeApsStatus = zigbeeApsStatus;
-    reply->finished();
 }
 
 ZigbeeCluster *ZigbeeNodeEndpoint::getOutputCluster(Zigbee::ClusterId clusterId) const

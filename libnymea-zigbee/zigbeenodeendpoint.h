@@ -32,8 +32,10 @@
 
 #include "zigbee.h"
 #include "zigbeeaddress.h"
-#include "zigbeecluster.h"
 #include "zigbeenetworkreply.h"
+
+#include "zcl/zigbeecluster.h"
+#include "zcl/general/zigbeeclusterbasic.h"
 
 class ZigbeeNode;
 class ZigbeeNetwork;
@@ -74,6 +76,24 @@ public:
     ZigbeeCluster *getOutputCluster(Zigbee::ClusterId clusterId) const;
     bool hasOutputCluster(Zigbee::ClusterId clusterId) const;
 
+    template<typename T>
+    inline T* inputCluster(Zigbee::ClusterId clusterId)
+    {
+        if (!hasInputCluster(clusterId))
+            return nullptr;
+
+        return qobject_cast<T *>(getInputCluster(clusterId));
+    }
+
+    template<typename T>
+    inline T* outputCluster(Zigbee::ClusterId clusterId)
+    {
+        if (!hasOutputCluster(clusterId))
+            return nullptr;
+
+        return qobject_cast<T *>(getOutputCluster(clusterId));
+    }
+
 private:
     explicit ZigbeeNodeEndpoint(ZigbeeNetwork *network, ZigbeeNode *node, quint8 endpointId, QObject *parent = nullptr);
 
@@ -83,7 +103,6 @@ private:
     Zigbee::ZigbeeProfile m_profile = Zigbee::ZigbeeProfileLightLink;
     quint16 m_deviceId = 0;
     quint8 m_deviceVersion = 0;
-
 
     QHash<Zigbee::ClusterId, ZigbeeCluster *> m_inputClusters;
     QHash<Zigbee::ClusterId, ZigbeeCluster *> m_outputClusters;
@@ -99,15 +118,14 @@ private:
     // Cluster commands
     //virtual void setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute = ZigbeeClusterAttribute()) = 0;
 
+    ZigbeeCluster *createCluster(Zigbee::ClusterId clusterId, ZigbeeCluster::Direction direction);
+
     void addInputCluster(ZigbeeCluster *cluster);
     void addOutputCluster(ZigbeeCluster *cluster);
 
-    // Network reply methods
-    ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());
-    void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError, Zigbee::ZigbeeApsStatus zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess);
-
 signals:
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
+
     void manufacturerNameChanged(const QString &manufacturerName);
     void modelIdentifierChanged(const QString &modelIdentifier);
     void softwareBuildIdChanged(const QString &softwareBuildId);

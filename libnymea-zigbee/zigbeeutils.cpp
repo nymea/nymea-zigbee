@@ -276,8 +276,11 @@ QString ZigbeeUtils::clusterIdToString(const Zigbee::ClusterId &clusterId)
     QMetaEnum metaEnum = metaObject.enumerator(metaObject.indexOfEnumerator("ClusterId"));
 
     QString enumString = metaEnum.valueToKey(clusterId);
+    QString clusterName = enumString.remove("Zigbee::ClusterId(ClusterId").remove(")").append(QString("(%1)").arg(ZigbeeUtils::convertUint16ToHexString(clusterId)));
+    if (clusterName.isEmpty())
+        clusterName = "Unknown";
 
-    return enumString.remove("Zigbee::ClusterId(ClusterId").remove(")").append(QString("(%1)").arg(ZigbeeUtils::convertUint16ToHexString(clusterId)));
+    return clusterName;
 }
 
 QString ZigbeeUtils::profileIdToString(const Zigbee::ZigbeeProfile &profileId)

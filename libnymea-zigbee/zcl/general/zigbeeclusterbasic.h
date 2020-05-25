@@ -3,12 +3,15 @@
 
 #include <QObject>
 
-#include "zigbeecluster.h"
+#include "zcl/zigbeecluster.h"
 
 class ZigbeeClusterBasic : public ZigbeeCluster
 {
     Q_OBJECT
 public:
+
+    friend class ZigbeeNode;
+    friend class ZigbeeNetwork;
 
     enum Attribute {
         AttributeZclVersion = 0x0000, // Mandatory
@@ -28,7 +31,7 @@ public:
     };
     Q_ENUM(Attribute)
 
-    // From attribute 0x0007 power source
+    // Enum for AttributePowerSource(0x0007)
     enum AttributePowerSourceValue {
         AttributePowerSourceValueUnknown = 0x00,
         AttributePowerSourceValueMainsSinglePhase = 0x01,
@@ -40,9 +43,10 @@ public:
     };
     Q_ENUM(AttributePowerSourceValue)
 
-
     explicit ZigbeeClusterBasic(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+private:
+    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:
 

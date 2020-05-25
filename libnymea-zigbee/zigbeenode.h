@@ -284,7 +284,6 @@ private:
     QList<quint8> m_uninitializedEndpoints;
     QList<quint16> m_uninitalizedBasicClusterAttributes;
 
-
 signals:
     void stateChanged(State state);
     void connectedChanged(bool connected);

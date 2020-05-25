@@ -32,7 +32,7 @@
 
 #include "zigbeenetwork.h"
 #include "zigbeechannelmask.h"
-#include "zigbeeclusterlibrary.h"
+#include "zcl/zigbeeclusterlibrary.h"
 #include "zigbeebridgecontrollerdeconz.h"
 
 class ZigbeeNetworkDeconz : public ZigbeeNetwork
@@ -75,6 +75,7 @@ private:
     void handleZigbeeDeviceProfileIndication(const DeconzApsDataIndication &indication);
 
     // ZZL
+    void handleZigbeeLightLinkIndication(const DeconzApsDataIndication &indication);
 
     // HA
     void handleZigbeeHomeAutomationIndication(const DeconzApsDataIndication &indication);
