@@ -12,6 +12,7 @@ public:
     QString name() const;
     QString className() const;
     QByteArray data() const;
+    int dataLength() const;
 
     static int typeLength(Zigbee::DataType dataType);
 

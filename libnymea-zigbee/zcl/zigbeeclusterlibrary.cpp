@@ -27,6 +27,7 @@
 
 #include "zigbeeclusterlibrary.h"
 #include "loggingcategory.h"
+#include "zigbeedatatype.h"
 #include "zigbeeutils.h"
 
 #include <QDataStream>
@@ -157,10 +158,27 @@ QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> ZigbeeClusterLibrary::par
                         data.append(element);
                     }
                 }
-            } else {
-                // Normal data type
+            } else if (dataType == Zigbee::OctetString || dataType == Zigbee::CharString) {
                 quint8 length = 0;
                 stream >> length;
+                qCDebug(dcZigbeeClusterLibrary()) << "Parse (octet string, character string)" << "Length:" << length;
+                for (int i = 0; i < length; i++) {
+                    quint8 element = 0;
+                    stream >> element;
+                    data.append(element);
+                }
+            } else if (dataType == Zigbee::LongOctetString || dataType == Zigbee::LongCharString) {
+                quint16 length = 0;
+                stream >> length;
+                qCDebug(dcZigbeeClusterLibrary()) << "Parse (long octet string, long character string)" << "Length:" << length;
+                for (int i = 0; i < length; i++) {
+                    quint8 element = 0;
+                    stream >> element;
+                    data.append(element);
+                }
+            } else {
+                // Normal data type
+                int length = ZigbeeDataType::typeLength(dataType);
                 qCDebug(dcZigbeeClusterLibrary()) << "Parse (normal data type)" << "Number of elements:" << length;
                 for (int i = 0; i < length; i++) {
                     quint8 element = 0;

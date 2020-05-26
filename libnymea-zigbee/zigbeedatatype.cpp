@@ -177,6 +177,9 @@ ZigbeeDataType::ZigbeeDataType(Zigbee::DataType dataType, const QByteArray &data
         break;
     }
 
+    // TODO: verify data length and consistency
+
+
     /*
     switch (dataType) {
     case Zigbee::NoData:
@@ -294,6 +297,11 @@ ZigbeeDataType::ZigbeeDataType(Zigbee::DataType dataType, const QByteArray &data
     }
     */
 
+}
+
+int ZigbeeDataType::dataLength() const
+{
+    return typeLength(m_dataType);
 }
 
 int ZigbeeDataType::typeLength(Zigbee::DataType dataType)

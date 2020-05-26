@@ -227,9 +227,12 @@ void ZigbeeCluster::processApsDataIndication(QByteArray payload)
 
         if (reply->isComplete())
             finishZclReply(reply);
+
+        return;
     }
 
-
+    // FIXME: increase transaction sequence number
+    qCWarning(dcZigbeeNode()) << m_node << m_endpoint << this << "Unhandled ZCL indication" << ZigbeeUtils::convertByteArrayToHexString(payload);
 }
 
 QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
