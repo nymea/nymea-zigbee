@@ -36,6 +36,7 @@
 #include <QBitArray>
 
 #include "zigbee.h"
+#include "zigbeedatatype.h"
 #include "zcl/zigbeecluster.h"
 
 
