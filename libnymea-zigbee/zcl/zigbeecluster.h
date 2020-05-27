@@ -89,23 +89,6 @@ public:
 //    };
 //    Q_ENUM(PowerConfigurationAttribute)
 
-//    // On Off Cluster 0x0006
-
-//    enum OnOffClusterAttribute {
-//        OnOffClusterAttributeOnOff = 0x0000,
-//        OnOffClusterAttributeGlobalSceneControl = 0x4000,
-//        OnOffClusterAttributeOnTime = 0x4001,
-//        OnOffClusterAttributeOffWaitTime = 0x4002
-//    };
-//    Q_ENUM(OnOffClusterAttribute)
-
-//    enum OnOffClusterCommand {
-//        OnOffClusterCommandOff = 0x00,
-//        OnOffClusterCommandOn = 0x01,
-//        OnOffClusterCommandToggle = 0x02
-//    };
-//    Q_ENUM(OnOffClusterCommand)
-
 
 //    // Level cluster 0x0008
 
@@ -195,6 +178,8 @@ protected:
     bool verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetworkReply *networkReply);
     void finishZclReply(ZigbeeClusterReply *zclReply);
 
+    virtual void processDataIndication(ZigbeeClusterLibrary::Frame frame);
+
 private:
     virtual void setAttribute(const ZigbeeClusterAttribute &attribute);
 
@@ -203,7 +188,6 @@ signals:
 
 public slots:
     void processApsDataIndication(QByteArray payload);
-
 
 };
 

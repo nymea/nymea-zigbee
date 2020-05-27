@@ -36,6 +36,7 @@
 
 #include "zcl/zigbeecluster.h"
 #include "zcl/general/zigbeeclusterbasic.h"
+#include "zcl/general/zigbeeclusteronoff.h"
 
 class ZigbeeNode;
 class ZigbeeNetwork;

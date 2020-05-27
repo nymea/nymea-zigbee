@@ -356,5 +356,5 @@ void ZigbeeDeviceObject::processApsDataIndication(quint8 destinationEndpoint, qu
         return;
     }
 
-    qCWarning(dcZigbeeDeviceObject()) << m_node << "unhandled ZDO indication";
+    qCWarning(dcZigbeeDeviceObject()) << "Unhandled ZDO indication" << m_node << asdu;
 }

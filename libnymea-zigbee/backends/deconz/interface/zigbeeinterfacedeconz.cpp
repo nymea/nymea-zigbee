@@ -250,7 +250,7 @@ bool ZigbeeInterfaceDeconz::enable(const QString &serialPort, qint32 baudrate)
     connect(m_serialPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(onError(QSerialPort::SerialPortError)));
 
     if (!m_serialPort->open(QSerialPort::ReadWrite)) {
-        qCWarning(dcZigbeeInterface()) << "Could not open serial port" << serialPort << baudrate;
+        qCWarning(dcZigbeeInterface()) << "Could not open serial port" << serialPort << baudrate << m_serialPort->errorString();
         m_reconnectTimer->start();
         return false;
     }

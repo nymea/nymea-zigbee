@@ -671,9 +671,16 @@ void ZigbeeNode::initBasicCluster()
             qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
             QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
             if (!attributeStatusRecords.isEmpty()) {
-                qCDebug(dcZigbeeNode()) << attributeStatusRecords.first();
-                basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecords.first().dataType, attributeStatusRecords.first().data));
-                m_endpoints.first()->m_manufacturerName = QString::fromUtf8(attributeStatusRecords.first().data);
+                ZigbeeClusterLibrary::ReadAttributeStatusRecord attributeStatusRecord = attributeStatusRecords.first();
+                qCDebug(dcZigbeeNode()) << attributeStatusRecord;
+                basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecord.dataType));
+                bool valueOk = false;
+                QString manufacturerName = attributeStatusRecord.dataType.toString(&valueOk);
+                if (valueOk) {
+                    m_endpoints.first()->m_manufacturerName = manufacturerName;
+                } else {
+                    qCWarning(dcZigbeeNode()) << "Could not convert manufacturer name attribute data to string" << attributeStatusRecord.dataType;
+                }
             }
         }
 
@@ -687,12 +694,18 @@ void ZigbeeNode::initBasicCluster()
                 qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
                 QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
                 if (!attributeStatusRecords.isEmpty()) {
-                    qCDebug(dcZigbeeNode()) << attributeStatusRecords.first();
-                    basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecords.first().dataType, attributeStatusRecords.first().data));
-                    m_endpoints.first()->m_modelIdentifier = QString::fromUtf8(attributeStatusRecords.first().data);
+                    ZigbeeClusterLibrary::ReadAttributeStatusRecord attributeStatusRecord = attributeStatusRecords.first();
+                    qCDebug(dcZigbeeNode()) << attributeStatusRecord;
+                    basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecord.dataType));
+                    bool valueOk = false;
+                    QString modelIdentifier = attributeStatusRecord.dataType.toString(&valueOk);
+                    if (valueOk) {
+                        m_endpoints.first()->m_modelIdentifier = modelIdentifier;
+                    } else {
+                        qCWarning(dcZigbeeNode()) << "Could not convert model identifier attribute data to string" << attributeStatusRecord.dataType;
+                    }
                 }
             }
-
 
             ZigbeeClusterBasic::Attribute attributeId = ZigbeeClusterBasic::AttributeSwBuildId;
             qCDebug(dcZigbeeNode()) << "Reading attribute" << attributeId;
@@ -704,9 +717,16 @@ void ZigbeeNode::initBasicCluster()
                     qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
                     QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
                     if (!attributeStatusRecords.isEmpty()) {
-                        qCDebug(dcZigbeeNode()) << attributeStatusRecords.first();
-                        basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecords.first().dataType, attributeStatusRecords.first().data));
-                        m_endpoints.first()->m_softwareBuildId = QString::fromUtf8(attributeStatusRecords.first().data);
+                        ZigbeeClusterLibrary::ReadAttributeStatusRecord attributeStatusRecord = attributeStatusRecords.first();
+                        qCDebug(dcZigbeeNode()) << attributeStatusRecord;
+                        basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecord.dataType));
+                        bool valueOk = false;
+                        QString softwareBuildId = attributeStatusRecord.dataType.toString(&valueOk);
+                        if (valueOk) {
+                            m_endpoints.first()->m_softwareBuildId = softwareBuildId;
+                        } else {
+                            qCWarning(dcZigbeeNode()) << "Could not convert software build id attribute data to string" << attributeStatusRecord.dataType;
+                        }
                     }
                 }
 
@@ -715,7 +735,6 @@ void ZigbeeNode::initBasicCluster()
             });
         });
     });
-
 }
 
 void ZigbeeNode::onClusterAttributeChanged(const ZigbeeClusterAttribute &attribute)

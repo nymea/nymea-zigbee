@@ -154,6 +154,9 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, Zi
     case Zigbee::ClusterIdBasic:
         return new ZigbeeClusterBasic(m_network, m_node, this, direction, this);
         break;
+    case Zigbee::ClusterIdOnOff:
+        return new ZigbeeClusterOnOff(m_network, m_node, this, direction, this);
+        break;
     default:
         return new ZigbeeCluster(m_network, m_node, this, clusterId, direction, this);
     }

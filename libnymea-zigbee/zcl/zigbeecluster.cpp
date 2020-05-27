@@ -82,11 +82,11 @@ ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 attributeId)
 void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     if (hasAttribute(attribute.id())) {
-        qCDebug(dcZigbeeCluster()) << this << "update attribute" << attribute;
+        qCDebug(dcZigbeeCluster()) << "Update attribute" << this << attribute;
         m_attributes[attribute.id()] = attribute;
         emit attributeChanged(attribute);
     } else {
-        qCDebug(dcZigbeeCluster()) << this << "add attribute" << attribute;
+        qCDebug(dcZigbeeCluster()) << "Add attribute" << this << attribute;
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);
     }
@@ -94,7 +94,7 @@ void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
 
 ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
 {
-    qCDebug(dcZigbeeClusterLibrary()) << "Read attributes from" << m_node << m_endpoint << this << attributes;
+    qCDebug(dcZigbeeCluster()) << "Read attributes from" << m_node << m_endpoint << this << attributes;
 
     // Build the request
     ZigbeeNetworkRequest request = createGeneralRequest();
@@ -139,7 +139,7 @@ ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {
             qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request"
-                                                << m_node << networkReply->error()
+                                                << m_node << m_endpoint << this << networkReply->error()
                                                 << networkReply->zigbeeApsStatus();
             finishZclReply(zclReply);
             return;
@@ -211,14 +211,23 @@ bool ZigbeeCluster::verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetwo
 void ZigbeeCluster::finishZclReply(ZigbeeClusterReply *zclReply)
 {
     m_pendingReplies.remove(zclReply->transactionSequenceNumber());
+    qCDebug(dcZigbeeCluster()) << "ZigbeeClusterReply finished" << zclReply->request() << zclReply->requestFrame() << zclReply->responseFrame();
     zclReply->finished();
+}
+
+void ZigbeeCluster::processDataIndication(ZigbeeClusterLibrary::Frame frame)
+{
+    // Increase the tsn for continuouse id increasing on both sides
+    m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
+    qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
 }
 
 void ZigbeeCluster::processApsDataIndication(QByteArray payload)
 {
     ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(payload);
-    qCDebug(dcZigbeeClusterLibrary()) << this << "received data indication" << frame;
+    qCDebug(dcZigbeeCluster()) << "Received data indication" << this << frame;
 
+    // Check if this indication is for a pending reply
     if (m_pendingReplies.contains(frame.header.transactionSequenceNumber)) {
         ZigbeeClusterReply *reply = m_pendingReplies.value(frame.header.transactionSequenceNumber);
         reply->m_responseData = payload;
@@ -231,8 +240,8 @@ void ZigbeeCluster::processApsDataIndication(QByteArray payload)
         return;
     }
 
-    // FIXME: increase transaction sequence number
-    qCWarning(dcZigbeeNode()) << m_node << m_endpoint << this << "Unhandled ZCL indication" << ZigbeeUtils::convertByteArrayToHexString(payload);
+    // Not for a reply, process the indication
+    processDataIndication(frame);
 }
 
 QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
@@ -252,7 +261,7 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterAttributeReport &attributeRep
                               << attributeReport.attributeId << ", "
                               << attributeReport.attributeStatus << ", "
                               << attributeReport.dataType << ", "
-                              << attributeReport.data << ", "
+                              << ZigbeeUtils::convertByteArrayToHexString(attributeReport.data)
                               << ")";
 
     return debug.space();

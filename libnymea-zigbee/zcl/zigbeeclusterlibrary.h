@@ -32,6 +32,7 @@
 #include <QDebug>
 
 #include "zigbee.h"
+#include "zigbeedatatype.h"
 
 class ZigbeeClusterLibrary
 {
@@ -101,7 +102,7 @@ public:
         FrameControl frameControl;
         quint16 manufacturerCode = 0;
         quint8 transactionSequenceNumber = 0;
-        Command command;
+        quint8 command;
     } ZclHeader;
 
     typedef struct Frame {
@@ -114,8 +115,7 @@ public:
     typedef struct ReadAttributeStatusRecord {
         quint16 attributeId;
         Zigbee::ZigbeeStatus attributeStatus;
-        Zigbee::DataType dataType;
-        QByteArray data;
+        ZigbeeDataType dataType;
     } ReadAttributeStatusRecord;
 
 
@@ -128,7 +128,7 @@ public:
     static QList<ReadAttributeStatusRecord> parseAttributeStatusRecords(const QByteArray &payload);
 
     //static QByteArray readAttributeData(const QDataStream &stream, Zigbee::DataType dataType);
-
+    static ZigbeeDataType readDataType(QDataStream *stream, Zigbee::DataType dataType);
 
     static Frame parseFrameData(const QByteArray &frameData);
     static QByteArray buildFrame(const Frame &frame);

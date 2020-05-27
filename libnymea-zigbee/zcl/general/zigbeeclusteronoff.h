@@ -25,64 +25,63 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeeutils.h"
-#include "zigbeeclusterattribute.h"
+#ifndef ZIGBEECLUSTERONOFF_H
+#define ZIGBEECLUSTERONOFF_H
 
-ZigbeeClusterAttribute::ZigbeeClusterAttribute()
+#include <QObject>
+
+#include "zcl/zigbeecluster.h"
+#include "zcl/zigbeeclusterreply.h"
+
+class ZigbeeNode;
+class ZigbeeNetwork;
+class ZigbeeNodeEndpoint;
+class ZigbeeNetworkReply;
+
+class ZigbeeClusterOnOff : public ZigbeeCluster
 {
+    Q_OBJECT
 
-}
+    friend class ZigbeeNode;
+    friend class ZigbeeNetwork;
 
-ZigbeeClusterAttribute::ZigbeeClusterAttribute(quint16 id, const ZigbeeDataType &dataType):
-    m_id(id),
-    m_dataType(dataType)
-{
+public:
+    enum Attribute {
+        AttributeOnOff = 0x0000,
+        AttributeGlobalSceneControl = 0x4000,
+        AttributeOnTime = 0x4001,
+        AttributeOffTime = 0x4002
+    };
+    Q_ENUM(Attribute)
 
-}
+    enum Command {
+        CommandOff = 0x00,
+        CommandOn = 0x01,
+        CommandToggle = 0x02,
+        CommandOffWithEffect = 0x40,
+        CommandOnWithRecallGlobalScene = 0x41,
+        CommandOnWithTimedOff = 0x42
+    };
+    Q_ENUM(Command)
 
-ZigbeeClusterAttribute::ZigbeeClusterAttribute(const ZigbeeClusterAttribute &other)
-{
-    m_id = other.id();
-    m_dataType = other.dataType();
-}
+    explicit ZigbeeClusterOnOff(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
-quint16 ZigbeeClusterAttribute::id() const
-{
-    return m_id;
-}
+    ZigbeeClusterReply *commandOff();
+    ZigbeeClusterReply *commandOn();
+//    ZigbeeClusterReply *commandToggle();
+//    ZigbeeClusterReply *commandOffWithEffect();
+//    ZigbeeClusterReply *commandOnWithRecallGlobalScene();
+//    ZigbeeClusterReply *commandOnWithTimedOff();
 
-ZigbeeDataType ZigbeeClusterAttribute::dataType() const
-{
-    return m_dataType;
-}
+private:
+    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
-ZigbeeClusterAttribute &ZigbeeClusterAttribute::operator=(const ZigbeeClusterAttribute &other)
-{
-    m_id = other.id();
-    m_dataType = other.dataType();
-    return *this;
-}
+protected:
+    void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
-bool ZigbeeClusterAttribute::operator==(const ZigbeeClusterAttribute &other) const
-{
-    return m_id == other.id() && m_dataType == other.dataType();
-}
 
-bool ZigbeeClusterAttribute::operator!=(const ZigbeeClusterAttribute &other) const
-{
-    return !operator==(other);
-}
+signals:
 
-bool ZigbeeClusterAttribute::isValid() const
-{
-    return m_id != 0xffff && m_dataType.isValid();
-}
+};
 
-QDebug operator<<(QDebug debug, const ZigbeeClusterAttribute &attribute)
-{
-    debug.nospace().noquote() << "ZigbeeClusterAttribute("
-                              << ZigbeeUtils::convertUint16ToHexString(attribute.id()) << ", "
-                              << attribute.dataType()
-                              << ")";
-    return debug.space();
-}
+#endif // ZIGBEECLUSTERONOFF_H

@@ -31,17 +31,17 @@
 #include <QDebug>
 
 #include "zigbee.h"
+#include "zigbeedatatype.h"
 
 class ZigbeeClusterAttribute
 {
 public:
     ZigbeeClusterAttribute();
-    ZigbeeClusterAttribute(quint16 id, Zigbee::DataType dataType, QByteArray data);
+    ZigbeeClusterAttribute(quint16 id, const ZigbeeDataType &dataType);
     ZigbeeClusterAttribute(const ZigbeeClusterAttribute &other);
 
     quint16 id() const;
-    Zigbee::DataType dataType() const;
-    QByteArray data() const;
+    ZigbeeDataType dataType() const;
 
     ZigbeeClusterAttribute &operator=(const ZigbeeClusterAttribute &other);
     bool operator==(const ZigbeeClusterAttribute &other) const;
@@ -50,9 +50,8 @@ public:
     bool isValid() const;
 
 private:
-    quint16 m_id = 0;
-    Zigbee::DataType m_dataType = Zigbee::NoData;
-    QByteArray m_data;
+    quint16 m_id = 0xffff;
+    ZigbeeDataType m_dataType;
 };
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterAttribute &attribute);
