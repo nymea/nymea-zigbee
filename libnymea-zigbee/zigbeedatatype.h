@@ -37,21 +37,35 @@ public:
     ZigbeeDataType();
     ZigbeeDataType(Zigbee::DataType dataType, const QByteArray &data = QByteArray());
 
-    ZigbeeDataType(quint8 value, Zigbee::DataType dataType = Zigbee::Uint8);
-    ZigbeeDataType(quint16 value, Zigbee::DataType dataType = Zigbee::Uint16);
+    // From uint
+    ZigbeeDataType(quint8 value);
+    ZigbeeDataType(quint16 value);
     ZigbeeDataType(quint32 value, Zigbee::DataType dataType = Zigbee::Uint32);
     ZigbeeDataType(quint64 value, Zigbee::DataType dataType = Zigbee::Uint64);
-    ZigbeeDataType(bool value);
 
+    // From int
+    ZigbeeDataType(qint8 value);
+    ZigbeeDataType(qint16 value);
+    ZigbeeDataType(qint32 value, Zigbee::DataType dataType = Zigbee::Int32);
+    ZigbeeDataType(qint64 value, Zigbee::DataType dataType = Zigbee::Int64);
+
+
+    ZigbeeDataType(bool value);
     ZigbeeDataType(const QString &value, Zigbee::DataType dataType = Zigbee::CharString);
 
+    // To uint
     quint8 toUInt8(bool *ok = nullptr) const;
     quint16 toUInt16(bool *ok = nullptr) const;
     quint32 toUInt32(bool *ok = nullptr) const;
     quint64 toUInt64(bool *ok = nullptr) const;
 
-    bool toBool(bool *ok = nullptr) const;
+    // Int
+    qint8 toInt8(bool *ok = nullptr) const;
+    qint16 toInt16(bool *ok = nullptr) const;
+    qint32 toInt32(bool *ok = nullptr) const;
+    qint64 toInt64(bool *ok = nullptr) const;
 
+    bool toBool(bool *ok = nullptr) const;
     QString toString(bool *ok = nullptr) const;
 
     Zigbee::DataType dataType() const;

@@ -81,12 +81,11 @@ ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 attributeId)
 
 void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
+    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << attribute;
     if (hasAttribute(attribute.id())) {
-        qCDebug(dcZigbeeCluster()) << "Update attribute" << this << attribute;
         m_attributes[attribute.id()] = attribute;
         emit attributeChanged(attribute);
     } else {
-        qCDebug(dcZigbeeCluster()) << "Add attribute" << this << attribute;
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);
     }
@@ -232,9 +231,20 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
         reply->m_responseData = asdu;
         reply->m_responseFrame = frame;
         reply->m_zclIndicationReceived = true;
-
         if (reply->isComplete())
             finishZclReply(reply);
+
+        // Update the attributes internally if this was a read command
+        if (frame.header.frameControl.frameType == ZigbeeClusterLibrary::FrameTypeGlobal) {
+            ZigbeeClusterLibrary::Command globalCommand = static_cast<ZigbeeClusterLibrary::Command>(frame.header.command);
+            if (globalCommand == ZigbeeClusterLibrary::CommandReadAttributesResponse) {
+                // Update the attributes from the attribut status reports internally
+                QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(frame.payload);
+                foreach (const ZigbeeClusterLibrary::ReadAttributeStatusRecord &attributeStatusRecord, attributeStatusRecords) {
+                    setAttribute(ZigbeeClusterAttribute(attributeStatusRecord.attributeId, attributeStatusRecord.dataType));
+                }
+            }
+        }
 
         return;
     }
@@ -256,7 +266,7 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
     }
 
 
-    // Not for a reply, process the indication
+    // Not for a reply or not an attribute report, let the cluster process this message internally
     processDataIndication(frame);
 }
 

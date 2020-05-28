@@ -54,8 +54,6 @@ public:
     };
     Q_ENUM(Attribute)
 
-    // No commands
-
     explicit ZigbeeClusterTemperatureMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
 private:

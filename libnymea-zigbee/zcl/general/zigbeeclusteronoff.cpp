@@ -190,12 +190,11 @@ ZigbeeClusterReply *ZigbeeClusterOnOff::commandToggle()
 
 void ZigbeeClusterOnOff::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
+    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
     if (hasAttribute(attribute.id())) {
-        qCDebug(dcZigbeeCluster()) << "Update attribute" << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
         m_attributes[attribute.id()] = attribute;
         emit attributeChanged(attribute);
     } else {
-        qCDebug(dcZigbeeCluster()) << "Add attribute" << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);
     }

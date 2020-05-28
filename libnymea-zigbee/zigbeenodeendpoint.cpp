@@ -170,6 +170,9 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, Zi
     case Zigbee::ClusterIdTemperatureMeasurement:
         return new ZigbeeClusterTemperatureMeasurement(m_network, m_node, this, direction, this);
         break;
+    case Zigbee::ClusterIdRelativeHumidityMeasurement:
+        return new ZigbeeClusterRelativeHumidityMeasurement(m_network, m_node, this, direction, this);
+        break;
     default:
         // Return a default cluster since we have no special implementation for this cluster
         return new ZigbeeCluster(m_network, m_node, this, clusterId, direction, this);

@@ -163,21 +163,18 @@ ZigbeeDataType::ZigbeeDataType(Zigbee::DataType dataType, const QByteArray &data
 
 }
 
-ZigbeeDataType::ZigbeeDataType(quint8 value, Zigbee::DataType dataType) :
-    m_dataType(dataType)
+ZigbeeDataType::ZigbeeDataType(quint8 value)
 {
-    Q_ASSERT_X(dataType == Zigbee::Uint8, "ZigbeeDataType", "invalid data type for quint8 constructor");
-    setDataType(dataType);
+    setDataType(Zigbee::Uint8);
     m_data.clear();
     QDataStream stream(&m_data, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << value;
 }
 
-ZigbeeDataType::ZigbeeDataType(quint16 value, Zigbee::DataType dataType)
+ZigbeeDataType::ZigbeeDataType(quint16 value)
 {
-    Q_ASSERT_X(dataType == Zigbee::Uint16, "ZigbeeDataType", "invalid data type for quint16 constructor");
-    setDataType(dataType);
+    setDataType(Zigbee::Uint16);
     m_data.clear();
     QDataStream stream(&m_data, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -216,6 +213,56 @@ ZigbeeDataType::ZigbeeDataType(quint64 value, Zigbee::DataType dataType)
     }
 }
 
+ZigbeeDataType::ZigbeeDataType(qint8 value)
+{
+    setDataType(Zigbee::Int8);
+    m_data.clear();
+    QDataStream stream(&m_data, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << value;
+}
+
+ZigbeeDataType::ZigbeeDataType(qint16 value)
+{
+    setDataType(Zigbee::Int16);
+    m_data.clear();
+    QDataStream stream(&m_data, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << value;
+}
+
+ZigbeeDataType::ZigbeeDataType(qint32 value, Zigbee::DataType dataType)
+{
+    Q_ASSERT_X(dataType == Zigbee::Int24 || dataType == Zigbee::Int32, "ZigbeeDataType", "invalid data type for qint32 constructor");
+    setDataType(dataType);
+    m_data.clear();
+    QDataStream stream(&m_data, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << value;
+
+    if (m_dataType == Zigbee::Int24) {
+        m_data.chop(1);
+    }
+}
+
+ZigbeeDataType::ZigbeeDataType(qint64 value, Zigbee::DataType dataType)
+{
+    Q_ASSERT_X(dataType == Zigbee::Int40 || dataType == Zigbee::Int48 || dataType == Zigbee::Int56 || dataType == Zigbee::Int64, "ZigbeeDataType", "invalid data type for qint64 constructor");
+    setDataType(dataType);
+    m_data.clear();
+    QDataStream stream(&m_data, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << value;
+
+    if (m_dataType == Zigbee::Int40) {
+        m_data.chop(3);
+    } else if (m_dataType == Zigbee::Int48) {
+        m_data.chop(2);
+    } else if (m_dataType == Zigbee::Int56) {
+        m_data.chop(1);
+    }
+}
+
 ZigbeeDataType::ZigbeeDataType(bool value)
 {
     setDataType(Zigbee::Bool);
@@ -250,9 +297,9 @@ ZigbeeDataType::ZigbeeDataType(const QString &value, Zigbee::DataType dataType)
 
 quint8 ZigbeeDataType::toUInt8(bool *ok) const
 {
-    *ok = true;
+    if (ok) *ok = true;
     if (m_data.count() != 1 || m_dataType != Zigbee::Uint8) {
-        *ok = false;
+        if (ok) *ok = false;
         return 0;
     }
 
@@ -293,10 +340,9 @@ quint32 ZigbeeDataType::toUInt32(bool *ok) const
     }
 
     if (m_data.count() == 3) {
-        // Note: make it 32 bit
+        // Make it 32 bit for converting
         QByteArray convertedData(m_data);
         convertedData.append(static_cast<char>(0));
-
         QDataStream stream(convertedData);
         stream.setByteOrder(QDataStream::LittleEndian);
         stream >> value;
@@ -321,7 +367,7 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
             break;
         }
 
-        // Note: make it 64 bit for converting
+        // Make it 64 bit for converting
         QByteArray convertedData(m_data);
         for (int i = 0; i < 3; i++)
             convertedData.append(static_cast<char>(0));
@@ -337,7 +383,7 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
             break;
         }
 
-        // Note: make it 64 bit for converting
+        // Make it 64 bit for converting
         QByteArray convertedData(m_data);
         for (int i = 0; i < 2; i++)
             convertedData.append(static_cast<char>(0));
@@ -353,10 +399,9 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
             break;
         }
 
-        // Note: make it 64 bit for converting
+        // Make it 64 bit for converting
         QByteArray convertedData(m_data);
         convertedData.append(static_cast<char>(0));
-
         QDataStream stream(convertedData);
         stream.setByteOrder(QDataStream::LittleEndian);
         stream >> value;
@@ -368,7 +413,137 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
             break;
         }
 
-        // Note: make it 64 bit for converting
+        QDataStream stream(m_data);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        stream >> value;
+        break;
+    }
+    default:
+        if (ok) *ok = false;
+        break;
+    }
+
+    return value;
+}
+
+qint8 ZigbeeDataType::toInt8(bool *ok) const
+{
+    if (ok) *ok = true;
+    if (m_data.count() != 1 || m_dataType != Zigbee::Int8) {
+        if (ok) *ok = false;
+        return 0;
+    }
+
+    return static_cast<qint8>(m_data.at(0));
+}
+
+qint16 ZigbeeDataType::toInt16(bool *ok) const
+{
+    if (ok) *ok = true;
+
+    qint16 value = 0;
+    if (m_data.count() != 2 || m_dataType != Zigbee::Int16) {
+        if (ok) *ok = false;
+        return value;
+    }
+
+    QDataStream stream(m_data);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream >> value;
+    return value;
+}
+
+qint32 ZigbeeDataType::toInt32(bool *ok) const
+{
+    if (ok) *ok = true;
+    qint32 value = 0;
+
+    // Verify the data type
+    if (m_dataType != Zigbee::Int24 && m_dataType != Zigbee::Int32) {
+        if (ok) *ok = false;
+        return value;
+    }
+
+    // Make sure there is enought data
+    if (m_data.count() != 3 && m_data.count() != 4) {
+        if (ok) *ok = false;
+        return value;
+    }
+
+    if (m_data.count() == 3) {
+        // Make it 32 bit for converting
+        QByteArray convertedData(m_data);
+        convertedData.append(static_cast<char>(0));
+        QDataStream stream(convertedData);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        stream >> value;
+    } else {
+        QDataStream stream(m_data);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        stream >> value;
+    }
+
+    return value;
+}
+
+qint64 ZigbeeDataType::toInt64(bool *ok) const
+{
+    if (ok) *ok = true;
+    qint64 value = 0;
+
+    switch (m_dataType) {
+    case Zigbee::Int40: {
+        if (m_data.count() != 5) {
+            if (ok) *ok = false;
+            break;
+        }
+
+        // Make it 64 bit for converting
+        QByteArray convertedData(m_data);
+        for (int i = 0; i < 3; i++)
+            convertedData.append(static_cast<char>(0));
+
+        QDataStream stream(convertedData);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        stream >> value;
+        break;
+    }
+    case Zigbee::Int48: {
+        if (m_data.count() != 6) {
+            if (ok) *ok = false;
+            break;
+        }
+
+        // Make it 64 bit for converting
+        QByteArray convertedData(m_data);
+        for (int i = 0; i < 2; i++)
+            convertedData.append(static_cast<char>(0));
+
+        QDataStream stream(convertedData);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        stream >> value;
+        break;
+    }
+    case Zigbee::Int56: {
+        if (m_data.count() != 7) {
+            if (ok) *ok = false;
+            break;
+        }
+
+        // Make it 64 bit for converting
+        QByteArray convertedData(m_data);
+        convertedData.append(static_cast<char>(0));
+        QDataStream stream(convertedData);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        stream >> value;
+        break;
+    }
+    case Zigbee::Int64: {
+        if (m_data.count() != 8) {
+            if (ok) *ok = false;
+            break;
+        }
+
         QDataStream stream(m_data);
         stream.setByteOrder(QDataStream::LittleEndian);
         stream >> value;
