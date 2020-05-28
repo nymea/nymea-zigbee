@@ -47,6 +47,13 @@ public:
     ZigbeeDeviceObjectReply *requestPowerDescriptor();
     ZigbeeDeviceObjectReply *requestActiveEndpoints();
     ZigbeeDeviceObjectReply *requestSimpleDescriptor(quint8 endpointId);
+    // TODO: implement other device and service discovery methods
+
+    // End device binding
+//    ZigbeeDeviceObjectReply *requestBindGroup(quint16 clusterId, quint16 groupAddress, quint8 destinationEndpoint);
+//    ZigbeeDeviceObjectReply *requestBindShortAddress();
+//    ZigbeeDeviceObjectReply *requestBindIeeeAddress();
+
 
     // Management request
     ZigbeeDeviceObjectReply *requestMgmtLeaveNetwork(bool rejoin = false, bool removeChildren = false);
@@ -60,16 +67,14 @@ private:
     quint8 m_transactionSequenceNumber = 0;
     QHash<quint8, ZigbeeDeviceObjectReply *> m_pendingReplies;
 
-    // Helper methods
+    // Helper methods for replies
     ZigbeeNetworkRequest buildZdoRequest(quint16 zdoRequest);
     ZigbeeDeviceObjectReply *createZigbeeDeviceObjectReply(const ZigbeeNetworkRequest &request, quint8 transactionSequenceNumber);
     bool verifyNetworkError(ZigbeeDeviceObjectReply *zdoReply, ZigbeeNetworkReply *networkReply);
     void finishZdoReply(ZigbeeDeviceObjectReply *zdoReply);
 
-signals:
-
 public slots:
-    void processApsDataIndication(quint8 destinationEndpoint, quint8 sourceEndpoint, quint16 clusterId, QByteArray payload, quint8 lqi, qint8 rssi);
+    void processApsDataIndication(const Zigbee::ApsdeDataIndication &indication);
 
 };
 

@@ -72,6 +72,11 @@ void ZigbeeNodeEndpoint::setDeviceVersion(quint8 deviceVersion)
     m_deviceVersion = deviceVersion;
 }
 
+bool ZigbeeNodeEndpoint::initialized() const
+{
+    return m_initialized;
+}
+
 QString ZigbeeNodeEndpoint::manufacturerName() const
 {
     return m_manufacturerName;
@@ -118,7 +123,12 @@ ZigbeeNodeEndpoint::ZigbeeNodeEndpoint(ZigbeeNetwork *network, ZigbeeNode *node,
     m_node(node),
     m_endpointId(endpointId)
 {
+    qCDebug(dcZigbeeEndpoint()) << "Creating endpoint" << m_endpointId << "on" << m_node;
+}
 
+ZigbeeNodeEndpoint::~ZigbeeNodeEndpoint()
+{
+    qCDebug(dcZigbeeEndpoint()) << "Destroy endpoint" << m_endpointId << "on" << m_node;
 }
 
 void ZigbeeNodeEndpoint::setManufacturerName(const QString &manufacturerName)
@@ -157,7 +167,11 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, Zi
     case Zigbee::ClusterIdOnOff:
         return new ZigbeeClusterOnOff(m_network, m_node, this, direction, this);
         break;
+    case Zigbee::ClusterIdTemperatureMeasurement:
+        return new ZigbeeClusterTemperatureMeasurement(m_network, m_node, this, direction, this);
+        break;
     default:
+        // Return a default cluster since we have no special implementation for this cluster
         return new ZigbeeCluster(m_network, m_node, this, clusterId, direction, this);
     }
 }
@@ -170,6 +184,37 @@ void ZigbeeNodeEndpoint::addInputCluster(ZigbeeCluster *cluster)
 void ZigbeeNodeEndpoint::addOutputCluster(ZigbeeCluster *cluster)
 {
     m_outputClusters.insert(cluster->clusterId(), cluster);
+}
+
+void ZigbeeNodeEndpoint::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication)
+{
+    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(indication.asdu);
+    qCDebug(dcZigbeeEndpoint()) << "Processing ZCL indication" << this << indication << frame;
+
+    // Check which kind of cluster sent this inidication, server or client
+    ZigbeeCluster *cluster = nullptr;
+    switch (frame.header.frameControl.direction) {
+    case ZigbeeClusterLibrary::DirectionClientToServer:
+        // Get the output/client cluster this indication is coming from
+        cluster = getOutputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
+        if (!cluster) {
+            cluster = createCluster(static_cast<Zigbee::ClusterId>(indication.clusterId), ZigbeeCluster::Client);
+            qCWarning(dcZigbeeEndpoint()) << "Received a ZCL indication for a cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
+            m_outputClusters.insert(cluster->clusterId(), cluster);
+        }
+        break;
+    case ZigbeeClusterLibrary::DirectionServerToClient:
+        // Get the input/server cluster this indication is coming from
+        cluster = getInputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
+        if (!cluster) {
+            cluster = createCluster(static_cast<Zigbee::ClusterId>(indication.clusterId), ZigbeeCluster::Server);
+            qCWarning(dcZigbeeEndpoint()) << "Received a ZCL indication for a cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
+            m_inputClusters.insert(cluster->clusterId(), cluster);
+        }
+        break;
+    }
+
+    cluster->processApsDataIndication(indication.asdu, frame);
 }
 
 ZigbeeCluster *ZigbeeNodeEndpoint::getOutputCluster(Zigbee::ClusterId clusterId) const

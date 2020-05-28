@@ -68,7 +68,7 @@ public:
 
     ZigbeeClusterReply *commandOff();
     ZigbeeClusterReply *commandOn();
-//    ZigbeeClusterReply *commandToggle();
+    ZigbeeClusterReply *commandToggle();
 //    ZigbeeClusterReply *commandOffWithEffect();
 //    ZigbeeClusterReply *commandOnWithRecallGlobalScene();
 //    ZigbeeClusterReply *commandOnWithTimedOff();
@@ -79,8 +79,9 @@ private:
 protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
-
 signals:
+    // Note: these signals will only be emitted if the cluster is a client
+    void commandSent(Command command);
 
 };
 

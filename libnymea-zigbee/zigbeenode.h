@@ -275,14 +275,19 @@ private:
     //virtual void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) = 0;
 
     // Init methods
+    int m_requestRetry = 0;
+    QList<quint8> m_uninitializedEndpoints;
     void initNodeDescriptor();
     void initPowerDescriptor();
     void initEndpoints();
     void initEndpoint(quint8 endpointId);
-    void initBasicCluster();
 
-    QList<quint8> m_uninitializedEndpoints;
-    QList<quint16> m_uninitalizedBasicClusterAttributes;
+    // For convinience and having base information about the first endpoint
+    void initBasicCluster();
+    void readManufacturerName(ZigbeeClusterBasic *basicCluster);
+    void readModelIdentifier(ZigbeeClusterBasic *basicCluster);
+    void readSoftwareBuildId(ZigbeeClusterBasic *basicCluster);
+
 
 signals:
     void stateChanged(State state);
@@ -290,8 +295,8 @@ signals:
     void clusterAdded(ZigbeeCluster *cluster);
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
 
-private slots:
-    void onClusterAttributeChanged(const ZigbeeClusterAttribute &attribute);
+public slots:
+    void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
 
 };
 

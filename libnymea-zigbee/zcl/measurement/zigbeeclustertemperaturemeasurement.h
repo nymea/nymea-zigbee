@@ -25,26 +25,45 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeeclusterbasic.h"
-#include "loggingcategory.h"
+#ifndef ZIGBEECLUSTERTEMPERATUREMEASUREMENT_H
+#define ZIGBEECLUSTERTEMPERATUREMEASUREMENT_H
 
-#include <QDataStream>
+#include <QObject>
 
-ZigbeeClusterBasic::ZigbeeClusterBasic(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, Zigbee::ClusterIdBasic, direction, parent)
+#include "zcl/zigbeecluster.h"
+#include "zcl/zigbeeclusterreply.h"
+
+class ZigbeeNode;
+class ZigbeeNetwork;
+class ZigbeeNodeEndpoint;
+class ZigbeeNetworkReply;
+
+class ZigbeeClusterTemperatureMeasurement : public ZigbeeCluster
 {
+    Q_OBJECT
 
-}
+    friend class ZigbeeNode;
+    friend class ZigbeeNetwork;
 
-void ZigbeeClusterBasic::setAttribute(const ZigbeeClusterAttribute &attribute)
-{
-    if (hasAttribute(attribute.id())) {
-        qCDebug(dcZigbeeCluster()) << "Update attribute" << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        qCDebug(dcZigbeeCluster()) << "Add attribute" << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
-}
+public:
+    enum Attribute {
+        AttributeMeasuredValue = 0x0000,
+        AttributeMinMeasuredValue = 0x0001,
+        AttributeMaxMeasuredValue = 0x0002,
+        AttributeTolerance = 0x0003
+    };
+    Q_ENUM(Attribute)
+
+    // No commands
+
+    explicit ZigbeeClusterTemperatureMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
+
+private:
+    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
+
+signals:
+    void temperatureChanged(double temperature);
+
+};
+
+#endif // ZIGBEECLUSTERTEMPERATUREMEASUREMENT_H

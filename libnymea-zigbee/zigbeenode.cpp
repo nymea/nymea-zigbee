@@ -396,24 +396,34 @@ void ZigbeeNode::startInitialization()
 
 void ZigbeeNode::initNodeDescriptor()
 {
+    qCDebug(dcZigbeeNode()) << "Requst node descriptor from" << this;
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestNodeDescriptor();
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read node descriptor" << reply->error();
-            // FIXME: decide what to do, retry or stop initialization
+            m_requestRetry++;
+            if (m_requestRetry < 3) {
+                qCDebug(dcZigbeeNode()) << "Retry to request node descriptor" << m_requestRetry << "/" << "3";
+                initNodeDescriptor();
+            } else {
+                qCWarning(dcZigbeeNode()) << "Failed to read node descriptor from" << this << "after 3 attempts. Giving up.";
+                m_requestRetry = 0;
+                // FIXME: decide what to do, remove the node again from network
+            }
             return;
         }
 
+        // The request finished, but we received a ZDP error.
         if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
             qCWarning(dcZigbeeNode()) << this << "failed to read node descriptor" << reply->responseAdpu().status;
-            // FIXME: decide what to do, retry or stop initialization
+            // FIXME: decide what to do, remove the node again from network
             return;
         }
 
         qCDebug(dcZigbeeNode()) << this << "reading node descriptor finished successfully.";
+        m_requestRetry = 0;
 
         // Parse and set the node descriptor FIXME: make it nicer using the data types
-
         QDataStream stream(reply->responseAdpu().payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         quint8 typeDescriptorFlag = 0; quint8 frequencyFlag = 0; quint8 macCapabilities = 0;
@@ -488,18 +498,27 @@ void ZigbeeNode::initPowerDescriptor()
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read power descriptor" << reply->error();
-            // FIXME: decide what to do, retry or stop initialization
+            if (m_requestRetry < 3) {
+                m_requestRetry++;
+                qCDebug(dcZigbeeNode()) << "Retry to request power descriptor from" << this << m_requestRetry << "/" << "3 attempts.";
+                initPowerDescriptor();
+            } else {
+                qCWarning(dcZigbeeNode()) << "Failed to read power descriptor from" << this << "after 3 attempts. Giving up.";
+                m_requestRetry = 0;
+                // FIXME: decide what to do, remove the node again from network or continue with active endpoint request
+            }
             return;
         }
 
         ZigbeeDeviceProfile::Adpu adpu = reply->responseAdpu();
         if (adpu.status != ZigbeeDeviceProfile::StatusSuccess) {
-            qCWarning(dcZigbeeNode()) << this << "failed to read node descriptor" << adpu.status;
-            // FIXME: decide what to do, retry or stop initialization
+            qCWarning(dcZigbeeNode()) << "Failed to read power descriptor from" << this << adpu.status;
+            // FIXME: decide what to do, remove the node again from network or continue without powerdescriptor
             return;
         }
 
         qCDebug(dcZigbeeNode()) << this << "reading power descriptor finished successfully.";
+        m_requestRetry = 0;
 
         QDataStream stream(adpu.payload);
         stream.setByteOrder(QDataStream::LittleEndian);
@@ -518,17 +537,26 @@ void ZigbeeNode::initEndpoints()
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read active endpoints" << reply->error();
-            // FIXME: decide what to do, retry or stop initialization
+            if (m_requestRetry < 3) {
+                m_requestRetry++;
+                qCDebug(dcZigbeeNode()) << "Retry to request active endpoints from" << this << m_requestRetry << "/" << "3 attempts.";
+                initEndpoints();
+            } else {
+                qCWarning(dcZigbeeNode()) << "Failed to read active endpoints from" << this << "after 3 attempts. Giving up.";
+                m_requestRetry = 0;
+                // FIXME: decide what to do, remove the node again from network
+            }
             return;
         }
 
         if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
-            qCWarning(dcZigbeeNode()) << this << "failed to read active endpoints" << reply->responseAdpu().status;
+            qCWarning(dcZigbeeNode()) << "Failed to read active endpoints" << reply->responseAdpu().status;
             // FIXME: decide what to do, retry or stop initialization
             return;
         }
 
         qCDebug(dcZigbeeNode()) << this << "reading active endpoints finished successfully.";
+        m_requestRetry = 0;
 
         QDataStream stream(reply->responseAdpu().payload);
         stream.setByteOrder(QDataStream::LittleEndian);
@@ -549,25 +577,31 @@ void ZigbeeNode::initEndpoints()
         // If there a no endpoints or all endpoints have already be initialized, continue with reading the basic cluster information
         if (m_uninitializedEndpoints.isEmpty()) {
             initBasicCluster();
+            return;
         }
 
-        // Read simple descriptor for each uninitialized endpoint
-        for (int i = 0; i < m_uninitializedEndpoints.count(); i++) {
-            quint8 endpointId = m_uninitializedEndpoints.at(i);
-            qCDebug(dcZigbeeNode()) << "Read simple descriptor of endpoint" << ZigbeeUtils::convertByteToHexString(endpointId);
-            initEndpoint(endpointId);
-        }
+        // Start reading simple descriptors sequentially
+        initEndpoint(m_uninitializedEndpoints.first());
     });
 }
 
 
 void ZigbeeNode::initEndpoint(quint8 endpointId)
 {
+    qCDebug(dcZigbeeNode()) << "Read simple descriptor of endpoint" << ZigbeeUtils::convertByteToHexString(endpointId);
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestSimpleDescriptor(endpointId);
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply, endpointId](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read simple descriptor for endpoint" << endpointId << reply->error();
-            // FIXME: decide what to do, retry or stop initialization
+            if (m_requestRetry < 3) {
+                m_requestRetry++;
+                qCDebug(dcZigbeeNode()) << "Retry to request simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << m_requestRetry << "/" << "3 attempts.";
+                initEndpoints();
+            } else {
+                qCWarning(dcZigbeeNode()) << "Failed to read simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << "after 3 attempts. Giving up.";
+                m_requestRetry = 0;
+                // FIXME: decide what to do, remove the node again from network
+            }
             return;
         }
 
@@ -578,6 +612,7 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
         }
 
         qCDebug(dcZigbeeNode()) << this << "reading simple descriptor for endpoint" << endpointId << "finished successfully.";
+        m_requestRetry = 0;
 
         quint8 length = 0; quint8 endpointId = 0; quint16 profileId = 0; quint16 deviceId = 0; quint8 deviceVersion = 0;
         quint8 inputClusterCount = 0; quint8 outputClusterCount = 0;
@@ -614,32 +649,34 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
         endpoint->setDeviceId(deviceId);
         endpoint->setDeviceVersion(deviceVersion);
 
+        // Parse and add server clusters
         qCDebug(dcZigbeeNode()) << "    Input clusters: (" << inputClusterCount << ")";
         for (int i = 0; i < inputClusterCount; i++) {
             quint16 clusterId = 0;
             stream >> clusterId;
             if (!endpoint->hasInputCluster(static_cast<Zigbee::ClusterId>(clusterId))) {
-                endpoint->addInputCluster(endpoint->createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Input));
+                endpoint->addInputCluster(endpoint->createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Server));
             }
             qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
         }
 
+        // Parse and add client clusters
         stream >> outputClusterCount;
-
         qCDebug(dcZigbeeNode()) << "    Output clusters: (" << outputClusterCount << ")";
         for (int i = 0; i < outputClusterCount; i++) {
             quint16 clusterId = 0;
             stream >> clusterId;
             if (!endpoint->hasOutputCluster(static_cast<Zigbee::ClusterId>(clusterId))) {
-                endpoint->addOutputCluster(endpoint->createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Output));
+                endpoint->addOutputCluster(endpoint->createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Client));
             }
             qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
         }
 
         m_uninitializedEndpoints.removeAll(endpointId);
+        endpoint->m_initialized = true;
 
         if (m_uninitializedEndpoints.isEmpty()) {
-
+            // Note: if we are initializing the coordinator, we can stop here
             if (m_shortAddress == 0) {
                 setState(StateInitialized);
                 return;
@@ -647,21 +684,49 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
 
             // Continue with the basic cluster attributes
             initBasicCluster();
+        } else {
+            // Fetch next endpoint
+            initEndpoint(m_uninitializedEndpoints.first());
         }
     });
 }
 
 void ZigbeeNode::initBasicCluster()
 {
+    // FIXME: check if we want to read from all endpoints the basic cluster information or only from the first
     ZigbeeClusterBasic *basicCluster = m_endpoints.first()->inputCluster<ZigbeeClusterBasic>(Zigbee::ClusterIdBasic);
-
     if (!basicCluster) {
-        qCWarning(dcZigbeeNode()) << this << "could not find basic server cluster";
+        qCWarning(dcZigbeeNode()) << "Could not find basic cluster on" << this << "Set the node to initialized anyways.";
+        // Set the device initialized any ways since this ist just for convinience
         setState(StateInitialized);
         return;
     }
 
+    // Start reading basic cluster attributes sequentially
+    readManufacturerName(basicCluster);
+}
+
+void ZigbeeNode::readManufacturerName(ZigbeeClusterBasic *basicCluster)
+{
     ZigbeeClusterBasic::Attribute attributeId = ZigbeeClusterBasic::AttributeManufacturerName;
+    if (basicCluster->hasAttribute(attributeId)) {
+        // Note: only read the basic cluster information if we don't have them already from an indication.
+        // Some devices (Lumi/Aquara) send cluster information containing different payload than a read attribute returns.
+        // This is bad device stack implementation, but we want to make it work either way without destroying the correct
+        // workflow as specified by the stack.
+        qCDebug(dcZigbeeNode()) << "The manufacturer name has already been set" << this << "Continue with model identifier";
+        bool valueOk = false;
+        QString manufacturerName = basicCluster->attribute(attributeId).dataType().toString(&valueOk);
+        if (valueOk) {
+            m_endpoints.first()->m_manufacturerName = manufacturerName;
+        } else {
+            qCWarning(dcZigbeeNode()) << "Could not convert manufacturer name attribute data to string" << basicCluster->attribute(attributeId).dataType();
+        }
+
+        readModelIdentifier(basicCluster);
+        return;
+    }
+
     qCDebug(dcZigbeeNode()) << "Reading attribute" << attributeId;
     ZigbeeClusterReply *reply = basicCluster->readAttributes({static_cast<quint16>(attributeId)});
     connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
@@ -684,64 +749,106 @@ void ZigbeeNode::initBasicCluster()
             }
         }
 
-        ZigbeeClusterBasic::Attribute attributeId = ZigbeeClusterBasic::AttributeModelIdentifier;
-        qCDebug(dcZigbeeNode()) << "Reading attribute" << attributeId;
-        ZigbeeClusterReply *reply = basicCluster->readAttributes({static_cast<quint16>(attributeId)});
-        connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
-            if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
-                qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
-            } else {
-                qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
-                QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
-                if (!attributeStatusRecords.isEmpty()) {
-                    ZigbeeClusterLibrary::ReadAttributeStatusRecord attributeStatusRecord = attributeStatusRecords.first();
-                    qCDebug(dcZigbeeNode()) << attributeStatusRecord;
-                    basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecord.dataType));
-                    bool valueOk = false;
-                    QString modelIdentifier = attributeStatusRecord.dataType.toString(&valueOk);
-                    if (valueOk) {
-                        m_endpoints.first()->m_modelIdentifier = modelIdentifier;
-                    } else {
-                        qCWarning(dcZigbeeNode()) << "Could not convert model identifier attribute data to string" << attributeStatusRecord.dataType;
-                    }
-                }
-            }
-
-            ZigbeeClusterBasic::Attribute attributeId = ZigbeeClusterBasic::AttributeSwBuildId;
-            qCDebug(dcZigbeeNode()) << "Reading attribute" << attributeId;
-            ZigbeeClusterReply *reply = basicCluster->readAttributes({static_cast<quint16>(attributeId)});
-            connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
-                if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
-                    qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
-                } else {
-                    qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
-                    QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
-                    if (!attributeStatusRecords.isEmpty()) {
-                        ZigbeeClusterLibrary::ReadAttributeStatusRecord attributeStatusRecord = attributeStatusRecords.first();
-                        qCDebug(dcZigbeeNode()) << attributeStatusRecord;
-                        basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecord.dataType));
-                        bool valueOk = false;
-                        QString softwareBuildId = attributeStatusRecord.dataType.toString(&valueOk);
-                        if (valueOk) {
-                            m_endpoints.first()->m_softwareBuildId = softwareBuildId;
-                        } else {
-                            qCWarning(dcZigbeeNode()) << "Could not convert software build id attribute data to string" << attributeStatusRecord.dataType;
-                        }
-                    }
-                }
-
-                // Finished with reading basic cluster, the node is initialized. TODO: read other cluster information
-                setState(StateInitialized);
-            });
-        });
+        // Continue eiterh way with attribute reading
+        readModelIdentifier(basicCluster);
     });
 }
 
-void ZigbeeNode::onClusterAttributeChanged(const ZigbeeClusterAttribute &attribute)
+void ZigbeeNode::readModelIdentifier(ZigbeeClusterBasic *basicCluster)
 {
-    ZigbeeCluster *cluster = static_cast<ZigbeeCluster *>(sender());
-    qCDebug(dcZigbeeNode()) << "Cluster" << cluster << "attribute changed" << attribute;
-    emit clusterAttributeChanged(cluster, attribute);
+    ZigbeeClusterBasic::Attribute attributeId = ZigbeeClusterBasic::AttributeModelIdentifier;
+    if (basicCluster->hasAttribute(attributeId)) {
+        // Note: only read the basic cluster information if we don't have them already from an indication.
+        // Some devices (Lumi/Aquara) send cluster information containing different payload than a read attribute returns.
+        // This is bad device stack implementation, but we want to make it work either way without destroying the correct
+        // workflow as specified by the stack.
+        qCDebug(dcZigbeeNode()) << "The model identifier has already been set" << this << "Continue with software build ID.";
+        bool valueOk = false;
+        QString modelIdentifier = basicCluster->attribute(attributeId).dataType().toString(&valueOk);
+        if (valueOk) {
+            m_endpoints.first()->m_modelIdentifier= modelIdentifier;
+        } else {
+            qCWarning(dcZigbeeNode()) << "Could not convert model identifier attribute data to string" << basicCluster->attribute(attributeId).dataType();
+        }
+
+        readSoftwareBuildId(basicCluster);
+        return;
+    }
+
+    qCDebug(dcZigbeeNode()) << "Reading attribute" << attributeId;
+    ZigbeeClusterReply *reply = basicCluster->readAttributes({static_cast<quint16>(attributeId)});
+    connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
+        if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
+        } else {
+            qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
+            QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
+            if (!attributeStatusRecords.isEmpty()) {
+                ZigbeeClusterLibrary::ReadAttributeStatusRecord attributeStatusRecord = attributeStatusRecords.first();
+                qCDebug(dcZigbeeNode()) << attributeStatusRecord;
+                basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecord.dataType));
+                bool valueOk = false;
+                QString modelIdentifier = attributeStatusRecord.dataType.toString(&valueOk);
+                if (valueOk) {
+                    m_endpoints.first()->m_modelIdentifier = modelIdentifier;
+                } else {
+                    qCWarning(dcZigbeeNode()) << "Could not convert model identifier attribute data to string" << attributeStatusRecord.dataType;
+                }
+            }
+        }
+
+        // Continue eiterh way with attribute reading
+        readSoftwareBuildId(basicCluster);
+    });
+}
+
+void ZigbeeNode::readSoftwareBuildId(ZigbeeClusterBasic *basicCluster)
+{
+    ZigbeeClusterBasic::Attribute attributeId = ZigbeeClusterBasic::AttributeSwBuildId;
+    qCDebug(dcZigbeeNode()) << "Reading attribute" << attributeId;
+    ZigbeeClusterReply *reply = basicCluster->readAttributes({static_cast<quint16>(attributeId)});
+    connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
+        if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
+        } else {
+            qCDebug(dcZigbeeNode()) << "Reading basic cluster attributes finished successfully";
+            QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(reply->responseFrame().payload);
+            if (!attributeStatusRecords.isEmpty()) {
+                ZigbeeClusterLibrary::ReadAttributeStatusRecord attributeStatusRecord = attributeStatusRecords.first();
+                qCDebug(dcZigbeeNode()) << attributeStatusRecord;
+                basicCluster->setAttribute(ZigbeeClusterAttribute(static_cast<quint16>(attributeId), attributeStatusRecord.dataType));
+                bool valueOk = false;
+                QString softwareBuildId = attributeStatusRecord.dataType.toString(&valueOk);
+                if (valueOk) {
+                    m_endpoints.first()->m_softwareBuildId = softwareBuildId;
+                } else {
+                    qCWarning(dcZigbeeNode()) << "Could not convert software build id attribute data to string" << attributeStatusRecord.dataType;
+                }
+            }
+        }
+
+        // Finished with reading basic cluster, the node is initialized.
+        // TODO: read other interesting cluster information
+        setState(StateInitialized);
+    });
+}
+
+void ZigbeeNode::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication)
+{
+    qCDebug(dcZigbeeNode()) << "Processing ZCL indication" << indication;
+
+    // Get the endpoint
+    ZigbeeNodeEndpoint *endpoint = getEndpoint(indication.sourceEndpoint);
+    if (!endpoint) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized endpoint. There is no such endpoint on" << this << "Creating the uninitialized endpoint";
+        // Create the uninitialized endpoint for now and fetch information later
+        endpoint = new ZigbeeNodeEndpoint(m_network, this, indication.sourceEndpoint, this);
+        endpoint->setProfile(static_cast<Zigbee::ZigbeeProfile>(indication.profileId));
+        // Note: the endpoint is not initializd yet, but keep it anyways
+        m_endpoints.append(endpoint);
+    }
+
+    endpoint->handleZigbeeClusterLibraryIndication(indication);
 }
 
 QDebug operator<<(QDebug debug, ZigbeeNode *node)

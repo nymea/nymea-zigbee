@@ -105,7 +105,7 @@ ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
     ZigbeeClusterLibrary::FrameControl frameControl;
     frameControl.frameType = ZigbeeClusterLibrary::FrameTypeGlobal;
     frameControl.manufacturerSpecific = false;
-    if (m_direction == Direction::Input) {
+    if (m_direction == Direction::Server) {
         frameControl.direction = ZigbeeClusterLibrary::DirectionClientToServer;
     } else {
         frameControl.direction = ZigbeeClusterLibrary::DirectionServerToClient;
@@ -222,15 +222,14 @@ void ZigbeeCluster::processDataIndication(ZigbeeClusterLibrary::Frame frame)
     qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
 }
 
-void ZigbeeCluster::processApsDataIndication(QByteArray payload)
+void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const ZigbeeClusterLibrary::Frame &frame)
 {
-    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(payload);
     qCDebug(dcZigbeeCluster()) << "Received data indication" << this << frame;
 
     // Check if this indication is for a pending reply
     if (m_pendingReplies.contains(frame.header.transactionSequenceNumber)) {
         ZigbeeClusterReply *reply = m_pendingReplies.value(frame.header.transactionSequenceNumber);
-        reply->m_responseData = payload;
+        reply->m_responseData = asdu;
         reply->m_responseFrame = frame;
         reply->m_zclIndicationReceived = true;
 
@@ -239,6 +238,23 @@ void ZigbeeCluster::processApsDataIndication(QByteArray payload)
 
         return;
     }
+
+    // Check for server clusters and if this is an attribute report
+    if (m_direction == Server && frame.header.frameControl.frameType == ZigbeeClusterLibrary::FrameTypeGlobal) {
+        ZigbeeClusterLibrary::Command globalCommand = static_cast<ZigbeeClusterLibrary::Command>(frame.header.command);
+        if (globalCommand == ZigbeeClusterLibrary::CommandReportAttributes) {
+            qCDebug(dcZigbeeCluster()) << "Received attributes report received" << this << frame;
+            // Read the attribute reports and update/set the attributes
+            QDataStream stream(frame.payload);
+            stream.setByteOrder(QDataStream::LittleEndian);
+            quint16 attributeId = 0; quint8 type = 0;
+            stream >> attributeId >> type;
+            ZigbeeDataType dataType = ZigbeeClusterLibrary::readDataType(&stream, static_cast<Zigbee::DataType>(type));
+            setAttribute(ZigbeeClusterAttribute(attributeId, dataType));
+            return;
+        }
+    }
+
 
     // Not for a reply, process the indication
     processDataIndication(frame);

@@ -351,7 +351,7 @@ void ZigbeeNetwork::loadNetwork()
             for (int n = 0; n < inputClustersCount; n ++) {
                 settings.setArrayIndex(n);
                 Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(settings.value("clusterId", 0).toUInt());
-                ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Input);
+                ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Server);
                 //qCDebug(dcZigbeeNetwork()) << "Created" << cluster;
                 endpoint->m_inputClusters.insert(clusterId, cluster);
             }
@@ -361,7 +361,7 @@ void ZigbeeNetwork::loadNetwork()
             for (int n = 0; n < outputClustersCount; n ++) {
                 settings.setArrayIndex(n);
                 Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(settings.value("clusterId", 0).toUInt());
-                ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Output);
+                ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Client);
                 //qCDebug(dcZigbeeNetwork()) << "Created" << cluster;
                 endpoint->m_outputClusters.insert(clusterId, cluster);
             }

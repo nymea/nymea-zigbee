@@ -69,8 +69,8 @@ class ZigbeeCluster : public QObject
 
 public:
     enum Direction {
-        Input,
-        Output
+        Server,
+        Client
     };
     Q_ENUM(Direction)
 
@@ -167,7 +167,7 @@ protected:
     ZigbeeNodeEndpoint *m_endpoint= nullptr;
 
     Zigbee::ClusterId m_clusterId = Zigbee::ClusterIdUnknown;
-    Direction m_direction = Input;
+    Direction m_direction = Server;
     QHash<quint16, ZigbeeClusterAttribute> m_attributes;
 
     ZigbeeNetworkRequest createGeneralRequest();
@@ -187,7 +187,7 @@ signals:
     void attributeChanged(const ZigbeeClusterAttribute &attribute);
 
 public slots:
-    void processApsDataIndication(QByteArray payload);
+    void processApsDataIndication(const QByteArray &asdu, const ZigbeeClusterLibrary::Frame &frame);
 
 };
 

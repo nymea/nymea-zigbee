@@ -9,6 +9,8 @@ SOURCES += \
     backends/deconz/zigbeebridgecontrollerdeconz.cpp \
     backends/deconz/zigbeenetworkdeconz.cpp \
     zcl/general/zigbeeclusteronoff.cpp \
+    zcl/measurement/zigbeeclusterrelativehumiditymeasurement.cpp \
+    zcl/measurement/zigbeeclustertemperaturemeasurement.cpp \
     zcl/zigbeecluster.cpp \
     zcl/zigbeeclusterattribute.cpp \
     zcl/zigbeeclusterlibrary.cpp \
@@ -51,6 +53,8 @@ HEADERS += \
     backends/deconz/zigbeebridgecontrollerdeconz.h \
     backends/deconz/zigbeenetworkdeconz.h \
     zcl/general/zigbeeclusteronoff.h \
+    zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h \
+    zcl/measurement/zigbeeclustertemperaturemeasurement.h \
     zcl/zigbeecluster.h \
     zcl/zigbeeclusterattribute.h \
     zcl/zigbeeclusterlibrary.h \

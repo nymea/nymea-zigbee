@@ -199,6 +199,8 @@ public:
 
     explicit ZigbeeClusterBasic(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    // TODO: reset all clusters to factory defaults command 0x00, optional
+
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 

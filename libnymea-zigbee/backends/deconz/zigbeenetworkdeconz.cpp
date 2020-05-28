@@ -36,7 +36,6 @@ ZigbeeNetworkDeconz::ZigbeeNetworkDeconz(QObject *parent) :
     ZigbeeNetwork(parent)
 {
     m_controller = new ZigbeeBridgeControllerDeconz(this);
-    //connect(m_controller, &ZigbeeBridgeControllerDeconz::messageReceived, this, &ZigbeeNetworkDeconz::onMessageReceived);
     connect(m_controller, &ZigbeeBridgeControllerDeconz::availableChanged, this, &ZigbeeNetworkDeconz::onControllerAvailableChanged);
     connect(m_controller, &ZigbeeBridgeControllerDeconz::apsDataConfirmReceived, this, &ZigbeeNetworkDeconz::onApsDataConfirmReceived);
     connect(m_controller, &ZigbeeBridgeControllerDeconz::apsDataIndicationReceived, this, &ZigbeeNetworkDeconz::onApsDataIndicationReceived);
@@ -54,11 +53,10 @@ ZigbeeNetworkDeconz::ZigbeeNetworkDeconz(QObject *parent) :
 
 ZigbeeBridgeController *ZigbeeNetworkDeconz::bridgeController() const
 {
-    if (m_controller) {
-        return qobject_cast<ZigbeeBridgeController *>(m_controller);
-    }
+    if (!m_controller)
+        return nullptr;
 
-    return nullptr;
+    return qobject_cast<ZigbeeBridgeController *>(m_controller);
 }
 
 ZigbeeNetworkReply *ZigbeeNetworkDeconz::sendRequest(const ZigbeeNetworkRequest &request)
@@ -308,8 +306,10 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
     }
 }
 
-void ZigbeeNetworkDeconz::handleZigbeeDeviceProfileIndication(const DeconzApsDataIndication &indication)
+void ZigbeeNetworkDeconz::handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication)
 {
+    //qCDebug(dcZigbeeNetwork()) << "Handle ZDP indication" << indication;
+
     // Check if this is a device announcement
     if (indication.clusterId == ZigbeeDeviceProfile::DeviceAnnounce) {
         QDataStream stream(indication.asdu);
@@ -320,77 +320,40 @@ void ZigbeeNetworkDeconz::handleZigbeeDeviceProfileIndication(const DeconzApsDat
         return;
     }
 
+    if (indication.destinationShortAddress == Zigbee::BroadcastAddressAllNodes ||
+            indication.destinationShortAddress == Zigbee::BroadcastAddressAllRouters ||
+            indication.destinationShortAddress == Zigbee::BroadcastAddressAllNonSleepingNodes) {
+        qCDebug(dcZigbeeNetwork()) << "Received unhandled broadcast ZDO indication" << indication;
+
+        // FIXME: check what we can do with such messages like permit join
+        return;
+    }
+
     ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
     if (!node) {
         qCWarning(dcZigbeeNetwork()) << "Received a ZDO indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
+        // FIXME: check if we want to create it since the device definitly exists within the network
         return;
     }
 
-    node->deviceObject()->processApsDataIndication(indication.destinationEndpoint, indication.sourceEndpoint, indication.clusterId, indication.asdu, indication.lqi, indication.rssi);
+    // Let the node device object handle this (ZDP)
+    node->deviceObject()->processApsDataIndication(indication);
 }
 
-void ZigbeeNetworkDeconz::handleZigbeeLightLinkIndication(const DeconzApsDataIndication &indication)
+void ZigbeeNetworkDeconz::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication)
 {
     ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(indication.asdu);
-    //qCDebug(dcZigbeeNetwork()) << "ZCL ZLL" << indication << frame;
+    //qCDebug(dcZigbeeNetwork()) << "Handle ZCL indication" << indication << frame;
 
     // Get the node
     ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
     if (!node) {
         qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
+        // FIXME: maybe create and init the node, since it is in the network, but not recognized
         return;
     }
 
-    // Get the endpoint
-    ZigbeeNodeEndpoint *endpoint = node->getEndpoint(indication.sourceEndpoint);
-    if (!endpoint) {
-        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized endpoint. There is no such endpoint on" << node << ". Ignoring indication" << indication;
-        return;
-    }
-
-    // Get the cluster
-    ZigbeeCluster *cluster = endpoint->getOutputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
-    if (!cluster) {
-        cluster = endpoint->getInputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
-        if (!cluster) {
-            qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized cluster. There is no such cluster on" << node << endpoint << "in the system. Ignoring indication" << indication;
-            return;
-        }
-    }
-
-    cluster->processApsDataIndication(indication.asdu);
-}
-
-void ZigbeeNetworkDeconz::handleZigbeeHomeAutomationIndication(const DeconzApsDataIndication &indication)
-{
-    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(indication.asdu);
-    //qCDebug(dcZigbeeNetwork()) << "ZCL HA" << indication << frame;
-
-    // Get the node
-    ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
-    if (!node) {
-        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
-        return;
-    }
-
-    // Get the endpoint
-    ZigbeeNodeEndpoint *endpoint = node->getEndpoint(indication.sourceEndpoint);
-    if (!endpoint) {
-        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized endpoint. There is no such endpoint on" << node << ". Ignoring indication" << indication;
-        return;
-    }
-
-    // Get the cluster
-    ZigbeeCluster *cluster = endpoint->getOutputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
-    if (!cluster) {
-        cluster = endpoint->getInputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
-        if (!cluster) {
-            qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized cluster. There is no such cluster on" << node << endpoint << "in the system. Ignoring indication" << indication;
-            return;
-        }
-    }
-
-    cluster->processApsDataIndication(indication.asdu);
+    node->handleZigbeeClusterLibraryIndication(indication);
 }
 
 void ZigbeeNetworkDeconz::setPermitJoiningInternal(bool permitJoining)
@@ -632,7 +595,7 @@ void ZigbeeNetworkDeconz::onPermitJoinRefreshTimout()
     setPermitJoiningInternal(true);
 }
 
-void ZigbeeNetworkDeconz::onApsDataConfirmReceived(const DeconzApsDataConfirm &confirm)
+void ZigbeeNetworkDeconz::onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm)
 {
     ZigbeeNetworkReply *reply = m_pendingReplies.value(confirm.requestId);
     if (!reply) {
@@ -643,7 +606,7 @@ void ZigbeeNetworkDeconz::onApsDataConfirmReceived(const DeconzApsDataConfirm &c
     setReplyResponseError(reply, static_cast<Zigbee::ZigbeeApsStatus>(confirm.zigbeeStatusCode));
 }
 
-void ZigbeeNetworkDeconz::onApsDataIndicationReceived(const DeconzApsDataIndication &indication)
+void ZigbeeNetworkDeconz::onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication)
 {
     // Check if this indocation is related to any pending reply
     if (indication.profileId == Zigbee::ZigbeeProfileDevice) {
@@ -651,18 +614,8 @@ void ZigbeeNetworkDeconz::onApsDataIndicationReceived(const DeconzApsDataIndicat
         return;
     }
 
-    if (indication.profileId == Zigbee::ZigbeeProfileLightLink) {
-
-    }
-
-    if (indication.profileId == Zigbee::ZigbeeProfileHomeAutomation) {
-        handleZigbeeHomeAutomationIndication(indication);
-        return;
-    }
-
-    // FIXME: handle it
-
-    qCDebug(dcZigbeeNetwork()) << "Unhandled indication" << indication;
+    // Else let the node handle this indication
+    handleZigbeeClusterLibraryIndication(indication);
 }
 
 void ZigbeeNetworkDeconz::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities)

@@ -26,4 +26,61 @@
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "zigbee.h"
+#include "zigbeeutils.h"
+#include "zdo/zigbeedeviceprofile.h"
 
+QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataConfirm &confirm)
+{
+    debug.nospace() << "APSDE-DATA.confirm(";
+    debug.nospace() << "Request ID: " << confirm.requestId << ", ";
+
+    if (confirm.destinationAddressMode == Zigbee::DestinationAddressModeGroup)
+        debug.nospace() << "Group address:" << ZigbeeUtils::convertUint16ToHexString(confirm.destinationShortAddress) << ", ";
+
+    if (confirm.destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
+        debug.nospace() << "NWK address:" << ZigbeeUtils::convertUint16ToHexString(confirm.destinationShortAddress) << ", ";
+
+    if (confirm.destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
+        debug.nospace() << "IEEE address:" << ZigbeeAddress(confirm.destinationIeeeAddress).toString() << ", ";
+
+    debug.nospace() << "Destination EP:" << ZigbeeUtils::convertByteToHexString(confirm.destinationEndpoint) << ", ";
+    debug.nospace() << "Source EP:" << ZigbeeUtils::convertByteToHexString(confirm.sourceEndpoint) << ", ";
+    debug.nospace() << static_cast<Zigbee::ZigbeeStatus>(confirm.zigbeeStatusCode);
+    debug.nospace() << ")";
+
+    return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataIndication &indication)
+{
+    debug.nospace() << "APSDE-DATA.indication(";
+    if (indication.destinationAddressMode == Zigbee::DestinationAddressModeGroup)
+        debug.nospace() << "Group address:" << ZigbeeUtils::convertUint16ToHexString(indication.destinationShortAddress) << ", ";
+
+    if (indication.destinationAddressMode == Zigbee::DestinationAddressModeShortAddress)
+        debug.nospace() << "NWK address:" << ZigbeeUtils::convertUint16ToHexString(indication.destinationShortAddress) << ", ";
+
+    if (indication.destinationAddressMode == Zigbee::DestinationAddressModeIeeeAddress)
+        debug.nospace() << "IEEE address:" << ZigbeeAddress(indication.destinationIeeeAddress).toString() << ", ";
+
+    debug.nospace() << "Destination EP:" << ZigbeeUtils::convertByteToHexString(indication.destinationEndpoint) << ", ";
+    debug.nospace() << "Source EP:" << ZigbeeUtils::convertByteToHexString(indication.sourceEndpoint) << ", ";
+
+    if (indication.sourceAddressMode == Zigbee::SourceAddressModeShortAddress || indication.sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
+        debug.nospace() << "Source NWK address:" << ZigbeeUtils::convertUint16ToHexString(indication.sourceShortAddress) << ", ";
+
+    if (indication.sourceAddressMode == Zigbee::SourceAddressModeIeeeAddress || indication.sourceAddressMode == Zigbee::SourceAddressModeShortAndIeeeAddress)
+        debug.nospace() << "Source IEEE address:" << ZigbeeAddress(indication.sourceIeeeAddress).toString() << ", ";
+
+    debug.nospace() << static_cast<Zigbee::ZigbeeProfile>(indication.profileId) << ", ";
+    if (indication.profileId == static_cast<quint16>(Zigbee::ZigbeeProfileDevice)) {
+        debug.nospace() << static_cast<ZigbeeDeviceProfile::ZdoCommand>(indication.clusterId) << ", ";
+    } else {
+        debug.nospace() << static_cast<Zigbee::ClusterId>(indication.clusterId) << ", ";
+    }
+
+    debug.nospace() << "ASDU: " << ZigbeeUtils::convertByteArrayToHexString(indication.asdu) << ", ";
+    debug.nospace() << "LQI: " << indication.lqi << ", ";
+    debug.nospace() << "RSSI: " << indication.rssi << "dBm)";
+    return debug.space();
+}

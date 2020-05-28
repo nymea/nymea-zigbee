@@ -72,15 +72,10 @@ private:
     void setCreateNetworkState(CreateNetworkState state);
 
     // ZDO
-    void handleZigbeeDeviceProfileIndication(const DeconzApsDataIndication &indication);
+    void handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication);
 
-    // ZZL
-    void handleZigbeeLightLinkIndication(const DeconzApsDataIndication &indication);
-
-    // HA
-    void handleZigbeeHomeAutomationIndication(const DeconzApsDataIndication &indication);
-
-    // GP
+    // ZCL
+    void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
 
 protected:
     void setPermitJoiningInternal(bool permitJoining) override;
@@ -91,8 +86,8 @@ private slots:
     void onPollNetworkStateTimeout();
     void onPermitJoinRefreshTimout();
 
-    void onApsDataConfirmReceived(const DeconzApsDataConfirm &confirm);
-    void onApsDataIndicationReceived(const DeconzApsDataIndication &indication);
+    void onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
+    void onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
 
     void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
 

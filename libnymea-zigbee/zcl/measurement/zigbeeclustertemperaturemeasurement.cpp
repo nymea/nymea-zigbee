@@ -25,18 +25,18 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeeclusterbasic.h"
+#include "zigbeeclustertemperaturemeasurement.h"
+#include "zigbeenetworkreply.h"
 #include "loggingcategory.h"
+#include "zigbeenetwork.h"
 
-#include <QDataStream>
-
-ZigbeeClusterBasic::ZigbeeClusterBasic(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, Zigbee::ClusterIdBasic, direction, parent)
+ZigbeeClusterTemperatureMeasurement::ZigbeeClusterTemperatureMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
+    ZigbeeCluster(network, node, endpoint, Zigbee::ClusterIdTemperatureMeasurement, direction, parent)
 {
 
 }
 
-void ZigbeeClusterBasic::setAttribute(const ZigbeeClusterAttribute &attribute)
+void ZigbeeClusterTemperatureMeasurement::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     if (hasAttribute(attribute.id())) {
         qCDebug(dcZigbeeCluster()) << "Update attribute" << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
@@ -46,5 +46,15 @@ void ZigbeeClusterBasic::setAttribute(const ZigbeeClusterAttribute &attribute)
         qCDebug(dcZigbeeCluster()) << "Add attribute" << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);
+    }
+
+    if (attribute.id() == AttributeMeasuredValue) {
+        bool valueOk = false;
+        quint16 value = attribute.dataType().toUInt16(&valueOk);
+        if (valueOk) {
+            double temperature = value / 100.0;
+            qCDebug(dcZigbeeCluster()) << "Temperature changed" << temperature << "°C";
+            emit temperatureChanged(temperature);
+        }
     }
 }

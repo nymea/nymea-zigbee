@@ -34,9 +34,11 @@
 #include "zigbeeaddress.h"
 #include "zigbeenetworkreply.h"
 
+// Import all implemented cluster types
 #include "zcl/zigbeecluster.h"
 #include "zcl/general/zigbeeclusterbasic.h"
 #include "zcl/general/zigbeeclusteronoff.h"
+#include "zcl/measurement/zigbeeclustertemperaturemeasurement.h"
 
 class ZigbeeNode;
 class ZigbeeNetwork;
@@ -62,17 +64,19 @@ public:
     quint8 deviceVersion() const;
     void setDeviceVersion(quint8 deviceVersion);
 
+    bool initialized() const;
+
     // Basic cluster information
     QString manufacturerName() const;
     QString modelIdentifier() const;
     QString softwareBuildId() const;
 
-    // Input clusters
+    // Server clusters
     QList<ZigbeeCluster *> inputClusters() const;
     ZigbeeCluster *getInputCluster(Zigbee::ClusterId clusterId) const;
     bool hasInputCluster(Zigbee::ClusterId clusterId) const;
 
-    // Output clusters
+    // Client clusters
     QList<ZigbeeCluster *> outputClusters() const;
     ZigbeeCluster *getOutputCluster(Zigbee::ClusterId clusterId) const;
     bool hasOutputCluster(Zigbee::ClusterId clusterId) const;
@@ -97,6 +101,7 @@ public:
 
 private:
     explicit ZigbeeNodeEndpoint(ZigbeeNetwork *network, ZigbeeNode *node, quint8 endpointId, QObject *parent = nullptr);
+    ~ZigbeeNodeEndpoint();
 
     ZigbeeNetwork *m_network = nullptr;
     ZigbeeNode *m_node = nullptr;
@@ -104,6 +109,7 @@ private:
     Zigbee::ZigbeeProfile m_profile = Zigbee::ZigbeeProfileLightLink;
     quint16 m_deviceId = 0;
     quint8 m_deviceVersion = 0;
+    bool m_initialized = false;
 
     QHash<Zigbee::ClusterId, ZigbeeCluster *> m_inputClusters;
     QHash<Zigbee::ClusterId, ZigbeeCluster *> m_outputClusters;
@@ -123,6 +129,8 @@ private:
 
     void addInputCluster(ZigbeeCluster *cluster);
     void addOutputCluster(ZigbeeCluster *cluster);
+
+    void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
 
 signals:
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);

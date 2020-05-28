@@ -335,19 +335,13 @@ void ZigbeeDeviceObject::finishZdoReply(ZigbeeDeviceObjectReply *zdoReply)
     zdoReply->finished();
 }
 
-void ZigbeeDeviceObject::processApsDataIndication(quint8 destinationEndpoint, quint8 sourceEndpoint, quint16 clusterId, QByteArray payload, quint8 lqi, qint8 rssi)
+void ZigbeeDeviceObject::processApsDataIndication(const Zigbee::ApsdeDataIndication &indication)
 {
-    Q_UNUSED(destinationEndpoint)
-    Q_UNUSED(sourceEndpoint)
-    Q_UNUSED(clusterId)
-    Q_UNUSED(lqi)
-    Q_UNUSED(rssi)
-
     // Check if we have a waiting ZDO reply for this data
-    ZigbeeDeviceProfile::Adpu asdu = ZigbeeDeviceProfile::parseAdpu(payload);
+    ZigbeeDeviceProfile::Adpu asdu = ZigbeeDeviceProfile::parseAdpu(indication.asdu);
     ZigbeeDeviceObjectReply *zdoReply = m_pendingReplies.value(asdu.transactionSequenceNumber);
-    if (zdoReply && clusterId == (zdoReply->request().clusterId() | 0x8000)) {
-        zdoReply->m_responseData = payload;
+    if (zdoReply && indication.clusterId == (zdoReply->request().clusterId() | 0x8000)) {
+        zdoReply->m_responseData = indication.asdu;
         zdoReply->m_responseAdpu = asdu;
         zdoReply->m_zdpIndicationReceived = true;
         if (zdoReply->isComplete()) {

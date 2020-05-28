@@ -70,34 +70,6 @@ typedef struct DeconzDeviceState {
     bool apsDataRequestFreeSlots = false;
 } DeconzDeviceState;
 
-
-// Basic struct for interface data. Default Response
-typedef  struct DeconzApsDataConfirm {
-    quint8 requestId = 0;
-    quint8 destinationAddressMode = Zigbee::DestinationAddressModeShortAddress;
-    quint16 destinationShortAddress = 0;
-    quint64 destinationIeeeAddress;
-    quint8 destinationEndpoint = 0;
-    quint8 sourceEndpoint = 0;
-    quint8 zigbeeStatusCode = 0;
-} DeconzApsDataConfirm;
-
-typedef  struct DeconzApsDataIndication {
-    quint8 destinationAddressMode = 0;
-    quint16 destinationShortAddress = 0;
-    quint64 destinationIeeeAddress = 0;
-    quint8 destinationEndpoint = 0;
-    quint8 sourceAddressMode = 0;
-    quint16 sourceShortAddress = 0;
-    quint64 sourceIeeeAddress = 0;
-    quint8 sourceEndpoint = 0;
-    quint16 profileId = 0;
-    quint16 clusterId = 0;
-    QByteArray asdu;
-    quint8 lqi = 0;
-    qint8 rssi = 0;
-} DeconzApsDataIndication;
-
 class ZigbeeBridgeControllerDeconz : public ZigbeeBridgeController
 {
     Q_OBJECT
@@ -164,8 +136,8 @@ signals:
     void networkStateChanged(Deconz::NetworkState networkState);
     void networkConfigurationParameterChanged(const DeconzNetworkConfiguration &networkConfiguration);
 
-    void apsDataConfirmReceived(const DeconzApsDataConfirm &confirm);
-    void apsDataIndicationReceived(const DeconzApsDataIndication &indication);
+    void apsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
+    void apsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
 
 private slots:
     void onInterfaceAvailableChanged(bool available);
@@ -179,8 +151,6 @@ public slots:
 };
 
 QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState);
-QDebug operator<<(QDebug debug, const DeconzApsDataConfirm &confirm);
-QDebug operator<<(QDebug debug, const DeconzApsDataIndication &indication);
 QDebug operator<<(QDebug debug, const DeconzNetworkConfiguration &configuration);
 
 
