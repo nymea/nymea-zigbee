@@ -183,6 +183,12 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, Zi
     case Zigbee::ClusterIdRelativeHumidityMeasurement:
         return new ZigbeeClusterRelativeHumidityMeasurement(m_network, m_node, this, direction, this);
         break;
+    case Zigbee::ClusterIdOccupancySensing:
+        return new ZigbeeClusterOccupancySensing(m_network, m_node, this, direction, this);
+        break;
+    case Zigbee::ClusterIdIlluminanceMeasurement:
+        return new ZigbeeClusterIlluminanceMeasurment(m_network, m_node, this, direction, this);
+        break;
     // Security
     case Zigbee::ClusterIdIasZone:
         return new ZigbeeClusterIasZone(m_network, m_node, this, direction, this);

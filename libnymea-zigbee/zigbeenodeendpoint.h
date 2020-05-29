@@ -41,6 +41,8 @@
 #include "zcl/general/zigbeeclusteronoff.h"
 #include "zcl/general/zigbeeclusteridentify.h"
 
+#include "zcl/measurement/zigbeeclusteroccupancysensing.h"
+#include "zcl/measurement/zigbeeclusterilluminancemeasurment.h"
 #include "zcl/measurement/zigbeeclustertemperaturemeasurement.h"
 #include "zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h"
 

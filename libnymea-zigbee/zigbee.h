@@ -125,7 +125,7 @@ public:
         ClusterIdBallastConfiguration   = 0x0301,
 
         // Sensing
-        ClusterIdMeasurementIlluminance         = 0x0400,
+        ClusterIdIlluminanceMeasurement         = 0x0400,
         ClusterIdIlluminanceLevelSensing        = 0x0401,
         ClusterIdTemperatureMeasurement         = 0x0402,
         ClusterIdPressureMeasurement            = 0x0403,

@@ -304,7 +304,7 @@ ZigbeeDataType::ZigbeeDataType(const QString &value, Zigbee::DataType dataType)
 quint8 ZigbeeDataType::toUInt8(bool *ok) const
 {
     if (ok) *ok = true;
-    if (m_data.count() != 1 || m_dataType != Zigbee::Uint8) {
+    if (m_data.count() != 1) {
         if (ok) *ok = false;
         return 0;
     }
@@ -435,7 +435,7 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
 qint8 ZigbeeDataType::toInt8(bool *ok) const
 {
     if (ok) *ok = true;
-    if (m_data.count() != 1 || m_dataType != Zigbee::Int8) {
+    if (m_data.count() != 1) {
         if (ok) *ok = false;
         return 0;
     }
