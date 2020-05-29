@@ -46,6 +46,7 @@ public:
     Q_ENUM(ChannelConfiguration)
 
     ZigbeeChannelMask();
+    ZigbeeChannelMask(const ZigbeeChannelMask &other);
     ZigbeeChannelMask(quint32 channelMask);
     ZigbeeChannelMask(Zigbee::ZigbeeChannels channels);
 

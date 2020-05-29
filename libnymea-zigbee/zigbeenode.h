@@ -126,7 +126,7 @@ public:
     } ServerMask;
 
     typedef struct NodeDescriptor {
-        NodeType nodeType = NodeTypeRouter;
+        NodeType nodeType = NodeTypeEndDevice;
         bool complexDescriptorAvailable = false;
         bool userDescriptorAvailable = false;
         FrequencyBand frequencyBand = FrequencyBand2400Mhz;
@@ -287,7 +287,6 @@ private:
     void readManufacturerName(ZigbeeClusterBasic *basicCluster);
     void readModelIdentifier(ZigbeeClusterBasic *basicCluster);
     void readSoftwareBuildId(ZigbeeClusterBasic *basicCluster);
-
 
 signals:
     void stateChanged(State state);

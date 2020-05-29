@@ -36,6 +36,12 @@ ZigbeeDataType::ZigbeeDataType()
     setDataType(Zigbee::NoData);
 }
 
+ZigbeeDataType::ZigbeeDataType(const ZigbeeDataType &other)
+{
+    setDataType(other.dataType());
+    m_data = other.data();
+}
+
 ZigbeeDataType::ZigbeeDataType(Zigbee::DataType dataType, const QByteArray &data):
     m_data(data)
 {

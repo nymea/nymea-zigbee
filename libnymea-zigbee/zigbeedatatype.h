@@ -35,6 +35,7 @@ class ZigbeeDataType
 {
 public:
     ZigbeeDataType();
+    ZigbeeDataType(const ZigbeeDataType &other);
     ZigbeeDataType(Zigbee::DataType dataType, const QByteArray &data = QByteArray());
 
     // From uint

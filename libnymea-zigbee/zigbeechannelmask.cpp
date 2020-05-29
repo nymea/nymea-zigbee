@@ -33,6 +33,11 @@ ZigbeeChannelMask::ZigbeeChannelMask()
 
 }
 
+ZigbeeChannelMask::ZigbeeChannelMask(const ZigbeeChannelMask &other)
+{
+    m_channelMask = other.toUInt32();
+}
+
 ZigbeeChannelMask::ZigbeeChannelMask(quint32 channelMask) :
     m_channelMask(channelMask)
 {
