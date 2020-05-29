@@ -218,6 +218,8 @@ void ZigbeeCluster::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
     // Increase the tsn for continuouse id increasing on both sides
     m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
+
+    // Warn about the unhandled cluster indication, you can override this method in cluster implementations
     qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
 }
 
@@ -246,6 +248,9 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
             }
         }
 
+        // Increase the tsn for continuouse id increasing on both sides
+        m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
+
         return;
     }
 
@@ -261,10 +266,13 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
             stream >> attributeId >> type;
             ZigbeeDataType dataType = ZigbeeClusterLibrary::readDataType(&stream, static_cast<Zigbee::DataType>(type));
             setAttribute(ZigbeeClusterAttribute(attributeId, dataType));
+
+            // Increase the tsn for continuouse id increasing on both sides
+            m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
+
             return;
         }
     }
-
 
     // Not for a reply or not an attribute report, let the cluster process this message internally
     processDataIndication(frame);

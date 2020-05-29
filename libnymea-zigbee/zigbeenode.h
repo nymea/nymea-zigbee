@@ -199,7 +199,7 @@ private:
 
     ZigbeeNetwork *m_network;
     ZigbeeDeviceObject *m_deviceObject = nullptr;
-    QList<ZigbeeNodeEndpoint *> m_endpoints;
+    QHash<quint8, ZigbeeNodeEndpoint *> m_endpoints;
 
     // Node descriptor information
     QByteArray m_nodeDescriptorRawData;
@@ -277,6 +277,7 @@ private:
     // Init methods
     int m_requestRetry = 0;
     QList<quint8> m_uninitializedEndpoints;
+
     void initNodeDescriptor();
     void initPowerDescriptor();
     void initEndpoints();

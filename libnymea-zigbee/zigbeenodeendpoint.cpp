@@ -112,6 +112,11 @@ QList<ZigbeeCluster *> ZigbeeNodeEndpoint::outputClusters() const
     return m_outputClusters.values();
 }
 
+ZigbeeCluster *ZigbeeNodeEndpoint::getOutputCluster(Zigbee::ClusterId clusterId) const
+{
+    return m_outputClusters.value(clusterId);
+}
+
 bool ZigbeeNodeEndpoint::hasOutputCluster(Zigbee::ClusterId clusterId) const
 {
     return m_outputClusters.keys().contains(clusterId);
@@ -161,17 +166,26 @@ void ZigbeeNodeEndpoint::setSoftwareBuildId(const QString &softwareBuildId)
 ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, ZigbeeCluster::Direction direction)
 {
     switch (clusterId) {
+    // General
     case Zigbee::ClusterIdBasic:
         return new ZigbeeClusterBasic(m_network, m_node, this, direction, this);
         break;
     case Zigbee::ClusterIdOnOff:
         return new ZigbeeClusterOnOff(m_network, m_node, this, direction, this);
         break;
+    case Zigbee::ClusterIdIdentify:
+        return new ZigbeeClusterIdentify(m_network, m_node, this, direction, this);
+        break;
+    // Measurement
     case Zigbee::ClusterIdTemperatureMeasurement:
         return new ZigbeeClusterTemperatureMeasurement(m_network, m_node, this, direction, this);
         break;
     case Zigbee::ClusterIdRelativeHumidityMeasurement:
         return new ZigbeeClusterRelativeHumidityMeasurement(m_network, m_node, this, direction, this);
+        break;
+    // Security
+    case Zigbee::ClusterIdIasZone:
+        return new ZigbeeClusterIasZone(m_network, m_node, this, direction, this);
         break;
     default:
         // Return a default cluster since we have no special implementation for this cluster
@@ -182,11 +196,13 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, Zi
 void ZigbeeNodeEndpoint::addInputCluster(ZigbeeCluster *cluster)
 {
     m_inputClusters.insert(cluster->clusterId(), cluster);
+    emit inputClusterAdded(cluster);
 }
 
 void ZigbeeNodeEndpoint::addOutputCluster(ZigbeeCluster *cluster)
 {
     m_outputClusters.insert(cluster->clusterId(), cluster);
+    emit outputClusterAdded(cluster);
 }
 
 void ZigbeeNodeEndpoint::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication)
@@ -203,7 +219,7 @@ void ZigbeeNodeEndpoint::handleZigbeeClusterLibraryIndication(const Zigbee::Apsd
         if (!cluster) {
             cluster = createCluster(static_cast<Zigbee::ClusterId>(indication.clusterId), ZigbeeCluster::Client);
             qCWarning(dcZigbeeEndpoint()) << "Received a ZCL indication for a cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
-            m_outputClusters.insert(cluster->clusterId(), cluster);
+            addOutputCluster(cluster);
         }
         break;
     case ZigbeeClusterLibrary::DirectionServerToClient:
@@ -212,17 +228,12 @@ void ZigbeeNodeEndpoint::handleZigbeeClusterLibraryIndication(const Zigbee::Apsd
         if (!cluster) {
             cluster = createCluster(static_cast<Zigbee::ClusterId>(indication.clusterId), ZigbeeCluster::Server);
             qCWarning(dcZigbeeEndpoint()) << "Received a ZCL indication for a cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
-            m_inputClusters.insert(cluster->clusterId(), cluster);
+            addInputCluster(cluster);
         }
         break;
     }
 
     cluster->processApsDataIndication(indication.asdu, frame);
-}
-
-ZigbeeCluster *ZigbeeNodeEndpoint::getOutputCluster(Zigbee::ClusterId clusterId) const
-{
-    return m_outputClusters.value(clusterId);
 }
 
 QDebug operator<<(QDebug debug, ZigbeeNodeEndpoint *endpoint)

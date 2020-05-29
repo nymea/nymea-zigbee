@@ -36,10 +36,15 @@
 
 // Import all implemented cluster types
 #include "zcl/zigbeecluster.h"
+
 #include "zcl/general/zigbeeclusterbasic.h"
 #include "zcl/general/zigbeeclusteronoff.h"
+#include "zcl/general/zigbeeclusteridentify.h"
+
 #include "zcl/measurement/zigbeeclustertemperaturemeasurement.h"
 #include "zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h"
+
+#include "zcl/security/zigbeeclusteriaszone.h"
 
 class ZigbeeNode;
 class ZigbeeNetwork;
@@ -82,6 +87,7 @@ public:
     ZigbeeCluster *getOutputCluster(Zigbee::ClusterId clusterId) const;
     bool hasOutputCluster(Zigbee::ClusterId clusterId) const;
 
+    // Convinience cast methods for getting a specific cluster object
     template<typename T>
     inline T* inputCluster(Zigbee::ClusterId clusterId)
     {
@@ -123,9 +129,6 @@ private:
     void setModelIdentifier(const QString &modelIdentifier);
     void setSoftwareBuildId(const QString &softwareBuildId);
 
-    // Cluster commands
-    //virtual void setClusterAttribute(Zigbee::ClusterId clusterId, const ZigbeeClusterAttribute &attribute = ZigbeeClusterAttribute()) = 0;
-
     ZigbeeCluster *createCluster(Zigbee::ClusterId clusterId, ZigbeeCluster::Direction direction);
 
     void addInputCluster(ZigbeeCluster *cluster);
@@ -134,12 +137,14 @@ private:
     void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
 
 signals:
+    void inputClusterAdded(ZigbeeCluster *cluster);
+    void outputClusterAdded(ZigbeeCluster *cluster);
+
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
 
     void manufacturerNameChanged(const QString &manufacturerName);
     void modelIdentifierChanged(const QString &modelIdentifier);
     void softwareBuildIdChanged(const QString &softwareBuildId);
-
 };
 
 QDebug operator<<(QDebug debug, ZigbeeNodeEndpoint *endpoint);
