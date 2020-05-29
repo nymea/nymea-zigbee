@@ -68,17 +68,23 @@ ZigbeeAddress ZigbeeNode::extendedAddress() const
 
 QList<ZigbeeNodeEndpoint *> ZigbeeNode::endpoints() const
 {
-    return m_endpoints.values();
+    return m_endpoints;
 }
 
 bool ZigbeeNode::hasEndpoint(quint8 endpointId) const
 {
-    return m_endpoints.keys().contains(endpointId);
+    return getEndpoint(endpointId) != nullptr;
 }
 
 ZigbeeNodeEndpoint *ZigbeeNode::getEndpoint(quint8 endpointId) const
 {
-    return m_endpoints.value(endpointId);
+    foreach (ZigbeeNodeEndpoint *ep, m_endpoints) {
+        if (ep->endpointId()== endpointId) {
+            return ep;
+        }
+    }
+
+    return nullptr;
 }
 
 ZigbeeNode::NodeType ZigbeeNode::nodeType() const
@@ -635,7 +641,7 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
         ZigbeeNodeEndpoint *endpoint = nullptr;
         if (!hasEndpoint(endpointId)) {
             endpoint = new ZigbeeNodeEndpoint(m_network, this, endpointId, this);
-            m_endpoints.insert(endpoint->endpointId(), endpoint);
+            m_endpoints.append(endpoint);
         } else {
             endpoint = getEndpoint(endpointId);
         }
@@ -687,8 +693,22 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
 
 void ZigbeeNode::initBasicCluster()
 {
-    // FIXME: check if we want to read from all endpoints the basic cluster information or only from the first
-    ZigbeeClusterBasic *basicCluster = endpoints().first()->inputCluster<ZigbeeClusterBasic>(Zigbee::ClusterIdBasic);
+    // Get the first endpoint which implements the basic cluster
+    ZigbeeNodeEndpoint *endpoint = nullptr;
+    foreach (ZigbeeNodeEndpoint *ep, endpoints()) {
+        if (ep->hasInputCluster(Zigbee::ClusterIdBasic)) {
+            endpoint = ep;
+            break;
+        }
+    }
+
+    if (!endpoint) {
+        qCWarning(dcZigbeeNode()) << "Could not find any endpoint contiaining the basic cluster on" << this << "Set the node to initialized anyways.";
+        setState(StateInitialized);
+        return;
+    }
+
+    ZigbeeClusterBasic *basicCluster = endpoint->inputCluster<ZigbeeClusterBasic>(Zigbee::ClusterIdBasic);
     if (!basicCluster) {
         qCWarning(dcZigbeeNode()) << "Could not find basic cluster on" << this << "Set the node to initialized anyways.";
         // Set the device initialized any ways since this ist just for convinience
@@ -839,7 +859,7 @@ void ZigbeeNode::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataInd
         endpoint = new ZigbeeNodeEndpoint(m_network, this, indication.sourceEndpoint, this);
         endpoint->setProfile(static_cast<Zigbee::ZigbeeProfile>(indication.profileId));
         // Note: the endpoint is not initializd yet, but keep it anyways
-        m_endpoints.insert(endpoint->endpointId(), endpoint);
+        m_endpoints.append(endpoint);
     }
 
     endpoint->handleZigbeeClusterLibraryIndication(indication);

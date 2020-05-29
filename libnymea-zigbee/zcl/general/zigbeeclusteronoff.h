@@ -80,7 +80,10 @@ protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
 signals:
-    // Note: these signals will only be emitted if the cluster is a client
+    // Server cluster signals
+    void powerChanged(bool power);
+
+    // Client cluster signals
     void commandSent(Command command);
 
 };

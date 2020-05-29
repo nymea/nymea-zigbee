@@ -199,7 +199,7 @@ private:
 
     ZigbeeNetwork *m_network;
     ZigbeeDeviceObject *m_deviceObject = nullptr;
-    QHash<quint8, ZigbeeNodeEndpoint *> m_endpoints;
+    QList<ZigbeeNodeEndpoint *> m_endpoints;
 
     // Node descriptor information
     QByteArray m_nodeDescriptorRawData;

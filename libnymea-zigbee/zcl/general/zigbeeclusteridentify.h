@@ -81,6 +81,8 @@ private:
 protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
+    // TODO: identifyQueryResponse signal
+
 };
 
 #endif // ZIGBEECLUSTERIDENTIFY_H

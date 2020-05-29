@@ -198,6 +198,16 @@ void ZigbeeClusterOnOff::setAttribute(const ZigbeeClusterAttribute &attribute)
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);
     }
+
+    // Parse the information for convinience
+    if (attribute.id() == AttributeOnOff) {
+        bool valueOk = false;
+        bool value = attribute.dataType().toBool(&valueOk);
+        if (valueOk) {
+            qCDebug(dcZigbeeCluster()) << "OnOff state changed on" << m_node << m_endpoint << this << value;
+            emit powerChanged(value);
+        }
+    }
 }
 
 void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame)

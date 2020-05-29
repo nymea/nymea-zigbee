@@ -365,7 +365,7 @@ void ZigbeeNetwork::loadNetwork()
             }
             settings.endArray(); // outputClusters
 
-            node->m_endpoints.insert(endpoint->endpointId(), endpoint);
+            node->m_endpoints.append(endpoint);
         }
 
         settings.endArray(); // endpoints
