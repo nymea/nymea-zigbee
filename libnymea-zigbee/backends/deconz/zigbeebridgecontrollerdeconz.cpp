@@ -81,7 +81,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestVersion()
     stream << static_cast<quint16>(5); // Frame length
 
     ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(Deconz::CommandVersion, sequenceNumber, this);
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater);
+    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
     m_pendingReplies.insert(sequenceNumber, reply);
 
     m_interface->sendPackage(message);
@@ -105,7 +105,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestDeviceState()
     stream << static_cast<quint8>(0); // Reserverd
 
     ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(Deconz::CommandDeviceState, sequenceNumber, this);
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater);
+    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
     m_pendingReplies.insert(sequenceNumber, reply);
 
     m_interface->sendPackage(message);
@@ -381,7 +381,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Co
     ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(command, sequenceNumber, parent);
 
     // Auto delete the object on finished
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater);
+    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
 
     // Add it to the pending list
     m_pendingReplies.insert(sequenceNumber, reply);
@@ -402,7 +402,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
 
     // Create an independent reply for finishing the entire read sequence
     ZigbeeInterfaceDeconzReply *readNetworkParametersReply = new ZigbeeInterfaceDeconzReply(Deconz::CommandReadParameter, m_sequenceNumber, this);
-    connect(readNetworkParametersReply, &ZigbeeInterfaceDeconzReply::finished, readNetworkParametersReply, &ZigbeeInterfaceDeconzReply::deleteLater);
+    connect(readNetworkParametersReply, &ZigbeeInterfaceDeconzReply::finished, readNetworkParametersReply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
 
     // Read MAC address of the bridge
     ZigbeeInterfaceDeconzReply *replyMacAddress = requestReadParameter(Deconz::ParameterMacAddress);

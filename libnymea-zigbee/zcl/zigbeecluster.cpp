@@ -137,9 +137,7 @@ ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {
-            qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request"
-                                                << m_node << m_endpoint << this << networkReply->error()
-                                                << networkReply->zigbeeApsStatus();
+            qCWarning(dcZigbeeClusterLibrary()) << "Failed to read attributes from" << m_node << m_endpoint << this << networkReply->error();
             finishZclReply(zclReply);
             return;
         }
@@ -158,7 +156,7 @@ ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
 ZigbeeClusterReply *ZigbeeCluster::createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame)
 {
     ZigbeeClusterReply *zclReply = new ZigbeeClusterReply(request, frame, this);
-    connect(zclReply, &ZigbeeClusterReply::finished, zclReply, &ZigbeeClusterReply::deleteLater);
+    connect(zclReply, &ZigbeeClusterReply::finished, zclReply, &ZigbeeClusterReply::deleteLater, Qt::QueuedConnection);
     zclReply->m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
     m_pendingReplies.insert(zclReply->transactionSequenceNumber(), zclReply);
     return zclReply;
@@ -189,6 +187,7 @@ bool ZigbeeCluster::verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetwo
         // wait for the expected indication or check if we already recieved it
         zclReply->m_apsConfirmReceived = true;
         zclReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
+        zclReply->m_zigbeeNwkStatus = networkReply->zigbeeNwkStatus();
         success = true;
         break;
     case ZigbeeNetworkReply::ErrorInterfaceError:
@@ -198,9 +197,14 @@ bool ZigbeeCluster::verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetwo
         zclReply->m_error = ZigbeeClusterReply::ErrorNetworkOffline;
         break;
     case ZigbeeNetworkReply::ErrorZigbeeApsStatusError:
-        zclReply->m_error = ZigbeeClusterReply::ErrorZigbeeApsStatusError;
         zclReply->m_apsConfirmReceived = true;
+        zclReply->m_error = ZigbeeClusterReply::ErrorZigbeeApsStatusError;
         zclReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
+        break;
+    case ZigbeeNetworkReply::ErrorZigbeeNwkStatusError:
+        zclReply->m_apsConfirmReceived = true;
+        zclReply->m_error = ZigbeeClusterReply::ErrorZigbeeNwkStatusError;
+        zclReply->m_zigbeeNwkStatus = networkReply->zigbeeNwkStatus();
         break;
     }
 

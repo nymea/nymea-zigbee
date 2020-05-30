@@ -391,8 +391,7 @@ public:
     Q_ENUM(Manufacturer)
 
     enum ZigbeeNwkLayerStatus {
-        ZigbeeNwkLayerStatusJointNetwork = 0x00,
-        ZigbeeNwkLayerStatusFormedNetwork = 0x01,
+        ZigbeeNwkLayerStatusSuccess = 0x00,
         ZigbeeNwkLayerStatusInvalidParameter = 0xc1,
         ZigbeeNwkLayerStatusInvalidRequest = 0xc2,
         ZigbeeNwkLayerStatusNotPermitted = 0xc3,
@@ -403,10 +402,13 @@ public:
         ZigbeeNwkLayerStatusUnknownDevice = 0xc8,
         ZigbeeNwkLayerStatusUnsupportedAttribute = 0xc9,
         ZigbeeNwkLayerStatusNoNetworks = 0xca,
-        ZigbeeNwkLayerStatusLeaveUnconfirmed = 0xcb,
         ZigbeeNwkLayerStatusMaxFrmCntr = 0xcc,
         ZigbeeNwkLayerStatusNoKey = 0xcd,
-        ZigbeeNwkLayerStatusBadCcmOutput = 0xce
+        ZigbeeNwkLayerStatusBadCcmOutput = 0xce,
+        ZigbeeNwkLayerStatusRouteDiscoveryFailed = 0xd0,
+        ZigbeeNwkLayerStatusRouteError = 0xd1,
+        ZigbeeNwkLayerStatusBtTableFull = 0xd2,
+        ZigbeeNwkLayerStatusFrameNotBuffered = 0xd3
     };
     Q_ENUM(ZigbeeNwkLayerStatus)
 

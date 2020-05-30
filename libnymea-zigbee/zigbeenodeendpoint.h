@@ -108,6 +108,13 @@ public:
         return qobject_cast<T *>(getOutputCluster(clusterId));
     }
 
+    // Note: these methods can be used for devices which do not
+    // show the clusters in the simple descriptor. By default these methods
+    // should not be neccessary
+    void createInputCluster(quint16 clusterId);
+    void createOutputCluster(quint16 clusterId);
+
+
 private:
     explicit ZigbeeNodeEndpoint(ZigbeeNetwork *network, ZigbeeNode *node, quint8 endpointId, QObject *parent = nullptr);
     ~ZigbeeNodeEndpoint();

@@ -32,6 +32,16 @@ ZigbeeClusterReply::Error ZigbeeClusterReply::error() const
     return m_error;
 }
 
+Zigbee::ZigbeeApsStatus ZigbeeClusterReply::zigbeeApsStatus() const
+{
+    return m_zigbeeApsStatus;
+}
+
+Zigbee::ZigbeeNwkLayerStatus ZigbeeClusterReply::zigbeeNwkStatus() const
+{
+    return m_zigbeeNwkStatus;
+}
+
 ZigbeeNetworkRequest ZigbeeClusterReply::request() const
 {
     return m_request;

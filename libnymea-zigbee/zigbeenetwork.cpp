@@ -541,25 +541,46 @@ ZigbeeNetworkReply *ZigbeeNetwork::createNetworkReply(const ZigbeeNetworkRequest
 {
     ZigbeeNetworkReply *reply = new ZigbeeNetworkReply(request, this);
     // Make sure the reply will be deleted
-    connect(reply, &ZigbeeNetworkReply::finished, reply, &ZigbeeNetworkReply::deleteLater);
+    connect(reply, &ZigbeeNetworkReply::finished, reply, &ZigbeeNetworkReply::deleteLater, Qt::QueuedConnection);
     return reply;
 }
 
 void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeApsStatus zigbeeApsStatus)
 {
-    reply->m_zigbeeApsStatus = zigbeeApsStatus;
-
-    if (reply->m_zigbeeApsStatus == Zigbee::ZigbeeApsStatusSuccess) {
+    if (zigbeeApsStatus == Zigbee::ZigbeeApsStatusSuccess) {
+        // The request has been sent successfully to the device
         finishNetworkReply(reply);
     } else {
-        finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeApsStatusError);
+        // There has been an error while transporting the request to the device
+        // Note: if the APS status is >= 0xc1, it has to interpreted as NWK layer error
+        if (zigbeeApsStatus >= 0xc1) {
+            reply->m_zigbeeNwkStatus = static_cast<Zigbee::ZigbeeNwkLayerStatus>(static_cast<quint8>(zigbeeApsStatus));
+            finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeNwkStatusError);
+        } else {
+            reply->m_zigbeeApsStatus = zigbeeApsStatus;
+            finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeApsStatusError);
+        }
     }
 }
 
 void ZigbeeNetwork::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error)
 {
-    qCDebug(dcZigbeeNetwork()) << "Reply finished" << error << reply->request();
     reply->m_error = error;
+    switch(reply->error()) {
+    case ZigbeeNetworkReply::ErrorNoError:
+        qCDebug(dcZigbeeNetwork()) << "Network request sent successfully to device" << reply->request();
+        break;
+    case ZigbeeNetworkReply::ErrorZigbeeApsStatusError:
+        qCWarning(dcZigbeeNetwork()) << "Failed to send request to device" << reply->request() << reply->error() << reply->zigbeeApsStatus();
+        break;
+    case ZigbeeNetworkReply::ErrorZigbeeNwkStatusError:
+        qCWarning(dcZigbeeNetwork()) << "Failed to send request to device" << reply->request() << reply->error() << reply->zigbeeNwkStatus();
+        break;
+    default:
+        qCWarning(dcZigbeeNetwork()) << "Failed to send request to device" << reply->request() << reply->error();
+        break;
+    }
+
     reply->finished();
 }
 

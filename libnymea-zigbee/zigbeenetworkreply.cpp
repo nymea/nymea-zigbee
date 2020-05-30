@@ -42,6 +42,11 @@ Zigbee::ZigbeeApsStatus ZigbeeNetworkReply::zigbeeApsStatus() const
     return m_zigbeeApsStatus;
 }
 
+Zigbee::ZigbeeNwkLayerStatus ZigbeeNetworkReply::zigbeeNwkStatus() const
+{
+    return m_zigbeeNwkStatus;
+}
+
 ZigbeeNetworkReply::ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent) :
     QObject(parent),
     m_request(request)

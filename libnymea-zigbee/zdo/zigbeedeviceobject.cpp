@@ -295,7 +295,7 @@ ZigbeeNetworkRequest ZigbeeDeviceObject::buildZdoRequest(quint16 zdoRequest)
 ZigbeeDeviceObjectReply *ZigbeeDeviceObject::createZigbeeDeviceObjectReply(const ZigbeeNetworkRequest &request, quint8 transactionSequenceNumber)
 {
     ZigbeeDeviceObjectReply *zdoReply = new ZigbeeDeviceObjectReply(request, this);
-    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, zdoReply, &ZigbeeDeviceObjectReply::deleteLater);
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, zdoReply, &ZigbeeDeviceObjectReply::deleteLater, Qt::QueuedConnection);
     zdoReply->m_expectedResponse =  static_cast<ZigbeeDeviceProfile::ZdoCommand>(request.clusterId() | 0x8000);
     zdoReply->m_transactionSequenceNumber = transactionSequenceNumber;
     m_pendingReplies.insert(transactionSequenceNumber, zdoReply);
@@ -311,6 +311,7 @@ bool ZigbeeDeviceObject::verifyNetworkError(ZigbeeDeviceObjectReply *zdoReply, Z
         // wait for the expected indication or check if we already recieved it
         zdoReply->m_apsConfirmReceived = true;
         zdoReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
+        zdoReply->m_zigbeeNwkStatus = networkReply->zigbeeNwkStatus();
         success = true;
         break;
     case ZigbeeNetworkReply::ErrorInterfaceError:
@@ -320,9 +321,14 @@ bool ZigbeeDeviceObject::verifyNetworkError(ZigbeeDeviceObjectReply *zdoReply, Z
         zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorNetworkOffline;
         break;
     case ZigbeeNetworkReply::ErrorZigbeeApsStatusError:
-        zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorZigbeeApsStatusError;
         zdoReply->m_apsConfirmReceived = true;
+        zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorZigbeeApsStatusError;
         zdoReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
+        break;
+    case ZigbeeNetworkReply::ErrorZigbeeNwkStatusError:
+        zdoReply->m_apsConfirmReceived = true;
+        zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorZigbeeNwkStatusError;
+        zdoReply->m_zigbeeNwkStatus = networkReply->zigbeeNwkStatus();
         break;
     }
 
@@ -331,6 +337,21 @@ bool ZigbeeDeviceObject::verifyNetworkError(ZigbeeDeviceObjectReply *zdoReply, Z
 
 void ZigbeeDeviceObject::finishZdoReply(ZigbeeDeviceObjectReply *zdoReply)
 {
+    switch(zdoReply->error()) {
+    case ZigbeeDeviceObjectReply::ErrorNoError:
+        qCDebug(dcZigbeeDeviceObject()) << "Reply finished successfully" << zdoReply->request();
+        break;
+    case ZigbeeDeviceObjectReply::ErrorZigbeeApsStatusError:
+        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request to device" << zdoReply->request() << zdoReply->error() << zdoReply->zigbeeApsStatus();
+        break;
+    case ZigbeeDeviceObjectReply::ErrorZigbeeNwkStatusError:
+        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request to device" << zdoReply->request() << zdoReply->error() << zdoReply->zigbeeNwkStatus();
+        break;
+    default:
+        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request to device" << zdoReply->request() << zdoReply->error();
+        break;
+    }
+
     m_pendingReplies.remove(zdoReply->transactionSequenceNumber());
     zdoReply->finished();
 }

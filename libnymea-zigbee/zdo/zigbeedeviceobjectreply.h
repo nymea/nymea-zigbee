@@ -44,12 +44,15 @@ public:
         ErrorNoError, // All OK, no error occured, the message was transported successfully
         ErrorTimeout, // The request timeouted
         ErrorZigbeeApsStatusError, // An APS transport error occured. See zigbeeApsStatus()
+        ErrorZigbeeNwkStatusError, // An NWK layer error occured. See zigbeeNwkStatus()
         ErrorInterfaceError, // A transport interface error occured. Could not communicate with the hardware.
         ErrorNetworkOffline // The network is offline. Cannot send any requests
     };
     Q_ENUM(Error)
 
     Error error() const;
+    Zigbee::ZigbeeApsStatus zigbeeApsStatus() const;
+    Zigbee::ZigbeeNwkLayerStatus zigbeeNwkStatus() const;
 
     ZigbeeNetworkRequest request() const;
     quint8 transactionSequenceNumber() const;
@@ -58,7 +61,6 @@ public:
     QByteArray responseData() const;
     ZigbeeDeviceProfile::Adpu responseAdpu() const;
 
-    Zigbee::ZigbeeApsStatus zigbeeApsStatus() const;
 
     bool isComplete() const;
 
@@ -74,6 +76,7 @@ private:
     // APS transport
     bool m_apsConfirmReceived = false;
     Zigbee::ZigbeeApsStatus m_zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess;
+    Zigbee::ZigbeeNwkLayerStatus m_zigbeeNwkStatus = Zigbee::ZigbeeNwkLayerStatusSuccess;
 
     // ZDP response data
     bool m_zdpIndicationReceived = false;

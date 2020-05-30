@@ -39,6 +39,16 @@ ZigbeeDeviceObjectReply::Error ZigbeeDeviceObjectReply::error() const
     return m_error;
 }
 
+Zigbee::ZigbeeApsStatus ZigbeeDeviceObjectReply::zigbeeApsStatus() const
+{
+    return m_zigbeeApsStatus;
+}
+
+Zigbee::ZigbeeNwkLayerStatus ZigbeeDeviceObjectReply::zigbeeNwkStatus() const
+{
+    return m_zigbeeNwkStatus;
+}
+
 ZigbeeNetworkRequest ZigbeeDeviceObjectReply::request() const
 {
     return m_request;
@@ -62,11 +72,6 @@ QByteArray ZigbeeDeviceObjectReply::responseData() const
 ZigbeeDeviceProfile::Adpu ZigbeeDeviceObjectReply::responseAdpu() const
 {
     return m_responseAdpu;
-}
-
-Zigbee::ZigbeeApsStatus ZigbeeDeviceObjectReply::zigbeeApsStatus() const
-{
-    return m_zigbeeApsStatus;
 }
 
 bool ZigbeeDeviceObjectReply::isComplete() const
