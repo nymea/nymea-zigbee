@@ -202,12 +202,18 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, Zi
 void ZigbeeNodeEndpoint::addInputCluster(ZigbeeCluster *cluster)
 {
     m_inputClusters.insert(cluster->clusterId(), cluster);
+    connect(cluster, &ZigbeeCluster::attributeChanged, this, [this, cluster](const ZigbeeClusterAttribute &attribute){
+        emit clusterAttributeChanged(cluster, attribute);
+    });
     emit inputClusterAdded(cluster);
 }
 
 void ZigbeeNodeEndpoint::addOutputCluster(ZigbeeCluster *cluster)
 {
     m_outputClusters.insert(cluster->clusterId(), cluster);
+    connect(cluster, &ZigbeeCluster::attributeChanged, this, [this, cluster](const ZigbeeClusterAttribute &attribute){
+        emit clusterAttributeChanged(cluster, attribute);
+    });
     emit outputClusterAdded(cluster);
 }
 

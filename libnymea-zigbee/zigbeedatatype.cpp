@@ -317,7 +317,7 @@ quint16 ZigbeeDataType::toUInt16(bool *ok) const
     if (ok) *ok = true;
 
     quint16 value = 0;
-    if (m_data.count() != 2 || m_dataType != Zigbee::Uint16) {
+    if (m_data.count() != 2) {
         if (ok) *ok = false;
         return value;
     }

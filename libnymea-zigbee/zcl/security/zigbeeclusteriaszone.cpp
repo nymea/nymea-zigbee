@@ -66,10 +66,10 @@ void ZigbeeClusterIasZone::processDataIndication(ZigbeeClusterLibrary::Frame fra
         // If the client cluster sends data to a server cluster (independent which), the command was executed on the device like button pressed
         if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionServerToClient) {
             // Read the payload which is
-            ClientCommand command = static_cast<ClientCommand>(frame.header.command);
+            ServerCommand command = static_cast<ServerCommand>(frame.header.command);
             qCDebug(dcZigbeeCluster()) << "Command received from" << m_node << m_endpoint << this << command;
             switch (command) {
-            case ClientCommandStatusChangedNotification: {
+            case ServerCommandStatusChangedNotification: {
                 QDataStream stream(frame.payload);
                 stream.setByteOrder(QDataStream::LittleEndian);
                 quint16 zoneStatus = 0; quint8 extendedStatus = 0; quint8 zoneId = 0xff; quint16 delay = 0;
@@ -77,10 +77,14 @@ void ZigbeeClusterIasZone::processDataIndication(ZigbeeClusterLibrary::Frame fra
                 qCDebug(dcZigbeeCluster()) << "IAS zone status notification from" << m_node << m_endpoint << this
                                            << ZoneStatusFlags(zoneStatus) << "Extended status:" << ZigbeeUtils::convertByteToHexString(extendedStatus)
                                            << "Zone ID:" << ZigbeeUtils::convertByteToHexString(zoneId) << "Delay:" << delay << "[s/4]";
+
+                // Update the ZoneState attribute
+                setAttribute(ZigbeeClusterAttribute(AttributeZoneState, ZigbeeDataType(Zigbee::BitMap16, frame.payload.left(2))));
+
                 emit zoneStatusChanged(ZoneStatusFlags(zoneStatus), extendedStatus, zoneId, delay);
                 break;
             }
-            case ClientCommandZoneEnrollRequest: {
+            case ServerCommandZoneEnrollRequest: {
                 QDataStream stream(frame.payload);
                 stream.setByteOrder(QDataStream::LittleEndian);
                 quint16 zoneTypeInt = 0; quint16 manufacturerCode = 0;
@@ -88,6 +92,9 @@ void ZigbeeClusterIasZone::processDataIndication(ZigbeeClusterLibrary::Frame fra
                 ZoneType zoneType = static_cast<ZoneType>(zoneTypeInt);
                 qCDebug(dcZigbeeCluster()) << "IAS zone enroll request from" << m_node << m_endpoint << this
                                            << zoneType << "Manufacturer code:" << ZigbeeUtils::convertUint16ToHexString(manufacturerCode);
+                // Update the ZoneState attribute
+                setAttribute(ZigbeeClusterAttribute(AttributeZoneType, ZigbeeDataType(Zigbee::Enum16, frame.payload.left(2))));
+
                 emit zoneEnrollRequest(zoneType, manufacturerCode);
                 break;
             }

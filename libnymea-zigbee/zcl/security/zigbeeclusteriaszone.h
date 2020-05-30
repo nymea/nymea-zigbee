@@ -85,20 +85,20 @@ public:
     };
     Q_ENUM(ZoneType)
 
-    enum ZoneStatusFlag {
-        ZoneStatusFlagAlarm1 = 0x0001,
-        ZoneStatusFlagAlarm2 = 0x0002,
-        ZoneStatusFlagTamper = 0x0004,
-        ZoneStatusFlagBattery = 0x0008,
-        ZoneStatusFlagSupervisionReports = 0x0010,
-        ZoneStatusFlagRestoreReports = 0x0020,
-        ZoneStatusFlagTrouble = 0x0040,
-        ZoneStatusFlagAcMains = 0x0080,
-        ZoneStatusFlagTest = 0x0100,
-        ZoneStatusFlagBatteryDefect = 0x0200
+    enum ZoneStatus {
+        ZoneStatusAlarm1 = 0x0001,
+        ZoneStatusAlarm2 = 0x0002,
+        ZoneStatusTamper = 0x0004,
+        ZoneStatusBattery = 0x0008,
+        ZoneStatusSupervisionReports = 0x0010,
+        ZoneStatusRestoreReports = 0x0020,
+        ZoneStatusTrouble = 0x0040,
+        ZoneStatusAcMains = 0x0080,
+        ZoneStatusTest = 0x0100,
+        ZoneStatusBatteryDefect = 0x0200
     };
-    Q_ENUM(ZoneStatusFlag)
-    Q_DECLARE_FLAGS(ZoneStatusFlags, ZoneStatusFlag)
+    Q_ENUM(ZoneStatus)
+    Q_DECLARE_FLAGS(ZoneStatusFlags, ZoneStatus)
 
     enum EnrollResponseCode {
         EnrollResponseCodeSuccess = 0x00,
@@ -108,18 +108,18 @@ public:
     };
     Q_ENUM(EnrollResponseCode)
 
-    enum ClientCommand {
-        ClientCommandStatusChangedNotification = 0x00, // M
-        ClientCommandZoneEnrollRequest = 0x01 // M
-    };
-    Q_ENUM(ClientCommand)
-
     enum ServerCommand {
-        ServerCommandEnrollResponse = 0x00, // M
-        ServerCommandInitNormalOperationMode = 0x01, // O
-        ServerCommandInitTestMode = 0x02 // O
+        ServerCommandStatusChangedNotification = 0x00, // M
+        ServerCommandZoneEnrollRequest = 0x01 // M
     };
     Q_ENUM(ServerCommand)
+
+    enum ClientCommand {
+        ClientCommandEnrollResponse = 0x00, // M
+        ClientCommandInitNormalOperationMode = 0x01, // O
+        ClientCommandInitTestMode = 0x02 // O
+    };
+    Q_ENUM(ClientCommand)
 
     explicit ZigbeeClusterIasZone(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
