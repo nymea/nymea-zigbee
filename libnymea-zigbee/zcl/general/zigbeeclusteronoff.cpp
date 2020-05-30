@@ -206,6 +206,8 @@ void ZigbeeClusterOnOff::setAttribute(const ZigbeeClusterAttribute &attribute)
         if (valueOk) {
             qCDebug(dcZigbeeCluster()) << "OnOff state changed on" << m_node << m_endpoint << this << value;
             emit powerChanged(value);
+        } else {
+            qCWarning(dcZigbeeCluster()) << "Failed to parse attribute data"  << m_node << m_endpoint << this << attribute;
         }
     }
 }

@@ -143,7 +143,6 @@ QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> ZigbeeClusterLibrary::par
 
 ZigbeeDataType ZigbeeClusterLibrary::readDataType(QDataStream *stream, Zigbee::DataType dataType)
 {
-
     QByteArray data; quint16 numberOfElenemts = 0; quint8 elementType = 0;
     QDataStream dataStream(&data, QIODevice::WriteOnly);
     dataStream.setByteOrder(QDataStream::LittleEndian);

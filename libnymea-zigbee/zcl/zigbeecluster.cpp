@@ -247,6 +247,7 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
                 // Update the attributes from the attribut status reports internally
                 QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(frame.payload);
                 foreach (const ZigbeeClusterLibrary::ReadAttributeStatusRecord &attributeStatusRecord, attributeStatusRecords) {
+                    qCDebug(dcZigbeeCluster()) << "Received read attribute status record" << this << attributeStatusRecord;
                     setAttribute(ZigbeeClusterAttribute(attributeStatusRecord.attributeId, attributeStatusRecord.dataType));
                 }
             }
@@ -254,7 +255,6 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
 
         // Increase the tsn for continuouse id increasing on both sides
         m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
         return;
     }
 
@@ -262,18 +262,19 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
     if (m_direction == Server && frame.header.frameControl.frameType == ZigbeeClusterLibrary::FrameTypeGlobal) {
         ZigbeeClusterLibrary::Command globalCommand = static_cast<ZigbeeClusterLibrary::Command>(frame.header.command);
         if (globalCommand == ZigbeeClusterLibrary::CommandReportAttributes) {
-            qCDebug(dcZigbeeCluster()) << "Received attributes report received" << this << frame;
             // Read the attribute reports and update/set the attributes
             QDataStream stream(frame.payload);
             stream.setByteOrder(QDataStream::LittleEndian);
-            quint16 attributeId = 0; quint8 type = 0;
-            stream >> attributeId >> type;
-            ZigbeeDataType dataType = ZigbeeClusterLibrary::readDataType(&stream, static_cast<Zigbee::DataType>(type));
-            setAttribute(ZigbeeClusterAttribute(attributeId, dataType));
+            while (!stream.atEnd()) {
+                quint16 attributeId = 0; quint8 type = 0;
+                stream >> attributeId >> type;
+                ZigbeeDataType dataType = ZigbeeClusterLibrary::readDataType(&stream, static_cast<Zigbee::DataType>(type));
+                qCDebug(dcZigbeeCluster()) << "Received attributes report" << this << frame;
+                setAttribute(ZigbeeClusterAttribute(attributeId, dataType));
+            }
 
             // Increase the tsn for continuouse id increasing on both sides
             m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
             return;
         }
     }

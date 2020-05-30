@@ -122,24 +122,6 @@ bool ZigbeeNodeEndpoint::hasOutputCluster(Zigbee::ClusterId clusterId) const
     return m_outputClusters.keys().contains(clusterId);
 }
 
-void ZigbeeNodeEndpoint::createInputCluster(quint16 clusterId)
-{
-    Zigbee::ClusterId id = static_cast<Zigbee::ClusterId>(clusterId);
-    if (hasInputCluster(id))
-        return;
-
-    addInputCluster(createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Server));
-}
-
-void ZigbeeNodeEndpoint::createOutputCluster(quint16 clusterId)
-{
-    Zigbee::ClusterId id = static_cast<Zigbee::ClusterId>(clusterId);
-    if (hasInputCluster(id))
-        return;
-
-    addOutputCluster(createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Client));
-}
-
 ZigbeeNodeEndpoint::ZigbeeNodeEndpoint(ZigbeeNetwork *network, ZigbeeNode *node, quint8 endpointId, QObject *parent) :
     QObject(parent),
     m_network(network),
