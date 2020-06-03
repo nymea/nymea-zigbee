@@ -29,8 +29,9 @@
 #define ZIGBEEBRIDGECONTROLLERDECONZ_H
 
 #include <QHash>
-#include <QObject>
 #include <QTimer>
+#include <QQueue>
+#include <QObject>
 
 #include "zigbee.h"
 #include "zigbeeaddress.h"
@@ -85,6 +86,7 @@ public:
 
     Deconz::NetworkState networkState() const;
 
+    // Controllere requests
     ZigbeeInterfaceDeconzReply *requestVersion();
     ZigbeeInterfaceDeconzReply *requestDeviceState();
     ZigbeeInterfaceDeconzReply *requestReadParameter(Deconz::Parameter parameter);
@@ -96,11 +98,7 @@ public:
     ZigbeeInterfaceDeconzReply *requestQuerySendDataConfirm();
 
     // Send data
-    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
-    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
-    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
     ZigbeeInterfaceDeconzReply *requestSendRequest(const ZigbeeNetworkRequest &request);
-
 
 private:
     ZigbeeInterfaceDeconz *m_interface = nullptr;
@@ -112,11 +110,19 @@ private:
     Deconz::NetworkState m_networkState = Deconz::NetworkStateOffline;
     QTimer *m_watchdogTimer = nullptr;
 
+    // APS request queue
     bool m_apsFreeSlotsAvailable = false;
+    QQueue<ZigbeeNetworkRequest> m_requestQueue;
+    void sendNextRequest();
 
     quint8 generateSequenceNumber();
 
     ZigbeeInterfaceDeconzReply *createReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent);
+
+    // Send data depending on the request destination address mode
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
+    ZigbeeInterfaceDeconzReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
 
     // Note: this method reads all parameters individual. The returned reply it self will not send or receive any data.
     // The data can be fetched from m_networkConfiguration on success.

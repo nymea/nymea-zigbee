@@ -9,6 +9,7 @@ SOURCES += \
     backends/deconz/zigbeebridgecontrollerdeconz.cpp \
     backends/deconz/zigbeenetworkdeconz.cpp \
     zcl/general/zigbeeclusteridentify.cpp \
+    zcl/general/zigbeeclusterlevelcontrol.cpp \
     zcl/general/zigbeeclusteronoff.cpp \
     zcl/measurement/zigbeeclusterilluminancemeasurment.cpp \
     zcl/measurement/zigbeeclusteroccupancysensing.cpp \
@@ -57,6 +58,7 @@ HEADERS += \
     backends/deconz/zigbeebridgecontrollerdeconz.h \
     backends/deconz/zigbeenetworkdeconz.h \
     zcl/general/zigbeeclusteridentify.h \
+    zcl/general/zigbeeclusterlevelcontrol.h \
     zcl/general/zigbeeclusteronoff.h \
     zcl/measurement/zigbeeclusterilluminancemeasurment.h \
     zcl/measurement/zigbeeclusteroccupancysensing.h \

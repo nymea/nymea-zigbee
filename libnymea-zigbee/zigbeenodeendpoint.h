@@ -40,6 +40,7 @@
 #include "zcl/general/zigbeeclusterbasic.h"
 #include "zcl/general/zigbeeclusteronoff.h"
 #include "zcl/general/zigbeeclusteridentify.h"
+#include "zcl/general/zigbeeclusterlevelcontrol.h"
 
 #include "zcl/measurement/zigbeeclusteroccupancysensing.h"
 #include "zcl/measurement/zigbeeclusterilluminancemeasurment.h"

@@ -34,6 +34,7 @@
 #include "zigbeeaddress.h"
 #include "zigbeenodeendpoint.h"
 #include "zdo/zigbeedeviceobject.h"
+#include "zdo/zigbeedeviceprofile.h"
 
 class ZigbeeNetwork;
 
@@ -51,94 +52,6 @@ public:
     };
     Q_ENUM(State)
 
-    enum NodeType {
-        NodeTypeCoordinator = 0,
-        NodeTypeRouter = 1,
-        NodeTypeEndDevice = 2
-    };
-    Q_ENUM(NodeType)
-
-    enum FrequencyBand {
-        FrequencyBand868Mhz,
-        FrequencyBand902Mhz,
-        FrequencyBand2400Mhz
-    };
-    Q_ENUM(FrequencyBand)
-
-    enum DeviceType {
-        DeviceTypeFullFunction,
-        DeviceTypeReducedFunction
-    };
-    Q_ENUM(DeviceType)
-
-    enum Relationship {
-        Parent,
-        Child,
-        Sibling
-    };
-    Q_ENUM(Relationship)
-
-    enum PowerMode {
-        PowerModeAlwaysOn,
-        PowerModeOnPeriodically,
-        PowerModeOnWhenStimulated
-    };
-    Q_ENUM(PowerMode)
-
-    enum PowerSource {
-        PowerSourcePermanentMainSupply,
-        PowerSourceRecharchableBattery,
-        PowerSourceDisposableBattery
-    };
-    Q_ENUM(PowerSource)
-
-    enum PowerLevel {
-        PowerLevelCriticalLow,
-        PowerLevelLow,
-        PowerLevelOk,
-        PowerLevelFull
-    };
-    Q_ENUM(PowerLevel)
-
-    typedef struct MacCapabilities {
-        bool alternatePanCoordinator = false;
-        DeviceType deviceType = DeviceTypeReducedFunction;
-        bool powerSourceFlagMainPower = false;
-        bool receiverOnWhenIdle = false;
-        bool securityCapability = false;
-        bool allocateAddress = false;
-    } MacCapabilities;
-
-    typedef struct DescriptorCapabilities {
-        bool extendedActiveEndpointListAvailable = false;
-        bool extendedSimpleDescriptorListAvailable = false;
-    } DescriptorCapabilities;
-
-    typedef struct ServerMask {
-        bool primaryTrustCenter = false;
-        bool backupTrustCenter = false;
-        bool primaryBindingCache = false;
-        bool backupBindingCache = false;
-        bool primaryDiscoveryCache = false;
-        bool backupDiscoveryCache = false;
-        bool networkManager = false;
-        quint8 stackComplianceVersion = 0;
-    } ServerMask;
-
-    typedef struct NodeDescriptor {
-        NodeType nodeType = NodeTypeEndDevice;
-        bool complexDescriptorAvailable = false;
-        bool userDescriptorAvailable = false;
-        FrequencyBand frequencyBand = FrequencyBand2400Mhz;
-        MacCapabilities macCapabilities;
-        quint16 manufacturerCode = 0;
-        quint8 maximumBufferSize = 0;
-        quint16 maximumRxSize = 0;
-        ServerMask serverMask;
-        quint16 maximumTxSize = 0;
-        DescriptorCapabilities descriptorCapabilities;
-    } NodeDescriptor;
-
     State state() const;
     bool connected() const;
 
@@ -151,45 +64,16 @@ public:
     bool hasEndpoint(quint8 endpointId) const;
     ZigbeeNodeEndpoint *getEndpoint(quint8 endpointId) const;
 
-    // Information from node descriptor
-    NodeType nodeType() const;
-    FrequencyBand frequencyBand() const;
-    Relationship relationship() const;
-    quint16 manufacturerCode() const;
-
-    bool complexDescriptorAvailable() const;
-    bool userDescriptorAvailable() const;
-
-    quint16 maximumRxSize() const;
-    quint16 maximumTxSize() const;
-    quint8 maximumBufferSize() const;
-
-    // Server Mask
-    bool isPrimaryTrustCenter() const;
-    bool isBackupTrustCenter() const;
-    bool isPrimaryBindingCache() const;
-    bool isBackupBindingCache() const;
-    bool isPrimaryDiscoveryCache() const;
-    bool isBackupDiscoveryCache() const;
-    bool isNetworkManager() const;
-
-    // Descriptor capability
-    bool extendedActiveEndpointListAvailable() const;
-    bool extendedSimpleDescriptorListAvailable() const;
-
-    // Mac capabilities flag
-    bool alternatePanCoordinator() const;
-    DeviceType deviceType() const;
-    bool powerSourceFlagMainPower() const;
-    bool receiverOnWhenIdle() const;
-    bool securityCapability() const;
-    bool allocateAddress() const;
+    // Information from descriptors
+    ZigbeeDeviceProfile::NodeDescriptor nodeDescriptor() const;
+    ZigbeeDeviceProfile::MacCapabilities macCapabilities() const;
+    ZigbeeDeviceProfile::PowerDescriptor powerDescriptor() const;
 
     // Information from node power descriptor
-    PowerMode powerMode() const;
-    PowerSource powerSource() const;
-    QList<PowerSource> availablePowerSources() const;
-    PowerLevel powerLevel() const;
+    ZigbeeDeviceProfile::PowerMode powerMode() const;
+    ZigbeeDeviceProfile::PowerSource powerSource() const;
+    QList<ZigbeeDeviceProfile::PowerSource> availablePowerSources() const;
+    ZigbeeDeviceProfile::PowerLevel powerLevel() const;
 
     // This method starts the node initialization phase (read descriptors and endpoints)
     void startInitialization();
@@ -198,86 +82,26 @@ private:
     ZigbeeNode(ZigbeeNetwork *network, quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent = nullptr);
 
     ZigbeeNetwork *m_network;
+    quint16 m_shortAddress = 0;
+    ZigbeeAddress m_extendedAddress;
+
     ZigbeeDeviceObject *m_deviceObject = nullptr;
     QList<ZigbeeNodeEndpoint *> m_endpoints;
+    bool m_connected = false;
+    State m_state = StateUninitialized;
+    quint8 m_lqi = 0;
 
-    // Node descriptor information
-    QByteArray m_nodeDescriptorRawData;
-    NodeType m_nodeType = NodeTypeRouter;
-    FrequencyBand m_frequencyBand = FrequencyBand2400Mhz;
-    Relationship m_relationship = Parent;
-    quint16 m_manufacturerCode = 0;
-
-    bool m_complexDescriptorAvailable = false;
-    bool m_userDescriptorAvailable = false;
-
-    quint16 m_maximumRxSize = 0;
-    quint16 m_maximumTxSize = 0;
-    quint8 m_maximumBufferSize = 0;
+    // Node information
+    ZigbeeDeviceProfile::NodeDescriptor m_nodeDescriptor;
+    ZigbeeDeviceProfile::MacCapabilities m_macCapabilities;
+    ZigbeeDeviceProfile::PowerDescriptor m_powerDescriptor;
 
     void setState(State state);
     void setConnected(bool connected);
 
-    void setShortAddress(const quint16 &shortAddress);
-    void setExtendedAddress(const ZigbeeAddress &extendedAddress);
-
-    quint16 serverMask() const;
-    void setServerMask(quint16 serverMask);
-
-    // MAC capability raw data flag for settings
-    quint8 macCapabilitiesFlag() const;
-    void setMacCapabilitiesFlag(quint8 macFlag);
-
-    quint8 descriptorFlag() const;
-    void setDescriptorFlag(quint8 descriptorFlag);
-
-    // Power decriptor data
-    quint16 powerDescriptorFlag() const;
-    void setPowerDescriptorFlag(quint16 powerDescriptorFlag);
-
-    bool m_connected = false;
-    State m_state = StateUninitialized;
-
-    quint16 m_shortAddress = 0;
-    ZigbeeAddress m_extendedAddress;
-
-    // Server Mask
-    quint16 m_serverMask = 0;
-    bool m_isPrimaryTrustCenter = false;
-    bool m_isBackupTrustCenter = false;
-    bool m_isPrimaryBindingCache = false;
-    bool m_isBackupBindingCache = false;
-    bool m_isPrimaryDiscoveryCache = false;
-    bool m_isBackupDiscoveryCache = false;
-    bool m_isNetworkManager = false;
-
-    // Power information
-    quint16 m_powerDescriptorFlag = 0;
-    PowerMode m_powerMode;
-    PowerSource m_powerSource;
-    QList<PowerSource> m_availablePowerSources;
-    PowerLevel m_powerLevel;
-
-    // Mac capabilities flag
-    quint8 m_macCapabilitiesFlag = 0;
-    bool m_alternatePanCoordinator = false;
-    DeviceType m_deviceType = DeviceTypeFullFunction;
-    bool m_powerSourceFlagMainPower = false;
-    bool m_receiverOnWhenIdle = false;
-    bool m_securityCapability = false;
-    bool m_allocateAddress = false;
-
-    // Descriptor capability
-    quint8 m_descriptorFlag = 0;
-    bool m_extendedActiveEndpointListAvailable = false;
-    bool m_extendedSimpleDescriptorListAvailable = false;
-
-    //virtual void setClusterAttributeReport(const ZigbeeClusterAttributeReport &report) = 0;
-
     // Init methods
     int m_requestRetry = 0;
     QList<quint8> m_uninitializedEndpoints;
-
     void initNodeDescriptor();
     void initPowerDescriptor();
     void initEndpoints();
@@ -291,6 +115,7 @@ private:
 
 signals:
     void stateChanged(State state);
+    void lqiChanged(quint8 lqi);
     void connectedChanged(bool connected);
     void clusterAdded(ZigbeeCluster *cluster);
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);

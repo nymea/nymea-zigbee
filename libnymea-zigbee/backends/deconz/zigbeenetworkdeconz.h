@@ -56,13 +56,14 @@ public:
     // Sending an APSDE-DATA.request, will be finished on APSDE-DATA.confirm
     ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) override;
 
-    ZigbeeNetworkReply *setPermitJoin(quint16 shortAddress, quint8 duration);
+    ZigbeeNetworkReply *setPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
 
 private:
     ZigbeeBridgeControllerDeconz *m_controller = nullptr;
     bool m_networkRunning = false;
     CreateNetworkState m_createState = CreateNetworkStateIdle;
     bool m_createNewNetwork = false;
+    bool m_initializing = false;
 
     QTimer *m_permitJoinRefreshTimer = nullptr;
 

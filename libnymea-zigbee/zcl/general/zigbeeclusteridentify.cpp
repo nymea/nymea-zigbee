@@ -40,156 +40,25 @@ ZigbeeClusterIdentify::ZigbeeClusterIdentify(ZigbeeNetwork *network, ZigbeeNode 
 
 ZigbeeClusterReply *ZigbeeClusterIdentify::identify(quint16 seconds)
 {
-    ZigbeeNetworkRequest request = createGeneralRequest();
-
-    // Build ZCL frame
-
-    ZigbeeClusterLibrary::FrameControl frameControl;
-    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeClusterSpecific;
-    frameControl.manufacturerSpecific = false;
-    frameControl.direction = ZigbeeClusterLibrary::DirectionClientToServer;
-    frameControl.disableDefaultResponse = false;
-
-    // ZCL header
-    ZigbeeClusterLibrary::Header header;
-    header.frameControl = frameControl;
-    header.command = ZigbeeClusterIdentify::CommandIdentify;
-    header.transactionSequenceNumber = m_transactionSequenceNumber++;
-
     // Note: the identify time unit is 0.5 seconds
     QByteArray payload = ZigbeeDataType(seconds * 2).data();
-
-    // Put them together
-    ZigbeeClusterLibrary::Frame frame;
-    frame.header = header;
-    frame.payload = payload;
-
-    request.setTxOptions(Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission));
-    request.setAsdu(ZigbeeClusterLibrary::buildFrame(frame));
-
-    ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
-    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
-        if (!verifyNetworkError(zclReply, networkReply)) {
-            qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request"
-                                                << m_node << networkReply->error()
-                                                << networkReply->zigbeeApsStatus();
-            finishZclReply(zclReply);
-            return;
-        }
-
-        // The request was successfully sent to the device
-        // Now check if the expected indication response received already
-        if (zclReply->isComplete()) {
-            finishZclReply(zclReply);
-            return;
-        }
-    });
-
-    return zclReply;
+    return executeClusterCommand(ZigbeeClusterIdentify::CommandIdentify, payload);
 }
 
 ZigbeeClusterReply *ZigbeeClusterIdentify::identifyQuery()
 {
-    ZigbeeNetworkRequest request = createGeneralRequest();
-
-    // Build ZCL frame
-
-    ZigbeeClusterLibrary::FrameControl frameControl;
-    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeClusterSpecific;
-    frameControl.manufacturerSpecific = false;
-    frameControl.direction = ZigbeeClusterLibrary::DirectionClientToServer;
-    frameControl.disableDefaultResponse = false;
-
-    // ZCL header
-    ZigbeeClusterLibrary::Header header;
-    header.frameControl = frameControl;
-    header.command = ZigbeeClusterIdentify::CommandIdentifyQuery;
-    header.transactionSequenceNumber = m_transactionSequenceNumber++;
-
-    // No payload
-
-    // Put them together
-    ZigbeeClusterLibrary::Frame frame;
-    frame.header = header;
-
-    request.setTxOptions(Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission));
-    request.setAsdu(ZigbeeClusterLibrary::buildFrame(frame));
-
-    ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
-    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
-        if (!verifyNetworkError(zclReply, networkReply)) {
-            qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request"
-                                                << m_node << networkReply->error()
-                                                << networkReply->zigbeeApsStatus();
-            finishZclReply(zclReply);
-            return;
-        }
-
-        // The request was successfully sent to the device
-        // Now check if the expected indication response received already
-        if (zclReply->isComplete()) {
-            finishZclReply(zclReply);
-            return;
-        }
-    });
-
-    return zclReply;
+    return executeClusterCommand(ZigbeeClusterIdentify::CommandIdentifyQuery);
 }
 
 ZigbeeClusterReply *ZigbeeClusterIdentify::triggerEffect(ZigbeeClusterIdentify::Effect effect, quint8 effectVariant)
 {
-    ZigbeeNetworkRequest request = createGeneralRequest();
-
-    // Build ZCL frame
-
-    ZigbeeClusterLibrary::FrameControl frameControl;
-    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeClusterSpecific;
-    frameControl.manufacturerSpecific = false;
-    frameControl.direction = ZigbeeClusterLibrary::DirectionClientToServer;
-    frameControl.disableDefaultResponse = false;
-
-    // ZCL header
-    ZigbeeClusterLibrary::Header header;
-    header.frameControl = frameControl;
-    header.command = ZigbeeClusterIdentify::CommandTriggerEffect;
-    header.transactionSequenceNumber = m_transactionSequenceNumber++;
-
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(effect);
     stream << static_cast<quint8>(effectVariant);
 
-    // Put them together
-    ZigbeeClusterLibrary::Frame frame;
-    frame.header = header;
-    frame.payload = payload;
-
-    request.setTxOptions(Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission));
-    request.setAsdu(ZigbeeClusterLibrary::buildFrame(frame));
-
-    ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
-    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
-        if (!verifyNetworkError(zclReply, networkReply)) {
-            qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request"
-                                                << m_node << networkReply->error()
-                                                << networkReply->zigbeeApsStatus();
-            finishZclReply(zclReply);
-            return;
-        }
-
-        // The request was successfully sent to the device
-        // Now check if the expected indication response received already
-        if (zclReply->isComplete()) {
-            finishZclReply(zclReply);
-            return;
-        }
-    });
-
-    return zclReply;
+    return executeClusterCommand(ZigbeeClusterIdentify::CommandTriggerEffect, payload);
 }
 
 void ZigbeeClusterIdentify::setAttribute(const ZigbeeClusterAttribute &attribute)

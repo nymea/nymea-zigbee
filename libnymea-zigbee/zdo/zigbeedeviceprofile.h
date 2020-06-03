@@ -174,8 +174,121 @@ public:
     } Adpu;
 
     static ZigbeeDeviceProfile::Adpu parseAdpu(const QByteArray &adpu);
+
+    // Node information
+    enum NodeType {
+        NodeTypeCoordinator = 0,
+        NodeTypeRouter = 1,
+        NodeTypeEndDevice = 2
+    };
+    Q_ENUM(NodeType)
+
+    enum FrequencyBand {
+        FrequencyBand868Mhz,
+        FrequencyBand902Mhz,
+        FrequencyBand2400Mhz
+    };
+    Q_ENUM(FrequencyBand)
+
+    enum DeviceType {
+        DeviceTypeFullFunction,
+        DeviceTypeReducedFunction
+    };
+    Q_ENUM(DeviceType)
+
+    enum Relationship {
+        Parent,
+        Child,
+        Sibling
+    };
+    Q_ENUM(Relationship)
+
+    enum PowerMode {
+        PowerModeAlwaysOn,
+        PowerModeOnPeriodically,
+        PowerModeOnWhenStimulated
+    };
+    Q_ENUM(PowerMode)
+
+    enum PowerSource {
+        PowerSourcePermanentMainSupply,
+        PowerSourceRecharchableBattery,
+        PowerSourceDisposableBattery
+    };
+    Q_ENUM(PowerSource)
+
+    enum PowerLevel {
+        PowerLevelCriticalLow,
+        PowerLevelLow,
+        PowerLevelOk,
+        PowerLevelFull
+    };
+    Q_ENUM(PowerLevel)
+
+    typedef struct MacCapabilities {
+        quint8 flag = 0x00; // For saving
+        bool alternatePanCoordinator = false;
+        DeviceType deviceType = DeviceTypeReducedFunction;
+        bool powerSourceFlagMainPower = false;
+        bool receiverOnWhenIdle = false;
+        bool securityCapability = false;
+        bool allocateAddress = false;
+    } MacCapabilities;
+
+    typedef struct DescriptorCapabilities {
+        quint8 descriptorCapabilitiesFlag = 0x00; // For saving
+        bool extendedActiveEndpointListAvailable = false;
+        bool extendedSimpleDescriptorListAvailable = false;
+    } DescriptorCapabilities;
+
+    typedef struct ServerMask {
+        quint16 serverMaskFlag = 0x0000; // For saving
+        bool primaryTrustCenter = false;
+        bool backupTrustCenter = false;
+        bool primaryBindingCache = false;
+        bool backupBindingCache = false;
+        bool primaryDiscoveryCache = false;
+        bool backupDiscoveryCache = false;
+        bool networkManager = false;
+        quint8 stackComplianceVersion = 0;
+    } ServerMask;
+
+    typedef struct NodeDescriptor {
+        QByteArray descriptorRawData; // For saving
+        NodeType nodeType = NodeTypeEndDevice;
+        bool complexDescriptorAvailable = false;
+        bool userDescriptorAvailable = false;
+        FrequencyBand frequencyBand = FrequencyBand2400Mhz;
+        MacCapabilities macCapabilities;
+        quint16 manufacturerCode = 0;
+        quint8 maximumBufferSize = 0;
+        quint16 maximumRxSize = 0;
+        ServerMask serverMask;
+        quint16 maximumTxSize = 0;
+        DescriptorCapabilities descriptorCapabilities;
+    } NodeDescriptor;
+
+    typedef struct PowerDescriptor {
+        quint16 powerDescriptoFlag = 0x0000;
+        PowerMode powerMode = PowerModeAlwaysOn;
+        QList<PowerSource> availablePowerSources;
+        PowerSource powerSource = PowerSourcePermanentMainSupply;
+        PowerLevel powerLevel = PowerLevelFull;
+    } PowerDescriptor;
+
+    static NodeDescriptor parseNodeDescriptor(const QByteArray &payload);
+    static MacCapabilities parseMacCapabilities(quint8 macCapabilitiesFlag);
+    static ServerMask parseServerMask(quint16 serverMaskFlag);
+    static DescriptorCapabilities parseDescriptorCapabilities(quint8 descriptorCapabilitiesFlag);
+
+    static PowerDescriptor parsePowerDescriptor(quint16 powerDescriptorFlag);
 };
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &deviceAdpu);
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NodeDescriptor &nodeDescriptor);
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::MacCapabilities &macCapabilities);
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::ServerMask &serverMask);
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::DescriptorCapabilities &descriptorCapabilities);
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::PowerDescriptor &powerDescriptor);
 
 #endif // ZIGBEEDEVICEPROFILE_H

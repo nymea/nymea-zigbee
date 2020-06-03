@@ -32,6 +32,7 @@
 #include <QTimer>
 
 #include "deconz.h"
+#include "zigbeenetworkrequest.h"
 
 class ZigbeeInterfaceDeconzReply : public QObject
 {
@@ -41,6 +42,7 @@ class ZigbeeInterfaceDeconzReply : public QObject
 
 public:
     // Request content
+    ZigbeeNetworkRequest networkRequest() const;
     Deconz::Command command() const;
     quint8 sequenceNumber() const;
     QByteArray responseData() const;
@@ -48,12 +50,13 @@ public:
     // Response content
     Deconz::StatusCode statusCode() const;
 
-    bool timeout() const;
+    bool timendOut() const;
     bool aborted() const;
     void abort();
 
 private:
     explicit ZigbeeInterfaceDeconzReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent = nullptr);
+    ZigbeeNetworkRequest m_networkRequest;
     QTimer *m_timer = nullptr;
     bool m_timeout = false;
     bool m_aborted = false;

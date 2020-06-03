@@ -98,7 +98,6 @@ public:
     void setPermitJoining(bool permitJoining);
 
     quint8 generateSequenceNumber();
-    quint8 generateTranactionSequenceNumber();
 
     // Network nodes
     QList<ZigbeeNode *> nodes() const;
@@ -113,6 +112,8 @@ public:
 
     virtual ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) = 0;
 
+    void removeZigbeeNode(const ZigbeeAddress &address);
+
 private:
     State m_state = StateUninitialized;
 
@@ -120,15 +121,15 @@ private:
     QString m_serialPortName = "/dev/ttyUSB0";
     qint32 m_serialBaudrate = 115200;
 
+    // Continuouse ASP sequence number for network requests
     quint8 m_sequenceNumber = 0;
-    quint8 m_transactionSequenceNumber = 0;
 
     // Network configurations
     quint16 m_panId = 0;
     quint64 m_extendedPanId = 0;
     quint32 m_channel = 0;
     ZigbeeChannelMask m_channelMask = ZigbeeChannelMask(ZigbeeChannelMask::ChannelConfigurationAllChannels);
-    ZigbeeNode::NodeType m_nodeType = ZigbeeNode::NodeTypeCoordinator;
+    ZigbeeDeviceProfile::NodeType m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 
     // Network storage
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";

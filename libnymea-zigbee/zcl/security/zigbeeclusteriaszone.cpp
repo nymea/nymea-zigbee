@@ -80,7 +80,6 @@ void ZigbeeClusterIasZone::processDataIndication(ZigbeeClusterLibrary::Frame fra
 
                 // Update the ZoneState attribute
                 setAttribute(ZigbeeClusterAttribute(AttributeZoneState, ZigbeeDataType(Zigbee::BitMap16, frame.payload.left(2))));
-
                 emit zoneStatusChanged(ZoneStatusFlags(zoneStatus), extendedStatus, zoneId, delay);
                 break;
             }

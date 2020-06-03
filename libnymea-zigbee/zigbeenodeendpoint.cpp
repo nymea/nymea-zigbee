@@ -176,7 +176,11 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, Zi
     case Zigbee::ClusterIdIdentify:
         return new ZigbeeClusterIdentify(m_network, m_node, this, direction, this);
         break;
-    // Measurement
+    case Zigbee::ClusterIdLevelControl:
+        return new ZigbeeClusterLevelControl(m_network, m_node, this, direction, this);
+        break;
+
+        // Measurement
     case Zigbee::ClusterIdTemperatureMeasurement:
         return new ZigbeeClusterTemperatureMeasurement(m_network, m_node, this, direction, this);
         break;
@@ -189,7 +193,8 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, Zi
     case Zigbee::ClusterIdIlluminanceMeasurement:
         return new ZigbeeClusterIlluminanceMeasurment(m_network, m_node, this, direction, this);
         break;
-    // Security
+
+        // Security
     case Zigbee::ClusterIdIasZone:
         return new ZigbeeClusterIasZone(m_network, m_node, this, direction, this);
         break;

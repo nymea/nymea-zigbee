@@ -90,31 +90,6 @@ public:
 //    Q_ENUM(PowerConfigurationAttribute)
 
 
-//    // Level cluster 0x0008
-
-//    enum LevelClusterAttribute {
-//        LevelClusterAttributeCurrentLevel = 0x0000,
-//        LevelClusterAttributeRemainingTime = 0x0001,
-//        LevelClusterAttributeOnOffTransitionTime = 0x0010,
-//        LevelClusterAttributeOnLevel = 0x0011,
-//        LevelClusterAttributeOnTransitionTime = 0x0012,
-//        LevelClusterAttributeOffTransitionTime = 0x0013,
-//        LevelClusterAttributeDefaultMoveRate = 0x0014
-//    };
-//    Q_ENUM(LevelClusterAttribute)
-
-//    enum LevelClusterCommand {
-//        LevelClusterCommandMoveToLevel = 0x00,
-//        LevelClusterCommandMove = 0x01,
-//        LevelClusterCommandStep = 0x02,
-//        LevelClusterCommandStop = 0x03,
-//        LevelClusterCommandMoveToLevelWithOnOff = 0x04,
-//        LevelClusterCommandMoveWithOnOff = 0x05,
-//        LevelClusterCommandStepWithOnOff = 0x06,
-//        LevelClusterCommandStopWithOnOff = 0x07,
-//    };
-//    Q_ENUM(LevelClusterCommand)
-
 //    // Color cluster 0x0300
 
 //    enum ColorControlClusterAttribute {
@@ -170,11 +145,12 @@ protected:
     Direction m_direction = Server;
     QHash<quint16, ZigbeeClusterAttribute> m_attributes;
 
+    // Helper methods for sending cluster specific commands
     ZigbeeNetworkRequest createGeneralRequest();
     quint8 m_transactionSequenceNumber = 0;
     QHash<quint8, ZigbeeClusterReply *> m_pendingReplies;
     ZigbeeClusterReply *createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame);
-
+    ZigbeeClusterReply *executeClusterCommand(quint8 command, const QByteArray &payload = QByteArray());
     bool verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetworkReply *networkReply);
     void finishZclReply(ZigbeeClusterReply *zclReply);
 

@@ -27,6 +27,11 @@
 
 #include "zigbeeinterfacedeconzreply.h"
 
+ZigbeeNetworkRequest ZigbeeInterfaceDeconzReply::networkRequest() const
+{
+    return m_networkRequest;
+}
+
 Deconz::Command ZigbeeInterfaceDeconzReply::command() const
 {
     return m_command;
@@ -47,6 +52,11 @@ Deconz::StatusCode ZigbeeInterfaceDeconzReply::statusCode() const
     return m_statusCode;
 }
 
+bool ZigbeeInterfaceDeconzReply::timendOut() const
+{
+    return m_timeout;
+}
+
 bool ZigbeeInterfaceDeconzReply::aborted() const
 {
     return m_aborted;
@@ -64,7 +74,7 @@ ZigbeeInterfaceDeconzReply::ZigbeeInterfaceDeconzReply(Deconz::Command command, 
     m_command(command),
     m_sequenceNumber(sequenceNumber)
 {
-    m_timer->setInterval(2000);
+    m_timer->setInterval(5000);
     m_timer->setSingleShot(true);
     connect(m_timer, &QTimer::timeout, this, &ZigbeeInterfaceDeconzReply::onTimeout);
 }

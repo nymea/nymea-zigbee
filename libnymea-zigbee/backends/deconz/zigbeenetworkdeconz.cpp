@@ -191,7 +191,7 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
                         return;
                     }
 
-                    qCDebug(dcZigbeeNetwork()) << "Configured APS extended PANID successfully. SQN:" << reply->sequenceNumber();
+                    qCDebug(dcZigbeeController()) << "Configured APS extended PANID successfully. SQN:" << reply->sequenceNumber();
 
                     QByteArray paramData;
                     QDataStream stream(&paramData, QIODevice::WriteOnly);
@@ -206,7 +206,7 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
                             return;
                         }
 
-                        qCDebug(dcZigbeeNetwork()) << "Configured trust center address successfully. SQN:" << reply->sequenceNumber();
+                        qCDebug(dcZigbeeController()) << "Configured trust center address successfully. SQN:" << reply->sequenceNumber();
 
                         QByteArray paramData;
                         QDataStream stream(&paramData, QIODevice::WriteOnly);
@@ -221,7 +221,7 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
                                 return;
                             }
 
-                            qCDebug(dcZigbeeNetwork()) << "Configured security mode successfully. SQN:" << reply->sequenceNumber();
+                            qCDebug(dcZigbeeController()) << "Configured security mode successfully. SQN:" << reply->sequenceNumber();
 
 
                             qCDebug(dcZigbeeNetwork()) << "Configure network key" << securityConfiguration().networkKey().toString();
@@ -233,7 +233,7 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
                                     // Note: writing the network key fails all the time...
                                     //return;
                                 } else {
-                                    qCDebug(dcZigbeeNetwork()) << "Configured network key successfully. SQN:" << reply->sequenceNumber();
+                                    qCDebug(dcZigbeeController()) << "Configured network key successfully. SQN:" << reply->sequenceNumber();
                                 }
 
                                 // Configuration finished, lets start the network
@@ -284,7 +284,9 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
     case CreateNetworkStateInitializeCoordinatorNode: {
         if (m_coordinatorNode) {
             qCDebug(dcZigbeeNetwork()) << "We already have the coordinator node. Network starting done.";
+            m_initializing = false;
             setState(StateRunning);
+            setPermitJoiningInternal(false);
             return;
         }
 
@@ -295,7 +297,9 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
         connect(coordinatorNode, &ZigbeeNode::stateChanged, this, [this, coordinatorNode](ZigbeeNode::State state){
             if (state == ZigbeeNode::StateInitialized) {
                 qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
+                m_initializing = false;
                 setState(StateRunning);
+                setPermitJoiningInternal(false);
                 return;
             }
         });
@@ -350,6 +354,11 @@ void ZigbeeNetworkDeconz::handleZigbeeClusterLibraryIndication(const Zigbee::Aps
     if (!node) {
         qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
         // FIXME: maybe create and init the node, since it is in the network, but not recognized
+
+        // Remove this node since we might have removed it but it did not respond, or we not explicitly allowed it to join.
+
+
+
         return;
     }
 
@@ -467,6 +476,8 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
                     return;
                 }
 
+                qCDebug(dcZigbeeNetwork()) << "Reading current network state finished successfully." << "SQN:" << reply->sequenceNumber();
+
                 QDataStream stream(reply->responseData());
                 stream.setByteOrder(QDataStream::LittleEndian);
                 quint8 deviceStateFlag = 0;
@@ -489,8 +500,11 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
                     // Get the network state and start the network if required
                     if (m_controller->networkState() == Deconz::NetworkStateConnected) {
                         qCDebug(dcZigbeeNetwork()) << "The network is already running.";
+                        m_initializing = false;
                         setState(StateRunning);
+                        setPermitJoiningInternal(false);
                     } else if (m_controller->networkState() == Deconz::NetworkStateOffline) {
+                        m_initializing = true;
                         qCDebug(dcZigbeeNetwork()) << "The network is offline. Lets start it";
                         setCreateNetworkState(CreateNetworkStateStartNetwork);
                     } else {
@@ -507,12 +521,14 @@ void ZigbeeNetworkDeconz::onControllerAvailableChanged(bool available)
     if (!available) {
         qCWarning(dcZigbeeNetwork()) << "Hardware controller is not available any more.";
         setError(ErrorHardwareUnavailable);
+        m_initializing = false;
         m_permitJoining = false;
         emit permitJoiningChanged(m_permitJoining);
         setState(StateOffline);
     } else {
         m_error = ErrorNoError;
         m_permitJoining = false;
+        m_initializing = true;
         emit permitJoiningChanged(m_permitJoining);
         setState(StateStarting);
         qCDebug(dcZigbeeNetwork()) << "Hardware controller is now available.";
@@ -647,7 +663,10 @@ void ZigbeeNetworkDeconz::startNetwork()
 
     m_permitJoining = false;
     emit permitJoiningChanged(m_permitJoining);
+
     // Note: wait for the controller available signal and start the initialization there
+
+    m_initializing = true;
 }
 
 void ZigbeeNetworkDeconz::stopNetwork()
@@ -674,6 +693,7 @@ void ZigbeeNetworkDeconz::reset()
 void ZigbeeNetworkDeconz::factoryResetNetwork()
 {
     qCDebug(dcZigbeeNetwork()) << "Factory reset network and forget all information. This cannot be undone.";
+    m_controller->disable();
     clearSettings();
     setState(StateUninitialized);
     qCDebug(dcZigbeeNetwork()) << "The factory reset is finished. Start restart with a fresh network.";

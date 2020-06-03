@@ -221,6 +221,66 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestQuerySendDataCo
     return createReply(Deconz::CommandApsDataConfirm, sequenceNumber, this);
 }
 
+ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestSendRequest(const ZigbeeNetworkRequest &request)
+{
+    // Send the request only if there are free slots on the device, otherwise enque request
+//    if (m_apsFreeSlotsAvailable) {
+
+//    }
+
+    qCDebug(dcZigbeeAps()) << "APSDE-DATA.request" << request;
+    ZigbeeInterfaceDeconzReply *interfaceReply = nullptr;
+    switch (request.destinationAddressMode()) {
+    case Zigbee::DestinationAddressModeGroup:
+        interfaceReply = requestEnqueueSendDataGroup(request.requestId(), request.destinationShortAddress(),
+                                                     request.profileId(), request.clusterId(),request.sourceEndpoint(),
+                                                     request.asdu(), request.txOptions(), request.radius());
+        break;
+    case Zigbee::DestinationAddressModeShortAddress:
+        interfaceReply = requestEnqueueSendDataShortAddress(request.requestId(), request.destinationShortAddress(),
+                                                            request.destinationEndpoint(), request.profileId(), request.clusterId(),
+                                                            request.sourceEndpoint(), request.asdu(), request.txOptions(), request.radius());
+        break;
+    case Zigbee::DestinationAddressModeIeeeAddress:
+        interfaceReply = requestEnqueueSendDataIeeeAddress(request.requestId(), request.destinationIeeeAddress(),
+                                                           request.destinationEndpoint(), request.profileId(), request.clusterId(),
+                                                           request.sourceEndpoint(), request.asdu(), request.txOptions(), request.radius());
+        break;
+    }
+
+    return interfaceReply;
+}
+
+quint8 ZigbeeBridgeControllerDeconz::generateSequenceNumber()
+{
+    return m_sequenceNumber++;
+}
+
+ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent)
+{
+    // Create the reply
+    ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(command, sequenceNumber, parent);
+
+    connect(reply, &ZigbeeInterfaceDeconzReply::timeout, this, [this, reply](){
+        qCWarning(dcZigbeeController()) << "Reply timeout" << reply->command() << "SQN:" <<  reply->sequenceNumber();
+        if (m_pendingReplies.contains(reply->sequenceNumber())) {
+            m_pendingReplies.remove(reply->sequenceNumber());
+            // Note: will be deleted with the finished signal
+        }
+    });
+
+    // Auto delete the object on finished
+    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
+
+    // Add it to the pending list
+    m_pendingReplies.insert(sequenceNumber, reply);
+
+    // Fixme: start the timer once actually sent to the interface
+    reply->m_timer->start();
+
+    return reply;
+}
+
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius)
 {
     quint8 sequenceNumber = generateSequenceNumber();
@@ -313,7 +373,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
                                   << profileId << clusterId
                                   << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
 
-    Q_ASSERT_X(asdu.length() <= 127, "ASDU", "ASDU package length has to <= 127 bytes");
+    Q_ASSERT_X(asdu.length() <= 127, "ZigbeeController", "ASDU package length has to be <= 127 bytes");
 
     // Note: 21 protocol bytes + asdu package length
     quint16 payloadLength = static_cast<quint16>(21 + asdu.length());
@@ -345,53 +405,6 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
     return createReply(Deconz::CommandApsDataRequest, sequenceNumber, this);
 }
 
-ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestSendRequest(const ZigbeeNetworkRequest &request)
-{
-    qCDebug(dcZigbeeAps()) << "APSDE-DATA.request" << request;
-    ZigbeeInterfaceDeconzReply *interfaceReply = nullptr;
-    switch (request.destinationAddressMode()) {
-    case Zigbee::DestinationAddressModeGroup:
-        interfaceReply = requestEnqueueSendDataGroup(request.requestId(), request.destinationShortAddress(),
-                                                     request.profileId(), request.clusterId(),request.sourceEndpoint(),
-                                                     request.asdu(), request.txOptions(), request.radius());
-        break;
-    case Zigbee::DestinationAddressModeShortAddress:
-        interfaceReply = requestEnqueueSendDataShortAddress(request.requestId(), request.destinationShortAddress(),
-                                                            request.destinationEndpoint(), request.profileId(), request.clusterId(),
-                                                            request.sourceEndpoint(), request.asdu(), request.txOptions(), request.radius());
-        break;
-    case Zigbee::DestinationAddressModeIeeeAddress:
-        interfaceReply = requestEnqueueSendDataIeeeAddress(request.requestId(), request.destinationIeeeAddress(),
-                                                           request.destinationEndpoint(), request.profileId(), request.clusterId(),
-                                                           request.sourceEndpoint(), request.asdu(), request.txOptions(), request.radius());
-        break;
-    }
-
-    return interfaceReply;
-}
-
-quint8 ZigbeeBridgeControllerDeconz::generateSequenceNumber()
-{
-    return m_sequenceNumber++;
-}
-
-ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent)
-{
-    // Create the reply
-    ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(command, sequenceNumber, parent);
-
-    // Auto delete the object on finished
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
-
-    // Add it to the pending list
-    m_pendingReplies.insert(sequenceNumber, reply);
-
-    // Fixme: start the timer once actually sent to the interface
-    reply->m_timer->start();
-
-    return reply;
-}
-
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters()
 {
     qCDebug(dcZigbeeController()) << "Start reading network parameters";
@@ -408,8 +421,8 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
     ZigbeeInterfaceDeconzReply *replyMacAddress = requestReadParameter(Deconz::ParameterMacAddress);
     connect(replyMacAddress, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyMacAddress](){
         if (replyMacAddress->statusCode() != Deconz::StatusCodeSuccess) {
-            qCWarning(dcZigbeeController()) << "Request" << replyMacAddress->command() << Deconz::ParameterMacAddress
-                                            << "finished with error" << replyMacAddress->statusCode();
+            qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyMacAddress->sequenceNumber() << replyMacAddress->command()
+                                            << Deconz::ParameterMacAddress << "finished with error" << replyMacAddress->statusCode();
 
             readNetworkParametersReply->m_statusCode = replyMacAddress->statusCode();
             readNetworkParametersReply->finished();
@@ -421,16 +434,16 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
         stream >> payloadLenght >> parameter >> macAddress;
 
         m_networkConfiguration.ieeeAddress = ZigbeeAddress(macAddress);
-        qCDebug(dcZigbeeController()) << "Request" << replyMacAddress->command() << static_cast<Deconz::Parameter>(parameter)
-                                      << "finished successfully";
+        qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyMacAddress->sequenceNumber() << replyMacAddress->command()
+                                      << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
         qCDebug(dcZigbeeController()) << "IEEE address:" << m_networkConfiguration.ieeeAddress.toString();
 
         // Read PAN ID
         ZigbeeInterfaceDeconzReply *replyPanId = requestReadParameter(Deconz::ParameterPanId);
         connect(replyPanId, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyPanId](){
             if (replyPanId->statusCode() != Deconz::StatusCodeSuccess) {
-                qCWarning(dcZigbeeController()) << "Request" << replyPanId->command() << Deconz::ParameterPanId
-                                                << "finished with error" << replyPanId->statusCode();
+                qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyPanId->sequenceNumber() << replyPanId->command()
+                                                << Deconz::ParameterPanId << "finished with error" << replyPanId->statusCode();
                 readNetworkParametersReply->m_statusCode = replyPanId->statusCode();
                 readNetworkParametersReply->finished();
                 return;
@@ -441,15 +454,15 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
             stream >> payloadLenght >> parameter >> panId;
 
             m_networkConfiguration.panId = panId;
-            qCDebug(dcZigbeeController()) << "Request" << replyPanId->command() << static_cast<Deconz::Parameter>(parameter)
-                                          << "finished successfully";
+            qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyPanId->sequenceNumber() << replyPanId->command()
+                                          << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
             qCDebug(dcZigbeeController()) << "PAN ID:" << ZigbeeUtils::convertUint16ToHexString(m_networkConfiguration.panId);
 
             // Read short address
             ZigbeeInterfaceDeconzReply *replyShortAddress = requestReadParameter(Deconz::ParameterNetworkAddress);
             connect(replyShortAddress, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyShortAddress](){
                 if (replyShortAddress->statusCode() != Deconz::StatusCodeSuccess) {
-                    qCWarning(dcZigbeeController()) << "Request" << replyShortAddress->command() << Deconz::ParameterNetworkAddress
+                    qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyShortAddress->sequenceNumber() << replyShortAddress->command() << Deconz::ParameterNetworkAddress
                                                     << "finished with error" << replyShortAddress->statusCode();
                     readNetworkParametersReply->m_statusCode = replyShortAddress->statusCode();
                     readNetworkParametersReply->finished();
@@ -461,16 +474,16 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                 quint16 payloadLenght = 0; quint8 parameter = 0; quint16 shortAddress = 0;
                 stream >> payloadLenght >> parameter >> shortAddress;
                 m_networkConfiguration.shortAddress = shortAddress;
-                qCDebug(dcZigbeeController()) << "Request" << replyShortAddress->command() << static_cast<Deconz::Parameter>(parameter)
-                                              << "finished successfully";
+                qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyShortAddress->sequenceNumber()
+                                              << replyShortAddress->command() << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
                 qCDebug(dcZigbeeController()) << ZigbeeUtils::convertUint16ToHexString(m_networkConfiguration.shortAddress);
 
                 // Read extended PAN ID
                 ZigbeeInterfaceDeconzReply *replyExtendedPanId = requestReadParameter(Deconz::ParameterNetworkExtendedPanId);
                 connect(replyExtendedPanId, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyExtendedPanId](){
                     if (replyExtendedPanId->statusCode() != Deconz::StatusCodeSuccess) {
-                        qCWarning(dcZigbeeController()) << "Request" << replyExtendedPanId->command() << Deconz::ParameterNetworkExtendedPanId
-                                                        << "finished with error" << replyExtendedPanId->statusCode();
+                        qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyExtendedPanId->sequenceNumber() << replyExtendedPanId->command()
+                                                        << Deconz::ParameterNetworkExtendedPanId << "finished with error" << replyExtendedPanId->statusCode();
                         readNetworkParametersReply->m_statusCode = replyExtendedPanId->statusCode();
                         readNetworkParametersReply->finished();
                         return;
@@ -481,7 +494,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                     quint16 payloadLenght = 0; quint8 parameter = 0; quint64 networkExtendedPanId = 0;
                     stream >> payloadLenght >> parameter >> networkExtendedPanId;
                     m_networkConfiguration.extendedPanId = networkExtendedPanId;
-                    qCDebug(dcZigbeeController()) << "Request" << replyExtendedPanId->command() << static_cast<Deconz::Parameter>(parameter)
+                    qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyExtendedPanId->sequenceNumber() << replyExtendedPanId->command() << static_cast<Deconz::Parameter>(parameter)
                                                   << "finished successfully";
                     qCDebug(dcZigbeeController()) << ZigbeeUtils::convertUint64ToHexString(m_networkConfiguration.extendedPanId);
 
@@ -489,8 +502,8 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                     ZigbeeInterfaceDeconzReply *replyNodeType = requestReadParameter(Deconz::ParameterNodeType);
                     connect(replyNodeType, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyNodeType](){
                         if (replyNodeType->statusCode() != Deconz::StatusCodeSuccess) {
-                            qCWarning(dcZigbeeController()) << "Request" << replyNodeType->command() << Deconz::ParameterNodeType
-                                                            << "finished with error" << replyNodeType->statusCode();
+                            qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyNodeType->sequenceNumber() << replyNodeType->command()
+                                                            << Deconz::ParameterNodeType << "finished with error" << replyNodeType->statusCode();
                             readNetworkParametersReply->m_statusCode = replyNodeType->statusCode();
                             readNetworkParametersReply->finished();
                             return;
@@ -502,7 +515,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                         stream >> payloadLenght >> parameter >> nodeType;
 
                         m_networkConfiguration.nodeType = static_cast<Deconz::NodeType>(nodeType);
-                        qCDebug(dcZigbeeController()) << "Request" << replyNodeType->command() << static_cast<Deconz::Parameter>(parameter)
+                        qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyNodeType->sequenceNumber() << replyNodeType->command() << static_cast<Deconz::Parameter>(parameter)
                                                       << "finished successfully";
                         qCDebug(dcZigbeeController()) << m_networkConfiguration.nodeType;
 
@@ -510,7 +523,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                         ZigbeeInterfaceDeconzReply *replyChannelMask = requestReadParameter(Deconz::ParameterChannelMask);
                         connect(replyChannelMask, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyChannelMask](){
                             if (replyChannelMask->statusCode() != Deconz::StatusCodeSuccess) {
-                                qCWarning(dcZigbeeController()) << "Request" << replyChannelMask->command() << Deconz::ParameterChannelMask
+                                qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyChannelMask->sequenceNumber() << replyChannelMask->command() << Deconz::ParameterChannelMask
                                                                 << "finished with error" << replyChannelMask->statusCode();
                                 readNetworkParametersReply->m_statusCode = replyChannelMask->statusCode();
                                 readNetworkParametersReply->finished();
@@ -523,16 +536,16 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                             stream >> payloadLenght >> parameter >> channelMask;
 
                             m_networkConfiguration.channelMask = channelMask;
-                            qCDebug(dcZigbeeController()) << "Request" << replyChannelMask->command() << static_cast<Deconz::Parameter>(parameter)
-                                                          << "finished successfully";
+                            qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyChannelMask->sequenceNumber() << replyChannelMask->command()
+                                                          << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
                             qCDebug(dcZigbeeController()) << ZigbeeUtils::convertUint32ToHexString(m_networkConfiguration.channelMask);
 
                             // Read APS extended PAN ID
                             ZigbeeInterfaceDeconzReply *replyApsExtendedPanId = requestReadParameter(Deconz::ParameterApsExtendedPanId);
                             connect(replyApsExtendedPanId, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyApsExtendedPanId](){
                                 if (replyApsExtendedPanId->statusCode() != Deconz::StatusCodeSuccess) {
-                                    qCWarning(dcZigbeeController()) << "Request" << replyApsExtendedPanId->command() << Deconz::ParameterApsExtendedPanId
-                                                                    << "finished with error" << replyApsExtendedPanId->statusCode();
+                                    qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyApsExtendedPanId->sequenceNumber() << replyApsExtendedPanId->command()
+                                                                    << Deconz::ParameterApsExtendedPanId << "finished with error" << replyApsExtendedPanId->statusCode();
                                     readNetworkParametersReply->m_statusCode = replyApsExtendedPanId->statusCode();
                                     readNetworkParametersReply->finished();
                                     return;
@@ -544,16 +557,16 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                 stream >> payloadLenght >> parameter >> apsExtendedPanId;
 
                                 m_networkConfiguration.apsExtendedPanId = apsExtendedPanId;
-                                qCDebug(dcZigbeeController()) << "Request" << replyApsExtendedPanId->command() << static_cast<Deconz::Parameter>(parameter)
-                                                              << "finished successfully";
+                                qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyApsExtendedPanId->sequenceNumber() << replyApsExtendedPanId->command()
+                                                              << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
                                 qCDebug(dcZigbeeController()) << ZigbeeUtils::convertUint64ToHexString(m_networkConfiguration.apsExtendedPanId);
 
                                 // Read trust center address
                                 ZigbeeInterfaceDeconzReply *replyTrustCenterAddress = requestReadParameter(Deconz::ParameterTrustCenterAddress);
                                 connect(replyTrustCenterAddress, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyTrustCenterAddress](){
                                     if (replyTrustCenterAddress->statusCode() != Deconz::StatusCodeSuccess) {
-                                        qCWarning(dcZigbeeController()) << "Request" << replyTrustCenterAddress->command() << Deconz::ParameterTrustCenterAddress
-                                                                        << "finished with error" << replyTrustCenterAddress->statusCode();
+                                        qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyTrustCenterAddress->sequenceNumber() << replyTrustCenterAddress->command()
+                                                                        << Deconz::ParameterTrustCenterAddress << "finished with error" << replyTrustCenterAddress->statusCode();
                                         readNetworkParametersReply->m_statusCode = replyTrustCenterAddress->statusCode();
                                         readNetworkParametersReply->finished();
                                         return;
@@ -565,16 +578,16 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                     stream >> payloadLenght >> parameter >> trustCenterAddress;
 
                                     m_networkConfiguration.trustCenterAddress = ZigbeeAddress(trustCenterAddress);
-                                    qCDebug(dcZigbeeController()) << "Request" << replyTrustCenterAddress->command() << static_cast<Deconz::Parameter>(parameter)
-                                                                  << "finished successfully";
+                                    qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyTrustCenterAddress->sequenceNumber() << replyTrustCenterAddress->command()
+                                                                  << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
                                     qCDebug(dcZigbeeController()) << m_networkConfiguration.trustCenterAddress;
 
                                     // Read security mode
                                     ZigbeeInterfaceDeconzReply *replySecurityMode = requestReadParameter(Deconz::ParameterSecurityMode);
                                     connect(replySecurityMode, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replySecurityMode](){
                                         if (replySecurityMode->statusCode() != Deconz::StatusCodeSuccess) {
-                                            qCWarning(dcZigbeeController()) << "Request" << replySecurityMode->command() << Deconz::ParameterSecurityMode
-                                                                            << "finished with error" << replySecurityMode->statusCode();
+                                            qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replySecurityMode->sequenceNumber() << replySecurityMode->command()
+                                                                            << Deconz::ParameterSecurityMode << "finished with error" << replySecurityMode->statusCode();
                                             readNetworkParametersReply->m_statusCode = replySecurityMode->statusCode();
                                             readNetworkParametersReply->finished();
                                             return;
@@ -586,8 +599,8 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                         stream >> payloadLenght >> parameter >> securityMode;
 
                                         m_networkConfiguration.securityMode = static_cast<Deconz::SecurityMode>(securityMode);
-                                        qCDebug(dcZigbeeController()) << "Request" << replySecurityMode->command() << static_cast<Deconz::Parameter>(parameter)
-                                                                      << "finished successfully";
+                                        qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replySecurityMode->sequenceNumber() << replySecurityMode->command()
+                                                                      << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
                                         qCDebug(dcZigbeeController()) << m_networkConfiguration.securityMode;
 
                                         // Note: reading the network key returns "InavlidParameter". Might be for security reasons which is good!
@@ -596,7 +609,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                         ZigbeeInterfaceDeconzReply *replyChannel = requestReadParameter(Deconz::ParameterCurrentChannel);
                                         connect(replyChannel, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyChannel](){
                                             if (replyChannel->statusCode() != Deconz::StatusCodeSuccess) {
-                                                qCWarning(dcZigbeeController()) << "Request" << replyChannel->command() << Deconz::ParameterCurrentChannel
+                                                qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyChannel->sequenceNumber() << replyChannel->command() << Deconz::ParameterCurrentChannel
                                                                                 << "finished with error" << replyChannel->statusCode();
                                                 readNetworkParametersReply->m_statusCode = replyChannel->statusCode();
                                                 readNetworkParametersReply->finished();
@@ -608,7 +621,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                             quint16 payloadLenght = 0; quint8 parameter = 0; quint8 channel = 0;
                                             stream >> payloadLenght >> parameter >> channel;
                                             m_networkConfiguration.currentChannel = channel;
-                                            qCDebug(dcZigbeeController()) << "Request" << replyChannel->command() << static_cast<Deconz::Parameter>(parameter)
+                                            qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyChannel->sequenceNumber() << replyChannel->command() << static_cast<Deconz::Parameter>(parameter)
                                                                           << "finished successfully";
                                             qCDebug(dcZigbeeController()) << "Current channel:" << m_networkConfiguration.currentChannel;
 
@@ -617,8 +630,8 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                             ZigbeeInterfaceDeconzReply *replyPermitJoin = requestReadParameter(Deconz::ParameterPermitJoin);
                                             connect(replyPermitJoin, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyPermitJoin](){
                                                 if (replyPermitJoin->statusCode() != Deconz::StatusCodeSuccess) {
-                                                    qCWarning(dcZigbeeController()) << "Request" << replyPermitJoin->command() << Deconz::ParameterPermitJoin
-                                                                                    << "finished with error" << replyPermitJoin->statusCode();
+                                                    qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyPermitJoin->sequenceNumber() << replyPermitJoin->command()
+                                                                                    << Deconz::ParameterPermitJoin << "finished with error" << replyPermitJoin->statusCode();
                                                     readNetworkParametersReply->m_statusCode = replyPermitJoin->statusCode();
                                                     readNetworkParametersReply->finished();
                                                     return;
@@ -629,7 +642,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                                 quint16 payloadLenght = 0; quint8 parameter = 0;
                                                 stream >> payloadLenght >> parameter;
                                                 //m_networkConfiguration.currentChannel = channel;
-                                                qCDebug(dcZigbeeController()) << "Request" << replyPermitJoin->command() << static_cast<Deconz::Parameter>(parameter)
+                                                qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyPermitJoin->sequenceNumber() << replyPermitJoin->command() << static_cast<Deconz::Parameter>(parameter)
                                                                               << "finished successfully" << ZigbeeUtils::convertByteArrayToHexString(replyPermitJoin->responseData());
 
 
@@ -637,8 +650,8 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                                 ZigbeeInterfaceDeconzReply *replyProtocolVersion = requestReadParameter(Deconz::ParameterProtocolVersion);
                                                 connect(replyProtocolVersion, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyProtocolVersion](){
                                                     if (replyProtocolVersion->statusCode() != Deconz::StatusCodeSuccess) {
-                                                        qCWarning(dcZigbeeController()) << "Request" << replyProtocolVersion->command() << Deconz::ParameterProtocolVersion
-                                                                                        << "finished with error" << replyProtocolVersion->statusCode();
+                                                        qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyProtocolVersion->sequenceNumber() << replyProtocolVersion->command()
+                                                                                        << Deconz::ParameterProtocolVersion << "finished with error" << replyProtocolVersion->statusCode();
                                                         readNetworkParametersReply->m_statusCode = replyProtocolVersion->statusCode();
                                                         readNetworkParametersReply->finished();
                                                         return;
@@ -649,16 +662,16 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                                     quint16 payloadLenght = 0; quint8 parameter = 0; quint16 protocolVersion = 0;
                                                     stream >> payloadLenght >> parameter >> protocolVersion;
                                                     m_networkConfiguration.protocolVersion = protocolVersion;
-                                                    qCDebug(dcZigbeeController()) << "Request" << replyProtocolVersion->command() << static_cast<Deconz::Parameter>(parameter)
-                                                                                  << "finished successfully";
+                                                    qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyProtocolVersion->sequenceNumber() << replyProtocolVersion->command()
+                                                                                  << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
                                                     qCDebug(dcZigbeeController()) << "Protocol version:" << ZigbeeUtils::convertUint16ToHexString(m_networkConfiguration.protocolVersion);
 
                                                     // Read network updat id
                                                     ZigbeeInterfaceDeconzReply *replyNetworkUpdateId = requestReadParameter(Deconz::ParameterNetworkUpdateId);
                                                     connect(replyNetworkUpdateId, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyNetworkUpdateId](){
                                                         if (replyNetworkUpdateId->statusCode() != Deconz::StatusCodeSuccess) {
-                                                            qCWarning(dcZigbeeController()) << "Request" << replyNetworkUpdateId->command() << Deconz::ParameterNetworkUpdateId
-                                                                                            << "finished with error" << replyNetworkUpdateId->statusCode();
+                                                            qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyNetworkUpdateId->sequenceNumber() << replyNetworkUpdateId->command()
+                                                                                            << Deconz::ParameterNetworkUpdateId << "finished with error" << replyNetworkUpdateId->statusCode();
                                                             readNetworkParametersReply->m_statusCode = replyNetworkUpdateId->statusCode();
                                                             readNetworkParametersReply->finished();
                                                             return;
@@ -669,8 +682,8 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                                         quint16 payloadLenght = 0; quint8 parameter = 0; quint8 networkUpdateId = 0;
                                                         stream >> payloadLenght >> parameter >> networkUpdateId;
                                                         m_networkConfiguration.networkUpdateId = networkUpdateId;
-                                                        qCDebug(dcZigbeeController()) << "Request" << replyNetworkUpdateId->command() << static_cast<Deconz::Parameter>(parameter)
-                                                                                      << "finished successfully";
+                                                        qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyNetworkUpdateId->sequenceNumber() << replyNetworkUpdateId->command()
+                                                                                      << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
                                                         qCDebug(dcZigbeeController()) << "Network update ID:" << m_networkConfiguration.networkUpdateId;
 
                                                         // Make sure the watchdog is available for this version
@@ -692,8 +705,8 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                                         ZigbeeInterfaceDeconzReply *replyWatchdogTimeout = requestReadParameter(Deconz::ParameterWatchdogTtl);
                                                         connect(replyWatchdogTimeout, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyWatchdogTimeout](){
                                                             if (replyWatchdogTimeout->statusCode() != Deconz::StatusCodeSuccess) {
-                                                                qCWarning(dcZigbeeController()) << "Request" << replyWatchdogTimeout->command() << Deconz::ParameterWatchdogTtl
-                                                                                                << "finished with error" << replyWatchdogTimeout->statusCode();
+                                                                qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyWatchdogTimeout->sequenceNumber() << replyWatchdogTimeout->command()
+                                                                                                << Deconz::ParameterWatchdogTtl << "finished with error" << replyWatchdogTimeout->statusCode();
                                                                 readNetworkParametersReply->m_statusCode = replyWatchdogTimeout->statusCode();
                                                                 readNetworkParametersReply->finished();
                                                                 return;
@@ -704,8 +717,8 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                                             quint16 payloadLenght = 0; quint8 parameter = 0; quint32 watchdogTimeout = 0;
                                                             stream >> payloadLenght >> parameter >> watchdogTimeout;
                                                             m_networkConfiguration.watchdogTimeout = watchdogTimeout;
-                                                            qCDebug(dcZigbeeController()) << "Request" << replyWatchdogTimeout->command() << static_cast<Deconz::Parameter>(parameter)
-                                                                                          << "finished successfully";
+                                                            qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyWatchdogTimeout->sequenceNumber() << replyWatchdogTimeout->command()
+                                                                                          << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
                                                             qCDebug(dcZigbeeController()) << "Watchdog timeout:" << m_networkConfiguration.watchdogTimeout;
 
                                                             // Finished reading all parameters. Finish the independent reply in order to indicate the process has finished
@@ -746,13 +759,13 @@ void ZigbeeBridgeControllerDeconz::readDataIndication()
     ZigbeeInterfaceDeconzReply *reply = requestReadReceivedDataIndication();
     connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-            qCWarning(dcZigbeeController()) << "Could not read data indication." << reply->statusCode();
+            qCWarning(dcZigbeeController()) << "Could not read data indication." << "SQN:" << reply->sequenceNumber() << reply->statusCode();
             // FIXME: set an appropriate error
             return;
         }
 
         // APS data indication received, process the content
-        qCDebug(dcZigbeeController()) << "Reading data indication finished successfully";
+        qCDebug(dcZigbeeController()) << "Reading data indication finished successfully" << "SQN:" << reply->sequenceNumber();
         processDataIndication(reply->responseData());
     });
 }
@@ -762,20 +775,20 @@ void ZigbeeBridgeControllerDeconz::readDataConfirm()
     ZigbeeInterfaceDeconzReply *reply = requestQuerySendDataConfirm();
     connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-            qCWarning(dcZigbeeController()) << "Could not read data confirm." << reply->statusCode();
+            qCWarning(dcZigbeeController()) << "Could not read data confirm." << "SQN:" << reply->sequenceNumber() << reply->statusCode();
             // FIXME: set an appropriate error
             return;
         }
 
         // APS data confirm received, process the content
-        qCDebug(dcZigbeeController()) << "Reading data confirm finished successfully";
+        qCDebug(dcZigbeeController()) << "Reading data confirm finished successfully" << "SQN:" << reply->sequenceNumber();
         processDataConfirm(reply->responseData());
     });
 }
 
 void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceState)
 {
-    qCDebug(dcZigbeeController()) << deviceState;
+    qCDebug(dcZigbeeController()) << "Process device state notification" << deviceState;
 
     if (m_networkState != deviceState.networkState) {
         qCDebug(dcZigbeeController()) << "Network state changed" << deviceState.networkState;
@@ -785,7 +798,10 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
 
     if (m_apsFreeSlotsAvailable != deviceState.apsDataRequestFreeSlots) {
         m_apsFreeSlotsAvailable = deviceState.apsDataRequestFreeSlots;
-
+        if (!m_apsFreeSlotsAvailable) {
+            qCWarning(dcZigbeeController()) << "The APS request table is full on the device. Cannot send requests until the queue gets processed on the controller.";
+            return;
+        }
         // FIXME: if changed to true, send next aps data request
 
     }
@@ -851,6 +867,7 @@ void ZigbeeBridgeControllerDeconz::processDataIndication(const QByteArray &data)
 
     // Process the device state in order to check if we have to request another indication
     DeconzDeviceState deviceState = parseDeviceStateFlag(deviceStateFlag);
+    qCDebug(dcZigbeeController()) << "Verify device state after data indication response" << deviceState;
     if (deviceState.apsDataIndication) {
         readDataIndication();
     }
@@ -881,6 +898,7 @@ void ZigbeeBridgeControllerDeconz::processDataConfirm(const QByteArray &data)
 
     // Process the device state in order to check if we have to request another indication
     DeconzDeviceState deviceState = parseDeviceStateFlag(deviceStateFlag);
+    qCDebug(dcZigbeeController()) << "Verify device state after data confirmation response" << deviceState;
     if (deviceState.apsDataConfirm) {
         readDataConfirm();
     }
@@ -912,12 +930,16 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
     QByteArray data = package.right(package.length() - 5);
     Deconz::Command command = static_cast<Deconz::Command>(commandInt);
     Deconz::StatusCode status = static_cast<Deconz::StatusCode>(statusInt);
-    //qCDebug(dcZigbeeController()) << "Interface message received" << command << "SQN:" << sequenceNumber
-    //                              << status << "Frame length:" << frameLength << ZigbeeUtils::convertByteArrayToHexString(data);
+    qCDebug(dcZigbeeController()) << "Interface message received" << command << "SQN:" << sequenceNumber
+                                  << status << "Frame length:" << frameLength << ZigbeeUtils::convertByteArrayToHexString(data);
 
     // Check if this is an interface response for a pending reply
     if (m_pendingReplies.contains(sequenceNumber) && m_pendingReplies.value(sequenceNumber)->command() == command) {
         ZigbeeInterfaceDeconzReply *reply = m_pendingReplies.take(sequenceNumber);
+        if (!reply) {
+            qCWarning(dcZigbeeController()) << "Received message but the corresponding reply does not exist any more.";
+            return;
+        }
         reply->m_responseData = data;
         reply->m_statusCode = status;
         reply->finished();
@@ -927,7 +949,7 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
     // Note: we got a notification, lets set the current sequence number to the notification id,
     //       so the next request will be a continuouse increase
 
-    m_sequenceNumber = sequenceNumber;
+    m_sequenceNumber = sequenceNumber + 1;
 
     // No request for this data, lets check which notification and process the data
     switch (command) {
@@ -938,12 +960,12 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
         break;
     }
     case Deconz::CommandMacPoll: {
-        // FIXME: parse the data and print info
-
+        qCDebug(dcZigbeeController()) << "MAC Poll command received" << ZigbeeUtils::convertByteArrayToHexString(data);// FIXME: parse the data and print info
         break;
     }
     case Deconz::CommandSimplifiedBeacon: {
         // FIXME: parse the data and print info
+        qCDebug(dcZigbeeController()) << "Simplified beacon command received" << ZigbeeUtils::convertByteArrayToHexString(data);
         break;
     }
     default:
@@ -951,7 +973,6 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
                                         << status << "Frame length:" << frameLength << ZigbeeUtils::convertByteArrayToHexString(data);
         break;
     }
-
 }
 
 void ZigbeeBridgeControllerDeconz::resetControllerWatchdog()
