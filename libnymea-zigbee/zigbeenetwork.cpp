@@ -30,7 +30,8 @@
 #include "loggingcategory.h"
 #include "zdo/zigbeedeviceprofile.h"
 
-#include <QSqlQuery>
+#include <QDir>
+#include <QFileInfo>
 
 ZigbeeNetwork::ZigbeeNetwork(QObject *parent) :
     QObject(parent)
@@ -231,7 +232,6 @@ bool ZigbeeNetwork::hasNode(const ZigbeeAddress &address) const
 
 void ZigbeeNetwork::removeZigbeeNode(const ZigbeeAddress &address)
 {
-
     ZigbeeNode *node = getZigbeeNode(address);
     if (!node) {
         qCWarning(dcZigbeeNetwork()) << "Failed remove zigbee node since there is no node with" << address;
@@ -313,6 +313,12 @@ void ZigbeeNetwork::saveNetwork()
 void ZigbeeNetwork::loadNetwork()
 {
     qCDebug(dcZigbeeNetwork()) << "Load current network configuration from" << m_settingsFileName;
+
+    if (!m_database) {
+        QDir storagePath = QFileInfo(m_settingsFileName).absoluteDir();
+        m_database = new ZigbeeNetworkDatabase(this, storagePath.absolutePath() + QDir::separator() + "zigbee-network.db", this);
+    }
+
     QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
 
     settings.beginGroup("Network");
@@ -381,6 +387,35 @@ void ZigbeeNetwork::loadNetwork()
         addNodeInternally(node);
     }
     settings.endGroup(); // Nodes
+
+    qCWarning(dcZigbeeNetwork()) << this;
+
+    // FIXME: for testing
+    foreach(ZigbeeNode *node, m_nodes) {
+        m_database->saveNode(node);
+    }
+
+    // Now load and print the nodes again for checking
+    QList<ZigbeeNode *> dbNodes = m_database->loadNodes();
+
+    foreach (ZigbeeNode *node, dbNodes) {
+        qCWarning(dcZigbeeNetwork()) << " ---> " << node << endl;
+        qCWarning(dcZigbeeNetwork()) << "  " << node->nodeDescriptor();
+        qCWarning(dcZigbeeNetwork()) << "  " << node->powerDescriptor();
+        qCWarning(dcZigbeeNetwork()) << "  Endpoints: " << node->endpoints().count() << endl;
+        foreach (ZigbeeNodeEndpoint *endpoint, node->endpoints()) {
+            qCWarning(dcZigbeeNetwork()) << "    - " << endpoint << endl;
+            qCWarning(dcZigbeeNetwork()) << "      Input clusters:" << endl;
+            foreach (ZigbeeCluster *cluster, endpoint->inputClusters()) {
+                qCWarning(dcZigbeeNetwork()) << "      - " << cluster << endl;
+            }
+            qCWarning(dcZigbeeNetwork()) << "      Output clusters:" << endl;
+            foreach (ZigbeeCluster *cluster, endpoint->outputClusters()) {
+                qCWarning(dcZigbeeNetwork()) << "      - " << cluster << endl;
+            }
+        }
+    }
+
 }
 
 void ZigbeeNetwork::clearSettings()

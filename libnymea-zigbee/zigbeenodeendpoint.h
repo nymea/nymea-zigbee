@@ -58,6 +58,7 @@ class ZigbeeNodeEndpoint : public QObject
 
     friend class ZigbeeNode;
     friend class ZigbeeNetwork;
+    friend class ZigbeeNetworkDatabase;
 
 public:
     quint8 endpointId() const;

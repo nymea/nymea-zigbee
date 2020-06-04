@@ -46,6 +46,16 @@ ZigbeeCluster::ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNod
     //qCDebug(dcZigbeeCluster()) << "Create cluster" << ZigbeeUtils::convertUint16ToHexString(clusterId) << direction;
 }
 
+ZigbeeNode *ZigbeeCluster::node() const
+{
+    return m_node;
+}
+
+ZigbeeNodeEndpoint *ZigbeeCluster::endpoint() const
+{
+    return m_endpoint;
+}
+
 ZigbeeCluster::Direction ZigbeeCluster::direction() const
 {
     return m_direction;

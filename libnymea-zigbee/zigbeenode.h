@@ -43,6 +43,7 @@ class ZigbeeNode : public QObject
     Q_OBJECT
 
     friend class ZigbeeNetwork;
+    friend class ZigbeeNetworkDatabase;
 
 public:
     enum State {

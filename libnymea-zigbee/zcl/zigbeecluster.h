@@ -66,6 +66,7 @@ class ZigbeeCluster : public QObject
 
     friend class ZigbeeNode;
     friend class ZigbeeNetwork;
+    friend class ZigbeeNetworkDatabase;
 
 public:
     enum Direction {
@@ -123,6 +124,9 @@ public:
 //    Q_ENUM(ColorControlClusterColorMode)
 
     explicit ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Zigbee::ClusterId clusterId, Direction direction, QObject *parent = nullptr);
+
+    ZigbeeNode *node() const;
+    ZigbeeNodeEndpoint *endpoint() const;
 
     Direction direction() const;
 

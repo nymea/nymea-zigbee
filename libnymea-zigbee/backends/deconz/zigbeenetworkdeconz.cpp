@@ -354,11 +354,7 @@ void ZigbeeNetworkDeconz::handleZigbeeClusterLibraryIndication(const Zigbee::Aps
     if (!node) {
         qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
         // FIXME: maybe create and init the node, since it is in the network, but not recognized
-
-        // Remove this node since we might have removed it but it did not respond, or we not explicitly allowed it to join.
-
-
-
+        // FIXME: maybe remove this node since we might have removed it but it did not respond, or we not explicitly allowed it to join.
         return;
     }
 

@@ -31,18 +31,38 @@
 #include <QObject>
 #include <QSqlDatabase>
 
+#define DB_VERSION 1
+
+class ZigbeeNode;
+class ZigbeeCluster;
+class ZigbeeNetwork;
+class ZigbeeNodeEndpoint;
+class ZigbeeClusterAttribute;
 
 class ZigbeeNetworkDatabase : public QObject
 {
     Q_OBJECT
 public:
-    explicit ZigbeeNetworkDatabase(const QString &databaseName, QObject *parent = nullptr);
+    explicit ZigbeeNetworkDatabase(ZigbeeNetwork *network, const QString &databaseName, QObject *parent = nullptr);
+
+    QList<ZigbeeNode *> loadNodes();
 
 private:
+    ZigbeeNetwork *m_network = nullptr;
     QSqlDatabase m_db;
 
+    bool initDatabase();
+    void createTable(const QString &tableName, const QString &schema);
+    void createIndices(const QString &indexName, const QString &tableName, const QString &columns);
 
-signals:
+    bool saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint);
+    bool saveInputCluster(ZigbeeCluster *cluster);
+    bool saveOutputCluster(ZigbeeCluster *cluster);
+    bool saveAttribute(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
+
+public slots:
+    bool saveNode(ZigbeeNode *node);
+    bool removeNode(ZigbeeNode *node);
 
 };
 

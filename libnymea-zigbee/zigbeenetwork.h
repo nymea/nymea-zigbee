@@ -34,8 +34,9 @@
 #include <QSqlDatabase>
 
 #include "zigbeenode.h"
-#include "zigbeenodeendpoint.h"
 #include "zigbeechannelmask.h"
+#include "zigbeenodeendpoint.h"
+#include "zigbeenetworkdatabase.h"
 #include "zigbeebridgecontroller.h"
 #include "zigbeesecurityconfiguration.h"
 
@@ -132,6 +133,7 @@ private:
     ZigbeeDeviceProfile::NodeType m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 
     // Network storage
+    ZigbeeNetworkDatabase *m_database = nullptr;
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
