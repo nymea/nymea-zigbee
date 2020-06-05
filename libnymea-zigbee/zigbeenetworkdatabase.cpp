@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 *
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
@@ -87,7 +87,9 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
             qCDebug(dcZigbeeNetworkDatabase()) << "Loaded endpoint" << endpoint;
 
             // Load input clusters for this endpoint
-            query = QString("SELECT * FROM serverClusters WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\";").arg(ieeeAddress).arg(endpointId);
+            query = QString("SELECT * FROM serverClusters WHERE endpointId = (SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\");")
+                    .arg(ieeeAddress)
+                    .arg(endpointId);
             QSqlQuery inputClustersQuery = m_db.exec(query);
             while (inputClustersQuery.next()) {
                 Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(inputClustersQuery.value("clusterId").toUInt());
@@ -95,7 +97,7 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
                 endpoint->addInputCluster(cluster);
 
                 // Load cluster attributes for the server cluster
-                query = QString("SELECT * FROM attributes WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\" AND clusterId = \"%3\";")
+                query = QString("SELECT * FROM attributes WHERE clusterId = (SELECT id FROM serverClusters WHERE endpointId = (SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\") AND clusterId = \"%3\"));")
                         .arg(ieeeAddress)
                         .arg(endpointId)
                         .arg(cluster->clusterId());
@@ -109,7 +111,9 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
             }
 
             // Load output clusters for this endpoint
-            query = QString("SELECT * FROM clientClusters WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\";").arg(ieeeAddress).arg(endpointId);
+            query = QString("SELECT * FROM clientClusters WHERE endpointId = (SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\");")
+                    .arg(ieeeAddress)
+                    .arg(endpointId);
             QSqlQuery outputClustersQuery = m_db.exec(query);
             while (outputClustersQuery.next()) {
                 Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(outputClustersQuery.value("clusterId").toUInt());
@@ -134,11 +138,12 @@ bool ZigbeeNetworkDatabase::initDatabase()
         return false;
     }
 
-    // Enable foreigen keys
+    // Write pragmas
     m_db.exec("PRAGMA foreign_keys = ON;");
 
     // Create nodes table
-    createTable("nodes", "(ieeeAddress INTEGER PRIMARY KEY, " // uint64
+    createTable("nodes",
+                "(ieeeAddress INTEGER PRIMARY KEY, " // uint64
                 "shortAddress INTEGER NOT NULL, " // uint16
                 "nodeDescriptor BLOB NOT NULL, " // bytes as received from the node
                 "powerDescriptor INTEGER NOT NULL)"); // uint16
@@ -146,8 +151,9 @@ bool ZigbeeNetworkDatabase::initDatabase()
 
 
     // Create endpoints table
-    createTable("endpoints", "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
-                "ieeeAddress INTEGER NOT NULL, " // uint64
+    createTable("endpoints",
+                "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
+                "ieeeAddress INTEGER NOT NULL, " // // reference to nodes.ieeeAddress
                 "endpointId INTEGER NOT NULL, " // uint8
                 "profileId INTEGER NOT NULL, " // uint16
                 "deviceId INTEGER NOT NULL, " // uint16
@@ -157,32 +163,30 @@ bool ZigbeeNetworkDatabase::initDatabase()
 
 
     // Create server cluster table
-    createTable("serverClusters", "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
-                "ieeeAddress INTEGER NOT NULL, " // uint64
-                "endpointId INTEGER NOT NULL, " // uint8
+    createTable("serverClusters",
+                "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
+                "endpointId INTEGER NOT NULL, " // reference to endpoint.id
                 "clusterId INTEGER NOT NULL, " // uint16
-                "CONSTRAINT fk_endpoint FOREIGN KEY(ieeeAddress, endpointId) REFERENCES endpoints(ieeeAddress, endpointId) ON DELETE CASCADE)");
-    createIndices("serverClusterIndex", "serverClusters", "ieeeAddress, endpointId, clusterId");
-
+                "CONSTRAINT fk_endpoint FOREIGN KEY(endpointId) REFERENCES endpoints(id) ON DELETE CASCADE)");
+    createIndices("serverClusterIndex", "serverClusters", "endpointId, clusterId");
 
     // Create client cluster table
-    createTable("clientClusters", "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
-                "ieeeAddress INTEGER NOT NULL, " // uint64
-                "endpointId INTEGER NOT NULL, " // uint8
+    createTable("clientClusters",
+                "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
+                "endpointId INTEGER NOT NULL, " // reference to endpoint.id
                 "clusterId INTEGER NOT NULL, " // uint16
-                "CONSTRAINT fk_endpoint FOREIGN KEY(ieeeAddress, endpointId) REFERENCES endpoints(ieeeAddress, endpointId) ON DELETE CASCADE)");
-    createIndices("clientClusterIndex", "clientClusters", "ieeeAddress, endpointId, clusterId");
+                "CONSTRAINT fk_endpoint FOREIGN KEY(endpointId) REFERENCES endpoints(id) ON DELETE CASCADE)");
+    createIndices("clientClusterIndex", "clientClusters", "endpointId, clusterId");
 
     // Create cluster attributes table
-    createTable("attributes", "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
-                "ieeeAddress INTEGER NOT NULL, " // uint64
-                "endpointId INTEGER NOT NULL, " // uint8
-                "clusterId INTEGER NOT NULL, " // uint16
+    createTable("attributes",
+                "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
+                "clusterId INTEGER NOT NULL, " // reference to serverClusters.id
                 "attributeId INTEGER NOT NULL, " // uint16
                 "dataType INTEGER NOT NULL, " // uint8
                 "data BLOB NOT NULL, " // raw data from attribute
-                "CONSTRAINT fk_cluster FOREIGN KEY(ieeeAddress, endpointId, clusterId) REFERENCES serverClusters(ieeeAddress, endpointId, clusterId) ON DELETE CASCADE)");
-    createIndices("attributesIndex", "attributes", "ieeeAddress, endpointId, clusterId, attributeId");
+                "CONSTRAINT fk_cluster FOREIGN KEY(clusterId) REFERENCES serverClusters(id) ON DELETE CASCADE)");
+    createIndices("attributesIndex", "attributes", "clusterId, attributeId");
 
     return true;
 }
@@ -241,12 +245,12 @@ bool ZigbeeNetworkDatabase::saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint)
 bool ZigbeeNetworkDatabase::saveInputCluster(ZigbeeCluster *cluster)
 {
     qCDebug(dcZigbeeNetworkDatabase()) << "Store" << cluster;
-    QString queryString = QString("INSERT OR REPLACE INTO serverClusters (ieeeAddress, endpointId, clusterId) "
-                                  "VALUES (\"%1\", \"%2\", \"%3\");")
+    QString endpointIdReferenceQuery = QString("(SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\")")
             .arg(cluster->node()->extendedAddress().toUInt64())
-            .arg(cluster->endpoint()->endpointId())
+            .arg(cluster->endpoint()->endpointId());
+    QString queryString = QString("INSERT OR REPLACE INTO serverClusters (endpointId, clusterId) VALUES (%1, \"%2\");")
+            .arg(endpointIdReferenceQuery)
             .arg(static_cast<quint16>(cluster->clusterId()));
-
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
         qCWarning(dcZigbeeNetworkDatabase()) << "Could not save input cluster into database." << m_db.lastError().databaseText() << m_db.lastError().driverText();
@@ -259,10 +263,11 @@ bool ZigbeeNetworkDatabase::saveInputCluster(ZigbeeCluster *cluster)
 bool ZigbeeNetworkDatabase::saveOutputCluster(ZigbeeCluster *cluster)
 {
     qCDebug(dcZigbeeNetworkDatabase()) << "Store" << cluster;
-    QString queryString = QString("INSERT OR REPLACE INTO clientClusters (ieeeAddress, endpointId, clusterId) "
-                                  "VALUES (\"%1\", \"%2\", \"%3\");")
+    QString endpointIdReferenceQuery = QString("(SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\")")
             .arg(cluster->node()->extendedAddress().toUInt64())
-            .arg(cluster->endpoint()->endpointId())
+            .arg(cluster->endpoint()->endpointId());
+    QString queryString = QString("INSERT OR REPLACE INTO clientClusters (endpointId, clusterId) VALUES (%1, \"%2\");")
+            .arg(endpointIdReferenceQuery)
             .arg(static_cast<quint16>(cluster->clusterId()));
 
     m_db.exec(queryString);
@@ -277,11 +282,16 @@ bool ZigbeeNetworkDatabase::saveOutputCluster(ZigbeeCluster *cluster)
 bool ZigbeeNetworkDatabase::saveAttribute(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeNetworkDatabase()) << "Store" << cluster << attribute;
-    QString queryString = QString("INSERT OR REPLACE INTO attributes (ieeeAddress, endpointId, clusterId, attributeId, dataType, data) "
-                                  "VALUES (\"%1\", \"%2\", \"%3\", \"%4\", \"%5\", \"%6\");")
+    QString serverClusterIdReferenceQuery = QString("(SELECT id FROM serverClusters "
+                                                    "WHERE endpointId = (SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\")"
+                                                    "AND clusterId = \"%3\")")
             .arg(cluster->node()->extendedAddress().toUInt64())
             .arg(cluster->endpoint()->endpointId())
-            .arg(static_cast<quint16>(cluster->clusterId()))
+            .arg(cluster->clusterId());
+
+    QString queryString = QString("INSERT OR REPLACE INTO attributes (clusterId, attributeId, dataType, data) "
+                                  "VALUES (%1, \"%2\", \"%3\", \"%4\");")
+            .arg(serverClusterIdReferenceQuery)
             .arg(static_cast<quint16>(attribute.id()))
             .arg(static_cast<quint8>(attribute.dataType().dataType()))
             .arg((attribute.dataType().data().toBase64().data()));
