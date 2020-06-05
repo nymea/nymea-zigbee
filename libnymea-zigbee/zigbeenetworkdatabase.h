@@ -46,6 +46,7 @@ public:
     explicit ZigbeeNetworkDatabase(ZigbeeNetwork *network, const QString &databaseName, QObject *parent = nullptr);
 
     QList<ZigbeeNode *> loadNodes();
+    bool wipeDatabase();
 
 private:
     ZigbeeNetwork *m_network = nullptr;
@@ -55,13 +56,13 @@ private:
     void createTable(const QString &tableName, const QString &schema);
     void createIndices(const QString &indexName, const QString &tableName, const QString &columns);
 
+public slots:
     bool saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint);
     bool saveInputCluster(ZigbeeCluster *cluster);
     bool saveOutputCluster(ZigbeeCluster *cluster);
     bool saveAttribute(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
-
-public slots:
     bool saveNode(ZigbeeNode *node);
+
     bool removeNode(ZigbeeNode *node);
 
 };

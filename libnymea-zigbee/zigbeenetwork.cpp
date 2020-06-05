@@ -266,6 +266,11 @@ void ZigbeeNetwork::addNodeInternally(ZigbeeNode *node)
     // FIXME: check when and how the note will be reachable
     //node->setConnected(state() == StateRunning);
 
+    // Note: if a cluster shows up after initialization (out of spec devices), save the cluster and it's attributes
+    foreach (ZigbeeNodeEndpoint *endpoint, node->endpoints()) {
+        connect(endpoint, &ZigbeeNodeEndpoint::clusterAttributeChanged, this, &ZigbeeNetwork::onNodeClusterAttributeChanged);
+    }
+
     m_nodes.append(node);
     emit nodeAdded(node);
 }
@@ -306,7 +311,7 @@ void ZigbeeNetwork::saveNetwork()
     settings.endGroup();
 
     foreach (ZigbeeNode *node, nodes()) {
-        saveNode(node);
+        m_database->saveNode(node);
     }
 }
 
@@ -320,7 +325,6 @@ void ZigbeeNetwork::loadNetwork()
     }
 
     QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
-
     settings.beginGroup("Network");
     quint16 panId = static_cast<quint16>(settings.value("panId", 0).toUInt());
     setPanId(panId);
@@ -335,87 +339,11 @@ void ZigbeeNetwork::loadNetwork()
 
     settings.endGroup(); // Network
 
-    // Load nodes
-    settings.beginGroup("Nodes");
-    foreach (const QString ieeeAddressString, settings.childGroups()) {
-        settings.beginGroup(ieeeAddressString);
-        quint16 shortAddress = static_cast<quint16>(settings.value("nwkAddress", 0).toUInt());
-        ZigbeeNode *node = createNode(shortAddress, ZigbeeAddress(ieeeAddressString), this);
-        node->m_nodeDescriptor = ZigbeeDeviceProfile::parseNodeDescriptor(settings.value("nodeDescriptorRaw").toByteArray());
-        node->m_macCapabilities = node->nodeDescriptor().macCapabilities;
-        node->m_powerDescriptor = ZigbeeDeviceProfile::parsePowerDescriptor(static_cast<quint16>(settings.value("powerDescriptorFlag", 0).toUInt()));
-
-        int endpointsCount = settings.beginReadArray("endpoints");
-        //qCDebug(dcZigbeeNetwork()) << "loading endpoints" << endpointsCount << settings.childKeys() << settings.childGroups();
-        for (int i = 0; i < endpointsCount; i++) {
-            settings.setArrayIndex(i);
-            quint8 endpointId = static_cast<quint8>(settings.value("id", 0).toUInt());
-            ZigbeeNodeEndpoint *endpoint = new ZigbeeNodeEndpoint(this, node, endpointId, node);
-            endpoint->m_profile = static_cast<Zigbee::ZigbeeProfile>(settings.value("profile", 0).toUInt());
-            endpoint->m_deviceId = static_cast<quint16>(settings.value("deviceId", 0).toUInt());
-            endpoint->m_deviceVersion = static_cast<quint8>(settings.value("deviceId", 0).toUInt());
-            endpoint->m_manufacturerName = settings.value("manufacturerName").toString();
-            endpoint->m_modelIdentifier = settings.value("modelIdentifier").toString();
-            endpoint->m_softwareBuildId = settings.value("softwareBuildId").toString();
-
-            int inputClustersCount = settings.beginReadArray("inputClusters");
-            for (int n = 0; n < inputClustersCount; n ++) {
-                settings.setArrayIndex(n);
-                Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(settings.value("clusterId", 0).toUInt());
-                ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Server);
-                endpoint->addInputCluster(cluster);
-            }
-            settings.endArray(); // inputClusters
-
-            int outputClustersCount = settings.beginReadArray("outputClusters");
-            for (int n = 0; n < outputClustersCount; n ++) {
-                settings.setArrayIndex(n);
-                Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(settings.value("clusterId", 0).toUInt());
-                ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Client);
-                endpoint->addOutputCluster(cluster);
-            }
-            settings.endArray(); // outputClusters
-
-            node->m_endpoints.append(endpoint);
-        }
-
-        settings.endArray(); // endpoints
-
-        settings.endGroup(); // ieeeAddress
-
+    QList<ZigbeeNode *> nodes = m_database->loadNodes();
+    foreach (ZigbeeNode *node, nodes) {
         node->setState(ZigbeeNode::StateInitialized);
         addNodeInternally(node);
     }
-    settings.endGroup(); // Nodes
-
-    qCWarning(dcZigbeeNetwork()) << this;
-
-    // FIXME: for testing
-    foreach(ZigbeeNode *node, m_nodes) {
-        m_database->saveNode(node);
-    }
-
-    // Now load and print the nodes again for checking
-    QList<ZigbeeNode *> dbNodes = m_database->loadNodes();
-
-    foreach (ZigbeeNode *node, dbNodes) {
-        qCWarning(dcZigbeeNetwork()) << " ---> " << node << endl;
-        qCWarning(dcZigbeeNetwork()) << "  " << node->nodeDescriptor();
-        qCWarning(dcZigbeeNetwork()) << "  " << node->powerDescriptor();
-        qCWarning(dcZigbeeNetwork()) << "  Endpoints: " << node->endpoints().count() << endl;
-        foreach (ZigbeeNodeEndpoint *endpoint, node->endpoints()) {
-            qCWarning(dcZigbeeNetwork()) << "    - " << endpoint << endl;
-            qCWarning(dcZigbeeNetwork()) << "      Input clusters:" << endl;
-            foreach (ZigbeeCluster *cluster, endpoint->inputClusters()) {
-                qCWarning(dcZigbeeNetwork()) << "      - " << cluster << endl;
-            }
-            qCWarning(dcZigbeeNetwork()) << "      Output clusters:" << endl;
-            foreach (ZigbeeCluster *cluster, endpoint->outputClusters()) {
-                qCWarning(dcZigbeeNetwork()) << "      - " << cluster << endl;
-            }
-        }
-    }
-
 }
 
 void ZigbeeNetwork::clearSettings()
@@ -493,20 +421,6 @@ void ZigbeeNetwork::saveNode(ZigbeeNode *node)
     settings.endGroup(); // Nodes
 }
 
-void ZigbeeNetwork::removeNodeFromSettings(ZigbeeNode *node)
-{
-    qCDebug(dcZigbeeNetwork()) << "Remove node" << node << "from settings" << m_settingsFileName;
-    QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
-    settings.beginGroup("Nodes");
-
-    // Clear settings for this node before storing it
-    settings.beginGroup(node->extendedAddress().toString());
-    settings.remove("");
-    settings.endGroup(); // Node ieee address
-
-    settings.endGroup(); // Nodes
-}
-
 void ZigbeeNetwork::addNode(ZigbeeNode *node)
 {
     qCDebug(dcZigbeeNetwork()) << "Add node" << node;
@@ -515,8 +429,8 @@ void ZigbeeNetwork::addNode(ZigbeeNode *node)
         return;
     }
 
+    m_database->saveNode(node);
     addNodeInternally(node);
-    saveNode(node);
 }
 
 void ZigbeeNetwork::addUnitializedNode(ZigbeeNode *node)
@@ -534,7 +448,7 @@ void ZigbeeNetwork::removeNode(ZigbeeNode *node)
 {
     qCDebug(dcZigbeeNetwork()) << "Remove node" << node;
     removeNodeInternally(node);
-    removeNodeFromSettings(node);
+    m_database->removeNode(node);
 }
 
 void ZigbeeNetwork::setState(ZigbeeNetwork::State state)
@@ -626,11 +540,7 @@ void ZigbeeNetwork::onNodeStateChanged(ZigbeeNode::State state)
 
 void ZigbeeNetwork::onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute)
 {
-    Q_UNUSED(cluster)
-    Q_UNUSED(attribute)
-
-    ZigbeeNode *node = qobject_cast<ZigbeeNode *>(sender());
-    saveNode(node);
+    m_database->saveAttribute(cluster, attribute);
 }
 
 QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
@@ -648,10 +558,16 @@ QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
             debug.nospace().noquote() << "      Input clusters:" << endl;
             foreach (ZigbeeCluster *cluster, endpoint->inputClusters()) {
                 debug.nospace().noquote() << "      - " << cluster << endl;
+                foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
+                    debug.nospace().noquote() << "        - " << attribute << endl;
+                }
             }
             debug.nospace().noquote() << "      Output clusters:" << endl;
             foreach (ZigbeeCluster *cluster, endpoint->outputClusters()) {
                 debug.nospace().noquote() << "      - " << cluster << endl;
+                foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
+                    debug.nospace().noquote() << "        - " << attribute << endl;
+                }
             }
         }
     }

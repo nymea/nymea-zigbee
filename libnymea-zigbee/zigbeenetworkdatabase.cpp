@@ -70,9 +70,10 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
         // Build the node object
         ZigbeeNode *node = new ZigbeeNode(m_network, shortAddress, ZigbeeAddress(ieeeAddress), m_network);
         node->m_nodeDescriptor = ZigbeeDeviceProfile::parseNodeDescriptor(nodeDescriptor);
+        node->m_macCapabilities = node->nodeDescriptor().macCapabilities;
         node->m_powerDescriptor = ZigbeeDeviceProfile::parsePowerDescriptor(powerDescriptor);
 
-        qCDebug(dcZigbeeNetworkDatabase()) << "Loaded node" << node;
+        qCDebug(dcZigbeeNetworkDatabase()) << "Loaded" << node;
 
         // Now load all endpoints for this node
         query = QString("SELECT * FROM endpoints WHERE ieeeAddress = \"%1\";").arg(ieeeAddress);
@@ -84,7 +85,7 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
             endpoint->setDeviceId(static_cast<Zigbee::ZigbeeProfile>(endpointsQuery.value("deviceId").toUInt()));
             endpoint->setDeviceVersion(static_cast<Zigbee::ZigbeeProfile>(endpointsQuery.value("deviceVersion").toUInt()));
 
-            qCDebug(dcZigbeeNetworkDatabase()) << "Loaded endpoint" << endpoint;
+            qCDebug(dcZigbeeNetworkDatabase()) << "Loaded" << endpoint;
 
             // Load input clusters for this endpoint
             query = QString("SELECT * FROM serverClusters WHERE endpointId = (SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\");")
@@ -96,18 +97,43 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
                 ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Server);
                 endpoint->addInputCluster(cluster);
 
-                // Load cluster attributes for the server cluster
-                query = QString("SELECT * FROM attributes WHERE clusterId = (SELECT id FROM serverClusters WHERE endpointId = (SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\") AND clusterId = \"%3\"));")
+                qCDebug(dcZigbeeNetworkDatabase()) << "Loaded" << cluster;
+
+                // Load cluster attributes for this server cluster
+                query = QString("SELECT * FROM attributes WHERE clusterId = (SELECT id FROM serverClusters WHERE endpointId = (SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\") AND clusterId = \"%3\");")
                         .arg(ieeeAddress)
                         .arg(endpointId)
                         .arg(cluster->clusterId());
                 QSqlQuery attributesQuery = m_db.exec(query);
+                if (m_db.lastError().type() != QSqlError::NoError) {
+                    qCWarning(dcZigbeeNetworkDatabase()) << "Could not fetch attributes from database entries." << query << m_db.lastError().databaseText() << m_db.lastError().driverText();
+                    continue;
+                }
+
+
                 while (attributesQuery.next()) {
                     quint16 attributeId = attributesQuery.value("attributeId").toUInt();
                     Zigbee::DataType type = static_cast<Zigbee::DataType>(attributesQuery.value("dataType").toUInt());
-                    QByteArray data = attributesQuery.value("data").toByteArray();
-                    cluster->setAttribute(ZigbeeClusterAttribute(attributeId, ZigbeeDataType(type, data)));
+                    QByteArray data = QByteArray::fromBase64(attributesQuery.value("data").toByteArray());
+                    ZigbeeClusterAttribute attribute(attributeId, ZigbeeDataType(type, data));
+                    qCDebug(dcZigbeeNetworkDatabase()) << "Loaded" << attribute;
+                    cluster->setAttribute(attribute);
                 }
+            }
+
+            // Set the basic cluster attributes if present
+            if (endpoint->hasInputCluster(Zigbee::ClusterIdBasic)) {
+                ZigbeeClusterBasic *basicCluster = endpoint->inputCluster<ZigbeeClusterBasic>(Zigbee::ClusterIdBasic);
+
+                if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeManufacturerName))
+                    endpoint->m_manufacturerName = basicCluster->attribute(ZigbeeClusterBasic::AttributeManufacturerName).dataType().toString();
+
+                if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeModelIdentifier))
+                    endpoint->m_modelIdentifier = basicCluster->attribute(ZigbeeClusterBasic::AttributeManufacturerName).dataType().toString();
+
+                if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeSwBuildId))
+                    endpoint->m_softwareBuildId = basicCluster->attribute(ZigbeeClusterBasic::AttributeSwBuildId).dataType().toString();
+
             }
 
             // Load output clusters for this endpoint
@@ -118,6 +144,7 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
             while (outputClustersQuery.next()) {
                 Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(outputClustersQuery.value("clusterId").toUInt());
                 ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Client);
+                qCDebug(dcZigbeeNetworkDatabase()) << "Loaded" << cluster;
                 endpoint->addOutputCluster(cluster);
             }
 
@@ -127,6 +154,19 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
     }
 
     return nodes;
+}
+
+bool ZigbeeNetworkDatabase::wipeDatabase()
+{
+    qCDebug(dcZigbeeNetworkDatabase()) << "Wipe all database entries from" << m_db.databaseName();
+    // Note: cascade will clean all other tables
+    m_db.exec("DELETE FROM nodes;");
+    if (m_db.lastError().type() != QSqlError::NoError) {
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not delete all node database entries." << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        return false;
+    }
+
+    return true;
 }
 
 bool ZigbeeNetworkDatabase::initDatabase()
@@ -140,6 +180,8 @@ bool ZigbeeNetworkDatabase::initDatabase()
 
     // Write pragmas
     m_db.exec("PRAGMA foreign_keys = ON;");
+
+    // FIXME: check schema version
 
     // Create nodes table
     createTable("nodes",
@@ -205,7 +247,7 @@ void ZigbeeNetworkDatabase::createIndices(const QString &indexName, const QStrin
 
 bool ZigbeeNetworkDatabase::saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint)
 {
-    qCDebug(dcZigbeeNetworkDatabase()) << "Store" << endpoint;
+    qCDebug(dcZigbeeNetworkDatabase()) << "Save" << endpoint;
     QString queryString = QString("INSERT OR REPLACE INTO endpoints (ieeeAddress, endpointId, profileId, deviceId, deviceVersion) "
                                   "VALUES (\"%1\", \"%2\", \"%3\", \"%4\", \"%5\");")
             .arg(endpoint->node()->extendedAddress().toUInt64())
@@ -244,7 +286,7 @@ bool ZigbeeNetworkDatabase::saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint)
 
 bool ZigbeeNetworkDatabase::saveInputCluster(ZigbeeCluster *cluster)
 {
-    qCDebug(dcZigbeeNetworkDatabase()) << "Store" << cluster;
+    qCDebug(dcZigbeeNetworkDatabase()) << "Save" << cluster;
     QString endpointIdReferenceQuery = QString("(SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\")")
             .arg(cluster->node()->extendedAddress().toUInt64())
             .arg(cluster->endpoint()->endpointId());
@@ -262,7 +304,7 @@ bool ZigbeeNetworkDatabase::saveInputCluster(ZigbeeCluster *cluster)
 
 bool ZigbeeNetworkDatabase::saveOutputCluster(ZigbeeCluster *cluster)
 {
-    qCDebug(dcZigbeeNetworkDatabase()) << "Store" << cluster;
+    qCDebug(dcZigbeeNetworkDatabase()) << "Save" << cluster;
     QString endpointIdReferenceQuery = QString("(SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\")")
             .arg(cluster->node()->extendedAddress().toUInt64())
             .arg(cluster->endpoint()->endpointId());
@@ -281,7 +323,7 @@ bool ZigbeeNetworkDatabase::saveOutputCluster(ZigbeeCluster *cluster)
 
 bool ZigbeeNetworkDatabase::saveAttribute(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute)
 {
-    qCDebug(dcZigbeeNetworkDatabase()) << "Store" << cluster << attribute;
+    qCDebug(dcZigbeeNetworkDatabase()) << "Save" << attribute;
     QString serverClusterIdReferenceQuery = QString("(SELECT id FROM serverClusters "
                                                     "WHERE endpointId = (SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\")"
                                                     "AND clusterId = \"%3\")")
@@ -307,7 +349,7 @@ bool ZigbeeNetworkDatabase::saveAttribute(ZigbeeCluster *cluster, const ZigbeeCl
 
 bool ZigbeeNetworkDatabase::saveNode(ZigbeeNode *node)
 {
-    qCDebug(dcZigbeeNetworkDatabase()) << "Store" << node;
+    qCDebug(dcZigbeeNetworkDatabase()) << "Save" << node;
     QString queryString = QString("INSERT OR REPLACE INTO nodes (ieeeAddress, shortAddress, nodeDescriptor, powerDescriptor) "
                                   "VALUES (\"%1\", \"%2\", \"%3\", \"%4\");")
             .arg(node->extendedAddress().toUInt64())

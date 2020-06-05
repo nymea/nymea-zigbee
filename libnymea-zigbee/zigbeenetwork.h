@@ -155,9 +155,8 @@ protected:
     void saveNetwork();
     void loadNetwork();
     void clearSettings();
-
     void saveNode(ZigbeeNode *node);
-    void removeNodeFromSettings(ZigbeeNode *node);
+
 
     void addNode(ZigbeeNode *node);
     void addUnitializedNode(ZigbeeNode *node);
