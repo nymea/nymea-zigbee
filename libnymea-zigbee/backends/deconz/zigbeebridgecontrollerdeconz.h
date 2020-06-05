@@ -110,6 +110,8 @@ private:
     Deconz::NetworkState m_networkState = Deconz::NetworkStateOffline;
     QTimer *m_watchdogTimer = nullptr;
 
+    // Interface queue, send all requests sequentially and always wait for the interface response
+
     // APS request queue
     bool m_apsFreeSlotsAvailable = false;
     QQueue<ZigbeeNetworkRequest> m_requestQueue;
@@ -120,6 +122,7 @@ private:
     ZigbeeInterfaceDeconzReply *createReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent);
 
     // Send data depending on the request destination address mode
+    QByteArray buildRequestEnqueueSendDataGroupMessage(quint8 requestId, quint16 groupAddress, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
     ZigbeeInterfaceDeconzReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
     ZigbeeInterfaceDeconzReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
     ZigbeeInterfaceDeconzReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);

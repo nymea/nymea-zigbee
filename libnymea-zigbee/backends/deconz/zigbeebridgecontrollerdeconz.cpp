@@ -224,9 +224,9 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestQuerySendDataCo
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestSendRequest(const ZigbeeNetworkRequest &request)
 {
     // Send the request only if there are free slots on the device, otherwise enque request
-//    if (m_apsFreeSlotsAvailable) {
+    //    if (m_apsFreeSlotsAvailable) {
 
-//    }
+    //    }
 
     qCDebug(dcZigbeeAps()) << "APSDE-DATA.request" << request;
     ZigbeeInterfaceDeconzReply *interfaceReply = nullptr;
@@ -253,14 +253,14 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestSendRequest(con
 
 quint8 ZigbeeBridgeControllerDeconz::generateSequenceNumber()
 {
-    return m_sequenceNumber++;
+    m_sequenceNumber += 3;
+    return m_sequenceNumber;
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent)
 {
     // Create the reply
     ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(command, sequenceNumber, parent);
-
     connect(reply, &ZigbeeInterfaceDeconzReply::timeout, this, [this, reply](){
         qCWarning(dcZigbeeController()) << "Reply timeout" << reply->command() << "SQN:" <<  reply->sequenceNumber();
         if (m_pendingReplies.contains(reply->sequenceNumber())) {
@@ -414,7 +414,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
     // If read request failes, this mehtod returns the status code of the failed request.
 
     // Create an independent reply for finishing the entire read sequence
-    ZigbeeInterfaceDeconzReply *readNetworkParametersReply = new ZigbeeInterfaceDeconzReply(Deconz::CommandReadParameter, m_sequenceNumber, this);
+    ZigbeeInterfaceDeconzReply *readNetworkParametersReply = new ZigbeeInterfaceDeconzReply(Deconz::CommandReadParameter, generateSequenceNumber(), this);
     connect(readNetworkParametersReply, &ZigbeeInterfaceDeconzReply::finished, readNetworkParametersReply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
 
     // Read MAC address of the bridge
@@ -934,22 +934,28 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
                                   << status << "Frame length:" << frameLength << ZigbeeUtils::convertByteArrayToHexString(data);
 
     // Check if this is an interface response for a pending reply
-    if (m_pendingReplies.contains(sequenceNumber) && m_pendingReplies.value(sequenceNumber)->command() == command) {
-        ZigbeeInterfaceDeconzReply *reply = m_pendingReplies.take(sequenceNumber);
-        if (!reply) {
-            qCWarning(dcZigbeeController()) << "Received message but the corresponding reply does not exist any more.";
+    if (m_pendingReplies.contains(sequenceNumber)) {
+        if (m_pendingReplies.value(sequenceNumber)->command() == command) {
+            // SQN and command maches
+            ZigbeeInterfaceDeconzReply *reply = m_pendingReplies.take(sequenceNumber);
+            if (!reply) {
+                qCWarning(dcZigbeeController()) << "Received message but the corresponding reply does not exist any more.";
+                return;
+            }
+            reply->m_responseData = data;
+            reply->m_statusCode = status;
+            reply->finished();
             return;
+        } else {
+            qCWarning(dcZigbeeController()) << "Received message with a pending request SQN but the command does not match. SQN mismatch.";
+            qCWarning(dcZigbeeController()) << "The SQN matches" << m_pendingReplies.value(sequenceNumber)->command() << "but command" << command << "received for SQN" << sequenceNumber;
         }
-        reply->m_responseData = data;
-        reply->m_statusCode = status;
-        reply->finished();
-        return;
     }
 
     // Note: we got a notification, lets set the current sequence number to the notification id,
     //       so the next request will be a continuouse increase
 
-    m_sequenceNumber = sequenceNumber + 1;
+    //m_sequenceNumber = sequenceNumber + 10;
 
     // No request for this data, lets check which notification and process the data
     switch (command) {

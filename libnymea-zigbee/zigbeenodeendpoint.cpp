@@ -194,6 +194,11 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, Zi
         return new ZigbeeClusterIlluminanceMeasurment(m_network, m_node, this, direction, this);
         break;
 
+        // Lighting
+    case Zigbee::ClusterIdColorControl:
+        return new ZigbeeClusterColorControl(m_network, m_node, this, direction, this);
+        break;
+
         // Security
     case Zigbee::ClusterIdIasZone:
         return new ZigbeeClusterIasZone(m_network, m_node, this, direction, this);

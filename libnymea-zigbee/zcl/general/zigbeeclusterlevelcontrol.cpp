@@ -38,12 +38,12 @@ ZigbeeClusterLevelControl::ZigbeeClusterLevelControl(ZigbeeNetwork *network, Zig
 
 }
 
-ZigbeeClusterReply *ZigbeeClusterLevelControl::commandMoveToLevel(quint8 level, quint16 transistionTime)
+ZigbeeClusterReply *ZigbeeClusterLevelControl::commandMoveToLevel(quint8 level, quint16 transitionTime)
 {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream << level << transistionTime;
+    stream << level << transitionTime;
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandMoveToLevel, payload);
 }
 
@@ -56,12 +56,12 @@ ZigbeeClusterReply *ZigbeeClusterLevelControl::commandMove(ZigbeeClusterLevelCon
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandMove, payload);
 }
 
-ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStep(ZigbeeClusterLevelControl::FadeMode fadeMode, quint8 stepSize, quint16 transistionTime)
+ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStep(ZigbeeClusterLevelControl::FadeMode fadeMode, quint8 stepSize, quint16 transitionTime)
 {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream << static_cast<quint8>(fadeMode) << stepSize << transistionTime;
+    stream << static_cast<quint8>(fadeMode) << stepSize << transitionTime;
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandStep, payload);
 }
 
@@ -70,12 +70,12 @@ ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStop()
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandStop);
 }
 
-ZigbeeClusterReply *ZigbeeClusterLevelControl::commandMoveToLevelWithOnOff(quint8 level, quint16 transistionTime)
+ZigbeeClusterReply *ZigbeeClusterLevelControl::commandMoveToLevelWithOnOff(quint8 level, quint16 transitionTime)
 {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream << level << transistionTime;
+    stream << level << transitionTime;
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandMoveToLevelWithOnOff, payload);
 }
 
@@ -88,12 +88,12 @@ ZigbeeClusterReply *ZigbeeClusterLevelControl::commandMoveWithOnOff(ZigbeeCluste
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandMoveWithOnOff, payload);
 }
 
-ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStepWithOnOff(ZigbeeClusterLevelControl::FadeMode fadeMode, quint8 stepSize, quint16 transistionTime)
+ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStepWithOnOff(ZigbeeClusterLevelControl::FadeMode fadeMode, quint8 stepSize, quint16 transitionTime)
 {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream << static_cast<quint8>(fadeMode) << stepSize << transistionTime;
+    stream << static_cast<quint8>(fadeMode) << stepSize << transitionTime;
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandStepWithOnOff, payload);
 }
 

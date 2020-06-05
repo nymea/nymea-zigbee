@@ -133,7 +133,6 @@ private:
     ZigbeeDeviceProfile::NodeType m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 
     // Network storage
-    ZigbeeNetworkDatabase *m_database = nullptr;
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
@@ -147,6 +146,7 @@ protected:
     ZigbeeNode *m_coordinatorNode = nullptr;
     bool m_permitJoining = false;
     ZigbeeSecurityConfiguration m_securityConfiguration;
+    ZigbeeNetworkDatabase *m_database = nullptr;
 
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent);
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, quint8 macCapabilities, QObject *parent);
@@ -156,7 +156,6 @@ protected:
     void loadNetwork();
     void clearSettings();
     void saveNode(ZigbeeNode *node);
-
 
     void addNode(ZigbeeNode *node);
     void addUnitializedNode(ZigbeeNode *node);
@@ -187,8 +186,8 @@ signals:
     void nodeRemoved(ZigbeeNode *node);
 
     void permitJoiningChanged(bool permitJoining);
-    void stateChanged(State state);
     void errorOccured(Error error);
+    void stateChanged(State state);
 
 private slots:
     void onNodeStateChanged(ZigbeeNode::State state);

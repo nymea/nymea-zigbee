@@ -47,6 +47,8 @@
 #include "zcl/measurement/zigbeeclustertemperaturemeasurement.h"
 #include "zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h"
 
+#include "zcl/lighting/zigbeeclustercolorcontrol.h"
+
 #include "zcl/security/zigbeeclusteriaszone.h"
 
 class ZigbeeNode;

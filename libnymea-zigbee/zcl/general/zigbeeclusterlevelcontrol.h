@@ -83,15 +83,15 @@ public:
 
     explicit ZigbeeClusterLevelControl(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
-    ZigbeeClusterReply *commandMoveToLevel(quint8 level, quint16 transistionTime = 0xffff);
+    ZigbeeClusterReply *commandMoveToLevel(quint8 level, quint16 transitionTime = 0xffff);
     ZigbeeClusterReply *commandMove(MoveMode moveMode, quint8 rate = 0xff);
-    ZigbeeClusterReply *commandStep(FadeMode fadeMode, quint8 stepSize = 0x01, quint16 transistionTime = 0xffff);
+    ZigbeeClusterReply *commandStep(FadeMode fadeMode, quint8 stepSize = 0x01, quint16 transitionTime = 0xffff);
     ZigbeeClusterReply *commandStop();
 
     // With on/off
-    ZigbeeClusterReply *commandMoveToLevelWithOnOff(quint8 level, quint16 transistionTime = 0xffff);
+    ZigbeeClusterReply *commandMoveToLevelWithOnOff(quint8 level, quint16 transitionTime = 0xffff);
     ZigbeeClusterReply *commandMoveWithOnOff(MoveMode moveMode, quint8 rate = 0xff);
-    ZigbeeClusterReply *commandStepWithOnOff(FadeMode fadeMode, quint8 stepSize = 0x01, quint16 transistionTime = 0xffff);
+    ZigbeeClusterReply *commandStepWithOnOff(FadeMode fadeMode, quint8 stepSize = 0x01, quint16 transitionTime = 0xffff);
     ZigbeeClusterReply *commandStopWithOnOff();
 
 private:

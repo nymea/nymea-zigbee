@@ -284,6 +284,7 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
     case CreateNetworkStateInitializeCoordinatorNode: {
         if (m_coordinatorNode) {
             qCDebug(dcZigbeeNetwork()) << "We already have the coordinator node. Network starting done.";
+            m_database->saveNode(m_coordinatorNode);
             m_initializing = false;
             setState(StateRunning);
             setPermitJoiningInternal(false);
@@ -417,7 +418,7 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
 
     m_createNewNetwork = false;
     // Check if we have to create a pan ID and select the channel
-    if (panId() == 0) {
+    if (panId() == 0 || !m_coordinatorNode) {
         m_createNewNetwork = true;
     }
 
@@ -497,8 +498,25 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
                     if (m_controller->networkState() == Deconz::NetworkStateConnected) {
                         qCDebug(dcZigbeeNetwork()) << "The network is already running.";
                         m_initializing = false;
-                        setState(StateRunning);
-                        setPermitJoiningInternal(false);
+                        setPermitJoining(false);
+                        // Set the permit joining timeout network configuration parameter
+                        QByteArray parameterData;
+                        QDataStream stream(&parameterData, QIODevice::WriteOnly);
+                        stream.setByteOrder(QDataStream::LittleEndian);
+                        stream << static_cast<quint8>(0);
+
+                        ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterPermitJoin, parameterData);
+                        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+                            if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+                                qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
+                                // FIXME: set an appropriate error
+                                return;
+                            }
+
+                            qCDebug(dcZigbeeNetwork()) << "Set permit join configuration request finished" << reply->statusCode();
+                            setState(StateRunning);
+                        });
+
                     } else if (m_controller->networkState() == Deconz::NetworkStateOffline) {
                         m_initializing = true;
                         qCDebug(dcZigbeeNetwork()) << "The network is offline. Lets start it";

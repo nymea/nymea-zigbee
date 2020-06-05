@@ -90,39 +90,6 @@ public:
 //    };
 //    Q_ENUM(PowerConfigurationAttribute)
 
-
-//    // Color cluster 0x0300
-
-//    enum ColorControlClusterAttribute {
-//        ColorControlClusterAttributeCurrentHue = 0x0000,
-//        ColorControlClusterAttributeCurrentSaturation = 0x0001,
-//        ColorControlClusterAttributeRemainingTime = 0x0002,
-//        ColorControlClusterAttributeCurrentX = 0x0003,
-//        ColorControlClusterAttributeCurrentY = 0x0004,
-//        ColorControlClusterAttributeDriftCompensation = 0x0005,
-//        ColorControlClusterAttributeCompensationText = 0x0006,
-//        ColorControlClusterAttributeColorTemperatureMireds = 0x0007,
-//        ColorControlClusterAttributeColorMode = 0x0008,
-//        ColorControlClusterAttributeEnhancedCurrentHue = 0x4000,
-//        ColorControlClusterAttributeEnhancedColorMode = 0x4001,
-//        ColorControlClusterAttributeColorLoopActive = 0x4002,
-//        ColorControlClusterAttributeColorLoopDirection = 0x4003,
-//        ColorControlClusterAttributeColorLoopTime = 0x4004,
-//        ColorControlClusterAttributeColorLoopStartEnhancedHue = 0x4005,
-//        ColorControlClusterAttributeColorLoopStoredEnhancedHue = 0x4006,
-//        ColorControlClusterAttributeColorCapabilities = 0x400a,
-//        ColorControlClusterAttributeColorTempPhysicalMinMireds = 0x400b,
-//        ColorControlClusterAttributeColorTempPhysicalMaxMireds = 0x400c
-//    };
-//    Q_ENUM(ColorControlClusterAttribute)
-
-//    enum ColorControlClusterColorMode {
-//        ColorControlClusterColorModeHueSaturation = 0x00,
-//        ColorControlClusterColorModeXY = 0x01,
-//        ColorControlClusterColorModeColorTemperatureMired = 0x02
-//    };
-//    Q_ENUM(ColorControlClusterColorMode)
-
     explicit ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Zigbee::ClusterId clusterId, Direction direction, QObject *parent = nullptr);
 
     ZigbeeNode *node() const;

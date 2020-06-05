@@ -11,6 +11,7 @@ SOURCES += \
     zcl/general/zigbeeclusteridentify.cpp \
     zcl/general/zigbeeclusterlevelcontrol.cpp \
     zcl/general/zigbeeclusteronoff.cpp \
+    zcl/lighting/zigbeeclustercolorcontrol.cpp \
     zcl/measurement/zigbeeclusterilluminancemeasurment.cpp \
     zcl/measurement/zigbeeclusteroccupancysensing.cpp \
     zcl/measurement/zigbeeclusterrelativehumiditymeasurement.cpp \
@@ -60,6 +61,7 @@ HEADERS += \
     zcl/general/zigbeeclusteridentify.h \
     zcl/general/zigbeeclusterlevelcontrol.h \
     zcl/general/zigbeeclusteronoff.h \
+    zcl/lighting/zigbeeclustercolorcontrol.h \
     zcl/measurement/zigbeeclusterilluminancemeasurment.h \
     zcl/measurement/zigbeeclusteroccupancysensing.h \
     zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h \

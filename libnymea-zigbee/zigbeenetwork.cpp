@@ -309,10 +309,6 @@ void ZigbeeNetwork::saveNetwork()
     settings.setValue("networkKey", securityConfiguration().networkKey().toString());
     settings.setValue("trustCenterLinkKey", securityConfiguration().globalTrustCenterLinkKey().toString());
     settings.endGroup();
-
-    foreach (ZigbeeNode *node, nodes()) {
-        m_database->saveNode(node);
-    }
 }
 
 void ZigbeeNetwork::loadNetwork()
@@ -458,12 +454,12 @@ void ZigbeeNetwork::setState(ZigbeeNetwork::State state)
 
     qCDebug(dcZigbeeNetwork()) << "State changed" << state;
     m_state = state;
-    emit stateChanged(m_state);
 
     if (state == StateRunning) {
         saveNetwork();
         qCDebug(dcZigbeeNetwork()) << this;
     }
+    emit stateChanged(m_state);
 }
 
 void ZigbeeNetwork::setError(ZigbeeNetwork::Error error)
@@ -478,7 +474,7 @@ void ZigbeeNetwork::setError(ZigbeeNetwork::Error error)
 
 bool ZigbeeNetwork::networkConfigurationAvailable() const
 {
-    return m_extendedPanId != 0 && m_channel != 0;
+    return m_extendedPanId != 0 && m_channel != 0 && m_coordinatorNode;
 }
 
 ZigbeeNetworkReply *ZigbeeNetwork::createNetworkReply(const ZigbeeNetworkRequest &request)
@@ -545,7 +541,7 @@ void ZigbeeNetwork::onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const 
 
 QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
 {
-    debug.nospace().noquote() << "ZigbeeNetwork (" << ZigbeeUtils::convertUint64ToHexString(network->extendedPanId())
+    debug.nospace().noquote() << "ZigbeeNetwork (" << ZigbeeUtils::convertUint16ToHexString(network->panId())
                               << ", Channel " << network->channel()
                               << ")" << endl;
     foreach (ZigbeeNode *node, network->nodes()) {
