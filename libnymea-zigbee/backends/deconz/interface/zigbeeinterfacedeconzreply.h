@@ -43,8 +43,10 @@ class ZigbeeInterfaceDeconzReply : public QObject
 public:
     // Request content
     ZigbeeNetworkRequest networkRequest() const;
+    QString requestName();
     Deconz::Command command() const;
     quint8 sequenceNumber() const;
+    QByteArray requestData() const;
     QByteArray responseData() const;
 
     // Response content
@@ -55,15 +57,19 @@ public:
     void abort();
 
 private:
-    explicit ZigbeeInterfaceDeconzReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent = nullptr);
+    explicit ZigbeeInterfaceDeconzReply(Deconz::Command command, QObject *parent = nullptr);
     ZigbeeNetworkRequest m_networkRequest;
     QTimer *m_timer = nullptr;
     bool m_timeout = false;
     bool m_aborted = false;
 
+    void setSequenceNumber(quint8 sequenceNumber);
+
     // Request content
+    QString m_requestName;
     Deconz::Command m_command;
     quint8 m_sequenceNumber = 0;
+    QByteArray m_requestData;
 
     // Response content
     Deconz::StatusCode m_statusCode = Deconz::StatusCodeError;
@@ -77,5 +83,7 @@ signals:
     void finished();
 
 };
+
+QDebug operator<<(QDebug debug, ZigbeeInterfaceDeconzReply *reply);
 
 #endif // ZIGBEEINTERFACEDECONZREPLY_H

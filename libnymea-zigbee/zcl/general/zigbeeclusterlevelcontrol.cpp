@@ -133,5 +133,24 @@ void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Fram
     // Increase the tsn for continuouse id increasing on both sides
     m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
 
-    // FIXME: parse client commands to group
+    switch (m_direction) {
+    case Client:
+        // If the client cluster sends data to a server cluster (independent which), the command was executed on the device like button pressed
+        if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {
+            // Read the payload which is
+            Command command = static_cast<Command>(frame.header.command);
+            qCDebug(dcZigbeeCluster()) << "Command sent from" << m_node << m_endpoint << this << command;
+            switch (command) {
+            default:
+                qCWarning(dcZigbeeCluster()) << "Unhandled command sent from" << m_node << m_endpoint << this << command;
+                break;
+            }
+        }
+        break;
+    case Server:
+        qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
+        break;
+    }
+
+
 }

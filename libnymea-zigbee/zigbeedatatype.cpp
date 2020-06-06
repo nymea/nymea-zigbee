@@ -1121,7 +1121,17 @@ QDebug operator<<(QDebug debug, const ZigbeeDataType &dataType)
 {
     // FIXME: print data depending on the datatype
     debug.nospace() << "ZigbeeDataType(" << dataType.name();
-    debug.nospace() << ", " << ZigbeeUtils::convertByteArrayToHexString(dataType.data());
+    switch (dataType.dataType()) {
+    case Zigbee::OctetString:
+    case Zigbee::LongOctetString:
+    case Zigbee::LongCharString:
+    case Zigbee::CharString:
+        debug.nospace() << ", " << dataType.toString();
+        break;
+    default:
+        debug.nospace() << ", " << ZigbeeUtils::convertByteArrayToHexString(dataType.data());
+    }
+
     debug.nospace() << ")";
     return debug.space();
 }

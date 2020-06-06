@@ -69,81 +69,57 @@ Deconz::NetworkState ZigbeeBridgeControllerDeconz::networkState() const
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestVersion()
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request version. SQN:" << sequenceNumber;
 
     QByteArray message;
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandVersion);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(5); // Frame length
 
-    ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(Deconz::CommandVersion, sequenceNumber, this);
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
-    m_pendingReplies.insert(sequenceNumber, reply);
-
-    m_interface->sendPackage(message);
-    return reply;
+    return createReply(Deconz::CommandVersion, "Request controller version", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestDeviceState()
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request device state. SQN:" << sequenceNumber;
-
     QByteArray message;
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandDeviceState);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(8); // Frame length
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint8>(0); // Reserverd
 
-    ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(Deconz::CommandDeviceState, sequenceNumber, this);
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
-    m_pendingReplies.insert(sequenceNumber, reply);
-
-    m_interface->sendPackage(message);
-
-    return createReply(Deconz::CommandDeviceState, sequenceNumber, this);
+    return createReply(Deconz::CommandDeviceState, "Request controller device state", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestReadParameter(Deconz::Parameter parameter)
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request read parameter. SQN:" << sequenceNumber << parameter;
-
     QByteArray message;
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandReadParameter);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(8); // Frame length 7 + 1 payload
     stream << static_cast<quint16>(1); // Payload length
     stream << static_cast<quint8>(parameter);
 
-    m_interface->sendPackage(message);
-
-    return createReply(Deconz::CommandReadParameter, sequenceNumber, this);
+    return createReply(Deconz::CommandReadParameter, "Request controller read parameter", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestWriteParameter(Deconz::Parameter parameter, const QByteArray &data)
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request write parameter. SQN:" << sequenceNumber << parameter << ZigbeeUtils::convertByteArrayToHexString(data);
-
     quint16 payloadLength = static_cast<quint16>(1 + data.length());
     QByteArray message;
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandWriteParameter);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(7 + payloadLength); // Frame length 7 + payload length
     stream << static_cast<quint16>(payloadLength); // 1 parameter + parameter data length
@@ -152,35 +128,25 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestWriteParameter(
         stream << static_cast<quint8>(data.at(i));
     }
 
-    m_interface->sendPackage(message);
-
-    return createReply(Deconz::CommandWriteParameter, sequenceNumber, this);
+    return createReply(Deconz::CommandWriteParameter, "Request controller write parameter", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestChangeNetworkState(Deconz::NetworkState networkState)
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request change network state. SQN:" << sequenceNumber << networkState;
-
     QByteArray message;
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandChangeNetworkState);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(6); // Frame length
     stream << static_cast<quint8>(networkState);
 
-    m_interface->sendPackage(message);
-
-    return createReply(Deconz::CommandChangeNetworkState, sequenceNumber, this);
+    return createReply(Deconz::CommandChangeNetworkState, "Request controller write parameter", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestReadReceivedDataIndication(Deconz::SourceAddressMode sourceAddressMode)
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request read received data indication. SQN:" << sequenceNumber << ZigbeeUtils::convertByteToHexString(sourceAddressMode);
-
     quint16 payloadLength = 0;
     if (sourceAddressMode != Deconz::SourceAddressModeNone) {
         payloadLength = 1;
@@ -190,45 +156,32 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestReadReceivedDat
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandApsDataIndication);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(7 + payloadLength); // Frame length + payload length
     stream << static_cast<quint16>(payloadLength); // payload length
     if (payloadLength > 0)
         stream << static_cast<quint8>(sourceAddressMode);
 
-    m_interface->sendPackage(message);
-
-    return createReply(Deconz::CommandApsDataIndication, sequenceNumber, this);
+    return createReply(Deconz::CommandApsDataIndication, "Request read received data indication", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestQuerySendDataConfirm()
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request query send data confirm. SQN:" << sequenceNumber;
-
     QByteArray message;
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandApsDataConfirm);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(7); // Frame length
     stream << static_cast<quint16>(0); // Payload length
 
-    m_interface->sendPackage(message);
-
-    return createReply(Deconz::CommandApsDataConfirm, sequenceNumber, this);
+    return createReply(Deconz::CommandApsDataConfirm, "Request query send data confirm", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestSendRequest(const ZigbeeNetworkRequest &request)
 {
-    // Send the request only if there are free slots on the device, otherwise enque request
-    //    if (m_apsFreeSlotsAvailable) {
-
-    //    }
-
-    qCDebug(dcZigbeeAps()) << "APSDE-DATA.request" << request;
     ZigbeeInterfaceDeconzReply *interfaceReply = nullptr;
     switch (request.destinationAddressMode()) {
     case Zigbee::DestinationAddressModeGroup:
@@ -251,44 +204,73 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestSendRequest(con
     return interfaceReply;
 }
 
-quint8 ZigbeeBridgeControllerDeconz::generateSequenceNumber()
+void ZigbeeBridgeControllerDeconz::sendNextRequest()
 {
-    m_sequenceNumber += 3;
-    return m_sequenceNumber;
+    // Check if there is a reply request to send
+    if (m_replyQueue.isEmpty())
+        return;
+
+    // Check if there is currently a running reply
+    if (m_currentReply)
+        return;
+
+//    // If the controler request queue is full, wait until it's free again
+//    if (!m_apsFreeSlotsAvailable)
+//        return;
+
+    // Get the next reply, set the sequence number, send the request data over the interface and start waiting
+    m_currentReply = m_replyQueue.dequeue();
+    m_currentReply->setSequenceNumber(generateSequenceNumber());
+    qCDebug(dcZigbeeController()) << "Send request" << m_currentReply;
+    m_interface->sendPackage(m_currentReply->requestData());
+    m_currentReply->m_timer->start();
 }
 
-ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent)
+quint8 ZigbeeBridgeControllerDeconz::generateSequenceNumber()
+{
+    return m_sequenceNumber++;
+}
+
+ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Command command, const QString &requestName, const QByteArray &requestData, QObject *parent)
 {
     // Create the reply
-    ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(command, sequenceNumber, parent);
+    ZigbeeInterfaceDeconzReply *reply = new ZigbeeInterfaceDeconzReply(command, parent);
+    reply->m_requestName = requestName;
+    reply->m_requestData = requestData;
+
+    // Make sure we clean up on timeout
     connect(reply, &ZigbeeInterfaceDeconzReply::timeout, this, [this, reply](){
-        qCWarning(dcZigbeeController()) << "Reply timeout" << reply->command() << "SQN:" <<  reply->sequenceNumber();
-        if (m_pendingReplies.contains(reply->sequenceNumber())) {
-            m_pendingReplies.remove(reply->sequenceNumber());
-            // Note: will be deleted with the finished signal
+        qCWarning(dcZigbeeController()) << "Reply timeout" << reply;
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+            QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
         }
     });
 
     // Auto delete the object on finished
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
+    connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, [this, reply](){
+        reply->deleteLater();
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+            QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
+        }
+    });
 
-    // Add it to the pending list
-    m_pendingReplies.insert(sequenceNumber, reply);
-
-    // Fixme: start the timer once actually sent to the interface
-    reply->m_timer->start();
-
+    // Enqueu this reply and send it once the current reply slot is free
+    m_replyQueue.enqueue(reply);
+    qCDebug(dcZigbeeController()) << "Enqueue request:" << reply->requestName();
+    QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
     return reply;
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius)
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request enqueue send data to group" << ZigbeeUtils::convertUint16ToHexString(groupAddress)
-                                  << "SQN:" << sequenceNumber
-                                  << static_cast<Zigbee::ZigbeeProfile>(profileId)
-                                  << ZigbeeUtils::convertUint16ToHexString(clusterId)
-                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+//    quint8 sequenceNumber = generateSequenceNumber();
+//    qCDebug(dcZigbeeController()) << "Request enqueue send data to group" << ZigbeeUtils::convertUint16ToHexString(groupAddress)
+//                                  << "SQN:" << sequenceNumber
+//                                  << static_cast<Zigbee::ZigbeeProfile>(profileId)
+//                                  << ZigbeeUtils::convertUint16ToHexString(clusterId)
+//                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
 
     Q_ASSERT_X(asdu.length() <= 127, "ASDU", "ASDU package length has to <= 127 bytes");
 
@@ -299,7 +281,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandApsDataRequest);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(7 + payloadLength); // Frame length
     stream << payloadLength;
@@ -317,20 +299,18 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
     stream << static_cast<quint8>(txOptions);
     stream << radius;
 
-    m_interface->sendPackage(message);
-
-    return createReply(Deconz::CommandApsDataRequest, sequenceNumber, this);
+    return createReply(Deconz::CommandApsDataRequest, "Request enqueue send data to group", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius)
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request enqueue send data to short address" << ZigbeeUtils::convertUint16ToHexString(shortAddress)
-                                  << "SQN:" << sequenceNumber
-                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
-                                  << static_cast<Zigbee::ZigbeeProfile>(profileId)
-                                  << ZigbeeUtils::convertUint16ToHexString(clusterId)
-                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+//    quint8 sequenceNumber = generateSequenceNumber();
+//    qCDebug(dcZigbeeController()) << "Request enqueue send data to short address" << ZigbeeUtils::convertUint16ToHexString(shortAddress)
+//                                  << "SQN:" << sequenceNumber
+//                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
+//                                  << static_cast<Zigbee::ZigbeeProfile>(profileId)
+//                                  << ZigbeeUtils::convertUint16ToHexString(clusterId)
+//                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
 
     Q_ASSERT_X(asdu.length() <= 127, "ASDU", "ASDU package length has to <= 127 bytes");
 
@@ -341,7 +321,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandApsDataRequest);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(7 + payloadLength); // Frame length
     stream << payloadLength;
@@ -359,19 +339,17 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
     stream << static_cast<quint8>(txOptions); // TX Options: Use APS ACKs
     stream << radius;
 
-    m_interface->sendPackage(message);
-
-    return createReply(Deconz::CommandApsDataRequest, sequenceNumber, this);
+    return createReply(Deconz::CommandApsDataRequest, "Request enqueue send data to short address", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius)
 {
-    quint8 sequenceNumber = generateSequenceNumber();
-    qCDebug(dcZigbeeController()) << "Request enqueue send data to IEEE address" << ieeeAddress.toString()
-                                  << "SQN:" << sequenceNumber
-                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
-                                  << profileId << clusterId
-                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+//    quint8 sequenceNumber = generateSequenceNumber();
+//    qCDebug(dcZigbeeController()) << "Request enqueue send data to IEEE address" << ieeeAddress.toString()
+//                                  << "SQN:" << sequenceNumber
+//                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
+//                                  << profileId << clusterId
+//                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
 
     Q_ASSERT_X(asdu.length() <= 127, "ZigbeeController", "ASDU package length has to be <= 127 bytes");
 
@@ -382,7 +360,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Deconz::CommandApsDataRequest);
-    stream << static_cast<quint8>(sequenceNumber);
+    stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
     stream << static_cast<quint16>(7 + payloadLength); // Frame length
     stream << payloadLength;
@@ -400,9 +378,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
     stream << static_cast<quint8>(txOptions); // TX Options: Use APS ACKs
     stream << radius;
 
-    m_interface->sendPackage(message);
-
-    return createReply(Deconz::CommandApsDataRequest, sequenceNumber, this);
+    return createReply(Deconz::CommandApsDataRequest, "Request enqueue send data to IEEE address", message, this);
 }
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters()
@@ -414,7 +390,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
     // If read request failes, this mehtod returns the status code of the failed request.
 
     // Create an independent reply for finishing the entire read sequence
-    ZigbeeInterfaceDeconzReply *readNetworkParametersReply = new ZigbeeInterfaceDeconzReply(Deconz::CommandReadParameter, generateSequenceNumber(), this);
+    ZigbeeInterfaceDeconzReply *readNetworkParametersReply = new ZigbeeInterfaceDeconzReply(Deconz::CommandReadParameter, this);
     connect(readNetworkParametersReply, &ZigbeeInterfaceDeconzReply::finished, readNetworkParametersReply, &ZigbeeInterfaceDeconzReply::deleteLater, Qt::QueuedConnection);
 
     // Read MAC address of the bridge
@@ -756,13 +732,24 @@ DeconzDeviceState ZigbeeBridgeControllerDeconz::parseDeviceStateFlag(quint8 devi
 
 void ZigbeeBridgeControllerDeconz::readDataIndication()
 {
-    ZigbeeInterfaceDeconzReply *reply = requestReadReceivedDataIndication();
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+    if (m_readIndicationReply) {
+        // There is alreay a read indication reply in the queue, let finish that first before creating a new one
+        return;
+    }
+
+    m_readIndicationReply = requestReadReceivedDataIndication();
+    connect(m_readIndicationReply, &ZigbeeInterfaceDeconzReply::finished, this, [this](){
+        ZigbeeInterfaceDeconzReply *reply = m_readIndicationReply;
+
+        // Allow to send the next read indication reply if required
+        m_readIndicationReply = nullptr;
+
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-            qCWarning(dcZigbeeController()) << "Could not read data indication." << "SQN:" << reply->sequenceNumber() << reply->statusCode();
+            qCWarning(dcZigbeeController()) << "Could not read data indication." << "SQN:" << m_readIndicationReply->sequenceNumber() << m_readIndicationReply->statusCode();
             // FIXME: set an appropriate error
             return;
         }
+
 
         // APS data indication received, process the content
         qCDebug(dcZigbeeController()) << "Reading data indication finished successfully" << "SQN:" << reply->sequenceNumber();
@@ -772,8 +759,18 @@ void ZigbeeBridgeControllerDeconz::readDataIndication()
 
 void ZigbeeBridgeControllerDeconz::readDataConfirm()
 {
-    ZigbeeInterfaceDeconzReply *reply = requestQuerySendDataConfirm();
-    connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+    if (m_readConfirmReply) {
+        // There is alreay a read confirm reply in the queue, let finish that first before creating a new one
+        return;
+    }
+
+    m_readConfirmReply = requestQuerySendDataConfirm();
+    connect(m_readConfirmReply, &ZigbeeInterfaceDeconzReply::finished, this, [this](){
+        ZigbeeInterfaceDeconzReply *reply = m_readConfirmReply;
+
+        // Allow to send the next read confirm reply if required
+        m_readConfirmReply = nullptr;
+
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
             qCWarning(dcZigbeeController()) << "Could not read data confirm." << "SQN:" << reply->sequenceNumber() << reply->statusCode();
             // FIXME: set an appropriate error
@@ -801,9 +798,10 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
         if (!m_apsFreeSlotsAvailable) {
             qCWarning(dcZigbeeController()) << "The APS request table is full on the device. Cannot send requests until the queue gets processed on the controller.";
             return;
+        } else {
+            qCDebug(dcZigbeeController()) << "The APS request table is free again. Sending the next request";
+            sendNextRequest();
         }
-        // FIXME: if changed to true, send next aps data request
-
     }
 
     if (m_networkState != Deconz::NetworkStateConnected)
@@ -909,15 +907,18 @@ void ZigbeeBridgeControllerDeconz::onInterfaceAvailableChanged(bool available)
     qCDebug(dcZigbeeController()) << "Interface available changed" << available;
     if (!available) {
         // Clean up any pending replies
-        foreach (quint8 id, m_pendingReplies.keys()) {
-            ZigbeeInterfaceDeconzReply *reply = m_pendingReplies.take(id);
+        while (!m_replyQueue.isEmpty()) {
+            ZigbeeInterfaceDeconzReply *reply = m_replyQueue.dequeue();
             reply->abort();
         }
 
+        m_sequenceNumber = 0;
+        m_apsFreeSlotsAvailable = true;
         m_watchdogTimer->stop();
     }
 
     setAvailable(available);
+    sendNextRequest();
 }
 
 void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &package)
@@ -933,29 +934,18 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
     qCDebug(dcZigbeeController()) << "Interface message received" << command << "SQN:" << sequenceNumber
                                   << status << "Frame length:" << frameLength << ZigbeeUtils::convertByteArrayToHexString(data);
 
-    // Check if this is an interface response for a pending reply
-    if (m_pendingReplies.contains(sequenceNumber)) {
-        if (m_pendingReplies.value(sequenceNumber)->command() == command) {
-            // SQN and command maches
-            ZigbeeInterfaceDeconzReply *reply = m_pendingReplies.take(sequenceNumber);
-            if (!reply) {
-                qCWarning(dcZigbeeController()) << "Received message but the corresponding reply does not exist any more.";
-                return;
-            }
-            reply->m_responseData = data;
-            reply->m_statusCode = status;
-            reply->finished();
-            return;
-        } else {
-            qCWarning(dcZigbeeController()) << "Received message with a pending request SQN but the command does not match. SQN mismatch.";
-            qCWarning(dcZigbeeController()) << "The SQN matches" << m_pendingReplies.value(sequenceNumber)->command() << "but command" << command << "received for SQN" << sequenceNumber;
-        }
+    // Check if this is the response to the current active reply
+    if (m_currentReply && m_currentReply->sequenceNumber() == sequenceNumber && m_currentReply->command() == command) {
+        m_currentReply->m_responseData = data;
+        m_currentReply->m_statusCode = status;
+        m_currentReply->finished();
+        // Note: the current reply will be cleand up in the finished slot
+        return;
     }
 
-    // Note: we got a notification, lets set the current sequence number to the notification id,
-    //       so the next request will be a continuouse increase
-
-    //m_sequenceNumber = sequenceNumber + 10;
+    // We got a notification, lets set the current sequence number to the notification id,
+    // so the next request will be a continuouse increase
+    m_sequenceNumber = sequenceNumber;
 
     // No request for this data, lets check which notification and process the data
     switch (command) {

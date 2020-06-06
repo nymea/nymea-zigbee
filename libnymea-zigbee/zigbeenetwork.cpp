@@ -437,6 +437,12 @@ void ZigbeeNetwork::addUnitializedNode(ZigbeeNode *node)
     }
 
     connect(node, &ZigbeeNode::stateChanged, this, &ZigbeeNetwork::onNodeStateChanged);
+    connect(node, &ZigbeeNode::nodeInitializationFailed, this, [this, node](){
+        qCWarning(dcZigbeeNetwork()) << "The initialization procedure for" << node << "failed. Please retry to add this node by restarting the init procedure.";
+        m_uninitializedNodes.removeAll(node);
+        node->deleteLater();
+    });
+
     m_uninitializedNodes.append(node);
 }
 

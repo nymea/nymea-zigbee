@@ -32,6 +32,11 @@ ZigbeeNetworkRequest ZigbeeInterfaceDeconzReply::networkRequest() const
     return m_networkRequest;
 }
 
+QString ZigbeeInterfaceDeconzReply::requestName()
+{
+    return m_requestName;
+}
+
 Deconz::Command ZigbeeInterfaceDeconzReply::command() const
 {
     return m_command;
@@ -40,6 +45,11 @@ Deconz::Command ZigbeeInterfaceDeconzReply::command() const
 quint8 ZigbeeInterfaceDeconzReply::sequenceNumber() const
 {
     return m_sequenceNumber;
+}
+
+QByteArray ZigbeeInterfaceDeconzReply::requestData() const
+{
+    return m_requestData;
 }
 
 QByteArray ZigbeeInterfaceDeconzReply::responseData() const
@@ -64,19 +74,26 @@ bool ZigbeeInterfaceDeconzReply::aborted() const
 
 void ZigbeeInterfaceDeconzReply::abort()
 {
+    m_timer->stop();
     m_aborted = true;
     emit finished();
 }
 
-ZigbeeInterfaceDeconzReply::ZigbeeInterfaceDeconzReply(Deconz::Command command, quint8 sequenceNumber, QObject *parent) :
+ZigbeeInterfaceDeconzReply::ZigbeeInterfaceDeconzReply(Deconz::Command command, QObject *parent) :
     QObject(parent),
     m_timer(new QTimer(this)),
-    m_command(command),
-    m_sequenceNumber(sequenceNumber)
+    m_command(command)
 {
-    m_timer->setInterval(5000);
+    m_timer->setInterval(3000);
     m_timer->setSingleShot(true);
     connect(m_timer, &QTimer::timeout, this, &ZigbeeInterfaceDeconzReply::onTimeout);
+}
+
+void ZigbeeInterfaceDeconzReply::setSequenceNumber(quint8 sequenceNumber)
+{
+    m_sequenceNumber = sequenceNumber;
+    // Put the sequence number into the request data payload, it's always the second byte
+    m_requestData[1] = m_sequenceNumber;
 }
 
 void ZigbeeInterfaceDeconzReply::onTimeout()
@@ -84,4 +101,10 @@ void ZigbeeInterfaceDeconzReply::onTimeout()
     m_timeout = true;
     emit timeout();
     emit finished();
+}
+
+QDebug operator<<(QDebug debug, ZigbeeInterfaceDeconzReply *reply)
+{
+    debug.nospace() << "InterfaceReply(" << reply->requestName() << ", " << reply->sequenceNumber() << ")";
+    return debug.space();
 }

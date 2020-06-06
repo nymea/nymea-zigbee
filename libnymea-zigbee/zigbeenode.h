@@ -115,6 +115,7 @@ private:
     void readSoftwareBuildId(ZigbeeClusterBasic *basicCluster);
 
 signals:
+    void nodeInitializationFailed();
     void stateChanged(State state);
     void lqiChanged(quint8 lqi);
     void connectedChanged(bool connected);

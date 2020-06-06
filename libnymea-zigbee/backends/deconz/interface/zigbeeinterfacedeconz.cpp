@@ -227,7 +227,7 @@ void ZigbeeInterfaceDeconz::sendPackage(const QByteArray &package)
         qCWarning(dcZigbeeInterface()) << "Could not stream byte" << ZigbeeUtils::convertByteArrayToHexString(data);
     }
 
-    //m_serialPort->flush();
+    m_serialPort->flush();
 }
 
 bool ZigbeeInterfaceDeconz::enable(const QString &serialPort, qint32 baudrate)

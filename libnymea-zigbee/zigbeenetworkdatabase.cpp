@@ -62,7 +62,7 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
     QString query("SELECT * FROM nodes;");
     QSqlQuery nodesQuery = m_db.exec(query);
     while (nodesQuery.next()) {
-        quint64 ieeeAddress = nodesQuery.value("ieeeAddress").toULongLong();
+        QString ieeeAddress = nodesQuery.value("ieeeAddress").toString();
         quint16 shortAddress = nodesQuery.value("shortAddress").toUInt();
         QByteArray nodeDescriptor = QByteArray::fromBase64(nodesQuery.value("nodeDescriptor").toByteArray());
         quint16 powerDescriptor = nodesQuery.value("powerDescriptor").toUInt();
@@ -185,7 +185,7 @@ bool ZigbeeNetworkDatabase::initDatabase()
 
     // Create nodes table
     createTable("nodes",
-                "(ieeeAddress INTEGER PRIMARY KEY, " // uint64
+                "(ieeeAddress TEXT PRIMARY KEY, " // ieeeAddress to string
                 "shortAddress INTEGER NOT NULL, " // uint16
                 "nodeDescriptor BLOB NOT NULL, " // bytes as received from the node
                 "powerDescriptor INTEGER NOT NULL)"); // uint16
@@ -250,7 +250,7 @@ bool ZigbeeNetworkDatabase::saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint)
     qCDebug(dcZigbeeNetworkDatabase()) << "Save" << endpoint;
     QString queryString = QString("INSERT OR REPLACE INTO endpoints (ieeeAddress, endpointId, profileId, deviceId, deviceVersion) "
                                   "VALUES (\"%1\", \"%2\", \"%3\", \"%4\", \"%5\");")
-            .arg(endpoint->node()->extendedAddress().toUInt64())
+            .arg(endpoint->node()->extendedAddress().toString())
             .arg(endpoint->endpointId())
             .arg(static_cast<quint16>(endpoint->profile()))
             .arg(static_cast<quint16>(endpoint->deviceId()))
@@ -258,7 +258,7 @@ bool ZigbeeNetworkDatabase::saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint)
 
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
-        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save node into database." << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save node into database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
         return false;
     }
 
@@ -288,14 +288,14 @@ bool ZigbeeNetworkDatabase::saveInputCluster(ZigbeeCluster *cluster)
 {
     qCDebug(dcZigbeeNetworkDatabase()) << "Save" << cluster;
     QString endpointIdReferenceQuery = QString("(SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\")")
-            .arg(cluster->node()->extendedAddress().toUInt64())
+            .arg(cluster->node()->extendedAddress().toString())
             .arg(cluster->endpoint()->endpointId());
     QString queryString = QString("INSERT OR REPLACE INTO serverClusters (endpointId, clusterId) VALUES (%1, \"%2\");")
             .arg(endpointIdReferenceQuery)
             .arg(static_cast<quint16>(cluster->clusterId()));
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
-        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save input cluster into database." << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save input cluster into database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
         return false;
     }
 
@@ -306,7 +306,7 @@ bool ZigbeeNetworkDatabase::saveOutputCluster(ZigbeeCluster *cluster)
 {
     qCDebug(dcZigbeeNetworkDatabase()) << "Save" << cluster;
     QString endpointIdReferenceQuery = QString("(SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\")")
-            .arg(cluster->node()->extendedAddress().toUInt64())
+            .arg(cluster->node()->extendedAddress().toString())
             .arg(cluster->endpoint()->endpointId());
     QString queryString = QString("INSERT OR REPLACE INTO clientClusters (endpointId, clusterId) VALUES (%1, \"%2\");")
             .arg(endpointIdReferenceQuery)
@@ -314,7 +314,7 @@ bool ZigbeeNetworkDatabase::saveOutputCluster(ZigbeeCluster *cluster)
 
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
-        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save output cluster into database." << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save output cluster into database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
         return false;
     }
 
@@ -327,7 +327,7 @@ bool ZigbeeNetworkDatabase::saveAttribute(ZigbeeCluster *cluster, const ZigbeeCl
     QString serverClusterIdReferenceQuery = QString("(SELECT id FROM serverClusters "
                                                     "WHERE endpointId = (SELECT id FROM endpoints WHERE ieeeAddress = \"%1\" AND endpointId = \"%2\")"
                                                     "AND clusterId = \"%3\")")
-            .arg(cluster->node()->extendedAddress().toUInt64())
+            .arg(cluster->node()->extendedAddress().toString())
             .arg(cluster->endpoint()->endpointId())
             .arg(cluster->clusterId());
 
@@ -340,7 +340,7 @@ bool ZigbeeNetworkDatabase::saveAttribute(ZigbeeCluster *cluster, const ZigbeeCl
 
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
-        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save cluster cluster attribute into database." << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save cluster cluster attribute into database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
         return false;
     }
 
@@ -352,14 +352,15 @@ bool ZigbeeNetworkDatabase::saveNode(ZigbeeNode *node)
     qCDebug(dcZigbeeNetworkDatabase()) << "Save" << node;
     QString queryString = QString("INSERT OR REPLACE INTO nodes (ieeeAddress, shortAddress, nodeDescriptor, powerDescriptor) "
                                   "VALUES (\"%1\", \"%2\", \"%3\", \"%4\");")
-            .arg(node->extendedAddress().toUInt64())
+            .arg(node->extendedAddress().toString())
             .arg(node->shortAddress())
             .arg(node->nodeDescriptor().descriptorRawData.toBase64().data()) // Note: convert to base64 for saving zeros as string
             .arg(node->powerDescriptor().powerDescriptoFlag);
 
+    qCDebug(dcZigbeeNetworkDatabase()) << queryString;
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
-        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save node into database." << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save node into database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
         return false;
     }
 
@@ -377,10 +378,10 @@ bool ZigbeeNetworkDatabase::removeNode(ZigbeeNode *node)
 {
     qCDebug(dcZigbeeNetworkDatabase()) << "Remove" << node;
     // Note: cascade delete will clean up all other tables
-    QString queryString = QString("DELETE FROM nodes WHERE ieeeAddress = %1;").arg(node->extendedAddress().toUInt64());
+    QString queryString = QString("DELETE FROM nodes WHERE ieeeAddress = %1;").arg(node->extendedAddress().toString());
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
-        qCWarning(dcZigbeeNetworkDatabase()) << "Could not remove node from database." << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not remove node from database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
         return false;
     }
 

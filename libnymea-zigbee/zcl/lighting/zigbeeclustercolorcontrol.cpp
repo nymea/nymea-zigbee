@@ -145,7 +145,7 @@ ZigbeeClusterReply *ZigbeeClusterColorControl::commandEnhancedMoveToHue(quint16 
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << enhancedHue << static_cast<quint8>(direction) << transitionTime;
-    return executeClusterCommand(ZigbeeClusterColorControl::CommandEnhancedMoveHue, payload);
+    return executeClusterCommand(ZigbeeClusterColorControl::CommandEnhancedMoveToHue, payload);
 }
 
 ZigbeeClusterReply *ZigbeeClusterColorControl::commandEnhancedMoveHue(ZigbeeClusterColorControl::MoveMode moveMode, quint16 rate)
@@ -212,7 +212,7 @@ ZigbeeClusterReply *ZigbeeClusterColorControl::commandStepColorTemperature(Zigbe
 
 void ZigbeeClusterColorControl::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
+    qCDebug(dcZigbeeCluster()) << "Attribute changed" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
     if (hasAttribute(attribute.id())) {
         m_attributes[attribute.id()] = attribute;
         emit attributeChanged(attribute);
@@ -220,6 +220,8 @@ void ZigbeeClusterColorControl::setAttribute(const ZigbeeClusterAttribute &attri
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);
     }
+
+
 }
 
 void ZigbeeClusterColorControl::processDataIndication(ZigbeeClusterLibrary::Frame frame)

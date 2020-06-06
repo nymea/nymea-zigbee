@@ -153,7 +153,7 @@ void ZigbeeNode::initNodeDescriptor()
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read node descriptor from" << this << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
-                // FIXME: decide what to do, remove the node again from network
+                emit nodeInitializationFailed();
             }
             return;
         }
@@ -188,7 +188,7 @@ void ZigbeeNode::initPowerDescriptor()
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read power descriptor from" << this << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
-                // FIXME: decide what to do, remove the node again from network or continue with active endpoint request
+                emit nodeInitializationFailed();
             }
             return;
         }
@@ -228,7 +228,7 @@ void ZigbeeNode::initEndpoints()
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read active endpoints from" << this << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
-                // FIXME: decide what to do, remove the node again from network
+                emit nodeInitializationFailed();
             }
             return;
         }
@@ -284,7 +284,7 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
-                // FIXME: decide what to do, remove the node again from network
+                emit nodeInitializationFailed();
             }
             return;
         }
