@@ -32,6 +32,11 @@
 
 #include <QDateTime>
 
+QStringList ZigbeeNetworkManager::availableBackendTypes()
+{
+    return {"deCONZ"};
+}
+
 ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(ZigbeeNetworkManager::BackendType backend, QObject *parent)
 {
     // Note: required for generating random PAN ID

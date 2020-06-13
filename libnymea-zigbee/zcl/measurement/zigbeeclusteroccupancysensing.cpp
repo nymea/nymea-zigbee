@@ -31,7 +31,7 @@
 #include "zigbeenetwork.h"
 
 ZigbeeClusterOccupancySensing::ZigbeeClusterOccupancySensing(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, Zigbee::ClusterIdOccupancySensing, direction, parent)
+    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdOccupancySensing, direction, parent)
 {
 
 }

@@ -31,7 +31,7 @@
 #include "zigbeenetwork.h"
 
 ZigbeeClusterTemperatureMeasurement::ZigbeeClusterTemperatureMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, Zigbee::ClusterIdTemperatureMeasurement, direction, parent)
+    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdTemperatureMeasurement, direction, parent)
 {
 
 }

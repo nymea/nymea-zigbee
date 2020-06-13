@@ -33,7 +33,7 @@
 #include <QDataStream>
 
 ZigbeeClusterIdentify::ZigbeeClusterIdentify(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, ZigbeeCluster::Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, Zigbee::ClusterIdIdentify, direction, parent)
+    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdIdentify, direction, parent)
 {
 
 }

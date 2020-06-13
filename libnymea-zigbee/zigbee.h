@@ -74,113 +74,6 @@ public:
     Q_ENUM(ZigbeeChannel)
     Q_DECLARE_FLAGS(ZigbeeChannels, ZigbeeChannel)
 
-    enum ClusterId {
-        // Basics
-        ClusterIdUnknown                = 0xffff,
-        ClusterIdBasic                  = 0x0000,
-        ClusterIdPower                  = 0x0001,
-        ClusterIdDeviceTemperature      = 0x0002,
-        ClusterIdIdentify               = 0x0003,
-        ClusterIdGroups                 = 0x0004,
-        ClusterIdScenes                 = 0x0005,
-        ClusterIdOnOff                  = 0x0006,
-        ClusterIdOnOffCOnfiguration     = 0x0007,
-        ClusterIdLevelControl           = 0x0008,
-        ClusterIdAlarms                 = 0x0009,
-        ClusterIdTime                   = 0x000A,
-        ClusterIdRssiLocation           = 0x000B,
-        ClusterIdAnalogInputBasic       = 0x000C,
-        ClusterIdAnalogOutputBasic      = 0x000D,
-        ClusterIdValueBasic             = 0x000E,
-        ClusterIdBinaryInputBasic       = 0x000F,
-        ClusterIdBinaryOutputBasic      = 0x0010,
-        ClusterIdBinaryValueBasic       = 0x0011,
-        ClusterIdMultiStateInputBasic   = 0x0012,
-        ClusterIdMultiStateOutputBasic  = 0x0013,
-        ClusterIdMultiStateValueBasic   = 0x0014,
-        ClusterIdCommissoning           = 0x0015,
-
-        // Over the air uppgrade (OTA)
-        ClusterIdOtaUpgrade             = 0x0019,
-
-        // Poll controll
-        ClusterIdPollControl            = 0x0020,
-
-
-        // Closures
-        ClusterIdShadeConfiguration     = 0x0100,
-
-        // Door Lock
-        ClusterIdDoorLock               = 0x0101,
-
-        // Heating, Ventilation and Air-Conditioning (HVAC)
-        ClusterIdPumpConfigurationControl = 0x0200,
-        ClusterIdThermostat               = 0x0201,
-        ClusterIdFanControll              = 0x0202,
-        ClusterIdDehumiditationControll   = 0x0203,
-        ClusterIdThermostatUserControll   = 0x0204,
-
-        // Lighting
-        ClusterIdColorControl           = 0x0300,
-        ClusterIdBallastConfiguration   = 0x0301,
-
-        // Sensing
-        ClusterIdIlluminanceMeasurement         = 0x0400,
-        ClusterIdIlluminanceLevelSensing        = 0x0401,
-        ClusterIdTemperatureMeasurement         = 0x0402,
-        ClusterIdPressureMeasurement            = 0x0403,
-        ClusterIdFlowMeasurement                = 0x0404,
-        ClusterIdRelativeHumidityMeasurement    = 0x0405,
-        ClusterIdOccupancySensing               = 0x0406,
-
-        // Security and Safty
-        ClusterIdIasZone = 0x0500,
-        ClusterIdIasAce  = 0x0501,
-        ClusterIdIasWd   = 0x0502,
-
-        // Smart energy
-        ClusterIdPrice          = 0x0700,
-        ClusterIdLoadControl    = 0x0701,
-        ClusterIdSimpleMetering = 0x0702,
-
-        // ZLL
-        ClusterIdTouchlinkCommissioning = 0x1000,
-
-        // NXP Appliances
-        ClusterIdApplianceControl           = 0x001B,
-        ClusterIdApplianceIdentification    = 0x0B00,
-        ClusterIdApplianceEventsAlerts      = 0x0B02,
-        ClusterIdApplianceStatistics        = 0x0B03,
-
-        // Electrical Measurement
-        ClusterIdElectricalMeasurement      = 0x0B04,
-        ClusterIdDiagnostics                = 0x0B05,
-
-        // Zigbee green power
-        ClusterIdGreenPower                 = 0x0021
-
-    };
-    Q_ENUM(ClusterId)
-
-    enum ClusterAttributeBasic {
-        ClusterAttributeBasicZclVersion = 0x0000,
-        ClusterAttributeBasicApplicationVersion = 0x0001,
-        ClusterAttributeBasicStackVersion = 0x0002,
-        ClusterAttributeBasicHardwareVersion = 0x0003,
-        ClusterAttributeBasicManufacturerName = 0x0004,
-        ClusterAttributeBasicModelIdentifier = 0x0005,
-        ClusterAttributeBasicDataCode = 0x0006,
-        ClusterAttributeBasicPowerSource = 0x0007,
-        ClusterAttributeBasicLocationDescription = 0x0010,
-        ClusterAttributeBasicPhysicalEnvironment = 0x0011,
-        ClusterAttributeBasicDeviceEnabled = 0x0012,
-        ClusterAttributeBasicAlarmMask = 0x0013,
-        ClusterAttributeBasicDisableLocalConfig = 0x0014,
-        ClusterAttributeBasicSoftwareBuildId = 0x4000
-    };
-    Q_ENUM(ClusterAttributeBasic)
-
-
     enum LightLinkDevice {
         // Lightning devices
         LightLinkDeviceOnOffLight                       = 0x0000,
@@ -350,17 +243,6 @@ public:
     };
     Q_ENUM(SourceAddressMode)
 
-    enum ZigbeeZclStatus {
-
-    };
-    Q_ENUM(ZigbeeZclStatus)
-
-
-    enum ZigbeeZdpStatus {
-
-    };
-    Q_ENUM(ZigbeeZdpStatus)
-
     enum ZigbeeTxOption {
         ZigbeeTxOptionSecurityEnabled = 0x01,
         ZigbeeTxOptionUseNetworkKey = 0x02,
@@ -433,45 +315,6 @@ public:
         ZigbeeApsStatusUnsupportedAttribute = 0xb0
     };
     Q_ENUM(ZigbeeApsStatus)
-
-    enum ZigbeeStatus {
-        ZigbeeStatusSuccess = 0x00,
-        ZigbeeStatusFailure = 0x01,
-        ZigbeeStatusNotAuthorized = 0x7e,
-        ZigbeeStatusReservedFieldNotZero = 0x7f,
-        ZigbeeStatusMalformedCommand = 0x80,
-        ZigbeeStatusUnsupportedClusterCommand = 0x81,
-        ZigbeeStatusUnsupportedGeneralCommand = 0x82,
-        ZigbeeStatusUnsupportedManufacturerClusterCommand = 0x83,
-        ZigbeeStatusUnsupportedManufacturerGeneralCommand = 0x84,
-        ZigbeeStatusInvalidField = 0x85,
-        ZigbeeStatusUnsupportedAttribute = 0x86,
-        ZigbeeStatusInvalidValue = 0x87,
-        ZigbeeStatusReadOnly = 0x88,
-        ZigbeeStatusInsufficientSpace = 0x89,
-        ZigbeeStatusDuplicateExists = 0x8a,
-        ZigbeeStatusNotFound = 0x8b,
-        ZigbeeStatusUnreportableAttribute = 0x8c,
-        ZigbeeStatusInvalidDataType = 0x8d,
-        ZigbeeStatusInvalidSector = 0x8e,
-        ZigbeeStatusWriteOnly = 0x8f,
-        ZigbeeStatusInconsistentStartupState = 0x90,
-        ZigbeeStatusDefinedOutOfBand = 0x91,
-        ZigbeeStatusInconsistent = 0x92,
-        ZigbeeStatusActionDenied = 0x93,
-        ZigbeeStatusTimeout = 0x94,
-        ZigbeeStatusAbort = 0x95,
-        ZigbeeStatusInvalidImage = 0x96,
-        ZigbeeStatusWaitForData = 0x97,
-        ZigbeeStatusNoImageAvailable = 0x98,
-        ZigbeeStatusRequireMoreImage = 0x99,
-        ZigbeeStatusNotificationPending = 0x9a,
-        ZigbeeStatusHardwareFailure = 0xc0,
-        ZigbeeStatusSoftwareFailure = 0xc1,
-        ZigbeeStatusCalibrationError = 0xc2,
-        ZigbeeStatusUnsupportedCluster = 0xc3
-    };
-    Q_ENUM(ZigbeeStatus)
 
     // Basic struct for interface data.
     typedef  struct ApsdeDataConfirm {

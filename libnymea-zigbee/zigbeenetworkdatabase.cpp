@@ -55,6 +55,14 @@ ZigbeeNetworkDatabase::ZigbeeNetworkDatabase(ZigbeeNetwork *network, const QStri
     }
 }
 
+ZigbeeNetworkDatabase::~ZigbeeNetworkDatabase()
+{
+    if (m_db.isOpen()) {
+        qCDebug(dcZigbeeNetworkDatabase()) << "Closing database" << m_db.databaseName();
+        m_db.close();
+    }
+}
+
 QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
 {
     qCDebug(dcZigbeeNetworkDatabase()) << "Loading nodes from database" << m_db.databaseName();
@@ -93,7 +101,7 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
                     .arg(endpointId);
             QSqlQuery inputClustersQuery = m_db.exec(query);
             while (inputClustersQuery.next()) {
-                Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(inputClustersQuery.value("clusterId").toUInt());
+                ZigbeeClusterLibrary::ClusterId clusterId = static_cast<ZigbeeClusterLibrary::ClusterId>(inputClustersQuery.value("clusterId").toUInt());
                 ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Server);
                 endpoint->addInputCluster(cluster);
 
@@ -122,8 +130,8 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
             }
 
             // Set the basic cluster attributes if present
-            if (endpoint->hasInputCluster(Zigbee::ClusterIdBasic)) {
-                ZigbeeClusterBasic *basicCluster = endpoint->inputCluster<ZigbeeClusterBasic>(Zigbee::ClusterIdBasic);
+            if (endpoint->hasInputCluster(ZigbeeClusterLibrary::ClusterIdBasic)) {
+                ZigbeeClusterBasic *basicCluster = endpoint->inputCluster<ZigbeeClusterBasic>(ZigbeeClusterLibrary::ClusterIdBasic);
 
                 if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeManufacturerName))
                     endpoint->m_manufacturerName = basicCluster->attribute(ZigbeeClusterBasic::AttributeManufacturerName).dataType().toString();
@@ -142,7 +150,7 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
                     .arg(endpointId);
             QSqlQuery outputClustersQuery = m_db.exec(query);
             while (outputClustersQuery.next()) {
-                Zigbee::ClusterId clusterId = static_cast<Zigbee::ClusterId>(outputClustersQuery.value("clusterId").toUInt());
+                ZigbeeClusterLibrary::ClusterId clusterId = static_cast<ZigbeeClusterLibrary::ClusterId>(outputClustersQuery.value("clusterId").toUInt());
                 ZigbeeCluster *cluster = endpoint->createCluster(clusterId, ZigbeeCluster::Client);
                 qCDebug(dcZigbeeNetworkDatabase()) << "Loaded" << cluster;
                 endpoint->addOutputCluster(cluster);
@@ -178,70 +186,89 @@ bool ZigbeeNetworkDatabase::initDatabase()
         return false;
     }
 
-    // Write pragmas
-    m_db.exec("PRAGMA foreign_keys = ON;");
 
-    // FIXME: check schema version
+    // FIXME: check schema version fro compatibility or migration
+
+    qCDebug(dcZigbeeNetworkDatabase()) << "Tables" << m_db.tables();
+    if (m_db.tables().isEmpty()) {
+        // Write pragmas
+        m_db.exec("PRAGMA foreign_keys = ON;");
+        m_db.exec(QString("PRAGMA schema_version = %1;").arg(DB_VERSION));
+        m_db.exec(QString("PRAGMA user_version = %1;").arg(DB_VERSION));
+    }
 
     // Create nodes table
-    createTable("nodes",
-                "(ieeeAddress TEXT PRIMARY KEY, " // ieeeAddress to string
-                "shortAddress INTEGER NOT NULL, " // uint16
-                "nodeDescriptor BLOB NOT NULL, " // bytes as received from the node
-                "powerDescriptor INTEGER NOT NULL)"); // uint16
-    createIndices("ieeeAddressIndex", "nodes", "ieeeAddress");
-
+    if (!m_db.tables().contains("nodes")) {
+        createTable("nodes",
+                    "(ieeeAddress TEXT PRIMARY KEY, " // ieeeAddress to string
+                    "shortAddress INTEGER NOT NULL, " // uint16
+                    "nodeDescriptor BLOB NOT NULL, " // bytes as received from the node
+                    "powerDescriptor INTEGER NOT NULL)"); // uint16
+        createIndices("ieeeAddressIndex", "nodes", "ieeeAddress");
+    }
 
     // Create endpoints table
-    createTable("endpoints",
-                "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
-                "ieeeAddress INTEGER NOT NULL, " // // reference to nodes.ieeeAddress
-                "endpointId INTEGER NOT NULL, " // uint8
-                "profileId INTEGER NOT NULL, " // uint16
-                "deviceId INTEGER NOT NULL, " // uint16
-                "deviceVersion INTEGER, " // uint8
-                "CONSTRAINT fk_ieeeAddress FOREIGN KEY(ieeeAddress) REFERENCES nodes(ieeeAddress) ON DELETE CASCADE)");
-    createIndices("endpointIndex", "endpoints", "ieeeAddress, endpointId");
-
+    if (!m_db.tables().contains("endpoints")) {
+        createTable("endpoints",
+                    "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
+                    "ieeeAddress INTEGER NOT NULL, " // // reference to nodes.ieeeAddress
+                    "endpointId INTEGER NOT NULL, " // uint8
+                    "profileId INTEGER NOT NULL, " // uint16
+                    "deviceId INTEGER NOT NULL, " // uint16
+                    "deviceVersion INTEGER, " // uint8
+                    "CONSTRAINT fk_ieeeAddress FOREIGN KEY(ieeeAddress) REFERENCES nodes(ieeeAddress) ON DELETE CASCADE)");
+        createIndices("endpointIndex", "endpoints", "ieeeAddress, endpointId");
+    }
 
     // Create server cluster table
-    createTable("serverClusters",
-                "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
-                "endpointId INTEGER NOT NULL, " // reference to endpoint.id
-                "clusterId INTEGER NOT NULL, " // uint16
-                "CONSTRAINT fk_endpoint FOREIGN KEY(endpointId) REFERENCES endpoints(id) ON DELETE CASCADE)");
-    createIndices("serverClusterIndex", "serverClusters", "endpointId, clusterId");
+    if (!m_db.tables().contains("serverClusters")) {
+        createTable("serverClusters",
+                    "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
+                    "endpointId INTEGER NOT NULL, " // reference to endpoint.id
+                    "clusterId INTEGER NOT NULL, " // uint16
+                    "CONSTRAINT fk_endpoint FOREIGN KEY(endpointId) REFERENCES endpoints(id) ON DELETE CASCADE)");
+        createIndices("serverClusterIndex", "serverClusters", "endpointId, clusterId");
+    }
 
     // Create client cluster table
-    createTable("clientClusters",
-                "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
-                "endpointId INTEGER NOT NULL, " // reference to endpoint.id
-                "clusterId INTEGER NOT NULL, " // uint16
-                "CONSTRAINT fk_endpoint FOREIGN KEY(endpointId) REFERENCES endpoints(id) ON DELETE CASCADE)");
-    createIndices("clientClusterIndex", "clientClusters", "endpointId, clusterId");
+    if (!m_db.tables().contains("clientClusters")) {
+        createTable("clientClusters",
+                    "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
+                    "endpointId INTEGER NOT NULL, " // reference to endpoint.id
+                    "clusterId INTEGER NOT NULL, " // uint16
+                    "CONSTRAINT fk_endpoint FOREIGN KEY(endpointId) REFERENCES endpoints(id) ON DELETE CASCADE)");
+        createIndices("clientClusterIndex", "clientClusters", "endpointId, clusterId");
+    }
 
     // Create cluster attributes table
-    createTable("attributes",
-                "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
-                "clusterId INTEGER NOT NULL, " // reference to serverClusters.id
-                "attributeId INTEGER NOT NULL, " // uint16
-                "dataType INTEGER NOT NULL, " // uint8
-                "data BLOB NOT NULL, " // raw data from attribute
-                "CONSTRAINT fk_cluster FOREIGN KEY(clusterId) REFERENCES serverClusters(id) ON DELETE CASCADE)");
-    createIndices("attributesIndex", "attributes", "clusterId, attributeId");
+    if (!m_db.tables().contains("attributes")) {
+        createTable("attributes",
+                    "(id INTEGER PRIMARY KEY AUTOINCREMENT, " // for db relation
+                    "clusterId INTEGER NOT NULL, " // reference to serverClusters.id
+                    "attributeId INTEGER NOT NULL, " // uint16
+                    "dataType INTEGER NOT NULL, " // uint8
+                    "data BLOB NOT NULL, " // raw data from attribute
+                    "CONSTRAINT fk_cluster FOREIGN KEY(clusterId) REFERENCES serverClusters(id) ON DELETE CASCADE)");
+        createIndices("attributesIndex", "attributes", "clusterId, attributeId");
+    }
 
     return true;
 }
 
 void ZigbeeNetworkDatabase::createTable(const QString &tableName, const QString &schema)
 {
-    m_db.exec(QString("CREATE TABLE IF NOT EXISTS %1 %2;").arg(tableName).arg(schema));
-    m_db.exec(QString("PRAGMA schema_version = %1;").arg(DB_VERSION));
-    m_db.exec(QString("PRAGMA user_version = %1;").arg(DB_VERSION));
+    qCDebug(dcZigbeeNetworkDatabase()) << "Creating table" << tableName << schema;
+    QString query = QString("CREATE TABLE IF NOT EXISTS %1 %2;").arg(tableName).arg(schema);
+    m_db.exec(query);
+    if (m_db.lastError().type() != QSqlError::NoError) {
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not create table in database." << query << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        return;
+    }
 }
 
 void ZigbeeNetworkDatabase::createIndices(const QString &indexName, const QString &tableName, const QString &columns)
 {
+    qCDebug(dcZigbeeNetworkDatabase()) << "Creating table indices" << indexName << tableName << columns;
     m_db.exec(QString("CREATE UNIQUE INDEX IF NOT EXISTS %1 ON %2(%3);").arg(indexName).arg(tableName).arg(columns));
 }
 
@@ -256,9 +283,10 @@ bool ZigbeeNetworkDatabase::saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint)
             .arg(static_cast<quint16>(endpoint->deviceId()))
             .arg(static_cast<quint8>(endpoint->deviceVersion()));
 
+    qCDebug(dcZigbeeNetworkDatabase()) << queryString;
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
-        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save node into database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not save endpoint into database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
         return false;
     }
 
@@ -378,7 +406,7 @@ bool ZigbeeNetworkDatabase::removeNode(ZigbeeNode *node)
 {
     qCDebug(dcZigbeeNetworkDatabase()) << "Remove" << node;
     // Note: cascade delete will clean up all other tables
-    QString queryString = QString("DELETE FROM nodes WHERE ieeeAddress = %1;").arg(node->extendedAddress().toString());
+    QString queryString = QString("DELETE FROM nodes WHERE ieeeAddress = \"%1\";").arg(node->extendedAddress().toString());
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
         qCWarning(dcZigbeeNetworkDatabase()) << "Could not remove node from database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();

@@ -33,7 +33,7 @@
 #include <QDataStream>
 
 ZigbeeClusterColorControl::ZigbeeClusterColorControl(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, ZigbeeCluster::Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, Zigbee::ClusterIdColorControl, direction, parent)
+    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdColorControl, direction, parent)
 {
 
 }
@@ -105,6 +105,7 @@ ZigbeeClusterReply *ZigbeeClusterColorControl::commandMoveToHueAndSaturation(qui
 
 ZigbeeClusterReply *ZigbeeClusterColorControl::commandMoveToColor(quint16 colorX, quint16 colorY, quint16 transitionTime)
 {
+    qCDebug(dcZigbeeCluster()) << "Move to color" << colorX << colorY << transitionTime << "1/10 s";
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
@@ -132,6 +133,8 @@ ZigbeeClusterReply *ZigbeeClusterColorControl::commandStepColor(quint16 stepX, q
 
 ZigbeeClusterReply *ZigbeeClusterColorControl::commandMoveToColorTemperature(quint16 colorTemperatureMireds, quint16 transitionTime)
 {
+    qCDebug(dcZigbeeCluster()) << "Move to color temperature" << colorTemperatureMireds << transitionTime << "1/10 s";
+
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);

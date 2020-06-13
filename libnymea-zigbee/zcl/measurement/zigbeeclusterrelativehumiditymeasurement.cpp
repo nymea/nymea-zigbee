@@ -31,7 +31,7 @@
 #include "zigbeenetwork.h"
 
 ZigbeeClusterRelativeHumidityMeasurement::ZigbeeClusterRelativeHumidityMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, Zigbee::ClusterIdRelativeHumidityMeasurement, direction, parent)
+    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdRelativeHumidityMeasurement, direction, parent)
 {
 
 }

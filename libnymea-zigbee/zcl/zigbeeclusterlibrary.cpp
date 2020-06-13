@@ -112,11 +112,11 @@ QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> ZigbeeClusterLibrary::par
 
         // Read attribute id and status
         stream >> attributeId >> statusInt;
-        Zigbee::ZigbeeStatus status = static_cast<Zigbee::ZigbeeStatus>(statusInt);
+        ZigbeeClusterLibrary::Status status = static_cast<ZigbeeClusterLibrary::Status>(statusInt);
 
         qCDebug(dcZigbeeClusterLibrary()) << "Parse:" << ZigbeeUtils::convertUint16ToHexString(attributeId) << status;
 
-        if (status != Zigbee::ZigbeeStatusSuccess) {
+        if (status != ZigbeeClusterLibrary::StatusSuccess) {
             qCWarning(dcZigbeeCluster()) << "Attribute status record" << ZigbeeUtils::convertUint16ToHexString(attributeId) << "finished with error" << status;
             // If not success, we are done and can continue with the next status record
             continue;
@@ -254,6 +254,45 @@ QByteArray ZigbeeClusterLibrary::buildFrame(const ZigbeeClusterLibrary::Frame &f
     return buildHeader(frame.header) + frame.payload;
 }
 
+QByteArray ZigbeeClusterLibrary::buildAttributeReportingConfiguration(const ZigbeeClusterLibrary::AttributeReportingConfiguration &reportingConfiguration)
+{
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(reportingConfiguration.direction);
+    stream << reportingConfiguration.attributeId;
+    stream << static_cast<quint8>(reportingConfiguration.dataType);
+    stream << reportingConfiguration.minReportingInterval;
+    stream << reportingConfiguration.maxReportingInterval;
+    for (int i = 0; i < reportingConfiguration.reportableChange.count(); i++) {
+        stream << static_cast<quint8>(reportingConfiguration.reportableChange.at(i));
+    }
+
+    // Note: for reporting the timeoutPeriod is omitted
+    if (reportingConfiguration.direction == ReportingDirectionReceiving) {
+        stream << reportingConfiguration.timeoutPeriod;
+    }
+
+    return payload;
+}
+
+QList<ZigbeeClusterLibrary::AttributeReportingStatusRecord> ZigbeeClusterLibrary::parseAttributeReportingStatusRecords(const QByteArray &payload)
+{
+    QList<ZigbeeClusterLibrary::AttributeReportingStatusRecord> statusRecords;
+    QDataStream stream(payload);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    while (!stream.atEnd()) {
+        ZigbeeClusterLibrary::AttributeReportingStatusRecord statusRecord;
+        quint8 status; quint8 direction = 0;
+        stream >> status >> direction >> statusRecord.attributeId;
+        statusRecord.direction = static_cast<ReportingDirection>(direction);
+        statusRecord.status = static_cast<ZigbeeClusterLibrary::Status>(status);
+        statusRecords.append(statusRecord);
+    }
+
+    return statusRecords;
+}
+
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::FrameControl &frameControl)
 {
     debug.nospace() << "FrameControl(";
@@ -304,4 +343,29 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::ReadAttributeStatusR
                     << ")";
 
     return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::AttributeReportingConfiguration &attributeReportingConfiguration)
+{
+    debug.nospace() << "AttributeReportingConfiguration("
+                    << attributeReportingConfiguration.direction << ", "
+                    << ZigbeeUtils::convertUint16ToHexString(attributeReportingConfiguration.attributeId) << ", "
+                    << attributeReportingConfiguration.dataType << ", "
+                    << "Min interval: " << attributeReportingConfiguration.minReportingInterval << "[s], "
+                    << "Max interval: " << attributeReportingConfiguration.maxReportingInterval << "[s], "
+                    << "Change: " << ZigbeeUtils::convertByteArrayToHexString(attributeReportingConfiguration.reportableChange) << ", "
+                    << "Timeout period: " << attributeReportingConfiguration.timeoutPeriod << "[s]"
+                    << ")";
+    return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::AttributeReportingStatusRecord &attributeReportingStatusRecord)
+{
+    debug.nospace() << "AttributeReportingConfiguration("
+                    << attributeReportingStatusRecord.status << ", "
+                    << attributeReportingStatusRecord.attributeId << ", "
+                    << attributeReportingStatusRecord.direction
+                    << ")";
+    return debug.space();
+
 }

@@ -114,6 +114,9 @@ private:
     void readModelIdentifier(ZigbeeClusterBasic *basicCluster);
     void readSoftwareBuildId(ZigbeeClusterBasic *basicCluster);
 
+
+
+
 signals:
     void nodeInitializationFailed();
     void stateChanged(State state);

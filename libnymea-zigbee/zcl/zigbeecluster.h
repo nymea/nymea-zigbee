@@ -48,9 +48,9 @@ struct ZigbeeClusterReportConfigurationRecord {
 typedef struct ZigbeeClusterAttributeReport {
     quint16 sourceAddress;
     quint8 endpointId;
-    Zigbee::ClusterId clusterId;
+    ZigbeeClusterLibrary::ClusterId clusterId;
     quint16 attributeId;
-    Zigbee::ZigbeeStatus attributeStatus;
+    ZigbeeClusterLibrary::Status attributeStatus;
     Zigbee::DataType dataType;
     QByteArray data;
 } ZigbeeClusterAttributeReport;
@@ -75,29 +75,14 @@ public:
     };
     Q_ENUM(Direction)
 
-
-//    // Power configuration cluster 0x0001
-
-//    enum PowerConfigurationAttribute {
-//        PowerConfigurationAttributeMainsInformation = 0x0000,
-//        PowerConfigurationAttributeMainsSettings = 0x0001,
-//        PowerConfigurationAttributeBatteryInformation = 0x0002,
-//        PowerConfigurationAttributeBatterySettings = 0x0003,
-//        PowerConfigurationAttributeBatterySource2Information = 0x0004,
-//        PowerConfigurationAttributeBattterySource2Settings = 0x0005,
-//        PowerConfigurationAttributeBatterySource3Information = 0x0006,
-//        PowerConfigurationAttributeBattterySource3Settings = 0x0007
-//    };
-//    Q_ENUM(PowerConfigurationAttribute)
-
-    explicit ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Zigbee::ClusterId clusterId, Direction direction, QObject *parent = nullptr);
+    explicit ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, ZigbeeClusterLibrary::ClusterId clusterId, Direction direction, QObject *parent = nullptr);
 
     ZigbeeNode *node() const;
     ZigbeeNodeEndpoint *endpoint() const;
 
     Direction direction() const;
 
-    Zigbee::ClusterId clusterId() const;
+    ZigbeeClusterLibrary::ClusterId clusterId() const;
     QString clusterName() const;
 
     QList<ZigbeeClusterAttribute> attributes() const;
@@ -106,13 +91,17 @@ public:
 
     // ZCL global commands
     ZigbeeClusterReply *readAttributes(QList<quint16> attributes);
+    ZigbeeClusterReply *configureReporting(QList<ZigbeeClusterLibrary::AttributeReportingConfiguration> reportingConfigurations);
+
+
+
 
 protected:
     ZigbeeNetwork *m_network = nullptr;
     ZigbeeNode *m_node = nullptr;
     ZigbeeNodeEndpoint *m_endpoint= nullptr;
 
-    Zigbee::ClusterId m_clusterId = Zigbee::ClusterIdUnknown;
+    ZigbeeClusterLibrary::ClusterId m_clusterId = ZigbeeClusterLibrary::ClusterIdUnknown;
     Direction m_direction = Server;
     QHash<quint16, ZigbeeClusterAttribute> m_attributes;
 
@@ -120,6 +109,12 @@ protected:
     ZigbeeNetworkRequest createGeneralRequest();
     quint8 m_transactionSequenceNumber = 0;
     QHash<quint8, ZigbeeClusterReply *> m_pendingReplies;
+
+    // Global commands
+    ZigbeeClusterReply *executeGlobalCommand(quint8 command, const QByteArray &payload = QByteArray());
+
+
+    // Cluster specific
     ZigbeeClusterReply *createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame);
     ZigbeeClusterReply *executeClusterCommand(quint8 command, const QByteArray &payload = QByteArray());
     bool verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetworkReply *networkReply);

@@ -35,7 +35,7 @@
 
 #include <QDataStream>
 
-ZigbeeCluster::ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Zigbee::ClusterId clusterId, Direction direction, QObject *parent) :
+ZigbeeCluster::ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, ZigbeeClusterLibrary::ClusterId clusterId, Direction direction, QObject *parent) :
     QObject(parent),
     m_network(network),
     m_node(node),
@@ -61,14 +61,14 @@ ZigbeeCluster::Direction ZigbeeCluster::direction() const
     return m_direction;
 }
 
-Zigbee::ClusterId ZigbeeCluster::clusterId() const
+ZigbeeClusterLibrary::ClusterId ZigbeeCluster::clusterId() const
 {
     return m_clusterId;
 }
 
 QString ZigbeeCluster::clusterName() const
 {
-    return ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(m_clusterId));
+    return ZigbeeUtils::clusterIdToString(static_cast<ZigbeeClusterLibrary::ClusterId>(m_clusterId));
 }
 
 QList<ZigbeeClusterAttribute> ZigbeeCluster::attributes() const
@@ -105,6 +105,32 @@ ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
 {
     qCDebug(dcZigbeeCluster()) << "Read attributes from" << m_node << m_endpoint << this << attributes;
 
+    // ZCL payload
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    foreach (quint16 attribute, attributes) {
+        stream << attribute;
+    }
+
+    return executeGlobalCommand(ZigbeeClusterLibrary::CommandReadAttributes, payload);
+}
+
+ZigbeeClusterReply *ZigbeeCluster::configureReporting(QList<ZigbeeClusterLibrary::AttributeReportingConfiguration> reportingConfigurations)
+{
+    qCDebug(dcZigbeeCluster()) << "Configure reporting on" << m_node << m_endpoint << this << reportingConfigurations;
+
+    QByteArray payload;
+    foreach (const ZigbeeClusterLibrary::AttributeReportingConfiguration reportingConfiguration, reportingConfigurations) {
+        payload += ZigbeeClusterLibrary::buildAttributeReportingConfiguration(reportingConfiguration);
+    }
+
+    return executeGlobalCommand(ZigbeeClusterLibrary::CommandConfigureReporting, payload);
+}
+
+
+ZigbeeClusterReply *ZigbeeCluster::executeGlobalCommand(quint8 command, const QByteArray &payload)
+{
     // Build the request
     ZigbeeNetworkRequest request = createGeneralRequest();
 
@@ -124,16 +150,8 @@ ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
     // ZCL header
     ZigbeeClusterLibrary::Header header;
     header.frameControl = frameControl;
-    header.command = ZigbeeClusterLibrary::CommandReadAttributes;
+    header.command = command;
     header.transactionSequenceNumber = m_transactionSequenceNumber++;
-
-    // ZCL payload
-    QByteArray payload;
-    QDataStream stream(&payload, QIODevice::WriteOnly);
-    stream.setByteOrder(QDataStream::LittleEndian);
-    foreach (quint16 attribute, attributes) {
-        stream << attribute;
-    }
 
     // Put them together
     ZigbeeClusterLibrary::Frame frame;
@@ -162,6 +180,7 @@ ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
 
     return zclReply;
 }
+
 
 ZigbeeClusterReply *ZigbeeCluster::createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame)
 {
@@ -198,6 +217,7 @@ ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const Q
     request.setAsdu(ZigbeeClusterLibrary::buildFrame(frame));
 
     ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
+    qCDebug(dcZigbeeCluster()) << "Executing command" << ZigbeeUtils::convertByteToHexString(command) << ZigbeeUtils::convertByteArrayToHexString(payload);
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {

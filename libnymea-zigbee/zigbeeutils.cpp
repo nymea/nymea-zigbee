@@ -34,24 +34,7 @@
 
 #include <math.h>
 
-// Disabling 1000 to 2500 K, as we never want to go into full red for color temp
 static QList<QColor> colorTemperatureScale = {
-//    QColor(255, 56, 0),     // 1000 K
-//    QColor(255, 71, 0),
-//    QColor(255, 83, 0),
-//    QColor(255, 93, 0),
-//    QColor(255, 101, 0),
-//    QColor(255, 109, 0),
-//    QColor(255, 115, 0),
-//    QColor(255, 121, 0),
-//    QColor(255, 126, 0),
-//    QColor(255, 131, 0),
-//    QColor(255, 138, 18),
-//    QColor(255, 142, 33),
-//    QColor(255, 147, 44),
-//    QColor(255, 152, 54),
-//    QColor(255, 157, 63),
-//    QColor(255, 161, 72),    // 2500K
     QColor(255, 165, 79),
     QColor(255, 169, 87),
     QColor(255, 173, 94),
@@ -260,23 +243,12 @@ QString ZigbeeUtils::convertUint64ToHexString(const quint64 &value)
     return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
 }
 
-//QString ZigbeeUtils::messageTypeToString(const Zigbee::InterfaceMessageType &type)
-//{
-//    QMetaObject metaObject = Zigbee::staticMetaObject;
-//    QMetaEnum metaEnum = metaObject.enumerator(metaObject.indexOfEnumerator("InterfaceMessageType"));
-
-//    QString enumString = metaEnum.valueToKey(type);
-
-//    return enumString.remove("Zigbee::InterfaceMessageType(MessageType").remove(")");
-//}
-
-QString ZigbeeUtils::clusterIdToString(const Zigbee::ClusterId &clusterId)
+QString ZigbeeUtils::clusterIdToString(const ZigbeeClusterLibrary::ClusterId &clusterId)
 {
-    QMetaObject metaObject = Zigbee::staticMetaObject;
+    QMetaObject metaObject = ZigbeeClusterLibrary::staticMetaObject;
     QMetaEnum metaEnum = metaObject.enumerator(metaObject.indexOfEnumerator("ClusterId"));
-
     QString enumString = metaEnum.valueToKey(clusterId);
-    QString clusterName = enumString.remove("Zigbee::ClusterId(ClusterId").remove(")").append(QString("(%1)").arg(ZigbeeUtils::convertUint16ToHexString(clusterId)));
+    QString clusterName = enumString.remove("ZigbeeClusterLibrary::ClusterId(ClusterId").remove(")");
     if (clusterName.isEmpty())
         clusterName = "Unknown";
 
@@ -287,9 +259,7 @@ QString ZigbeeUtils::profileIdToString(const Zigbee::ZigbeeProfile &profileId)
 {
     QMetaObject metaObject = Zigbee::staticMetaObject;
     QMetaEnum metaEnum = metaObject.enumerator(metaObject.indexOfEnumerator("ZigbeeProfile"));
-
     QString enumString = metaEnum.valueToKey(profileId);
-
     return enumString.remove("Zigbee::ZigbeeProfile(ZigbeeProfile").remove(")");
 }
 
@@ -328,6 +298,12 @@ QPointF ZigbeeUtils::convertColorToXY(const QColor &color)
     // TODO: ceck if this point is within the color gamut triangle of the light, otherwise get closest point
 
     return QPointF(x, y);
+}
+
+QPoint ZigbeeUtils::convertColorToXYInt(const QColor &color)
+{
+    QPointF xyColor = convertColorToXY(color);
+    return QPoint(qRound(xyColor.x() * 65536), qRound(xyColor.y() * 65536));
 }
 
 QColor ZigbeeUtils::convertXYToColor(const QPointF &xyColor)
@@ -428,82 +404,4 @@ QColor ZigbeeUtils::interpolateColorFromColorTemperature(int colorTemperature, i
     int closestColorIndex = qRound((colorTemperatureScale.count() - 1) * (1.0 - percentage));
     // FIXME: interpolate between the selected index and the next color for more accuracy if required
     return colorTemperatureScale.at(closestColorIndex);
-}
-
-ZigbeeClusterAttributeReport ZigbeeUtils::parseAttributeReport(const QByteArray &data)
-{
-    QByteArray dataCopy = data;
-    quint8 sequenceNumber = 0;
-    quint16 sourceAddress = 0;
-    quint8 endpointId = 0;
-    quint16 clusterId = 0;
-    quint16 attributeId = 0;
-    quint8 attributeStatus = 0;
-    quint8 attributDataType = 0;
-    quint16 dataSize = 0;
-
-    QDataStream stream(&dataCopy, QIODevice::ReadOnly);
-    stream >> sequenceNumber >> sourceAddress >> endpointId >> clusterId >> attributeId >> attributeStatus >> attributDataType >> dataSize;
-
-    Zigbee::DataType dataType = static_cast<Zigbee::DataType>(attributDataType);
-    QByteArray attributeData = data.right(dataSize);
-
-    if (attributeData.length() != dataSize) {
-        //qCWarning(dcZigbeeNetwork()) << "HACK" << attributeData.length() << "!=" << dataSize;
-        // Note: the NXP firmware for JN5169 has a bug here and does not send the attributeStatus.
-        // Repars data without attribute status
-        sequenceNumber = 0;
-        sourceAddress = 0;
-        endpointId = 0;
-        clusterId = 0;
-        attributeId = 0;
-        attributeStatus = 0;
-        attributDataType = 0;
-        dataSize = 0;
-
-        QDataStream alternativeStream(&dataCopy, QIODevice::ReadOnly);
-        alternativeStream >> sequenceNumber >> sourceAddress >> endpointId >> clusterId >> attributeId >> attributDataType >> dataSize;
-
-        dataType = static_cast<Zigbee::DataType>(attributDataType);
-        attributeData = data.right(dataSize);
-    }
-
-//    qCDebug(dcZigbeeNetwork()) << "Attribute read response:";
-//    qCDebug(dcZigbeeNetwork()) << "    SQN:" << ZigbeeUtils::convertByteToHexString(sequenceNumber);
-//    qCDebug(dcZigbeeNetwork()) << "    Source address:" << ZigbeeUtils::convertUint16ToHexString(sourceAddress);
-//    qCDebug(dcZigbeeNetwork()) << "    End point:" << ZigbeeUtils::convertByteToHexString(endpointId);
-//    qCDebug(dcZigbeeNetwork()) << "    Cluster:" << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
-//    qCDebug(dcZigbeeNetwork()) << "    Attribut id:" << ZigbeeUtils::convertUint16ToHexString(attributeId);
-//    qCDebug(dcZigbeeNetwork()) << "    Attribut status:" <<  static_cast<Zigbee::ZigbeeStatus>(attributeStatus);
-//    qCDebug(dcZigbeeNetwork()) << "    Attribut data type:" << dataType;
-//    qCDebug(dcZigbeeNetwork()) << "    Attribut size:" << dataSize;
-//    qCDebug(dcZigbeeNetwork()) << "    Data:" << ZigbeeUtils::convertByteArrayToHexString(attributeData);
-
-//    switch (dataType) {
-//    case Zigbee::CharString:
-//        qCDebug(dcZigbeeNetwork()) << "    Data(converted)" << QString::fromUtf8(attributeData);
-//        break;
-//    case Zigbee::Bool:
-//        qCDebug(dcZigbeeNetwork()) << "    Data(converted)" << static_cast<bool>(attributeData.at(0));
-//        break;
-//    default:
-//        break;
-//    }
-
-
-//    ZigbeeNodeNxp *node = qobject_cast<ZigbeeNodeNxp *>(getZigbeeNode(sourceAddress));
-//    if (!node) {
-//        qCWarning(dcZigbeeNode()) << "Received an attribute report from an unknown node. Ignoring data.";
-//        return;
-//    }
-
-    ZigbeeClusterAttributeReport attributeReport;
-    attributeReport.sourceAddress = sourceAddress;
-    attributeReport.endpointId = endpointId;
-    attributeReport.clusterId = static_cast<Zigbee::ClusterId>(clusterId);
-    attributeReport.attributeId = attributeId;
-    attributeReport.attributeStatus = static_cast<Zigbee::ZigbeeStatus>(attributeStatus);
-    attributeReport.dataType = dataType;
-    attributeReport.data = attributeData;
-    return attributeReport;
 }

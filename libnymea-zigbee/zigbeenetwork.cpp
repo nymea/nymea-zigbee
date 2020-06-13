@@ -303,7 +303,7 @@ void ZigbeeNetwork::saveNetwork()
 {
     qCDebug(dcZigbeeNetwork()) << "Save current network configuration to" << m_settingsFileName;
     QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
-    settings.beginGroup("Network");
+    settings.beginGroup("ZigbeeNetwork");
     settings.setValue("panId", panId());
     settings.setValue("channel", channel());
     settings.setValue("networkKey", securityConfiguration().networkKey().toString());
@@ -321,7 +321,7 @@ void ZigbeeNetwork::loadNetwork()
     }
 
     QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
-    settings.beginGroup("Network");
+    settings.beginGroup("ZigbeeNetwork");
     quint16 panId = static_cast<quint16>(settings.value("panId", 0).toUInt());
     setPanId(panId);
     setChannel(settings.value("channel", 0).toUInt());
@@ -535,6 +535,7 @@ void ZigbeeNetwork::onNodeStateChanged(ZigbeeNode::State state)
     ZigbeeNode *node = qobject_cast<ZigbeeNode *>(sender());
     if (state == ZigbeeNode::StateInitialized && m_uninitializedNodes.contains(node)) {
         m_uninitializedNodes.removeAll(node);
+        // Disconnect this slot since we don't need it any more
         disconnect(node, &ZigbeeNode::stateChanged, this, &ZigbeeNetwork::onNodeStateChanged);
         addNode(node);
     }

@@ -97,12 +97,12 @@ QList<ZigbeeCluster *> ZigbeeNodeEndpoint::inputClusters() const
     return m_inputClusters.values();
 }
 
-ZigbeeCluster *ZigbeeNodeEndpoint::getInputCluster(Zigbee::ClusterId clusterId) const
+ZigbeeCluster *ZigbeeNodeEndpoint::getInputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const
 {
     return m_inputClusters.value(clusterId);
 }
 
-bool ZigbeeNodeEndpoint::hasInputCluster(Zigbee::ClusterId clusterId) const
+bool ZigbeeNodeEndpoint::hasInputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const
 {
     return m_inputClusters.keys().contains(clusterId);
 }
@@ -112,12 +112,12 @@ QList<ZigbeeCluster *> ZigbeeNodeEndpoint::outputClusters() const
     return m_outputClusters.values();
 }
 
-ZigbeeCluster *ZigbeeNodeEndpoint::getOutputCluster(Zigbee::ClusterId clusterId) const
+ZigbeeCluster *ZigbeeNodeEndpoint::getOutputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const
 {
     return m_outputClusters.value(clusterId);
 }
 
-bool ZigbeeNodeEndpoint::hasOutputCluster(Zigbee::ClusterId clusterId) const
+bool ZigbeeNodeEndpoint::hasOutputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const
 {
     return m_outputClusters.keys().contains(clusterId);
 }
@@ -163,48 +163,52 @@ void ZigbeeNodeEndpoint::setSoftwareBuildId(const QString &softwareBuildId)
     emit softwareBuildIdChanged(m_softwareBuildId);
 }
 
-ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(Zigbee::ClusterId clusterId, ZigbeeCluster::Direction direction)
+ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId clusterId, ZigbeeCluster::Direction direction)
 {
     switch (clusterId) {
     // General
-    case Zigbee::ClusterIdBasic:
+    case ZigbeeClusterLibrary::ClusterIdBasic:
         return new ZigbeeClusterBasic(m_network, m_node, this, direction, this);
         break;
-    case Zigbee::ClusterIdOnOff:
-        return new ZigbeeClusterOnOff(m_network, m_node, this, direction, this);
+    case ZigbeeClusterLibrary::ClusterIdPowerConfiguration:
+        return new ZigbeeClusterPowerConfiguration(m_network, m_node, this, direction, this);
         break;
-    case Zigbee::ClusterIdIdentify:
+    case ZigbeeClusterLibrary::ClusterIdIdentify:
         return new ZigbeeClusterIdentify(m_network, m_node, this, direction, this);
         break;
-    case Zigbee::ClusterIdLevelControl:
+    case ZigbeeClusterLibrary::ClusterIdOnOff:
+        return new ZigbeeClusterOnOff(m_network, m_node, this, direction, this);
+        break;
+    case ZigbeeClusterLibrary::ClusterIdLevelControl:
         return new ZigbeeClusterLevelControl(m_network, m_node, this, direction, this);
         break;
 
         // Measurement
-    case Zigbee::ClusterIdTemperatureMeasurement:
+    case ZigbeeClusterLibrary::ClusterIdIlluminanceMeasurement:
+        return new ZigbeeClusterIlluminanceMeasurment(m_network, m_node, this, direction, this);
+        break;
+    case ZigbeeClusterLibrary::ClusterIdTemperatureMeasurement:
         return new ZigbeeClusterTemperatureMeasurement(m_network, m_node, this, direction, this);
         break;
-    case Zigbee::ClusterIdRelativeHumidityMeasurement:
+    case ZigbeeClusterLibrary::ClusterIdRelativeHumidityMeasurement:
         return new ZigbeeClusterRelativeHumidityMeasurement(m_network, m_node, this, direction, this);
         break;
-    case Zigbee::ClusterIdOccupancySensing:
+    case ZigbeeClusterLibrary::ClusterIdOccupancySensing:
         return new ZigbeeClusterOccupancySensing(m_network, m_node, this, direction, this);
-        break;
-    case Zigbee::ClusterIdIlluminanceMeasurement:
-        return new ZigbeeClusterIlluminanceMeasurment(m_network, m_node, this, direction, this);
         break;
 
         // Lighting
-    case Zigbee::ClusterIdColorControl:
+    case ZigbeeClusterLibrary::ClusterIdColorControl:
         return new ZigbeeClusterColorControl(m_network, m_node, this, direction, this);
         break;
 
         // Security
-    case Zigbee::ClusterIdIasZone:
+    case ZigbeeClusterLibrary::ClusterIdIasZone:
         return new ZigbeeClusterIasZone(m_network, m_node, this, direction, this);
         break;
+
     default:
-        // Return a default cluster since we have no special implementation for this cluster
+        // Return a default cluster since we have no special implementation for this cluster, allowing to use generic clusters operations
         return new ZigbeeCluster(m_network, m_node, this, clusterId, direction, this);
     }
 }
@@ -237,18 +241,18 @@ void ZigbeeNodeEndpoint::handleZigbeeClusterLibraryIndication(const Zigbee::Apsd
     switch (frame.header.frameControl.direction) {
     case ZigbeeClusterLibrary::DirectionClientToServer:
         // Get the output/client cluster this indication is coming from
-        cluster = getOutputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
+        cluster = getOutputCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId));
         if (!cluster) {
-            cluster = createCluster(static_cast<Zigbee::ClusterId>(indication.clusterId), ZigbeeCluster::Client);
+            cluster = createCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId), ZigbeeCluster::Client);
             qCWarning(dcZigbeeEndpoint()) << "Received a ZCL indication for a cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
             addOutputCluster(cluster);
         }
         break;
     case ZigbeeClusterLibrary::DirectionServerToClient:
         // Get the input/server cluster this indication is coming from
-        cluster = getInputCluster(static_cast<Zigbee::ClusterId>(indication.clusterId));
+        cluster = getInputCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId));
         if (!cluster) {
-            cluster = createCluster(static_cast<Zigbee::ClusterId>(indication.clusterId), ZigbeeCluster::Server);
+            cluster = createCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId), ZigbeeCluster::Server);
             qCWarning(dcZigbeeEndpoint()) << "Received a ZCL indication for a cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
             addInputCluster(cluster);
         }

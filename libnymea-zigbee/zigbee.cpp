@@ -45,7 +45,7 @@ QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataConfirm &confirm)
 
     debug.nospace() << "Destination EP:" << ZigbeeUtils::convertByteToHexString(confirm.destinationEndpoint) << ", ";
     debug.nospace() << "Source EP:" << ZigbeeUtils::convertByteToHexString(confirm.sourceEndpoint) << ", ";
-    debug.nospace() << static_cast<Zigbee::ZigbeeStatus>(confirm.zigbeeStatusCode);
+    debug.nospace() << static_cast<ZigbeeClusterLibrary::Status>(confirm.zigbeeStatusCode);
     debug.nospace() << ")";
 
     return debug.space();
@@ -76,7 +76,7 @@ QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataIndication &indication)
     if (indication.profileId == static_cast<quint16>(Zigbee::ZigbeeProfileDevice)) {
         debug.nospace() << static_cast<ZigbeeDeviceProfile::ZdoCommand>(indication.clusterId) << ", ";
     } else {
-        debug.nospace() << static_cast<Zigbee::ClusterId>(indication.clusterId) << ", ";
+        debug.nospace() << static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId) << ", ";
     }
 
     debug.nospace() << "ASDU: " << ZigbeeUtils::convertByteArrayToHexString(indication.asdu) << ", ";

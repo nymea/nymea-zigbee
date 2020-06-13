@@ -66,6 +66,133 @@ public:
     };
     Q_ENUM(Command)
 
+    enum Status {
+        StatusSuccess = 0x00,
+        StatusFailure = 0x01,
+        StatusNotAuthorized = 0x7e,
+        StatusReservedFieldNotZero = 0x7f,
+        StatusMalformedCommand = 0x80,
+        StatusUnsupportedClusterCommand = 0x81,
+        StatusUnsupportedGeneralCommand = 0x82,
+        StatusUnsupportedManufacturerClusterCommand = 0x83,
+        StatusUnsupportedManufacturerGeneralCommand = 0x84,
+        StatusInvalidField = 0x85,
+        StatusUnsupportedAttribute = 0x86,
+        StatusInvalidValue = 0x87,
+        StatusReadOnly = 0x88,
+        StatusInsufficientSpace = 0x89,
+        StatusDuplicateExists = 0x8a,
+        StatusNotFound = 0x8b,
+        StatusUnreportableAttribute = 0x8c,
+        StatusInvalidDataType = 0x8d,
+        StatusInvalidSector = 0x8e,
+        StatusWriteOnly = 0x8f,
+        StatusInconsistentStartupState = 0x90,
+        StatusDefinedOutOfBand = 0x91,
+        StatusInconsistent = 0x92,
+        StatusActionDenied = 0x93,
+        StatusTimeout = 0x94,
+        StatusAbort = 0x95,
+        StatusInvalidImage = 0x96,
+        StatusWaitForData = 0x97,
+        StatusNoImageAvailable = 0x98,
+        StatusRequireMoreImage = 0x99,
+        StatusNotificationPending = 0x9a,
+        StatusHardwareFailure = 0xc0,
+        StatusSoftwareFailure = 0xc1,
+        StatusCalibrationError = 0xc2,
+        StatusUnsupportedCluster = 0xc3
+    };
+    Q_ENUM(Status)
+
+    enum ClusterId {
+        // Basics
+        ClusterIdUnknown                = 0xffff,
+        ClusterIdBasic                  = 0x0000,
+        ClusterIdPowerConfiguration     = 0x0001,
+        ClusterIdDeviceTemperature      = 0x0002,
+        ClusterIdIdentify               = 0x0003,
+        ClusterIdGroups                 = 0x0004,
+        ClusterIdScenes                 = 0x0005,
+        ClusterIdOnOff                  = 0x0006,
+        ClusterIdOnOffCOnfiguration     = 0x0007,
+        ClusterIdLevelControl           = 0x0008,
+        ClusterIdAlarms                 = 0x0009,
+        ClusterIdTime                   = 0x000A,
+        ClusterIdRssiLocation           = 0x000B,
+        ClusterIdAnalogInputBasic       = 0x000C,
+        ClusterIdAnalogOutputBasic      = 0x000D,
+        ClusterIdValueBasic             = 0x000E,
+        ClusterIdBinaryInputBasic       = 0x000F,
+        ClusterIdBinaryOutputBasic      = 0x0010,
+        ClusterIdBinaryValueBasic       = 0x0011,
+        ClusterIdMultiStateInputBasic   = 0x0012,
+        ClusterIdMultiStateOutputBasic  = 0x0013,
+        ClusterIdMultiStateValueBasic   = 0x0014,
+        ClusterIdCommissoning           = 0x0015,
+
+        // Over the air uppgrade (OTA)
+        ClusterIdOtaUpgrade             = 0x0019,
+
+        // Poll controll
+        ClusterIdPollControl            = 0x0020,
+
+
+        // Closures
+        ClusterIdShadeConfiguration     = 0x0100,
+
+        // Door Lock
+        ClusterIdDoorLock               = 0x0101,
+
+        // Heating, Ventilation and Air-Conditioning (HVAC)
+        ClusterIdPumpConfigurationControl = 0x0200,
+        ClusterIdThermostat               = 0x0201,
+        ClusterIdFanControll              = 0x0202,
+        ClusterIdDehumiditationControll   = 0x0203,
+        ClusterIdThermostatUserControll   = 0x0204,
+
+        // Lighting
+        ClusterIdColorControl           = 0x0300,
+        ClusterIdBallastConfiguration   = 0x0301,
+
+        // Sensing
+        ClusterIdIlluminanceMeasurement         = 0x0400,
+        ClusterIdIlluminanceLevelSensing        = 0x0401,
+        ClusterIdTemperatureMeasurement         = 0x0402,
+        ClusterIdPressureMeasurement            = 0x0403,
+        ClusterIdFlowMeasurement                = 0x0404,
+        ClusterIdRelativeHumidityMeasurement    = 0x0405,
+        ClusterIdOccupancySensing               = 0x0406,
+
+        // Security and Safty
+        ClusterIdIasZone = 0x0500,
+        ClusterIdIasAce  = 0x0501,
+        ClusterIdIasWd   = 0x0502,
+
+        // Smart energy
+        ClusterIdPrice          = 0x0700,
+        ClusterIdLoadControl    = 0x0701,
+        ClusterIdSimpleMetering = 0x0702,
+
+        // ZLL
+        ClusterIdTouchlinkCommissioning = 0x1000,
+
+        // NXP Appliances
+        ClusterIdApplianceControl           = 0x001B,
+        ClusterIdApplianceIdentification    = 0x0B00,
+        ClusterIdApplianceEventsAlerts      = 0x0B02,
+        ClusterIdApplianceStatistics        = 0x0B03,
+
+        // Electrical Measurement
+        ClusterIdElectricalMeasurement      = 0x0B04,
+        ClusterIdDiagnostics                = 0x0B05,
+
+        // Zigbee green power
+        ClusterIdGreenPower                 = 0x0021
+
+    };
+    Q_ENUM(ClusterId)
+
     enum GlobalAttribute {
         GlobalAttributeClusterRevision = 0xfffd,
         GlobalAttributeAttributeReportingStatus = 0xfffe
@@ -91,6 +218,12 @@ public:
     };
     Q_ENUM(Direction)
 
+    enum ReportingDirection {
+        ReportingDirectionReporting = 0x00,
+        ReportingDirectionReceiving = 0x01
+    };
+    Q_ENUM(ReportingDirection)
+
     typedef struct FrameControl {
         FrameType frameType = FrameTypeGlobal;
         bool manufacturerSpecific = false;
@@ -114,9 +247,27 @@ public:
     // Read attribute
     typedef struct ReadAttributeStatusRecord {
         quint16 attributeId;
-        Zigbee::ZigbeeStatus attributeStatus;
+        ZigbeeClusterLibrary::Status attributeStatus;
         ZigbeeDataType dataType;
     } ReadAttributeStatusRecord;
+
+    // Reporting attributes
+    typedef struct AttributeReportingConfiguration {
+        ReportingDirection direction = ReportingDirectionReporting;
+        quint16 attributeId = 0x0000;
+        Zigbee::DataType dataType = Zigbee::NoData;
+        quint16 minReportingInterval = 0x0000; // seconds
+        quint16 maxReportingInterval = 0x0000; // seconds
+        QByteArray reportableChange; // Data depending on the dataType
+        quint16 timeoutPeriod = 0x0000;  // seconds, only used for direction receiving
+    } AttributeReportingConfiguration;
+
+    // Response of reporting configuration
+    typedef struct AttributeReportingStatusRecord {
+        ZigbeeClusterLibrary::Status status;
+        ReportingDirection direction = ReportingDirectionReporting;
+        quint16 attributeId = 0x0000;
+    } AttributeReportingStatusRecord;
 
 
     // General parse/build methods
@@ -132,12 +283,21 @@ public:
 
     static Frame parseFrameData(const QByteArray &frameData);
     static QByteArray buildFrame(const Frame &frame);
+
+    // AttributeReportingConfiguration
+    static QByteArray buildAttributeReportingConfiguration(const AttributeReportingConfiguration &reportingConfiguration);
+    // TODO: parseAttributeReportingConfiguration
+
+    static QList<AttributeReportingStatusRecord> parseAttributeReportingStatusRecords(const QByteArray &payload);
+
 };
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::FrameControl &frameControl);
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Header &header);
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Frame &frame);
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::ReadAttributeStatusRecord &attributeStatusRecord);
+QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::AttributeReportingConfiguration &attributeReportingConfiguration);
+QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::AttributeReportingStatusRecord &attributeReportingStatusRecord);
 
 
 #endif // ZIGBEECLUSTERLIBRARY_H

@@ -41,6 +41,7 @@
 #include "zcl/general/zigbeeclusteronoff.h"
 #include "zcl/general/zigbeeclusteridentify.h"
 #include "zcl/general/zigbeeclusterlevelcontrol.h"
+#include "zcl/general/zigbeeclusterpowerconfiguration.h"
 
 #include "zcl/measurement/zigbeeclusteroccupancysensing.h"
 #include "zcl/measurement/zigbeeclusterilluminancemeasurment.h"
@@ -85,17 +86,17 @@ public:
 
     // Server clusters
     QList<ZigbeeCluster *> inputClusters() const;
-    ZigbeeCluster *getInputCluster(Zigbee::ClusterId clusterId) const;
-    bool hasInputCluster(Zigbee::ClusterId clusterId) const;
+    ZigbeeCluster *getInputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const;
+    bool hasInputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const;
 
     // Client clusters
     QList<ZigbeeCluster *> outputClusters() const;
-    ZigbeeCluster *getOutputCluster(Zigbee::ClusterId clusterId) const;
-    bool hasOutputCluster(Zigbee::ClusterId clusterId) const;
+    ZigbeeCluster *getOutputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const;
+    bool hasOutputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const;
 
     // Convinience cast methods for getting a specific cluster object
     template<typename T>
-    inline T* inputCluster(Zigbee::ClusterId clusterId)
+    inline T* inputCluster(ZigbeeClusterLibrary::ClusterId clusterId)
     {
         if (!hasInputCluster(clusterId))
             return nullptr;
@@ -104,7 +105,7 @@ public:
     }
 
     template<typename T>
-    inline T* outputCluster(Zigbee::ClusterId clusterId)
+    inline T* outputCluster(ZigbeeClusterLibrary::ClusterId clusterId)
     {
         if (!hasOutputCluster(clusterId))
             return nullptr;
@@ -124,8 +125,8 @@ private:
     quint8 m_deviceVersion = 0;
     bool m_initialized = false;
 
-    QHash<Zigbee::ClusterId, ZigbeeCluster *> m_inputClusters;
-    QHash<Zigbee::ClusterId, ZigbeeCluster *> m_outputClusters;
+    QHash<ZigbeeClusterLibrary::ClusterId, ZigbeeCluster *> m_inputClusters;
+    QHash<ZigbeeClusterLibrary::ClusterId, ZigbeeCluster *> m_outputClusters;
 
     QString m_manufacturerName;
     QString m_modelIdentifier;
@@ -135,7 +136,7 @@ private:
     void setModelIdentifier(const QString &modelIdentifier);
     void setSoftwareBuildId(const QString &softwareBuildId);
 
-    ZigbeeCluster *createCluster(Zigbee::ClusterId clusterId, ZigbeeCluster::Direction direction);
+    ZigbeeCluster *createCluster(ZigbeeClusterLibrary::ClusterId clusterId, ZigbeeCluster::Direction direction);
 
     void addInputCluster(ZigbeeCluster *cluster);
     void addOutputCluster(ZigbeeCluster *cluster);

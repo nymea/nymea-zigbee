@@ -29,6 +29,7 @@
 #define ZIGBEEUTILS_H
 
 #include <QColor>
+#include <QPoint>
 #include <QObject>
 #include <QString>
 #include <QPointF>
@@ -38,7 +39,6 @@
 #include "zigbee.h"
 #include "zigbeedatatype.h"
 #include "zcl/zigbeecluster.h"
-
 
 class ZigbeeUtils
 {
@@ -63,7 +63,7 @@ public:
 
     // Enum prittify print methods
     //static QString messageTypeToString(const Zigbee::InterfaceMessageType &type);
-    static QString clusterIdToString(const Zigbee::ClusterId &clusterId);
+    static QString clusterIdToString(const ZigbeeClusterLibrary::ClusterId &clusterId);
     static QString profileIdToString(const Zigbee::ZigbeeProfile &profileId);
 
     // Generate random data
@@ -71,13 +71,12 @@ public:
 
     // Color converter
     static QPointF convertColorToXY(const QColor &color);
+    static QPoint convertColorToXYInt(const QColor &color);
     static QColor convertXYToColor(const QPointF &xyColor);
     static QColor convertXYToColor(quint16 x, quint16 y);
 
     // Color temperature interpolation
     static QColor interpolateColorFromColorTemperature(int colorTemperature, int minValue, int maxValue);
-
-    static ZigbeeClusterAttributeReport parseAttributeReport(const QByteArray &data);
 
 };
 

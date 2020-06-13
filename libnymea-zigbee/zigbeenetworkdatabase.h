@@ -44,6 +44,7 @@ class ZigbeeNetworkDatabase : public QObject
     Q_OBJECT
 public:
     explicit ZigbeeNetworkDatabase(ZigbeeNetwork *network, const QString &databaseName, QObject *parent = nullptr);
+    ~ZigbeeNetworkDatabase();
 
     QList<ZigbeeNode *> loadNodes();
     bool wipeDatabase();

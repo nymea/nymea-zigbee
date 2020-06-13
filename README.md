@@ -9,8 +9,10 @@ Depending on your available hardware following gateway modules are supported
 
 ## NXP
 
-* JN5168 (SoM)
-* JN5169 (USB Stick)
+> Note: the firmware erquires an entire rework and implement the APS layer
+
+* ~~JN5168 (SoM)~~
+* ~~JN5169 (USB Stick)~~
 
 ## deCONZ
 
@@ -20,15 +22,11 @@ Depending on your available hardware following gateway modules are supported
 * RaspBee II
 
 
-## Structure
+## Hidden base groups
 
-ZigbeeNetwork
-  - ZDO handler
-  - ZCL handler
-    - ZHA handler
-    - ZLL handler
-    - GP handler
+Each sensor/remote cluster will be bound automatically to the sensors group in order to receive commands from the device. The lights group can be used to switch all lights within the network with one command.
 
-  - [ZigbeeNode]
-    - [ZigbeeNodeEndpoints]
-        - Profile
+- Sensors: `0xfff0`
+- Light: `0xfff1`
+
+

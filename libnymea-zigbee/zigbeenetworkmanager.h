@@ -25,8 +25,8 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEEMANAGER_H
-#define ZIGBEEMANAGER_H
+#ifndef ZIGBEENETWORKMANAGER_H
+#define ZIGBEENETWORKMANAGER_H
 
 #include <QObject>
 
@@ -39,7 +39,9 @@ public:
         BackendTypeDeconz
     };
 
+    static QStringList availableBackendTypes();
+
     static ZigbeeNetwork *createZigbeeNetwork(BackendType backend, QObject *parent = nullptr);
 };
 
-#endif // ZIGBEEMANAGER_H
+#endif // ZIGBEENETWORKMANAGER_H

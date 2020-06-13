@@ -151,7 +151,7 @@ QDebug operator<<(QDebug debug, const ZigbeeNetworkRequest &request)
     if (request.profileId() == Zigbee::ZigbeeProfileDevice) {
         debug.nospace() << static_cast<ZigbeeDeviceProfile::ZdoCommand>(request.clusterId()) << ", ";
     } else {
-        debug.nospace() << static_cast<Zigbee::ClusterId>(request.clusterId()) << ", ";
+        debug.nospace() << static_cast<ZigbeeClusterLibrary::ClusterId>(request.clusterId()) << ", ";
     }
 
     if (request.destinationAddressMode() == Zigbee::DestinationAddressModeGroup)

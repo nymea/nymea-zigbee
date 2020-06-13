@@ -280,7 +280,7 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to request simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << m_requestRetry << "/" << "3 attempts.";
-                initEndpoints();
+                initEndpoint(endpointId);
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
@@ -338,10 +338,10 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
         for (int i = 0; i < inputClusterCount; i++) {
             quint16 clusterId = 0;
             stream >> clusterId;
-            if (!endpoint->hasInputCluster(static_cast<Zigbee::ClusterId>(clusterId))) {
-                endpoint->addInputCluster(endpoint->createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Server));
+            if (!endpoint->hasInputCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(clusterId))) {
+                endpoint->addInputCluster(endpoint->createCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(clusterId), ZigbeeCluster::Server));
             }
-            qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
+            qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<ZigbeeClusterLibrary::ClusterId>(clusterId));
         }
 
         // Parse and add client clusters
@@ -350,10 +350,10 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
         for (int i = 0; i < outputClusterCount; i++) {
             quint16 clusterId = 0;
             stream >> clusterId;
-            if (!endpoint->hasOutputCluster(static_cast<Zigbee::ClusterId>(clusterId))) {
-                endpoint->addOutputCluster(endpoint->createCluster(static_cast<Zigbee::ClusterId>(clusterId), ZigbeeCluster::Client));
+            if (!endpoint->hasOutputCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(clusterId))) {
+                endpoint->addOutputCluster(endpoint->createCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(clusterId), ZigbeeCluster::Client));
             }
-            qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<Zigbee::ClusterId>(clusterId));
+            qCDebug(dcZigbeeNode()) << "        Cluster ID:" << ZigbeeUtils::convertUint16ToHexString(clusterId) << ZigbeeUtils::clusterIdToString(static_cast<ZigbeeClusterLibrary::ClusterId>(clusterId));
         }
 
         m_uninitializedEndpoints.removeAll(endpointId);
@@ -380,7 +380,7 @@ void ZigbeeNode::initBasicCluster()
     // Get the first endpoint which implements the basic cluster
     ZigbeeNodeEndpoint *endpoint = nullptr;
     foreach (ZigbeeNodeEndpoint *ep, endpoints()) {
-        if (ep->hasInputCluster(Zigbee::ClusterIdBasic)) {
+        if (ep->hasInputCluster(ZigbeeClusterLibrary::ClusterIdBasic)) {
             endpoint = ep;
             break;
         }
@@ -392,7 +392,7 @@ void ZigbeeNode::initBasicCluster()
         return;
     }
 
-    ZigbeeClusterBasic *basicCluster = endpoint->inputCluster<ZigbeeClusterBasic>(Zigbee::ClusterIdBasic);
+    ZigbeeClusterBasic *basicCluster = endpoint->inputCluster<ZigbeeClusterBasic>(ZigbeeClusterLibrary::ClusterIdBasic);
     if (!basicCluster) {
         qCWarning(dcZigbeeNode()) << "Could not find basic cluster on" << this << "Set the node to initialized anyways.";
         // Set the device initialized any ways since this ist just for convinience
@@ -527,6 +527,11 @@ void ZigbeeNode::readSoftwareBuildId(ZigbeeClusterBasic *basicCluster)
 
         // Finished with reading basic cluster, the node is initialized.
         // TODO: read other interesting cluster information
+
+
+        // Bind client clusters to the sensor group
+        // Configure reporting
+
         setState(StateInitialized);
     });
 }

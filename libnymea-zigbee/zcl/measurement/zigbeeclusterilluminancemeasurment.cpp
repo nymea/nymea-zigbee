@@ -31,7 +31,7 @@
 #include "zigbeenetwork.h"
 
 ZigbeeClusterIlluminanceMeasurment::ZigbeeClusterIlluminanceMeasurment(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, Zigbee::ClusterIdIlluminanceMeasurement, direction, parent)
+    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdIlluminanceMeasurement, direction, parent)
 {
 
 }
