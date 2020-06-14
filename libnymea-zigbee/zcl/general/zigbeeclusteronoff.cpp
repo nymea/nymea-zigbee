@@ -53,6 +53,29 @@ ZigbeeClusterReply *ZigbeeClusterOnOff::commandToggle()
     return executeClusterCommand(ZigbeeClusterOnOff::CommandToggle);
 }
 
+ZigbeeClusterReply *ZigbeeClusterOnOff::commandOffWithEffect(ZigbeeClusterOnOff::Effect effect, quint8 effectVariant)
+{
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(effect) << effectVariant;
+    return executeClusterCommand(ZigbeeClusterOnOff::CommandOffWithEffect, payload);
+}
+
+ZigbeeClusterReply *ZigbeeClusterOnOff::commandOnWithRecallGlobalScene()
+{
+    return executeClusterCommand(ZigbeeClusterOnOff::CommandOnWithRecallGlobalScene);
+}
+
+ZigbeeClusterReply *ZigbeeClusterOnOff::commandOnWithTimedOff(bool acceptOnlyWhenOn, quint16 onTime, quint16 offWaitTime)
+{
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(acceptOnlyWhenOn) << onTime << offWaitTime;
+    return executeClusterCommand(ZigbeeClusterOnOff::CommandOnWithTimedOff, payload);
+}
+
 void ZigbeeClusterOnOff::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();

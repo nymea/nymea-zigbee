@@ -366,57 +366,6 @@ void ZigbeeNetwork::clearSettings()
     m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 }
 
-void ZigbeeNetwork::saveNode(ZigbeeNode *node)
-{
-    QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
-    settings.beginGroup("Nodes");
-
-    // Save this node
-    settings.beginGroup(node->extendedAddress().toString());
-    settings.setValue("nwkAddress", node->shortAddress());
-
-    // Node descriptor
-    settings.setValue("nodeDescriptorRaw", node->nodeDescriptor().descriptorRawData);
-
-    // Power descriptor
-    settings.setValue("powerDescriptorFlag", node->powerDescriptor().powerDescriptoFlag);
-
-    settings.beginWriteArray("endpoints");
-    for (int i = 0; i < node->endpoints().count(); i++) {
-        ZigbeeNodeEndpoint *endpoint = node->endpoints().at(i);
-        settings.setArrayIndex(i);
-        settings.setValue("id", endpoint->endpointId());
-        settings.setValue("profile", endpoint->profile());
-        settings.setValue("deviceId", endpoint->deviceId());
-        settings.setValue("deviceVersion", endpoint->deviceVersion());
-        settings.setValue("manufacturerName", endpoint->manufacturerName());
-        settings.setValue("modelIdentifier", endpoint->modelIdentifier());
-        settings.setValue("softwareBuildId", endpoint->softwareBuildId());
-
-        settings.beginWriteArray("inputClusters");
-        for (int n = 0; n < endpoint->inputClusters().count(); n++) {
-            ZigbeeCluster *cluster = endpoint->inputClusters().at(n);
-            settings.setArrayIndex(n);
-            settings.setValue("clusterId", cluster->clusterId());
-        }
-        settings.endArray(); // inputClusters
-
-        settings.beginWriteArray("outputClusters");
-        for (int n = 0; n < endpoint->outputClusters().count(); n++) {
-            ZigbeeCluster *cluster = endpoint->outputClusters().at(n);
-            settings.setArrayIndex(n);
-            settings.setValue("clusterId", cluster->clusterId());
-        }
-        settings.endArray(); // outputClusters
-    }
-
-    settings.endArray(); // endpoints
-
-    settings.endGroup(); // Node ieee address
-
-    settings.endGroup(); // Nodes
-}
-
 void ZigbeeNetwork::addNode(ZigbeeNode *node)
 {
     qCDebug(dcZigbeeNetwork()) << "Add node" << node;
@@ -481,6 +430,11 @@ void ZigbeeNetwork::setError(ZigbeeNetwork::Error error)
 bool ZigbeeNetwork::networkConfigurationAvailable() const
 {
     return m_extendedPanId != 0 && m_channel != 0 && m_coordinatorNode;
+}
+
+void ZigbeeNetwork::handleNodeIndication(ZigbeeNode *node, const Zigbee::ApsdeDataIndication indication)
+{
+    node->handleDataIndication(indication);
 }
 
 ZigbeeNetworkReply *ZigbeeNetwork::createNetworkReply(const ZigbeeNetworkRequest &request)

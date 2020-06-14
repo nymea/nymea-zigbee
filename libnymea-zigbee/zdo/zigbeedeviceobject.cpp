@@ -224,6 +224,58 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestSimpleDescriptor(quint8 endp
     return zdoReply;
 }
 
+ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestBindIeeeAddress(quint8 sourceEndpointId, quint16 clusterId, const ZigbeeAddress &destinationIeeeAddress, quint8 destinationEndpointId)
+{
+    qCDebug(dcZigbeeDeviceObject()) << "Request bind ieee address from" << m_node << "endpoint" << clusterId << "to" << destinationIeeeAddress.toString() << destinationEndpointId;
+
+    // Build APS request
+    ZigbeeNetworkRequest request = buildZdoRequest(ZigbeeDeviceProfile::BindRequest);
+
+    // Generate a new transaction sequence number for this device object
+    quint8 transactionSequenceNumber = m_transactionSequenceNumber++;
+
+    // Build ZDO frame
+    QByteArray asdu;
+    QDataStream stream(&asdu, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << transactionSequenceNumber;
+    stream << m_node->extendedAddress().toUInt64();
+    stream << sourceEndpointId;
+    stream << clusterId;
+    stream << static_cast<quint8>(Zigbee::DestinationAddressModeIeeeAddress);
+    stream << destinationIeeeAddress.toUInt64();
+    stream << destinationEndpointId;
+
+    // Set the ZDO frame as APS request payload
+    request.setAsdu(asdu);
+
+    // Create the device object reply and wait for the response indication
+    ZigbeeDeviceObjectReply *zdoReply = createZigbeeDeviceObjectReply(request, transactionSequenceNumber);
+
+    // Send the request, on finished read the confirm information
+    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
+    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+        if (!verifyNetworkError(zdoReply, networkReply)) {
+            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
+                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
+                                              << m_node << networkReply->error()
+                                              << networkReply->zigbeeApsStatus();
+            finishZdoReply(zdoReply);
+            return;
+        }
+
+        // The request was successfully sent to the device
+        // Now check if the expected indication response received already
+        if (zdoReply->isComplete()) {
+            finishZdoReply(zdoReply);
+            return;
+        }
+        // We received the confirmation but not yet the indication
+    });
+
+    return zdoReply;
+}
+
 ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLeaveNetwork(bool rejoin, bool removeChildren)
 {
     qCDebug(dcZigbeeDeviceObject()) << "Request management leave network from" << m_node << "rejoin" << rejoin << "remove children" << removeChildren;

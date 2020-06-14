@@ -64,14 +64,20 @@ public:
     };
     Q_ENUM(Command)
 
+    enum Effect {
+        EffectDelayedAllOff = 0x00,
+        EffectDyingLight = 0x01
+    };
+    Q_ENUM(Effect)
+
     explicit ZigbeeClusterOnOff(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
     ZigbeeClusterReply *commandOff();
     ZigbeeClusterReply *commandOn();
     ZigbeeClusterReply *commandToggle();
-//    ZigbeeClusterReply *commandOffWithEffect();
-//    ZigbeeClusterReply *commandOnWithRecallGlobalScene();
-//    ZigbeeClusterReply *commandOnWithTimedOff();
+    ZigbeeClusterReply *commandOffWithEffect(Effect effect, quint8 effectVariant = 0x00);
+    ZigbeeClusterReply *commandOnWithRecallGlobalScene();
+    ZigbeeClusterReply *commandOnWithTimedOff(bool acceptOnlyWhenOn, quint16 onTime, quint16 offWaitTime);
 
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;

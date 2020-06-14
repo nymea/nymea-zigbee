@@ -87,6 +87,11 @@ ZigbeeNodeEndpoint *ZigbeeNode::getEndpoint(quint8 endpointId) const
     return nullptr;
 }
 
+quint8 ZigbeeNode::lqi() const
+{
+    return m_lqi;
+}
+
 ZigbeeDeviceProfile::NodeDescriptor ZigbeeNode::nodeDescriptor() const
 {
     return m_nodeDescriptor;
@@ -534,6 +539,24 @@ void ZigbeeNode::readSoftwareBuildId(ZigbeeClusterBasic *basicCluster)
 
         setState(StateInitialized);
     });
+}
+
+void ZigbeeNode::handleDataIndication(const Zigbee::ApsdeDataIndication &indication)
+{
+    if (indication.lqi != m_lqi) {
+        m_lqi = indication.lqi;
+        emit lqiChanged(m_lqi);
+    }
+
+
+    // Check if this indocation is related to any pending reply
+    if (indication.profileId == Zigbee::ZigbeeProfileDevice) {
+        deviceObject()->processApsDataIndication(indication);
+        return;
+    }
+
+    // Else let the node handle this indication
+    handleZigbeeClusterLibraryIndication(indication);
 }
 
 void ZigbeeNode::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication)

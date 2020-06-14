@@ -140,17 +140,11 @@ void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Fram
             // Read the payload which is
             Command command = static_cast<Command>(frame.header.command);
             qCDebug(dcZigbeeCluster()) << "Command sent from" << m_node << m_endpoint << this << command;
-            switch (command) {
-            default:
-                qCWarning(dcZigbeeCluster()) << "Unhandled command sent from" << m_node << m_endpoint << this << command;
-                break;
-            }
+            emit commandSent(command, frame.payload);
         }
         break;
     case Server:
         qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
         break;
     }
-
-
 }

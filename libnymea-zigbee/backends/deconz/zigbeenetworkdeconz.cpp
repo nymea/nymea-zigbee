@@ -341,8 +341,8 @@ void ZigbeeNetworkDeconz::handleZigbeeDeviceProfileIndication(const Zigbee::Apsd
         return;
     }
 
-    // Let the node device object handle this (ZDP)
-    node->deviceObject()->processApsDataIndication(indication);
+    // Let the node handle this indication
+    handleNodeIndication(node, indication);
 }
 
 void ZigbeeNetworkDeconz::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication)
@@ -358,8 +358,8 @@ void ZigbeeNetworkDeconz::handleZigbeeClusterLibraryIndication(const Zigbee::Aps
         // FIXME: maybe remove this node since we might have removed it but it did not respond, or we not explicitly allowed it to join.
         return;
     }
-
-    node->handleZigbeeClusterLibraryIndication(indication);
+    // Let the node handle this indication
+    handleNodeIndication(node, indication);
 }
 
 void ZigbeeNetworkDeconz::setPermitJoiningInternal(bool permitJoining)

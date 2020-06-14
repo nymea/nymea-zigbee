@@ -155,7 +155,6 @@ protected:
     void saveNetwork();
     void loadNetwork();
     void clearSettings();
-    void saveNode(ZigbeeNode *node);
 
     void addNode(ZigbeeNode *node);
     void addUnitializedNode(ZigbeeNode *node);
@@ -165,6 +164,8 @@ protected:
     void setError(Error error);
 
     bool networkConfigurationAvailable() const;
+
+    void handleNodeIndication(ZigbeeNode *node, const Zigbee::ApsdeDataIndication indication);
 
     // Network reply methods
     ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());

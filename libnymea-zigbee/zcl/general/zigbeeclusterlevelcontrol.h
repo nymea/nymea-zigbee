@@ -102,6 +102,8 @@ protected:
 
 signals:
     void currentLevelChanged(quint8 level);
+    void commandSent(ZigbeeClusterLevelControl::Command command, const QByteArray &parameter = QByteArray());
+
 
 };
 

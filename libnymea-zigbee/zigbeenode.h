@@ -65,6 +65,8 @@ public:
     bool hasEndpoint(quint8 endpointId) const;
     ZigbeeNodeEndpoint *getEndpoint(quint8 endpointId) const;
 
+    quint8 lqi() const;
+
     // Information from descriptors
     ZigbeeDeviceProfile::NodeDescriptor nodeDescriptor() const;
     ZigbeeDeviceProfile::MacCapabilities macCapabilities() const;
@@ -114,8 +116,7 @@ private:
     void readModelIdentifier(ZigbeeClusterBasic *basicCluster);
     void readSoftwareBuildId(ZigbeeClusterBasic *basicCluster);
 
-
-
+    void handleDataIndication(const Zigbee::ApsdeDataIndication &indication);
 
 signals:
     void nodeInitializationFailed();
