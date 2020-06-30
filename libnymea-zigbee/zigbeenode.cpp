@@ -166,7 +166,7 @@ void ZigbeeNode::initNodeDescriptor()
         // The request finished, but we received a ZDP error.
         if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
             qCWarning(dcZigbeeNode()) << this << "failed to read node descriptor" << reply->responseAdpu().status;
-            // FIXME: decide what to do, remove the node again from network
+            emit nodeInitializationFailed();
             return;
         }
 
@@ -240,7 +240,7 @@ void ZigbeeNode::initEndpoints()
 
         if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
             qCWarning(dcZigbeeNode()) << "Failed to read active endpoints" << reply->responseAdpu().status;
-            // FIXME: decide what to do, retry or stop initialization
+            emit nodeInitializationFailed();
             return;
         }
 
@@ -296,7 +296,7 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
 
         if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
             qCWarning(dcZigbeeNode()) << this << "failed to read simple descriptor from endpoint" << endpointId << reply->responseAdpu().status;
-            // FIXME: decide what to do, retry or stop initialization
+            emit nodeInitializationFailed();
             return;
         }
 

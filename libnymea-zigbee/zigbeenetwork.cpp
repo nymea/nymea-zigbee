@@ -282,6 +282,10 @@ void ZigbeeNetwork::removeNodeInternally(ZigbeeNode *node)
         return;
     }
 
+    if (node == m_coordinatorNode) {
+        m_coordinatorNode = nullptr;
+    }
+
     m_nodes.removeAll(node);
     emit nodeRemoved(node);
     node->deleteLater();
@@ -366,6 +370,17 @@ void ZigbeeNetwork::clearSettings()
     m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 }
 
+bool ZigbeeNetwork::hasUninitializedNode(const ZigbeeAddress &address) const
+{
+    foreach (ZigbeeNode *node, m_uninitializedNodes) {
+        if (node->extendedAddress() == address) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void ZigbeeNetwork::addNode(ZigbeeNode *node)
 {
     qCDebug(dcZigbeeNetwork()) << "Add node" << node;
@@ -400,6 +415,13 @@ void ZigbeeNetwork::removeNode(ZigbeeNode *node)
     qCDebug(dcZigbeeNetwork()) << "Remove node" << node;
     removeNodeInternally(node);
     m_database->removeNode(node);
+}
+
+void ZigbeeNetwork::removeUninitializedNode(ZigbeeNode *node)
+{
+    qCDebug(dcZigbeeNetwork()) << "Remove uninitialized node" << node;
+    m_uninitializedNodes.removeAll(node);
+    node->deleteLater();
 }
 
 void ZigbeeNetwork::setState(ZigbeeNetwork::State state)
@@ -480,8 +502,16 @@ void ZigbeeNetwork::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkR
         qCWarning(dcZigbeeNetwork()) << "Failed to send request to device" << reply->request() << reply->error();
         break;
     }
+    // Stop the timer
+    reply->m_timer->stop();
 
+    // Finish the reply
     reply->finished();
+}
+
+void ZigbeeNetwork::startWaitingReply(ZigbeeNetworkReply *reply)
+{
+    reply->m_timer->start();
 }
 
 void ZigbeeNetwork::onNodeStateChanged(ZigbeeNode::State state)

@@ -267,6 +267,9 @@ bool ZigbeeCluster::verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetwo
         zclReply->m_zigbeeNwkStatus = networkReply->zigbeeNwkStatus();
         success = true;
         break;
+    case ZigbeeNetworkReply::ErrorTimeout:
+        zclReply->m_error = ZigbeeClusterReply::ErrorTimeout;
+        break;
     case ZigbeeNetworkReply::ErrorInterfaceError:
         zclReply->m_error = ZigbeeClusterReply::ErrorInterfaceError;
         break;

@@ -224,7 +224,6 @@ void ZigbeeClusterColorControl::setAttribute(const ZigbeeClusterAttribute &attri
         emit attributeChanged(attribute);
     }
 
-
 }
 
 void ZigbeeClusterColorControl::processDataIndication(ZigbeeClusterLibrary::Frame frame)

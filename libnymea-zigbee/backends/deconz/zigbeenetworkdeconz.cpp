@@ -81,6 +81,9 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::sendRequest(const ZigbeeNetworkRequest 
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorInterfaceError);
             return;
         }
+
+        // The request has been sent successfully to the device, start the timeout timer now
+        startWaitingReply(reply);
     });
 
     return reply;
@@ -651,6 +654,13 @@ void ZigbeeNetworkDeconz::onApsDataIndicationReceived(const Zigbee::ApsdeDataInd
 void ZigbeeNetworkDeconz::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities)
 {
     qCDebug(dcZigbeeNetwork()) << "Device announced" << ZigbeeUtils::convertUint16ToHexString(shortAddress) << ieeeAddress.toString() << ZigbeeUtils::convertByteToHexString(macCapabilities);
+
+    // Lets check if this device is in the uninitialized node list, if so, remove it and recreate the device
+    if (hasUninitializedNode(ieeeAddress)) {
+        qCWarning(dcZigbeeNetwork()) << "Device announced but there is already an initialization running for it. Remove the device and restart the initialization.";
+        ZigbeeNode *uninitializedNode = getZigbeeNode(ieeeAddress);
+        removeUninitializedNode(uninitializedNode);
+    }
 
     if (hasNode(ieeeAddress)) {
         qCWarning(dcZigbeeNetwork()) << "Already known device announced. FIXME: Ignoring announcement" << ieeeAddress.toString();

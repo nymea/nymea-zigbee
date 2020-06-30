@@ -128,7 +128,6 @@ public:
     };
     Q_ENUM(EnhancedColorMode)
 
-
     enum ColorCapability {
         ColorCapabilityHueSaturation = 0x01,
         ColorCapabilityEnhancedHue = 0x02,

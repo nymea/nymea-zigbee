@@ -214,7 +214,7 @@ void ZigbeeBridgeControllerDeconz::sendNextRequest()
     if (m_currentReply)
         return;
 
-//    // If the controler request queue is full, wait until it's free again
+//    // FIXME: If the controler request queue is full, wait until it's free again
 //    if (!m_apsFreeSlotsAvailable)
 //        return;
 
@@ -241,15 +241,24 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Co
     // Make sure we clean up on timeout
     connect(reply, &ZigbeeInterfaceDeconzReply::timeout, this, [this, reply](){
         qCWarning(dcZigbeeController()) << "Reply timeout" << reply;
-        if (m_currentReply == reply) {
-            m_currentReply = nullptr;
-            QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
+
+        // Make sure we can send the next read confirm reply
+        if (m_readConfirmReply == reply) {
+            m_readConfirmReply = nullptr;
         }
+
+        // Make sure we can send the next read indication reply
+        if (m_readIndicationReply == reply) {
+            m_readIndicationReply = nullptr;
+        }
+
+        // Note: send next reply with the finished signal
     });
 
     // Auto delete the object on finished
     connect(reply, &ZigbeeInterfaceDeconzReply::finished, reply, [this, reply](){
         reply->deleteLater();
+
         if (m_currentReply == reply) {
             m_currentReply = nullptr;
             QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
@@ -257,8 +266,16 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Co
     });
 
     // Enqueu this reply and send it once the current reply slot is free
-    m_replyQueue.enqueue(reply);
-    qCDebug(dcZigbeeController()) << "Enqueue request:" << reply->requestName();
+
+    // If this is a data indication or a confirmation, prepend the reply since responses have higher priority than new requests
+    if (command == Deconz::CommandApsDataConfirm || command == Deconz::CommandApsDataIndication) {
+        m_replyQueue.prepend(reply);
+        qCDebug(dcZigbeeController()) << "Prepend request to queue:" << reply->requestName();
+    } else {
+        m_replyQueue.enqueue(reply);
+        qCDebug(dcZigbeeController()) << "Enqueue request:" << reply->requestName();
+    }
+
     QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
     return reply;
 }
@@ -737,15 +754,15 @@ void ZigbeeBridgeControllerDeconz::readDataIndication()
         return;
     }
 
-    m_readIndicationReply = requestReadReceivedDataIndication();
-    connect(m_readIndicationReply, &ZigbeeInterfaceDeconzReply::finished, this, [this](){
-        ZigbeeInterfaceDeconzReply *reply = m_readIndicationReply;
-
+    ZigbeeInterfaceDeconzReply *reply = requestReadReceivedDataIndication();
+    // Set this as the current read indication reply so we don't request more than one at the time
+    m_readIndicationReply = reply;
+    connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
         // Allow to send the next read indication reply if required
         m_readIndicationReply = nullptr;
 
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-            qCWarning(dcZigbeeController()) << "Could not read data indication." << "SQN:" << m_readIndicationReply->sequenceNumber() << m_readIndicationReply->statusCode();
+            qCWarning(dcZigbeeController()) << "Could not read data indication." << "SQN:" << reply->sequenceNumber() << reply->statusCode();
             // FIXME: set an appropriate error
             return;
         }
@@ -764,10 +781,10 @@ void ZigbeeBridgeControllerDeconz::readDataConfirm()
         return;
     }
 
-    m_readConfirmReply = requestQuerySendDataConfirm();
-    connect(m_readConfirmReply, &ZigbeeInterfaceDeconzReply::finished, this, [this](){
-        ZigbeeInterfaceDeconzReply *reply = m_readConfirmReply;
-
+    ZigbeeInterfaceDeconzReply *reply = requestQuerySendDataConfirm();
+    // Set this as the current read confirm reply so we don't request more than one at the time
+    m_readConfirmReply = reply;
+    connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
         // Allow to send the next read confirm reply if required
         m_readConfirmReply = nullptr;
 
@@ -939,13 +956,13 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
         m_currentReply->m_responseData = data;
         m_currentReply->m_statusCode = status;
         m_currentReply->finished();
-        // Note: the current reply will be cleand up in the finished slot
+        // Note: the current reply will be cleaned up in the finished slot
         return;
     }
 
     // We got a notification, lets set the current sequence number to the notification id,
     // so the next request will be a continuouse increase
-    m_sequenceNumber = sequenceNumber;
+    m_sequenceNumber = sequenceNumber + 1;
 
     // No request for this data, lets check which notification and process the data
     switch (command) {
@@ -956,7 +973,8 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
         break;
     }
     case Deconz::CommandMacPoll: {
-        qCDebug(dcZigbeeController()) << "MAC Poll command received" << ZigbeeUtils::convertByteArrayToHexString(data);// FIXME: parse the data and print info
+        // FIXME: parse the data and print info
+        qCDebug(dcZigbeeController()) << "MAC Poll command received" << ZigbeeUtils::convertByteArrayToHexString(data);
         break;
     }
     case Deconz::CommandSimplifiedBeacon: {

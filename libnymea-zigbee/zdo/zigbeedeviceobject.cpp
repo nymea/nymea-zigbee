@@ -369,6 +369,9 @@ bool ZigbeeDeviceObject::verifyNetworkError(ZigbeeDeviceObjectReply *zdoReply, Z
     case ZigbeeNetworkReply::ErrorInterfaceError:
         zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorInterfaceError;
         break;
+    case ZigbeeNetworkReply::ErrorTimeout:
+        zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorTimeout;
+        break;
     case ZigbeeNetworkReply::ErrorNetworkOffline:
         zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorNetworkOffline;
         break;

@@ -29,6 +29,7 @@
 #define ZIGBEENETWORKREPLY_H
 
 #include <QObject>
+#include <QTimer>
 
 #include "zigbee.h"
 #include "zigbeenetworkrequest.h"
@@ -43,6 +44,7 @@ class ZigbeeNetworkReply : public QObject
 public:
     enum Error {
         ErrorNoError,
+        ErrorTimeout,
         ErrorZigbeeApsStatusError,
         ErrorZigbeeNwkStatusError,
         ErrorInterfaceError,
@@ -59,6 +61,7 @@ public:
 private:
     explicit ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent = nullptr);
     ZigbeeNetworkRequest m_request;
+    QTimer *m_timer = nullptr;
 
     Error m_error = ErrorNoError;
     Zigbee::ZigbeeApsStatus m_zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess;

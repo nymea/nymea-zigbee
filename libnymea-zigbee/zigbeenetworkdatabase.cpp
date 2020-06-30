@@ -193,7 +193,6 @@ bool ZigbeeNetworkDatabase::initDatabase()
     if (m_db.tables().isEmpty()) {
         // Write pragmas
         m_db.exec("PRAGMA foreign_keys = ON;");
-        m_db.exec(QString("PRAGMA schema_version = %1;").arg(DB_VERSION));
         m_db.exec(QString("PRAGMA user_version = %1;").arg(DB_VERSION));
     }
 
@@ -203,7 +202,9 @@ bool ZigbeeNetworkDatabase::initDatabase()
                     "(ieeeAddress TEXT PRIMARY KEY, " // ieeeAddress to string
                     "shortAddress INTEGER NOT NULL, " // uint16
                     "nodeDescriptor BLOB NOT NULL, " // bytes as received from the node
-                    "powerDescriptor INTEGER NOT NULL)"); // uint16
+                    "powerDescriptor INTEGER NOT NULL, "
+                    "lqi INTEGER,"
+                    "timestamp )"); // uint16
         createIndices("ieeeAddressIndex", "nodes", "ieeeAddress");
     }
 

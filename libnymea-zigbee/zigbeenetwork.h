@@ -156,9 +156,12 @@ protected:
     void loadNetwork();
     void clearSettings();
 
+    bool hasUninitializedNode(const ZigbeeAddress &address) const;
+
     void addNode(ZigbeeNode *node);
     void addUnitializedNode(ZigbeeNode *node);
     void removeNode(ZigbeeNode *node);
+    void removeUninitializedNode(ZigbeeNode *node);
 
     void setState(State state);
     void setError(Error error);
@@ -171,6 +174,7 @@ protected:
     ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());
     void setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeApsStatus zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess);
     void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError);
+    void startWaitingReply(ZigbeeNetworkReply *reply);
 
 signals:
     void settingsFileNameChanged(const QString &settingsFileName);
