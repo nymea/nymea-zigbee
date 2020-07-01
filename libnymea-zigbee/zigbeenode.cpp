@@ -92,6 +92,11 @@ quint8 ZigbeeNode::lqi() const
     return m_lqi;
 }
 
+QDateTime ZigbeeNode::lastSeen() const
+{
+    return m_lastSeen;
+}
+
 ZigbeeDeviceProfile::NodeDescriptor ZigbeeNode::nodeDescriptor() const
 {
     return m_nodeDescriptor;
@@ -548,6 +553,11 @@ void ZigbeeNode::handleDataIndication(const Zigbee::ApsdeDataIndication &indicat
         emit lqiChanged(m_lqi);
     }
 
+    // Update the UTC timestamp of last seen for reachable verification
+    if (m_lastSeen != QDateTime::currentDateTimeUtc()) {
+        m_lastSeen = QDateTime::currentDateTimeUtc();
+        emit lastSeenChanged(m_lastSeen);
+    }
 
     // Check if this indocation is related to any pending reply
     if (indication.profileId == Zigbee::ZigbeeProfileDevice) {

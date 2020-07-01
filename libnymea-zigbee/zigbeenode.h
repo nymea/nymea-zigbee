@@ -29,6 +29,7 @@
 #define ZIGBEENODE_H
 
 #include <QObject>
+#include <QDateTime>
 
 #include "zigbee.h"
 #include "zigbeeaddress.h"
@@ -66,6 +67,7 @@ public:
     ZigbeeNodeEndpoint *getEndpoint(quint8 endpointId) const;
 
     quint8 lqi() const;
+    QDateTime lastSeen() const;
 
     // Information from descriptors
     ZigbeeDeviceProfile::NodeDescriptor nodeDescriptor() const;
@@ -93,6 +95,7 @@ private:
     bool m_connected = false;
     State m_state = StateUninitialized;
     quint8 m_lqi = 0;
+    QDateTime m_lastSeen;
 
     // Node information
     ZigbeeDeviceProfile::NodeDescriptor m_nodeDescriptor;
@@ -122,6 +125,7 @@ signals:
     void nodeInitializationFailed();
     void stateChanged(State state);
     void lqiChanged(quint8 lqi);
+    void lastSeenChanged(const QDateTime &lastSeen);
     void connectedChanged(bool connected);
     void clusterAdded(ZigbeeCluster *cluster);
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);

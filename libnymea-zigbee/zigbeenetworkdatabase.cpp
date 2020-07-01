@@ -74,12 +74,16 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
         quint16 shortAddress = nodesQuery.value("shortAddress").toUInt();
         QByteArray nodeDescriptor = QByteArray::fromBase64(nodesQuery.value("nodeDescriptor").toByteArray());
         quint16 powerDescriptor = nodesQuery.value("powerDescriptor").toUInt();
+        quint8 lqi = nodesQuery.value("lqi").toUInt();
+        quint64 lastSeen = nodesQuery.value("timestamp").toULongLong();
 
         // Build the node object
         ZigbeeNode *node = new ZigbeeNode(m_network, shortAddress, ZigbeeAddress(ieeeAddress), m_network);
         node->m_nodeDescriptor = ZigbeeDeviceProfile::parseNodeDescriptor(nodeDescriptor);
         node->m_macCapabilities = node->nodeDescriptor().macCapabilities;
         node->m_powerDescriptor = ZigbeeDeviceProfile::parsePowerDescriptor(powerDescriptor);
+        node->m_lqi = lqi;
+        node->m_lastSeen = QDateTime::fromMSecsSinceEpoch(lastSeen * 1000);
 
         qCDebug(dcZigbeeNetworkDatabase()) << "Loaded" << node;
 
@@ -202,9 +206,9 @@ bool ZigbeeNetworkDatabase::initDatabase()
                     "(ieeeAddress TEXT PRIMARY KEY, " // ieeeAddress to string
                     "shortAddress INTEGER NOT NULL, " // uint16
                     "nodeDescriptor BLOB NOT NULL, " // bytes as received from the node
-                    "powerDescriptor INTEGER NOT NULL, "
-                    "lqi INTEGER,"
-                    "timestamp )"); // uint16
+                    "powerDescriptor INTEGER NOT NULL, " // uint16
+                    "lqi INTEGER NOT NULL," // uint8
+                    "timestamp INTEGER NOT NULL)"); // unix timestamp with the last communication
         createIndices("ieeeAddressIndex", "nodes", "ieeeAddress");
     }
 
@@ -379,12 +383,14 @@ bool ZigbeeNetworkDatabase::saveAttribute(ZigbeeCluster *cluster, const ZigbeeCl
 bool ZigbeeNetworkDatabase::saveNode(ZigbeeNode *node)
 {
     qCDebug(dcZigbeeNetworkDatabase()) << "Save" << node;
-    QString queryString = QString("INSERT OR REPLACE INTO nodes (ieeeAddress, shortAddress, nodeDescriptor, powerDescriptor) "
-                                  "VALUES (\"%1\", \"%2\", \"%3\", \"%4\");")
+    QString queryString = QString("INSERT OR REPLACE INTO nodes (ieeeAddress, shortAddress, nodeDescriptor, powerDescriptor, lqi, timestamp) "
+                                  "VALUES (\"%1\", \"%2\", \"%3\", \"%4\", \"%5\", \"%6\");")
             .arg(node->extendedAddress().toString())
             .arg(node->shortAddress())
             .arg(node->nodeDescriptor().descriptorRawData.toBase64().data()) // Note: convert to base64 for saving zeros as string
-            .arg(node->powerDescriptor().powerDescriptoFlag);
+            .arg(node->powerDescriptor().powerDescriptoFlag)
+            .arg(node->lqi())
+            .arg(node->lastSeen().toMSecsSinceEpoch() / 1000);
 
     qCDebug(dcZigbeeNetworkDatabase()) << queryString;
     m_db.exec(queryString);
@@ -398,6 +404,33 @@ bool ZigbeeNetworkDatabase::saveNode(ZigbeeNode *node)
         if (!saveNodeEndpoint(endpoint)) {
             return false;
         }
+    }
+
+    return true;
+}
+
+bool ZigbeeNetworkDatabase::updateNodeLqi(ZigbeeNode *node, quint8 lqi)
+{
+    qCDebug(dcZigbeeNetworkDatabase()) << "Update nod LQI" << node << lqi;
+    QString queryString = QString("UPDATE nodes SET lqi = \"%1\" WHERE ieeeAddress = \"%2\";").arg(lqi).arg(node->extendedAddress().toString());
+    m_db.exec(queryString);
+    if (m_db.lastError().type() != QSqlError::NoError) {
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not update node LQI value in the database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        return false;
+    }
+
+    return true;
+}
+
+bool ZigbeeNetworkDatabase::updateNodeLastSeen(ZigbeeNode *node, const QDateTime &lastSeen)
+{
+    quint64 timestamp = lastSeen.toMSecsSinceEpoch() / 1000;
+    qCDebug(dcZigbeeNetworkDatabase()) << "Update node last seen UTC timestamp" << node << timestamp;
+    QString queryString = QString("UPDATE nodes SET timestamp = \"%1\" WHERE ieeeAddress = \"%2\";").arg(timestamp).arg(node->extendedAddress().toString());
+    m_db.exec(queryString);
+    if (m_db.lastError().type() != QSqlError::NoError) {
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not update node timestamp value in the database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        return false;
     }
 
     return true;

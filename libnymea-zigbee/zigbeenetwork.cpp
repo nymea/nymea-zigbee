@@ -243,7 +243,7 @@ void ZigbeeNetwork::removeZigbeeNode(const ZigbeeAddress &address)
     connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [this, zdoReply, node](){
         if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Failed to send management leave request to" << node << zdoReply->error();
-            qCWarning(dcZigbeeNode()) << "This node is gonna be removed internally and tried to remove once it shows up the next time.";
+            qCWarning(dcZigbeeNode()) << "This node is gonna be removed internally. TODO: try to remove using ZDO once it shows up the next time.";
         }
 
         removeNode(node);
@@ -264,7 +264,15 @@ void ZigbeeNetwork::addNodeInternally(ZigbeeNode *node)
     }
 
     // FIXME: check when and how the note will be reachable
-    //node->setConnected(state() == StateRunning);
+
+    // Update database metrics of the node
+    connect(node, &ZigbeeNode::lqiChanged, this, [this, node](quint8 lqi){
+        m_database->updateNodeLqi(node, lqi);
+    });
+
+    connect(node, &ZigbeeNode::lastSeenChanged, this, [this, node](const QDateTime &lastSeen){
+        m_database->updateNodeLastSeen(node, lastSeen);
+    });
 
     // Note: if a cluster shows up after initialization (out of spec devices), save the cluster and it's attributes
     foreach (ZigbeeNodeEndpoint *endpoint, node->endpoints()) {

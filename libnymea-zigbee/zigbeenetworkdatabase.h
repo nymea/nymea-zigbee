@@ -63,7 +63,8 @@ public slots:
     bool saveOutputCluster(ZigbeeCluster *cluster);
     bool saveAttribute(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
     bool saveNode(ZigbeeNode *node);
-
+    bool updateNodeLqi(ZigbeeNode *node, quint8 lqi);
+    bool updateNodeLastSeen(ZigbeeNode *node, const QDateTime &lastSeen);
     bool removeNode(ZigbeeNode *node);
 
 };
