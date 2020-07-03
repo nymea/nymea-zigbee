@@ -123,8 +123,9 @@ void ZigbeeInterfaceDeconz::setAvailable(bool available)
         return;
 
     // Clear the data buffer in any case
-    if (m_available)
+    if (m_available) {
         m_dataBuffer.clear();
+    }
 
     m_available = available;
     emit availableChanged(m_available);
@@ -138,6 +139,7 @@ void ZigbeeInterfaceDeconz::onReconnectTimeout()
             m_reconnectTimer->start();
         } else {
             qCDebug(dcZigbeeInterface()) << "Interface reconnected successfully on" << m_serialPort->portName() << m_serialPort->baudRate();
+            m_serialPort->clear();
             setAvailable(true);
         }
     }
@@ -146,6 +148,7 @@ void ZigbeeInterfaceDeconz::onReconnectTimeout()
 void ZigbeeInterfaceDeconz::onReadyRead()
 {
     QByteArray data = m_serialPort->readAll();
+
     // Read each byte until we get END byte, then unescape the package
     for (int i = 0; i < data.length(); i++) {
         quint8 byte = static_cast<quint8>(data.at(i));
@@ -168,6 +171,7 @@ void ZigbeeInterfaceDeconz::onReadyRead()
                 quint16 calculatedChecksum = calculateCrc(package);
                 if (receivedChecksum != calculatedChecksum) {
                     qCWarning(dcZigbeeInterfaceTraffic()) << "Checksum verification failed for frame" << ZigbeeUtils::convertByteArrayToHexString(m_dataBuffer) << receivedChecksum << "!=" << calculatedChecksum;
+                    m_dataBuffer.clear();
                     continue;
                 }
 
@@ -256,6 +260,8 @@ bool ZigbeeInterfaceDeconz::enable(const QString &serialPort, qint32 baudrate)
     }
 
     qCDebug(dcZigbeeInterface()) << "Interface enabled successfully on" << serialPort << baudrate;
+    m_serialPort->clear();
+
     setAvailable(true);
     return true;
 }
