@@ -25,7 +25,7 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeeinterfacedeconz.h"
+#include "zigbeeinterfacenxp.h"
 #include "zigbee.h"
 #include "zigbeeutils.h"
 #include "loggingcategory.h"
@@ -34,42 +34,41 @@
 
 // SLIP: https://tools.ietf.org/html/rfc1055
 
-ZigbeeInterfaceDeconz::ZigbeeInterfaceDeconz(QObject *parent) : QObject(parent)
+ZigbeeInterfaceNxp::ZigbeeInterfaceNxp(QObject *parent) : QObject(parent)
 {
     m_reconnectTimer = new QTimer(this);
     m_reconnectTimer->setSingleShot(true);
     m_reconnectTimer->setInterval(5000);
 
-    connect(m_reconnectTimer, &QTimer::timeout, this, &ZigbeeInterfaceDeconz::onReconnectTimeout);
+    connect(m_reconnectTimer, &QTimer::timeout, this, &ZigbeeInterfaceNxp::onReconnectTimeout);
 }
 
-ZigbeeInterfaceDeconz::~ZigbeeInterfaceDeconz()
+ZigbeeInterfaceNxp::~ZigbeeInterfaceNxp()
 {
 
 }
 
-bool ZigbeeInterfaceDeconz::available() const
+bool ZigbeeInterfaceNxp::available() const
 {
     return m_available;
 }
 
-QString ZigbeeInterfaceDeconz::serialPort() const
+QString ZigbeeInterfaceNxp::serialPort() const
 {
     return m_serialPort->portName();
 }
 
-quint16 ZigbeeInterfaceDeconz::calculateCrc(const QByteArray &data)
+quint8 ZigbeeInterfaceNxp::calculateCrc(const QByteArray &data)
 {
-    quint16 crc = 0;
-    for (int i = 0; i < data.length(); i++) {
-        crc += static_cast<quint8>(data.at(i));
+    quint8 crc = 0;
+    for(int i = 0; i < data.length(); i++) {
+        crc ^= data[i];
     }
-    quint8 crc0 = (~crc + 1) & 0xFF;
-    quint8 crc1 = ((~crc + 1) >> 8) & 0xFF;
-    return (static_cast<quint16>(crc1 << 8) | static_cast<quint16>(crc0));
+
+    return crc;
 }
 
-QByteArray ZigbeeInterfaceDeconz::unescapeData(const QByteArray &data)
+QByteArray ZigbeeInterfaceNxp::unescapeData(const QByteArray &data)
 {
     QByteArray deserializedData;
     // Parse serial data and built InterfaceMessage
@@ -102,7 +101,7 @@ QByteArray ZigbeeInterfaceDeconz::unescapeData(const QByteArray &data)
     return deserializedData;
 }
 
-QByteArray ZigbeeInterfaceDeconz::escapeData(const QByteArray &data)
+QByteArray ZigbeeInterfaceNxp::escapeData(const QByteArray &data)
 {
     QByteArray serializedData;
     QDataStream stream(&serializedData, QIODevice::WriteOnly);
@@ -127,7 +126,7 @@ QByteArray ZigbeeInterfaceDeconz::escapeData(const QByteArray &data)
     return serializedData;
 }
 
-void ZigbeeInterfaceDeconz::setAvailable(bool available)
+void ZigbeeInterfaceNxp::setAvailable(bool available)
 {
     if (m_available == available)
         return;
@@ -141,7 +140,7 @@ void ZigbeeInterfaceDeconz::setAvailable(bool available)
     emit availableChanged(m_available);
 }
 
-void ZigbeeInterfaceDeconz::onReconnectTimeout()
+void ZigbeeInterfaceNxp::onReconnectTimeout()
 {
     if (m_serialPort && !m_serialPort->isOpen()) {
         if (!m_serialPort->open(QSerialPort::ReadWrite)) {
@@ -155,7 +154,7 @@ void ZigbeeInterfaceDeconz::onReconnectTimeout()
     }
 }
 
-void ZigbeeInterfaceDeconz::onReadyRead()
+void ZigbeeInterfaceNxp::onReadyRead()
 {
     QByteArray data = m_serialPort->readAll();
 
@@ -196,7 +195,7 @@ void ZigbeeInterfaceDeconz::onReadyRead()
     }
 }
 
-void ZigbeeInterfaceDeconz::onError(const QSerialPort::SerialPortError &error)
+void ZigbeeInterfaceNxp::onError(const QSerialPort::SerialPortError &error)
 {
     if (error != QSerialPort::NoError && m_serialPort->isOpen()) {
         qCWarning(dcZigbeeInterface()) << "Serial port error:" << error << m_serialPort->errorString();
@@ -206,7 +205,7 @@ void ZigbeeInterfaceDeconz::onError(const QSerialPort::SerialPortError &error)
     }
 }
 
-void ZigbeeInterfaceDeconz::sendPackage(const QByteArray &package)
+void ZigbeeInterfaceNxp::sendPackage(const QByteArray &package)
 {
     if (!m_available) {
         qCWarning(dcZigbeeInterface()) << "Can not send data. The interface is not available";
@@ -214,7 +213,7 @@ void ZigbeeInterfaceDeconz::sendPackage(const QByteArray &package)
     }
 
     // Build the frame and escape the package data and crc
-    quint16 checksum = calculateCrc(package);
+    quint8 checksum = calculateCrc(package);
 
     QByteArray frame = package;
     QDataStream frameStream(&frame, QIODevice::WriteOnly  | QIODevice::Append);
@@ -240,11 +239,9 @@ void ZigbeeInterfaceDeconz::sendPackage(const QByteArray &package)
     if (m_serialPort->write(data) < 0) {
         qCWarning(dcZigbeeInterface()) << "Could not stream byte" << ZigbeeUtils::convertByteArrayToHexString(data);
     }
-
-    //m_serialPort->flush();
 }
 
-bool ZigbeeInterfaceDeconz::enable(const QString &serialPort, qint32 baudrate)
+bool ZigbeeInterfaceNxp::enable(const QString &serialPort, qint32 baudrate)
 {
     qCDebug(dcZigbeeInterface()) << "Start UART interface " << serialPort << baudrate;
 
@@ -260,7 +257,7 @@ bool ZigbeeInterfaceDeconz::enable(const QString &serialPort, qint32 baudrate)
     m_serialPort->setParity(QSerialPort::NoParity);
     m_serialPort->setFlowControl(QSerialPort::NoFlowControl);
 
-    connect(m_serialPort, &QSerialPort::readyRead, this, &ZigbeeInterfaceDeconz::onReadyRead);
+    connect(m_serialPort, &QSerialPort::readyRead, this, &ZigbeeInterfaceNxp::onReadyRead);
     connect(m_serialPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(onError(QSerialPort::SerialPortError)), Qt::QueuedConnection);
 
     if (!m_serialPort->open(QSerialPort::ReadWrite)) {
@@ -276,7 +273,7 @@ bool ZigbeeInterfaceDeconz::enable(const QString &serialPort, qint32 baudrate)
     return true;
 }
 
-void ZigbeeInterfaceDeconz::reconnectController()
+void ZigbeeInterfaceNxp::reconnectController()
 {
     if (!m_serialPort)
         return;
@@ -290,7 +287,7 @@ void ZigbeeInterfaceDeconz::reconnectController()
     m_reconnectTimer->start();
 }
 
-void ZigbeeInterfaceDeconz::disable()
+void ZigbeeInterfaceNxp::disable()
 {
     if (!m_serialPort)
         return;
