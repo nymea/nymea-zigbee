@@ -155,7 +155,6 @@ private slots:
     void resetControllerWatchdog();
     void sendNextRequest();
 
-
 public slots:
     bool enable(const QString &serialPort, qint32 baudrate);
     void disable();

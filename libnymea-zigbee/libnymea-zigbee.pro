@@ -9,6 +9,8 @@ SOURCES += \
     backends/deconz/zigbeebridgecontrollerdeconz.cpp \
     backends/deconz/zigbeenetworkdeconz.cpp \
     backends/nxp/interface/zigbeeinterfacenxp.cpp \
+    backends/nxp/zigbeebridgecontrollernxp.cpp \
+    backends/nxp/zigbeenetworknxp.cpp \
     zcl/general/zigbeeclusteridentify.cpp \
     zcl/general/zigbeeclusterlevelcontrol.cpp \
     zcl/general/zigbeeclusteronoff.cpp \
@@ -60,7 +62,10 @@ HEADERS += \
     backends/deconz/interface/zigbeeinterfacedeconzreply.h \
     backends/deconz/zigbeebridgecontrollerdeconz.h \
     backends/deconz/zigbeenetworkdeconz.h \
+    backends/nxp/interface/nxp.h \
     backends/nxp/interface/zigbeeinterfacenxp.h \
+    backends/nxp/zigbeebridgecontrollernxp.h \
+    backends/nxp/zigbeenetworknxp.h \
     zcl/general/zigbeeclusteridentify.h \
     zcl/general/zigbeeclusterlevelcontrol.h \
     zcl/general/zigbeeclusteronoff.h \
