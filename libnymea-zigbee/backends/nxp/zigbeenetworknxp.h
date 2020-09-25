@@ -20,14 +20,16 @@ public:
     ZigbeeNetworkReply *setPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
 
 
-
-
 private:
     ZigbeeBridgeControllerNxp *m_controller = nullptr;
     bool m_networkRunning = false;
 
 private slots:
     void onControllerAvailableChanged(bool available);
+
+protected:
+    void setPermitJoiningInternal(bool permitJoining) override;
+
 
 signals:
 

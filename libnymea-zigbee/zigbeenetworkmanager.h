@@ -34,13 +34,13 @@
 
 class ZigbeeNetworkManager
 {
+    Q_GADGET
 public:
-    //Q_GADGET
-
     enum BackendType {
-        BackendTypeDeconz
+        BackendTypeDeconz,
+        BackendTypeNxp
     };
-    //Q_ENUM(BackendType)
+    Q_ENUM(BackendType)
 
     static QStringList availableBackendTypes();
     static ZigbeeNetwork *createZigbeeNetwork(BackendType backend, QObject *parent = nullptr);

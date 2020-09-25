@@ -36,6 +36,8 @@
 
 ZigbeeInterfaceNxp::ZigbeeInterfaceNxp(QObject *parent) : QObject(parent)
 {
+    qRegisterMetaType<QSerialPort::SerialPortError>();
+
     m_reconnectTimer = new QTimer(this);
     m_reconnectTimer->setSingleShot(true);
     m_reconnectTimer->setInterval(5000);
@@ -62,7 +64,7 @@ quint8 ZigbeeInterfaceNxp::calculateCrc(const QByteArray &data)
 {
     quint8 crc = 0;
     for(int i = 0; i < data.length(); i++) {
-        crc ^= data[i];
+        crc ^= static_cast<quint8>(data.at(i));
     }
 
     return crc;
@@ -171,13 +173,9 @@ void ZigbeeInterfaceNxp::onReadyRead()
             if (frame.isNull()) {
                 qCWarning(dcZigbeeInterface()) << "Received inconsistant message. Ignoring data" << ZigbeeUtils::convertByteArrayToHexString(m_dataBuffer);
             } else {
-                QByteArray package = frame.left(frame.length() - 2);
-                QByteArray checksumBytes = frame.right(2);
-                QDataStream stream(&checksumBytes, QIODevice::ReadOnly);
-                stream.setByteOrder(QDataStream::LittleEndian);
-                quint16 receivedChecksum = 0;
-                stream >> receivedChecksum;
-                quint16 calculatedChecksum = calculateCrc(package);
+                QByteArray package = frame.left(frame.length() - 1);
+                quint8 receivedChecksum = frame.at(frame.length() - 1);
+                quint8 calculatedChecksum = calculateCrc(package);
                 if (receivedChecksum != calculatedChecksum) {
                     qCWarning(dcZigbeeInterfaceTraffic()) << "Checksum verification failed for frame" << ZigbeeUtils::convertByteArrayToHexString(m_dataBuffer) << receivedChecksum << "!=" << calculatedChecksum;
                     m_dataBuffer.clear();
@@ -228,7 +226,7 @@ void ZigbeeInterfaceNxp::sendPackage(const QByteArray &package)
     // Build transport data
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream << static_cast<quint8>(ProtocolByteEnd); // Start with SLIP END character
+    //stream << static_cast<quint8>(ProtocolByteEnd); // Start with SLIP END character
     for (int i = 0; i < serializedData.length(); i++)
         stream << static_cast<quint8>(serializedData.at(i));
 

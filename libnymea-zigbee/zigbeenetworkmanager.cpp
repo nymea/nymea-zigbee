@@ -28,13 +28,14 @@
 #include "zigbeenetworkmanager.h"
 #include "loggingcategory.h"
 
+#include "backends/nxp/zigbeenetworknxp.h"
 #include "backends/deconz/zigbeenetworkdeconz.h"
 
 #include <QDateTime>
 
 QStringList ZigbeeNetworkManager::availableBackendTypes()
 {
-    return {"deCONZ"};
+    return {"deCONZ", "NXP"};
 }
 
 ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(ZigbeeNetworkManager::BackendType backend, QObject *parent)
@@ -43,8 +44,8 @@ ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(ZigbeeNetworkManager::B
     srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
 
     switch (backend) {
-//    case BackendTypeNxp:
-//        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));
+    case BackendTypeNxp:
+        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));
     case BackendTypeDeconz:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(parent));
     }

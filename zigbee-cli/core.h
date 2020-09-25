@@ -18,7 +18,7 @@ public:
     explicit Core(const QString &serialPort, qint32 baudrate, const int &channel, QObject *parent = nullptr);
 
 private:
-    ZigbeeNetworkManager *m_manager = nullptr;
+    ZigbeeNetwork *m_network = nullptr;
     QList<TerminalCommand> m_commands;
     QString m_serialPort;
     qint32 m_baudRate;
@@ -29,7 +29,7 @@ private:
 signals:
 
 private slots:
-    void onCommandReceived(const QStringList &tokens);
+    //void onCommandReceived(const QStringList &tokens);
 
 };
 

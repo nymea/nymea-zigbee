@@ -36,6 +36,18 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::setPermitJoin(quint16 shortAddress, quint8
 void ZigbeeNetworkNxp::onControllerAvailableChanged(bool available)
 {
     qCDebug(dcZigbeeNetwork()) << "Controller is" << (available ? "now available" : "not available any more");
+
+    if (available) {
+        ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
+        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [](){
+            qCDebug(dcZigbeeNetwork()) << "Version reply finished";
+        });
+    }
+}
+
+void ZigbeeNetworkNxp::setPermitJoiningInternal(bool permitJoining)
+{
+    qCDebug(dcZigbeeNetwork()) << "Set permit join internal" << permitJoining;
 }
 
 void ZigbeeNetworkNxp::startNetwork()
@@ -53,7 +65,7 @@ void ZigbeeNetworkNxp::startNetwork()
     m_permitJoining = false;
     emit permitJoiningChanged(m_permitJoining);
 
-    // Wait for the network to be started
+    // Get current state and load information
 }
 
 void ZigbeeNetworkNxp::stopNetwork()

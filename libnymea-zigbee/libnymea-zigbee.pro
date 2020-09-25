@@ -9,6 +9,7 @@ SOURCES += \
     backends/deconz/zigbeebridgecontrollerdeconz.cpp \
     backends/deconz/zigbeenetworkdeconz.cpp \
     backends/nxp/interface/zigbeeinterfacenxp.cpp \
+    backends/nxp/interface/zigbeeinterfacenxpreply.cpp \
     backends/nxp/zigbeebridgecontrollernxp.cpp \
     backends/nxp/zigbeenetworknxp.cpp \
     zcl/general/zigbeeclusteridentify.cpp \
@@ -64,6 +65,7 @@ HEADERS += \
     backends/deconz/zigbeenetworkdeconz.h \
     backends/nxp/interface/nxp.h \
     backends/nxp/interface/zigbeeinterfacenxp.h \
+    backends/nxp/interface/zigbeeinterfacenxpreply.h \
     backends/nxp/zigbeebridgecontrollernxp.h \
     backends/nxp/zigbeenetworknxp.h \
     zcl/general/zigbeeclusteridentify.h \
