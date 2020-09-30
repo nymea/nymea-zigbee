@@ -163,6 +163,7 @@ void ZigbeeInterfaceNxp::onReadyRead()
     // Read each byte until we get END byte, then unescape the package
     for (int i = 0; i < data.length(); i++) {
         quint8 byte = static_cast<quint8>(data.at(i));
+        qCDebug(dcZigbeeInterfaceTraffic()) << ZigbeeUtils::convertByteToHexString(byte);
         if (byte == ProtocolByteEnd) {
             // If there is no data...continue since it might be a starting END byte
             if (m_dataBuffer.isEmpty())

@@ -38,10 +38,12 @@ void ZigbeeNetworkNxp::onControllerAvailableChanged(bool available)
     qCDebug(dcZigbeeNetwork()) << "Controller is" << (available ? "now available" : "not available any more");
 
     if (available) {
-        ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
-        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [](){
-            qCDebug(dcZigbeeNetwork()) << "Version reply finished";
-        });
+        reset();
+
+//        ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
+//        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [](){
+//            qCDebug(dcZigbeeNetwork()) << "Version reply finished";
+//        });
     }
 }
 
@@ -75,7 +77,10 @@ void ZigbeeNetworkNxp::stopNetwork()
 
 void ZigbeeNetworkNxp::reset()
 {
-
+    ZigbeeInterfaceNxpReply *reply = m_controller->requestSoftResetController();
+    connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [](){
+        qCDebug(dcZigbeeNetwork()) << "Soft reset reply finished";
+    });
 }
 
 void ZigbeeNetworkNxp::factoryResetNetwork()
