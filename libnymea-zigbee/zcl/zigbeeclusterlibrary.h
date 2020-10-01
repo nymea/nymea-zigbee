@@ -251,6 +251,13 @@ public:
         ZigbeeDataType dataType;
     } ReadAttributeStatusRecord;
 
+    // Write attribute
+    typedef struct WriteAttributeRecord {
+        quint16 attributeId;
+        Zigbee::DataType dataType;
+        QByteArray data;
+    } WriteAttributeRecord;
+
     // Reporting attributes
     typedef struct AttributeReportingConfiguration {
         ReportingDirection direction = ReportingDirectionReporting;
@@ -286,6 +293,7 @@ public:
 
     // AttributeReportingConfiguration
     static QByteArray buildAttributeReportingConfiguration(const AttributeReportingConfiguration &reportingConfiguration);
+    static QByteArray buildWriteAttributeRecord(const WriteAttributeRecord &writeAttributeRecord);
     // TODO: parseAttributeReportingConfiguration
 
     static QList<AttributeReportingStatusRecord> parseAttributeReportingStatusRecords(const QByteArray &payload);

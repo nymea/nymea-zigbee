@@ -116,6 +116,17 @@ ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
     return executeGlobalCommand(ZigbeeClusterLibrary::CommandReadAttributes, payload);
 }
 
+ZigbeeClusterReply *ZigbeeCluster::writeAttributes(QList<ZigbeeClusterLibrary::WriteAttributeRecord> writeAttributeRecords)
+{
+    qCDebug(dcZigbeeCluster()) << "Write attributes on" << m_node << m_endpoint << this;
+    QByteArray payload;
+    foreach (const ZigbeeClusterLibrary::WriteAttributeRecord &writeAttributeRecord, writeAttributeRecords) {
+        payload += ZigbeeClusterLibrary::buildWriteAttributeRecord(writeAttributeRecord);
+    }
+
+    return executeGlobalCommand(ZigbeeClusterLibrary::CommandWriteAttributes, payload);
+}
+
 ZigbeeClusterReply *ZigbeeCluster::configureReporting(QList<ZigbeeClusterLibrary::AttributeReportingConfiguration> reportingConfigurations)
 {
     qCDebug(dcZigbeeCluster()) << "Configure reporting on" << m_node << m_endpoint << this << reportingConfigurations;
