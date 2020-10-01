@@ -23,14 +23,18 @@ public:
 
     // Controllere requests
     ZigbeeInterfaceNxpReply *requestVersion();
+    ZigbeeInterfaceNxpReply *requestSoftResetController();
 
 signals:
+    void interfaceNotificationReceived(Nxp::Notification notification, const QByteArray &data);
 
 private:
     ZigbeeInterfaceNxp *m_interface = nullptr;
     quint8 m_sequenceNumber = 0;
 
-    ZigbeeInterfaceNxpReply *createReply(Nxp::Command command, const QString &requestName, const QByteArray &requestData, QObject *parent);
+    QHash<quint8, ZigbeeInterfaceNxpReply *> m_pendingReplies;
+    ZigbeeInterfaceNxpReply *createReply(Nxp::Command command, quint8 sequenceNumber, const QString &requestName, const QByteArray &requestData, QObject *parent);
+
 
 private slots:
     void onInterfaceAvailableChanged(bool available);

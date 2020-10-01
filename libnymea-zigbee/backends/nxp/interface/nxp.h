@@ -9,7 +9,8 @@ class Nxp
 public:
     enum Command {
         CommandGetVersion = 0x00,
-        CommandGetDeviceState = 0x01
+        CommandGetDeviceState = 0x01,
+        CommandSoftReset = 0x02
     };
     Q_ENUM(Command)
 
@@ -27,6 +28,17 @@ public:
     };
     Q_ENUM(Status)
 
+    enum LogLevel {
+        LogLevelEmergency = 0x00,
+        LogLevelAlert = 0x01,
+        LogLevelCritical = 0x02,
+        LogLevelError = 0x03,
+        LogLevelWarning = 0x04,
+        LogLevelNotice = 0x05,
+        LogLevelInfo = 0x06,
+        LogLevelDebug = 0x07
+    };
+    Q_ENUM(LogLevel)
 };
 
 #endif // NXP_H
