@@ -276,6 +276,20 @@ QByteArray ZigbeeClusterLibrary::buildAttributeReportingConfiguration(const Zigb
     return payload;
 }
 
+QByteArray ZigbeeClusterLibrary::buildWriteAttributeRecord(const ZigbeeClusterLibrary::WriteAttributeRecord &writeAttributeRecord)
+{
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << writeAttributeRecord.attributeId;
+    stream << static_cast<quint8>(writeAttributeRecord.dataType);
+    for (int i = 0; i < writeAttributeRecord.data.count(); i++) {
+        stream << static_cast<quint8>(writeAttributeRecord.data.at(i));
+    }
+
+    return payload;
+}
+
 QList<ZigbeeClusterLibrary::AttributeReportingStatusRecord> ZigbeeClusterLibrary::parseAttributeReportingStatusRecords(const QByteArray &payload)
 {
     QList<ZigbeeClusterLibrary::AttributeReportingStatusRecord> statusRecords;

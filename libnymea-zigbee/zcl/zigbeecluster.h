@@ -91,6 +91,7 @@ public:
 
     // ZCL global commands
     ZigbeeClusterReply *readAttributes(QList<quint16> attributes);
+    ZigbeeClusterReply *writeAttributes(QList<ZigbeeClusterLibrary::WriteAttributeRecord> writeAttributeRecords);
     ZigbeeClusterReply *configureReporting(QList<ZigbeeClusterLibrary::AttributeReportingConfiguration> reportingConfigurations);
 
 
