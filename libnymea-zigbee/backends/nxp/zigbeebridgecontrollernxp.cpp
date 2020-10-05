@@ -17,6 +17,11 @@ ZigbeeBridgeControllerNxp::~ZigbeeBridgeControllerNxp()
     qCDebug(dcZigbeeController()) << "Destroy controller";
 }
 
+ZigbeeBridgeControllerNxp::ControllerState ZigbeeBridgeControllerNxp::controllerState() const
+{
+    return m_controllerState;
+}
+
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestVersion()
 {
     QByteArray message;
@@ -27,6 +32,18 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestVersion()
     stream << static_cast<quint16>(0); // Frame length
 
     return createReply(Nxp::CommandGetVersion, m_sequenceNumber, "Request controller version", message, this);
+}
+
+ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestControllerState()
+{
+    QByteArray message;
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Nxp::CommandGetControllerState);
+    stream << static_cast<quint8>(m_sequenceNumber++);
+    stream << static_cast<quint16>(0); // Frame length
+
+    return createReply(Nxp::CommandGetControllerState, m_sequenceNumber, "Request controller state", message, this);
 }
 
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestSoftResetController()
@@ -56,6 +73,7 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::createReply(Nxp::Command com
 
     // Auto delete the object on finished
     connect(reply, &ZigbeeInterfaceNxpReply::finished, reply, [reply](){
+        qCDebug(dcZigbeeController()) << "Interface reply finished" << reply->command() << reply->sequenceNumber() << reply->status();
         reply->deleteLater();
     });
 
@@ -82,26 +100,34 @@ void ZigbeeBridgeControllerNxp::onInterfacePackageReceived(const QByteArray &pac
         quint16 payloadLength = 0;
         stream >> payloadLength;
         QByteArray data = package.mid(4, payloadLength);
-        if (package.length() < payloadLength + 4) {
+        if (package.length() != payloadLength + 4) {
             qCWarning(dcZigbeeController()) << "Invalid package length received" << ZigbeeUtils::convertByteArrayToHexString(package) << payloadLength;
             return;
         }
+
         Nxp::Notification notification = static_cast<Nxp::Notification>(commandInt);
         //qCDebug(dcZigbeeController()) << "Interface notification received" << notification << "SQN:" << sequenceNumber << ZigbeeUtils::convertByteArrayToHexString(data);
-        if (notification == Nxp::NotificationDebugMessage) {
+        switch (notification) {
+        case Nxp::NotificationDebugMessage:
             if (data.isEmpty()) {
                 qCWarning(dcZigbeeController()) << "Received empty debug log notification";
                 return;
             }
-            Nxp::LogLevel logLevel = static_cast<Nxp::LogLevel>(data.at(0));
-            qCDebug(dcZigbeeController()) << "DEBUG" << logLevel << qUtf8Printable(data.right(data.length() - 1));
+            qCDebug(dcZigbeeController()) << "DEBUG" << static_cast<Nxp::LogLevel>(data.at(0)) << qUtf8Printable(data.right(data.length() - 1));
+            break;
+        case Nxp::NotificationDeviceStatusChanged:
+            m_controllerState = static_cast<ControllerState>(data.at(0));
+            qCDebug(dcZigbeeController()) << "Controller state changed" << m_controllerState;
+            emit controllerStateChanged(m_controllerState);
+            break;
+        default:
+            emit interfaceNotificationReceived(notification, data);
+            break;
         }
-
-        emit interfaceNotificationReceived(notification, data);
     } else {
         quint8 statusInt = 0; quint16 payloadLength = 0;
         stream >> statusInt >> payloadLength;
-        if (package.length() < payloadLength + 5) {
+        if (package.length() != payloadLength + 5) {
             qCWarning(dcZigbeeController()) << "Invalid package length received" << ZigbeeUtils::convertByteArrayToHexString(package) << payloadLength;
             return;
         }
@@ -117,7 +143,9 @@ void ZigbeeBridgeControllerNxp::onInterfacePackageReceived(const QByteArray &pac
             } else {
                 qCWarning(dcZigbeeController()) << "Received interface response for a pending sequence number but the command does not match the request." << command << reply->command();
             }
-            reply->finished();
+            reply->setFinished();
+        } else {
+            qCWarning(dcZigbeeController()) << "Received a response for a non pending reply. There is no pending reply for command" << command << "SQN:" << sequenceNumber;
         }
     }
 }

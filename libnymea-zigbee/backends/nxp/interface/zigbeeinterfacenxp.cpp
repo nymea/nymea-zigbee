@@ -163,7 +163,7 @@ void ZigbeeInterfaceNxp::onReadyRead()
     // Read each byte until we get END byte, then unescape the package
     for (int i = 0; i < data.length(); i++) {
         quint8 byte = static_cast<quint8>(data.at(i));
-        qCDebug(dcZigbeeInterfaceTraffic()) << ZigbeeUtils::convertByteToHexString(byte);
+        qCDebug(dcZigbeeInterfaceTraffic()) << "[in] " << ZigbeeUtils::convertByteToHexString(byte);
         if (byte == ProtocolByteEnd) {
             // If there is no data...continue since it might be a starting END byte
             if (m_dataBuffer.isEmpty())
@@ -235,6 +235,10 @@ void ZigbeeInterfaceNxp::sendPackage(const QByteArray &package)
 
     // Send the data
     qCDebug(dcZigbeeInterfaceTraffic()) << "-->" << ZigbeeUtils::convertByteArrayToHexString(data);
+    for (int i = 0; i < data.length(); i++) {
+        qCDebug(dcZigbeeInterfaceTraffic()) << "[out]" << ZigbeeUtils::convertByteToHexString(data.at(i));
+    }
+
     if (m_serialPort->write(data) < 0) {
         qCWarning(dcZigbeeInterface()) << "Could not stream byte" << ZigbeeUtils::convertByteArrayToHexString(data);
     }

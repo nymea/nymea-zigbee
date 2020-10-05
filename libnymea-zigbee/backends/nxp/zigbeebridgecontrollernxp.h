@@ -21,20 +21,33 @@ public:
     explicit ZigbeeBridgeControllerNxp(QObject *parent = nullptr);
     ~ZigbeeBridgeControllerNxp() override;
 
+    enum ControllerState {
+        ControllerStateRunning = 0x00,
+        ControllerStateBooting = 0x01,
+        ControllerStateStarting = 0x02,
+        ControllerStateRunningUninitialized = 0x03,
+        ControllerStateNotRunning = 0x04
+    };
+    Q_ENUM(ControllerState)
+
+    ControllerState controllerState() const;
+
     // Controllere requests
     ZigbeeInterfaceNxpReply *requestVersion();
+    ZigbeeInterfaceNxpReply *requestControllerState();
     ZigbeeInterfaceNxpReply *requestSoftResetController();
 
 signals:
+    void controllerStateChanged(ControllerState controllerState);
     void interfaceNotificationReceived(Nxp::Notification notification, const QByteArray &data);
 
 private:
     ZigbeeInterfaceNxp *m_interface = nullptr;
+    ControllerState m_controllerState = ControllerStateNotRunning;
     quint8 m_sequenceNumber = 0;
 
     QHash<quint8, ZigbeeInterfaceNxpReply *> m_pendingReplies;
     ZigbeeInterfaceNxpReply *createReply(Nxp::Command command, quint8 sequenceNumber, const QString &requestName, const QByteArray &requestData, QObject *parent);
-
 
 private slots:
     void onInterfaceAvailableChanged(bool available);

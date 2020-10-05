@@ -9,7 +9,7 @@ class Nxp
 public:
     enum Command {
         CommandGetVersion = 0x00,
-        CommandGetDeviceState = 0x01,
+        CommandGetControllerState = 0x01,
         CommandSoftReset = 0x02
     };
     Q_ENUM(Command)

@@ -108,7 +108,7 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::setPermitJoin(quint16 shortAddress, qui
     stream << request.requestId();
     stream << duration;
     stream << static_cast<quint8>(0x01); // TrustCenter significance, always force to 1 according to Spec.
-    request.setTxOptions(Zigbee::ZigbeeTxOptions(nullptr)); // no ACK for broadcasts
+    request.setTxOptions(Zigbee::ZigbeeTxOptions()); // no ACK for broadcasts
     request.setAsdu(asdu);
 
     qCDebug(dcZigbeeNetwork()) << "Send permit join request" << ZigbeeUtils::convertUint16ToHexString(request.destinationShortAddress()) << duration << "s";
@@ -372,7 +372,7 @@ void ZigbeeNetworkDeconz::setPermitJoiningInternal(bool permitJoining)
         duration = 254;
     }
 
-    // Note: since compliance version >= 21 the value 255 is not any more endless.
+    // Note: since compliance version >= 21 the value 255 is not any more Qt::endless.
     // we need to refresh the command on timeout
 
     ZigbeeNetworkReply *reply = setPermitJoin(Zigbee::BroadcastAddressAllRouters, duration);

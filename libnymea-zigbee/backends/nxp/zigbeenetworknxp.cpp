@@ -7,6 +7,7 @@ ZigbeeNetworkNxp::ZigbeeNetworkNxp(QObject *parent) :
 {
     m_controller = new ZigbeeBridgeControllerNxp(this);
     connect(m_controller, &ZigbeeBridgeControllerNxp::availableChanged, this, &ZigbeeNetworkNxp::onControllerAvailableChanged);
+    connect(m_controller, &ZigbeeBridgeControllerNxp::controllerStateChanged, this, &ZigbeeNetworkNxp::onControllerStateChanged);
     //connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataConfirmReceived, this, &ZigbeeNetworkNxp::onApsDataConfirmReceived);
     //connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataIndicationReceived, this, &ZigbeeNetworkNxp::onApsDataIndicationReceived);
 
@@ -38,12 +39,36 @@ void ZigbeeNetworkNxp::onControllerAvailableChanged(bool available)
     qCDebug(dcZigbeeNetwork()) << "Controller is" << (available ? "now available" : "not available any more");
 
     if (available) {
-        reset();
+       reset();
+    }
+}
 
-//        ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
-//        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [](){
-//            qCDebug(dcZigbeeNetwork()) << "Version reply finished";
-//        });
+void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::ControllerState controllerState)
+{
+    switch (controllerState) {
+    case ZigbeeBridgeControllerNxp::ControllerStateRunning: {
+        qCDebug(dcZigbeeNetwork()) << "Request controller version";
+        ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
+        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
+            qCDebug(dcZigbeeNetwork()) << "Version reply finished" << reply->status();
+
+        });
+        break;
+    }
+    case ZigbeeBridgeControllerNxp::ControllerStateStarting:
+        break;
+    case ZigbeeBridgeControllerNxp::ControllerStateBooting:
+        break;
+    case ZigbeeBridgeControllerNxp::ControllerStateRunningUninitialized: {
+        qCDebug(dcZigbeeNetwork()) << "Request controller version";
+        ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
+        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
+            qCDebug(dcZigbeeNetwork()) << "Version reply finished" << reply->status();
+        });
+        break;
+    }
+    case ZigbeeBridgeControllerNxp::ControllerStateNotRunning:
+        break;
     }
 }
 

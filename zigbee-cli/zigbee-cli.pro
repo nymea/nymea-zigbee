@@ -7,6 +7,9 @@ TARGET = zigbee-cli
 
 LIBS += -L$$buildDir/libnymea-zigbee -lnymea-zigbee1
 
+win32:LIBS += -L$$buildDir/libnymea-zigbee/debug -lnymea-zigbee1
+
+
 INCLUDEPATH += ../libnymea-zigbee/
 
 target.path = /usr/bin

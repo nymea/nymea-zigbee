@@ -47,6 +47,8 @@ private:
     Nxp::Status m_status = Nxp::StatusUnknownCommand; // FIXME
     QByteArray m_responseData;
 
+    void setFinished();
+
 private slots:
     void onTimeout();
 

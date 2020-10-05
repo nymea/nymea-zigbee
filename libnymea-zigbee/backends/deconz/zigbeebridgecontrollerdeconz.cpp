@@ -1045,19 +1045,19 @@ QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState)
 
 QDebug operator<<(QDebug debug, const DeconzNetworkConfiguration &configuration)
 {
-    debug.nospace() << "Network configuration:" << endl;
-    debug.nospace() << " - Node type:" << configuration.nodeType << endl;
-    debug.nospace() << " - IEEE address:" << configuration.ieeeAddress.toString() << endl;
-    debug.nospace() << " - NWK address:" << ZigbeeUtils::convertUint16ToHexString(configuration.shortAddress) << endl;
-    debug.nospace() << " - PAN ID:" << ZigbeeUtils::convertUint16ToHexString(configuration.panId) << endl;
-    debug.nospace() << " - Extended PAN ID:" << ZigbeeUtils::convertUint64ToHexString(configuration.extendedPanId) << endl;
-    debug.nospace() << " - APS Extended PAN ID:" << ZigbeeUtils::convertUint64ToHexString(configuration.apsExtendedPanId) << endl;
-    debug.nospace() << " - Trust center IEEE address:" << configuration.trustCenterAddress.toString() << endl;
-    debug.nospace() << " - Channel mask:" << ZigbeeChannelMask(configuration.channelMask) << endl;
-    debug.nospace() << " - Channel:" << configuration.currentChannel << endl;
-    debug.nospace() << " - Security mode:" << configuration.securityMode << endl;
-    debug.nospace() << " - Protocol version:" << ZigbeeUtils::convertUint16ToHexString(configuration.protocolVersion) << endl;
-    debug.nospace() << " - Network update ID:" << ZigbeeUtils::convertByteToHexString(configuration.networkUpdateId) << endl;
-    debug.nospace() << " - Watchdog TTL:" << configuration.watchdogTimeout << endl;
+    debug.nospace() << "Network configuration:" << Qt::endl;
+    debug.nospace() << " - Node type:" << configuration.nodeType << Qt::endl;
+    debug.nospace() << " - IEEE address:" << configuration.ieeeAddress.toString() << Qt::endl;
+    debug.nospace() << " - NWK address:" << ZigbeeUtils::convertUint16ToHexString(configuration.shortAddress) << Qt::endl;
+    debug.nospace() << " - PAN ID:" << ZigbeeUtils::convertUint16ToHexString(configuration.panId) << Qt::endl;
+    debug.nospace() << " - Extended PAN ID:" << ZigbeeUtils::convertUint64ToHexString(configuration.extendedPanId) << Qt::endl;
+    debug.nospace() << " - APS Extended PAN ID:" << ZigbeeUtils::convertUint64ToHexString(configuration.apsExtendedPanId) << Qt::endl;
+    debug.nospace() << " - Trust center IEEE address:" << configuration.trustCenterAddress.toString() << Qt::endl;
+    debug.nospace() << " - Channel mask:" << ZigbeeChannelMask(configuration.channelMask) << Qt::endl;
+    debug.nospace() << " - Channel:" << configuration.currentChannel << Qt::endl;
+    debug.nospace() << " - Security mode:" << configuration.securityMode << Qt::endl;
+    debug.nospace() << " - Protocol version:" << ZigbeeUtils::convertUint16ToHexString(configuration.protocolVersion) << Qt::endl;
+    debug.nospace() << " - Network update ID:" << ZigbeeUtils::convertByteToHexString(configuration.networkUpdateId) << Qt::endl;
+    debug.nospace() << " - Watchdog TTL:" << configuration.watchdogTimeout << Qt::endl;
     return debug.space();
 }

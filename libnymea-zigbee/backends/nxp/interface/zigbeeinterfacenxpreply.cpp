@@ -62,6 +62,12 @@ ZigbeeInterfaceNxpReply::ZigbeeInterfaceNxpReply(Nxp::Command command, QObject *
     connect(m_timer, &QTimer::timeout, this, &ZigbeeInterfaceNxpReply::onTimeout);
 }
 
+void ZigbeeInterfaceNxpReply::setFinished()
+{
+    m_timer->stop();
+    emit finished();
+}
+
 void ZigbeeInterfaceNxpReply::onTimeout()
 {
     m_timeout = true;
