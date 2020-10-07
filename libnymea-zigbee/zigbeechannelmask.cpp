@@ -121,13 +121,13 @@ bool ZigbeeChannelMask::isSet(Zigbee::ZigbeeChannel channel) const
 void ZigbeeChannelMask::setChannel(Zigbee::ZigbeeChannel channel)
 {
     // Set channel bit
-    m_channelMask |= 1 << channel;
+    m_channelMask |= channel;
 }
 
 void ZigbeeChannelMask::unsetChannel(Zigbee::ZigbeeChannel channel)
 {
     // Clear channel bit
-    m_channelMask  &= ~(1 << channel);
+    m_channelMask  &= ~(channel);
 }
 
 ZigbeeChannelMask &ZigbeeChannelMask::operator=(const ZigbeeChannelMask &other)
