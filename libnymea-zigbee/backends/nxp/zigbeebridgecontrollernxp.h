@@ -17,6 +17,9 @@
 class ZigbeeBridgeControllerNxp : public ZigbeeBridgeController
 {
     Q_OBJECT
+
+    friend class ZigbeeNetworkNxp;
+
 public:
     explicit ZigbeeBridgeControllerNxp(QObject *parent = nullptr);
     ~ZigbeeBridgeControllerNxp() override;
@@ -36,6 +39,9 @@ public:
     ZigbeeInterfaceNxpReply *requestVersion();
     ZigbeeInterfaceNxpReply *requestControllerState();
     ZigbeeInterfaceNxpReply *requestSoftResetController();
+    ZigbeeInterfaceNxpReply *requestFactoryResetController();
+    ZigbeeInterfaceNxpReply *requestSetPanId(quint64 panId);
+    ZigbeeInterfaceNxpReply *requestSetChannelMask(quint32 channelMask);
 
 signals:
     void controllerStateChanged(ControllerState controllerState);
@@ -46,12 +52,17 @@ private:
     ControllerState m_controllerState = ControllerStateNotRunning;
     quint8 m_sequenceNumber = 0;
 
-    QHash<quint8, ZigbeeInterfaceNxpReply *> m_pendingReplies;
+    ZigbeeInterfaceNxpReply *m_currentReply = nullptr;
+    QQueue<ZigbeeInterfaceNxpReply *> m_replyQueue;
     ZigbeeInterfaceNxpReply *createReply(Nxp::Command command, quint8 sequenceNumber, const QString &requestName, const QByteArray &requestData, QObject *parent);
+
+    void bumpSequenceNumber();
 
 private slots:
     void onInterfaceAvailableChanged(bool available);
     void onInterfacePackageReceived(const QByteArray &package);
+
+    void sendNextRequest();
 
 public slots:
     bool enable(const QString &serialPort, qint32 baudrate);

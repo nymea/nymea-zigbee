@@ -25,10 +25,11 @@ ZigbeeBridgeControllerNxp::ControllerState ZigbeeBridgeControllerNxp::controller
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestVersion()
 {
     QByteArray message;
+    bumpSequenceNumber();
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Nxp::CommandGetVersion);
-    stream << static_cast<quint8>(m_sequenceNumber++);
+    stream << static_cast<quint8>(m_sequenceNumber);
     stream << static_cast<quint16>(0); // Frame length
 
     return createReply(Nxp::CommandGetVersion, m_sequenceNumber, "Request controller version", message, this);
@@ -37,10 +38,11 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestVersion()
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestControllerState()
 {
     QByteArray message;
+    bumpSequenceNumber();
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Nxp::CommandGetControllerState);
-    stream << static_cast<quint8>(m_sequenceNumber++);
+    stream << static_cast<quint8>(m_sequenceNumber);
     stream << static_cast<quint16>(0); // Frame length
 
     return createReply(Nxp::CommandGetControllerState, m_sequenceNumber, "Request controller state", message, this);
@@ -49,13 +51,55 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestControllerState()
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestSoftResetController()
 {
     QByteArray message;
+    bumpSequenceNumber();
     QDataStream stream(&message, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(Nxp::CommandSoftReset);
-    stream << static_cast<quint8>(m_sequenceNumber++);
+    stream << static_cast<quint8>(m_sequenceNumber);
     stream << static_cast<quint16>(0); // Frame length
 
     return createReply(Nxp::CommandSoftReset, m_sequenceNumber, "Request soft reset controller", message, this);
+}
+
+ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestFactoryResetController()
+{
+    QByteArray message;
+    bumpSequenceNumber();
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Nxp::CommandFactoryReset);
+    stream << static_cast<quint8>(m_sequenceNumber);
+    stream << static_cast<quint16>(0); // Frame length
+
+    return createReply(Nxp::CommandFactoryReset, m_sequenceNumber, "Request factory reset controller", message, this);
+}
+
+ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestSetPanId(quint64 panId)
+{
+    QByteArray message;
+    bumpSequenceNumber();
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Nxp::CommandSetPanId);
+    stream << static_cast<quint8>(m_sequenceNumber);
+    stream << static_cast<quint16>(8); // Frame length
+    stream << panId;
+
+    return createReply(Nxp::CommandSetPanId, m_sequenceNumber, "Request set PAN ID", message, this);
+}
+
+ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestSetChannelMask(quint32 channelMask)
+{
+    QByteArray message;
+    bumpSequenceNumber();
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Nxp::CommandSetChannelMask);
+    stream << static_cast<quint8>(m_sequenceNumber);
+    stream << static_cast<quint16>(4); // Frame length
+    stream << channelMask;
+
+    return createReply(Nxp::CommandSetChannelMask, m_sequenceNumber, "Request set channel mask", message, this);
 }
 
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::createReply(Nxp::Command command, quint8 sequenceNumber, const QString &requestName, const QByteArray &requestData, QObject *parent)
@@ -65,21 +109,30 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::createReply(Nxp::Command com
     reply->m_requestName = requestName;
     reply->m_requestData = requestData;
     reply->m_sequenceNumber = sequenceNumber;
-
     // Make sure we clean up on timeout
     connect(reply, &ZigbeeInterfaceNxpReply::timeout, this, [reply](){
         qCWarning(dcZigbeeController()) << "Reply timeout" << reply;
     });
 
     // Auto delete the object on finished
-    connect(reply, &ZigbeeInterfaceNxpReply::finished, reply, [reply](){
-        qCDebug(dcZigbeeController()) << "Interface reply finished" << reply->command() << reply->sequenceNumber() << reply->status();
+    connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
         reply->deleteLater();
+        if (m_currentReply == reply) {
+            m_currentReply = nullptr;
+            QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
+        }
     });
 
-    m_pendingReplies.insert(sequenceNumber, reply);
-    m_interface->sendPackage(requestData);
+    qCDebug(dcZigbeeController()) << "Enqueue request" << reply->command() << "SQN:" << reply->sequenceNumber();
+    m_replyQueue.enqueue(reply);
+
+    QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
     return reply;
+}
+
+void ZigbeeBridgeControllerNxp::bumpSequenceNumber()
+{
+    m_sequenceNumber += 1;
 }
 
 void ZigbeeBridgeControllerNxp::onInterfaceAvailableChanged(bool available)
@@ -106,14 +159,14 @@ void ZigbeeBridgeControllerNxp::onInterfacePackageReceived(const QByteArray &pac
         }
 
         Nxp::Notification notification = static_cast<Nxp::Notification>(commandInt);
-        //qCDebug(dcZigbeeController()) << "Interface notification received" << notification << "SQN:" << sequenceNumber << ZigbeeUtils::convertByteArrayToHexString(data);
+        qCDebug(dcZigbeeController()) << "Interface notification received" << notification << "SQN:" << sequenceNumber << ZigbeeUtils::convertByteArrayToHexString(data);
         switch (notification) {
         case Nxp::NotificationDebugMessage:
             if (data.isEmpty()) {
                 qCWarning(dcZigbeeController()) << "Received empty debug log notification";
                 return;
             }
-            qCDebug(dcZigbeeController()) << "DEBUG" << static_cast<Nxp::LogLevel>(data.at(0)) << qUtf8Printable(data.right(data.length() - 1));
+            qCDebug(dcZigbeeController()) << "*****DEBUG*****" << static_cast<Nxp::LogLevel>(data.at(0)) << Qt::endl << qUtf8Printable(data.right(data.length() - 1));
             break;
         case Nxp::NotificationDeviceStatusChanged:
             m_controllerState = static_cast<ControllerState>(data.at(0));
@@ -135,19 +188,35 @@ void ZigbeeBridgeControllerNxp::onInterfacePackageReceived(const QByteArray &pac
         Nxp::Command command = static_cast<Nxp::Command>(commandInt);
         Nxp::Status status = static_cast<Nxp::Status>(statusInt);
         qCDebug(dcZigbeeController()) << "Interface response received" << command << "SQN:" << sequenceNumber << status << ZigbeeUtils::convertByteArrayToHexString(data);
-        if (m_pendingReplies.keys().contains(sequenceNumber)) {
-            ZigbeeInterfaceNxpReply * reply = m_pendingReplies.take(sequenceNumber);
-            if (reply->command() == command) {
-                reply->m_status = status;
-                reply->m_responseData = data;
+        if (m_currentReply->sequenceNumber() == sequenceNumber) {
+            if (m_currentReply->command() == command) {
+                m_currentReply->m_status = status;
+                m_currentReply->m_responseData = data;
             } else {
-                qCWarning(dcZigbeeController()) << "Received interface response for a pending sequence number but the command does not match the request." << command << reply->command();
+                qCWarning(dcZigbeeController()) << "Received interface response for a pending sequence number but the command does not match the request." << command << m_currentReply->command();
             }
-            reply->setFinished();
+            m_currentReply->setFinished();
         } else {
             qCWarning(dcZigbeeController()) << "Received a response for a non pending reply. There is no pending reply for command" << command << "SQN:" << sequenceNumber;
         }
     }
+}
+
+void ZigbeeBridgeControllerNxp::sendNextRequest()
+{
+    // Check if there is a reply request to send
+    if (m_replyQueue.isEmpty())
+        return;
+
+    // Check if there is currently a running reply
+    if (m_currentReply)
+        return;
+
+    // Send next message
+    m_currentReply = m_replyQueue.dequeue();
+    qCDebug(dcZigbeeController()) << "Send request" << m_currentReply;
+    m_interface->sendPackage(m_currentReply->requestData());
+    m_currentReply->m_timer->start();
 }
 
 bool ZigbeeBridgeControllerNxp::enable(const QString &serialPort, qint32 baudrate)

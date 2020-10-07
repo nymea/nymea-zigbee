@@ -168,6 +168,10 @@ int main(int argc, char *argv[])
     network->setSerialPortName(parser.value(serialOption));
     network->setSerialBaudrate(baudrate);
     network->setSettingsFileName("/tmp/zigbee.conf");
+    network->setExtendedPanId(5);
+    ZigbeeChannelMask mask;
+    mask.setChannel(Zigbee::ZigbeeChannel13);
+    network->setChannelMask(mask);
     network->startNetwork();
 
     //Core core(parser.value(serialOption), baudrate, channel);

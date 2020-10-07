@@ -10,7 +10,12 @@ public:
     enum Command {
         CommandGetVersion = 0x00,
         CommandGetControllerState = 0x01,
-        CommandSoftReset = 0x02
+        CommandSoftReset = 0x02,
+        CommandFactoryReset = 0x03,
+        CommandSetPanId = 0x04,
+        CommandSetChannelMask = 0x05,
+        CommandSetSecurityKey = 0x06,
+        CommandStartNetwork = 0x07
     };
     Q_ENUM(Command)
 
@@ -24,7 +29,8 @@ public:
         StatusSuccess = 0x00,
         StatusProtocolError = 0x01,
         StatusUnknownCommand = 0x02,
-        StatusInvalidCrc = 0x03
+        StatusInvalidCrc = 0x03,
+        StatusStackError = 0x04
     };
     Q_ENUM(Status)
 

@@ -2,6 +2,8 @@
 #include "loggingcategory.h"
 #include "zigbeeutils.h"
 
+#include <QDataStream>
+
 ZigbeeNetworkNxp::ZigbeeNetworkNxp(QObject *parent) :
     ZigbeeNetwork(parent)
 {
@@ -39,7 +41,7 @@ void ZigbeeNetworkNxp::onControllerAvailableChanged(bool available)
     qCDebug(dcZigbeeNetwork()) << "Controller is" << (available ? "now available" : "not available any more");
 
     if (available) {
-       reset();
+        reset();
     }
 }
 
@@ -49,8 +51,19 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
     case ZigbeeBridgeControllerNxp::ControllerStateRunning: {
         qCDebug(dcZigbeeNetwork()) << "Request controller version";
         ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
-        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
+        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
             qCDebug(dcZigbeeNetwork()) << "Version reply finished" << reply->status();
+            QByteArray payload = reply->responseData();
+            QDataStream stream(&payload, QIODevice::ReadOnly);
+            stream.setByteOrder(QDataStream::LittleEndian);
+            quint8 major = 0; quint8 minor = 0; quint8 patch = 0; quint16 sdkVersion = 0;
+            stream >> major >> minor >> patch >> sdkVersion;
+
+            QString versionString = QString ("%1.%2.%3 - %4").arg(major).arg(minor).arg(patch).arg(sdkVersion);
+            qCDebug(dcZigbeeNetwork()) << "Controller version" << versionString;
+            m_controller->setFirmwareVersion(versionString);
+
+            // We are done here...
 
         });
         break;
@@ -62,8 +75,30 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
     case ZigbeeBridgeControllerNxp::ControllerStateRunningUninitialized: {
         qCDebug(dcZigbeeNetwork()) << "Request controller version";
         ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
-        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
+        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
             qCDebug(dcZigbeeNetwork()) << "Version reply finished" << reply->status();
+            QByteArray payload = reply->responseData();
+            QDataStream stream(&payload, QIODevice::ReadOnly);
+            stream.setByteOrder(QDataStream::LittleEndian);
+            quint8 major = 0; quint8 minor = 0; quint8 patch = 0; quint16 sdkVersion = 0;
+            stream >> major >> minor >> patch >> sdkVersion;
+
+            QString versionString = QString ("%1.%2.%3 - %4").arg(major).arg(minor).arg(patch).arg(sdkVersion);
+            qCDebug(dcZigbeeNetwork()) << "Controller version" << versionString;
+            m_controller->setFirmwareVersion(versionString);
+
+            qCDebug(dcZigbeeNetwork()) << "Set pan id" << ZigbeeUtils::convertUint64ToHexString(extendedPanId()) << extendedPanId();
+            ZigbeeInterfaceNxpReply *reply = m_controller->requestSetPanId(extendedPanId());
+            connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
+                qCDebug(dcZigbeeNetwork()) << "Set PAN ID reply finished" << reply->status();
+
+                qCDebug(dcZigbeeNetwork()) << "Set channel mask" << channelMask() << ZigbeeUtils::convertUint32ToHexString(channelMask().toUInt32()) << channelMask().toUInt32();
+                ZigbeeInterfaceNxpReply *reply = m_controller->requestSetChannelMask(channelMask().toUInt32());
+                connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
+                    qCDebug(dcZigbeeNetwork()) << "Set channel mask reply finished" << reply->status();
+
+                });
+            });
         });
         break;
     }
@@ -110,5 +145,8 @@ void ZigbeeNetworkNxp::reset()
 
 void ZigbeeNetworkNxp::factoryResetNetwork()
 {
-
+    ZigbeeInterfaceNxpReply *reply = m_controller->requestFactoryResetController();
+    connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [](){
+        qCDebug(dcZigbeeNetwork()) << "Factory reset reply finished";
+    });
 }
