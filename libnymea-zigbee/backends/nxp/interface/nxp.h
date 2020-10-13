@@ -45,6 +45,13 @@ public:
         LogLevelDebug = 0x07
     };
     Q_ENUM(LogLevel)
+
+
+    enum KeyType {
+        KeyTypeGlobalLinkKey = 0x00,
+        KeyTypeUniqueLinkKey = 0x01
+    };
+    Q_ENUM(KeyType)
 };
 
 #endif // NXP_H

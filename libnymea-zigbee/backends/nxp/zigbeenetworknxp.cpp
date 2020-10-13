@@ -41,7 +41,8 @@ void ZigbeeNetworkNxp::onControllerAvailableChanged(bool available)
     qCDebug(dcZigbeeNetwork()) << "Controller is" << (available ? "now available" : "not available any more");
 
     if (available) {
-        reset();
+        //reset();
+        factoryResetNetwork();
     }
 }
 
@@ -77,6 +78,8 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
         ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
         connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
             qCDebug(dcZigbeeNetwork()) << "Version reply finished" << reply->status();
+            //FIXME: error handling
+
             QByteArray payload = reply->responseData();
             QDataStream stream(&payload, QIODevice::ReadOnly);
             stream.setByteOrder(QDataStream::LittleEndian);
@@ -91,12 +94,37 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
             ZigbeeInterfaceNxpReply *reply = m_controller->requestSetPanId(extendedPanId());
             connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
                 qCDebug(dcZigbeeNetwork()) << "Set PAN ID reply finished" << reply->status();
+                //FIXME: error handling
 
                 qCDebug(dcZigbeeNetwork()) << "Set channel mask" << channelMask() << ZigbeeUtils::convertUint32ToHexString(channelMask().toUInt32()) << channelMask().toUInt32();
                 ZigbeeInterfaceNxpReply *reply = m_controller->requestSetChannelMask(channelMask().toUInt32());
-                connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
+                connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
                     qCDebug(dcZigbeeNetwork()) << "Set channel mask reply finished" << reply->status();
+                    //FIXME: error handling
 
+                    qCDebug(dcZigbeeNetwork()) << "Set global link key" << securityConfiguration().globalTrustCenterLinkKey().toString();
+                    ZigbeeInterfaceNxpReply *reply = m_controller->requestSetSecurityKey(Nxp::KeyTypeGlobalLinkKey, securityConfiguration().globalTrustCenterLinkKey());
+                    connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
+                        qCDebug(dcZigbeeNetwork()) << "Set global link key" << reply->status();
+                        //FIXME: error handling
+
+                        qCDebug(dcZigbeeNetwork()) << "Set network link key" << securityConfiguration().networkKey().toString();
+                        ZigbeeInterfaceNxpReply *reply = m_controller->requestSetSecurityKey(Nxp::KeyTypeUniqueLinkKey, securityConfiguration().networkKey());
+                        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
+                            qCDebug(dcZigbeeNetwork()) << "Set network link key" << reply->status();
+                            //FIXME: error handling
+
+                            qCDebug(dcZigbeeNetwork()) << "Start the network";
+                            ZigbeeInterfaceNxpReply *reply = m_controller->requestStartNetwork();
+                            connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
+                                qCDebug(dcZigbeeNetwork()) << "Start network" << reply->status();
+                                //FIXME: error handling
+
+
+
+                            });
+                        });
+                    });
                 });
             });
         });

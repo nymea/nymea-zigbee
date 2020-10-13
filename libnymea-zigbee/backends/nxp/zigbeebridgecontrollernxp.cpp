@@ -102,6 +102,37 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestSetChannelMask(quint3
     return createReply(Nxp::CommandSetChannelMask, m_sequenceNumber, "Request set channel mask", message, this);
 }
 
+ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestSetSecurityKey(Nxp::KeyType keyType, const ZigbeeNetworkKey &key)
+{
+    QByteArray message;
+    bumpSequenceNumber();
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Nxp::CommandSetSecurityKey);
+    stream << static_cast<quint8>(m_sequenceNumber);
+    stream << static_cast<quint16>(17); // Frame length
+    stream << static_cast<quint8>(keyType);
+    QByteArray keyData = key.toByteArray();
+    for (int i = 0; i < 16; i++) {
+        stream << static_cast<quint8>(keyData.at(i));
+    }
+
+    return createReply(Nxp::CommandSetSecurityKey, m_sequenceNumber, "Request set security key", message, this);
+}
+
+ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestStartNetwork()
+{
+    QByteArray message;
+    bumpSequenceNumber();
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Nxp::CommandStartNetwork);
+    stream << static_cast<quint8>(m_sequenceNumber);
+    stream << static_cast<quint16>(0); // Frame length
+
+    return createReply(Nxp::CommandStartNetwork, m_sequenceNumber, "Request start network", message, this);
+}
+
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::createReply(Nxp::Command command, quint8 sequenceNumber, const QString &requestName, const QByteArray &requestData, QObject *parent)
 {
     // Create the reply

@@ -1,7 +1,8 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
-
+#include <QLoggingCategory>
+#include "zigbeenetworkkey.h"
 #include "zigbeenetworkmanager.h"
 
 //static QHash<QString, bool> s_loggingFilters;
@@ -138,13 +139,20 @@ int main(int argc, char *argv[])
         debugLevel = 1;
     }
 
-//    s_loggingFilters.insert("Application", true);
-//    s_loggingFilters.insert("Zigbee", true);
-//    s_loggingFilters.insert("ZigbeeController", (debugLevel > 1));
-//    s_loggingFilters.insert("ZigbeeInterface", (debugLevel > 2));
-//    s_loggingFilters.insert("ZigbeeInterfaceTraffic", (debugLevel > 3));
+    //    s_loggingFilters.insert("Application", true);
+    //    s_loggingFilters.insert("Zigbee", true);
+    //    s_loggingFilters.insert("ZigbeeController", (debugLevel > 1));
+    //    s_loggingFilters.insert("ZigbeeInterface", (debugLevel > 2));
+    //    s_loggingFilters.insert("ZigbeeInterfaceTraffic", (debugLevel > 3));
 
     //QLoggingCategory::installFilter(loggingCategoryFilter);
+
+    QLoggingCategory::setFilterRules("*.debug=false\n"
+                                     "Zigbee.debug=true\n"
+                                     "ZigbeeController.debug=true\n"
+                                     "ZigbeeInterface.debug=false\n"
+                                     "ZigbeeInterfaceTraffic.debug=false\n"
+                                     );
 
     // Check channel
     bool channelValueOk = false;
@@ -172,9 +180,12 @@ int main(int argc, char *argv[])
     ZigbeeChannelMask mask;
     mask.setChannel(Zigbee::ZigbeeChannel13);
     network->setChannelMask(mask);
-    network->startNetwork();
 
-    //Core core(parser.value(serialOption), baudrate, channel);
+    ZigbeeSecurityConfiguration securityConfiguration;
+    securityConfiguration.setNetworkKey(ZigbeeNetworkKey(QString("2a:59:f4:11:75:bb:64:48:55:c5:23:62:b0:33:ea:33")));
+    network->setSecurityConfiguration(securityConfiguration);
+
+    network->startNetwork();
 
     return application.exec();
 }

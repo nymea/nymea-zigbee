@@ -40,8 +40,14 @@ public:
     ZigbeeInterfaceNxpReply *requestControllerState();
     ZigbeeInterfaceNxpReply *requestSoftResetController();
     ZigbeeInterfaceNxpReply *requestFactoryResetController();
+
+    // Configure network
     ZigbeeInterfaceNxpReply *requestSetPanId(quint64 panId);
     ZigbeeInterfaceNxpReply *requestSetChannelMask(quint32 channelMask);
+    ZigbeeInterfaceNxpReply *requestSetSecurityKey(Nxp::KeyType keyType, const ZigbeeNetworkKey &key);
+
+    ZigbeeInterfaceNxpReply *requestStartNetwork();
+
 
 signals:
     void controllerStateChanged(ControllerState controllerState);
