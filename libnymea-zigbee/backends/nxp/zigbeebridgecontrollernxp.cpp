@@ -197,7 +197,7 @@ void ZigbeeBridgeControllerNxp::onInterfacePackageReceived(const QByteArray &pac
                 qCWarning(dcZigbeeController()) << "Received empty debug log notification";
                 return;
             }
-            qCDebug(dcZigbeeController()) << "*****DEBUG*****" << static_cast<Nxp::LogLevel>(data.at(0)) << Qt::endl << qUtf8Printable(data.right(data.length() - 1));
+            qCDebug(dcZigbeeController()) << "*****DEBUG*****" << static_cast<Nxp::LogLevel>(data.at(0)) << "\n" << qUtf8Printable(data.right(data.length() - 1));
             break;
         case Nxp::NotificationDeviceStatusChanged:
             m_controllerState = static_cast<ControllerState>(data.at(0));

@@ -206,15 +206,15 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &deviceAdpu)
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NodeDescriptor &nodeDescriptor)
 {
-    debug.nospace() << "NodeDescriptor(" << nodeDescriptor.nodeType << ")" << Qt::endl;
-    debug.nospace() << "    Complex descriptor available: " << nodeDescriptor.complexDescriptorAvailable << Qt::endl;
-    debug.nospace() << "    User descriptor available: " << nodeDescriptor.userDescriptorAvailable << Qt::endl;
-    debug.nospace() << "    " << nodeDescriptor.frequencyBand << Qt::endl;
+    debug.nospace() << "NodeDescriptor(" << nodeDescriptor.nodeType << ")" << "\n";
+    debug.nospace() << "    Complex descriptor available: " << nodeDescriptor.complexDescriptorAvailable << "\n";
+    debug.nospace() << "    User descriptor available: " << nodeDescriptor.userDescriptorAvailable << "\n";
+    debug.nospace() << "    " << nodeDescriptor.frequencyBand << "\n";
     debug.nospace() << "    " << nodeDescriptor.macCapabilities;
-    debug.nospace() << "    Manufacturer code: " << ZigbeeUtils::convertUint16ToHexString(nodeDescriptor.manufacturerCode) << "(" << nodeDescriptor.manufacturerCode << ")" << Qt::endl;
-    debug.nospace() << "    Maximum buffer size: " << nodeDescriptor.maximumBufferSize << Qt::endl;
-    debug.nospace() << "    Maximum RX size: " << nodeDescriptor.maximumRxSize << Qt::endl;
-    debug.nospace() << "    Maximum TX size: " << nodeDescriptor.maximumTxSize << Qt::endl;
+    debug.nospace() << "    Manufacturer code: " << ZigbeeUtils::convertUint16ToHexString(nodeDescriptor.manufacturerCode) << "(" << nodeDescriptor.manufacturerCode << ")" << "\n";
+    debug.nospace() << "    Maximum buffer size: " << nodeDescriptor.maximumBufferSize << "\n";
+    debug.nospace() << "    Maximum RX size: " << nodeDescriptor.maximumRxSize << "\n";
+    debug.nospace() << "    Maximum TX size: " << nodeDescriptor.maximumTxSize << "\n";
     debug.nospace() << "    " << nodeDescriptor.serverMask;
     debug.nospace() << "    " << nodeDescriptor.descriptorCapabilities;
     return debug;
@@ -222,43 +222,43 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NodeDescriptor &nodeD
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::MacCapabilities &macCapabilities)
 {
-    debug.nospace() << "MacCapabilities(" << ZigbeeUtils::convertByteToHexString(macCapabilities.flag) << ")" << Qt::endl;
-    debug.nospace() << "    Alternate PAN Coordinator: " << macCapabilities.alternatePanCoordinator << Qt::endl;
-    debug.nospace() << "    " << macCapabilities.deviceType << Qt::endl;
-    debug.nospace() << "    Power source main power: " << macCapabilities.powerSourceFlagMainPower << Qt::endl;
-    debug.nospace() << "    Receiver on when idle: " << macCapabilities.receiverOnWhenIdle << Qt::endl;
-    debug.nospace() << "    Security capability: " << macCapabilities.securityCapability << Qt::endl;
-    debug.nospace() << "    Allocate address: " << macCapabilities.allocateAddress << Qt::endl;
+    debug.nospace() << "MacCapabilities(" << ZigbeeUtils::convertByteToHexString(macCapabilities.flag) << ")" << "\n";
+    debug.nospace() << "    Alternate PAN Coordinator: " << macCapabilities.alternatePanCoordinator << "\n";
+    debug.nospace() << "    " << macCapabilities.deviceType << "\n";
+    debug.nospace() << "    Power source main power: " << macCapabilities.powerSourceFlagMainPower << "\n";
+    debug.nospace() << "    Receiver on when idle: " << macCapabilities.receiverOnWhenIdle << "\n";
+    debug.nospace() << "    Security capability: " << macCapabilities.securityCapability << "\n";
+    debug.nospace() << "    Allocate address: " << macCapabilities.allocateAddress << "\n";
     return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::ServerMask &serverMask)
 {
-    debug.nospace() << "ServerMask(" << ZigbeeUtils::convertUint16ToHexString(serverMask.serverMaskFlag) << ")" << Qt::endl;
-    debug.nospace() << "    Primary trust center: " << serverMask.primaryTrustCenter << Qt::endl;
-    debug.nospace() << "    Backup trust center: " << serverMask.backupTrustCenter << Qt::endl;
-    debug.nospace() << "    Primary binding cache: " << serverMask.primaryBindingCache << Qt::endl;
-    debug.nospace() << "    Backup binding cache: " << serverMask.backupBindingCache << Qt::endl;
-    debug.nospace() << "    Primary discovery cache: " << serverMask.primaryDiscoveryCache << Qt::endl;
-    debug.nospace() << "    Backup discovery cache: " << serverMask.backupDiscoveryCache << Qt::endl;
-    debug.nospace() << "    Network manager: " << serverMask.networkManager << Qt::endl;
+    debug.nospace() << "ServerMask(" << ZigbeeUtils::convertUint16ToHexString(serverMask.serverMaskFlag) << ")" << "\n";
+    debug.nospace() << "    Primary trust center: " << serverMask.primaryTrustCenter << "\n";
+    debug.nospace() << "    Backup trust center: " << serverMask.backupTrustCenter << "\n";
+    debug.nospace() << "    Primary binding cache: " << serverMask.primaryBindingCache << "\n";
+    debug.nospace() << "    Backup binding cache: " << serverMask.backupBindingCache << "\n";
+    debug.nospace() << "    Primary discovery cache: " << serverMask.primaryDiscoveryCache << "\n";
+    debug.nospace() << "    Backup discovery cache: " << serverMask.backupDiscoveryCache << "\n";
+    debug.nospace() << "    Network manager: " << serverMask.networkManager << "\n";
     return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::DescriptorCapabilities &descriptorCapabilities)
 {
-    debug.nospace() << "DescriptorCapabilities(" << ZigbeeUtils::convertByteToHexString(descriptorCapabilities.descriptorCapabilitiesFlag) << ")" << Qt::endl;
-    debug.nospace() << "    Extended active endpoint list available: " << descriptorCapabilities.extendedActiveEndpointListAvailable << Qt::endl;
-    debug.nospace() << "    Extended simple descriptor list available: " << descriptorCapabilities.extendedSimpleDescriptorListAvailable << Qt::endl;
+    debug.nospace() << "DescriptorCapabilities(" << ZigbeeUtils::convertByteToHexString(descriptorCapabilities.descriptorCapabilitiesFlag) << ")" << "\n";
+    debug.nospace() << "    Extended active endpoint list available: " << descriptorCapabilities.extendedActiveEndpointListAvailable << "\n";
+    debug.nospace() << "    Extended simple descriptor list available: " << descriptorCapabilities.extendedSimpleDescriptorListAvailable << "\n";
     return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::PowerDescriptor &powerDescriptor)
 {
-    debug.nospace() << "PowerDescriptor(" << ZigbeeUtils::convertByteToHexString(powerDescriptor.powerDescriptoFlag) << ")" << Qt::endl;
-    debug.nospace() << "    Power mode: " << powerDescriptor.powerMode << Qt::endl;
-    debug.nospace() << "    Available power sources: " << powerDescriptor.availablePowerSources << Qt::endl;
-    debug.nospace() << "    Power source: " << powerDescriptor.powerSource << Qt::endl;
-    debug.nospace() << "    Power level: " << powerDescriptor.powerLevel << Qt::endl;
+    debug.nospace() << "PowerDescriptor(" << ZigbeeUtils::convertByteToHexString(powerDescriptor.powerDescriptoFlag) << ")" << "\n";
+    debug.nospace() << "    Power mode: " << powerDescriptor.powerMode << "\n";
+    debug.nospace() << "    Available power sources: " << powerDescriptor.availablePowerSources << "\n";
+    debug.nospace() << "    Power source: " << powerDescriptor.powerSource << "\n";
+    debug.nospace() << "    Power level: " << powerDescriptor.powerLevel << "\n";
     return debug;
 }

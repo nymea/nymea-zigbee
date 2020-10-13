@@ -542,26 +542,26 @@ QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
 {
     debug.nospace().noquote() << "ZigbeeNetwork (" << ZigbeeUtils::convertUint16ToHexString(network->panId())
                               << ", Channel " << network->channel()
-                              << ")" << Qt::endl;
+                              << ")" << "\n";
     foreach (ZigbeeNode *node, network->nodes()) {
-        debug.nospace().noquote() << " ---> " << node << Qt::endl;
+        debug.nospace().noquote() << " ---> " << node << "\n";
         debug.nospace().noquote() << "  " << node->nodeDescriptor();
         debug.nospace().noquote() << "  " << node->powerDescriptor();
-        debug.nospace().noquote() << "  Endpoints: " << node->endpoints().count() << Qt::endl;
+        debug.nospace().noquote() << "  Endpoints: " << node->endpoints().count() << "\n";
         foreach (ZigbeeNodeEndpoint *endpoint, node->endpoints()) {
-            debug.nospace().noquote() << "    - " << endpoint << Qt::endl;
-            debug.nospace().noquote() << "      Input clusters:" << Qt::endl;
+            debug.nospace().noquote() << "    - " << endpoint << "\n";
+            debug.nospace().noquote() << "      Input clusters:" << "\n";
             foreach (ZigbeeCluster *cluster, endpoint->inputClusters()) {
-                debug.nospace().noquote() << "      - " << cluster << Qt::endl;
+                debug.nospace().noquote() << "      - " << cluster << "\n";
                 foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
-                    debug.nospace().noquote() << "        - " << attribute << Qt::endl;
+                    debug.nospace().noquote() << "        - " << attribute << "\n";
                 }
             }
-            debug.nospace().noquote() << "      Output clusters:" << Qt::endl;
+            debug.nospace().noquote() << "      Output clusters:" << "\n";
             foreach (ZigbeeCluster *cluster, endpoint->outputClusters()) {
-                debug.nospace().noquote() << "      - " << cluster << Qt::endl;
+                debug.nospace().noquote() << "      - " << cluster << "\n";
                 foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
-                    debug.nospace().noquote() << "        - " << attribute << Qt::endl;
+                    debug.nospace().noquote() << "        - " << attribute << "\n";
                 }
             }
         }
