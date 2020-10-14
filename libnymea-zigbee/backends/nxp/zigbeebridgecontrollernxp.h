@@ -46,7 +46,12 @@ public:
     ZigbeeInterfaceNxpReply *requestSetChannelMask(quint32 channelMask);
     ZigbeeInterfaceNxpReply *requestSetSecurityKey(Nxp::KeyType keyType, const ZigbeeNetworkKey &key);
 
+    // Network commands
     ZigbeeInterfaceNxpReply *requestStartNetwork();
+    ZigbeeInterfaceNxpReply *requestNetworkState();
+    ZigbeeInterfaceNxpReply *requestSetPermitJoinCoordinator(quint8 duration);
+
+    // APS
 
 
 signals:

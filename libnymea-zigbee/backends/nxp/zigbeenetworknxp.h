@@ -27,6 +27,7 @@ private:
 private slots:
     void onControllerAvailableChanged(bool available);
     void onControllerStateChanged(ZigbeeBridgeControllerNxp::ControllerState controllerState);
+    void onInterfaceNotificationReceived(Nxp::Notification notification, const QByteArray &payload);
 
 protected:
     void setPermitJoiningInternal(bool permitJoining) override;

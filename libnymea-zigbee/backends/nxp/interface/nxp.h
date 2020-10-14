@@ -12,15 +12,20 @@ public:
         CommandGetControllerState = 0x01,
         CommandSoftReset = 0x02,
         CommandFactoryReset = 0x03,
+
         CommandSetPanId = 0x04,
         CommandSetChannelMask = 0x05,
         CommandSetSecurityKey = 0x06,
-        CommandStartNetwork = 0x07
+
+        CommandStartNetwork = 0x07,
+        CommandGetNetworkState = 0x08,
+        CommandSetPermitJoinCoordinator = 0x09
     };
     Q_ENUM(Command)
 
     enum Notification {
         NotificationDeviceStatusChanged = 0x7D,
+        NotificationNetworkStarted = 0x7E,
         NotificationDebugMessage = 0xFE
     };
     Q_ENUM(Notification)

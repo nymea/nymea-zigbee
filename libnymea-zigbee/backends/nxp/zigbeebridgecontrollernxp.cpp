@@ -133,6 +133,33 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestStartNetwork()
     return createReply(Nxp::CommandStartNetwork, m_sequenceNumber, "Request start network", message, this);
 }
 
+ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestNetworkState()
+{
+    QByteArray message;
+    bumpSequenceNumber();
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Nxp::CommandGetNetworkState);
+    stream << static_cast<quint8>(m_sequenceNumber);
+    stream << static_cast<quint16>(0); // Frame length
+
+    return createReply(Nxp::CommandGetNetworkState, m_sequenceNumber, "Request network state", message, this);
+}
+
+ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestSetPermitJoinCoordinator(quint8 duration)
+{
+    QByteArray message;
+    bumpSequenceNumber();
+    QDataStream stream(&message, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(Nxp::CommandSetPermitJoinCoordinator);
+    stream << static_cast<quint8>(m_sequenceNumber);
+    stream << static_cast<quint16>(1); // Frame length
+    stream << duration;
+
+    return createReply(Nxp::CommandSetPermitJoinCoordinator, m_sequenceNumber, "Request set permit join in coordinator", message, this);
+}
+
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::createReply(Nxp::Command command, quint8 sequenceNumber, const QString &requestName, const QByteArray &requestData, QObject *parent)
 {
     // Create the reply
