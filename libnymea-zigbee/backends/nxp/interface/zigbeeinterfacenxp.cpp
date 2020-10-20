@@ -34,6 +34,8 @@
 
 // SLIP: https://tools.ietf.org/html/rfc1055
 
+Q_DECLARE_METATYPE(QSerialPort::SerialPortError);
+
 ZigbeeInterfaceNxp::ZigbeeInterfaceNxp(QObject *parent) : QObject(parent)
 {
     qRegisterMetaType<QSerialPort::SerialPortError>();
