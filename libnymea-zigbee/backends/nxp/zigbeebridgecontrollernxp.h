@@ -34,6 +34,7 @@ public:
     Q_ENUM(ControllerState)
 
     ControllerState controllerState() const;
+    void refreshControllerState();
 
     // Controllere requests
     ZigbeeInterfaceNxpReply *requestVersion();
@@ -52,6 +53,7 @@ public:
     ZigbeeInterfaceNxpReply *requestSetPermitJoinCoordinator(quint8 duration);
 
     // APS
+    ZigbeeInterfaceNxpReply *requestSendRequest(const ZigbeeNetworkRequest &request);
 
 
 signals:
@@ -68,6 +70,11 @@ private:
     ZigbeeInterfaceNxpReply *createReply(Nxp::Command command, quint8 sequenceNumber, const QString &requestName, const QByteArray &requestData, QObject *parent);
 
     void bumpSequenceNumber();
+
+    ZigbeeInterfaceNxpReply *requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
+    ZigbeeInterfaceNxpReply *requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
+    ZigbeeInterfaceNxpReply *requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius = 0);
+
 
 private slots:
     void onInterfaceAvailableChanged(bool available);

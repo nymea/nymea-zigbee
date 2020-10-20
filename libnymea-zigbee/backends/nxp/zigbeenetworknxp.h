@@ -2,6 +2,7 @@
 #define ZIGBEENETWORKNXP_H
 
 #include <QObject>
+#include <QTimer>
 
 #include "zigbeenetwork.h"
 #include "zigbeechannelmask.h"
@@ -23,15 +24,28 @@ public:
 private:
     ZigbeeBridgeControllerNxp *m_controller = nullptr;
     bool m_networkRunning = false;
+    QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
+
+    QTimer *m_permitJoinRefreshTimer = nullptr;
+
+    // ZDO
+    void handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication);
+
+    // ZCL
+    void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
 
 private slots:
     void onControllerAvailableChanged(bool available);
     void onControllerStateChanged(ZigbeeBridgeControllerNxp::ControllerState controllerState);
     void onInterfaceNotificationReceived(Nxp::Notification notification, const QByteArray &payload);
 
+    void onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
+    void onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
+
+    void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
+
 protected:
     void setPermitJoiningInternal(bool permitJoining) override;
-
 
 signals:
 

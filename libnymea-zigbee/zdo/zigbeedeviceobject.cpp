@@ -30,6 +30,7 @@
 #include "loggingcategory.h"
 
 #include <QDataStream>
+#include <QPointer>
 
 ZigbeeDeviceObject::ZigbeeDeviceObject(ZigbeeNetwork *network, ZigbeeNode *node, QObject *parent) :
     QObject(parent),
@@ -406,6 +407,7 @@ void ZigbeeDeviceObject::finishZdoReply(ZigbeeDeviceObjectReply *zdoReply)
         qCWarning(dcZigbeeDeviceObject()) << "Failed to send request to device" << zdoReply->request() << zdoReply->error();
         break;
     }
+
 
     m_pendingReplies.remove(zdoReply->transactionSequenceNumber());
     zdoReply->finished();

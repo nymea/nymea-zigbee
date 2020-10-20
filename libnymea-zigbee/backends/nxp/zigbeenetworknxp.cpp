@@ -11,8 +11,15 @@ ZigbeeNetworkNxp::ZigbeeNetworkNxp(QObject *parent) :
     connect(m_controller, &ZigbeeBridgeControllerNxp::availableChanged, this, &ZigbeeNetworkNxp::onControllerAvailableChanged);
     connect(m_controller, &ZigbeeBridgeControllerNxp::interfaceNotificationReceived, this, &ZigbeeNetworkNxp::onInterfaceNotificationReceived);
     connect(m_controller, &ZigbeeBridgeControllerNxp::controllerStateChanged, this, &ZigbeeNetworkNxp::onControllerStateChanged);
-    //connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataConfirmReceived, this, &ZigbeeNetworkNxp::onApsDataConfirmReceived);
-    //connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataIndicationReceived, this, &ZigbeeNetworkNxp::onApsDataIndicationReceived);
+    connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataConfirmReceived, this, &ZigbeeNetworkNxp::onApsDataConfirmReceived);
+    connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataIndicationReceived, this, &ZigbeeNetworkNxp::onApsDataIndicationReceived);
+
+    m_permitJoinRefreshTimer = new QTimer(this);
+    m_permitJoinRefreshTimer->setInterval(250 * 1000);
+    m_permitJoinRefreshTimer->setSingleShot(false);
+    connect(m_permitJoinRefreshTimer, &QTimer::timeout, this, [this](){
+        setPermitJoiningInternal(true);
+    });
 }
 
 ZigbeeBridgeController *ZigbeeNetworkNxp::bridgeController() const
@@ -25,27 +32,130 @@ ZigbeeBridgeController *ZigbeeNetworkNxp::bridgeController() const
 
 ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &request)
 {
-    Q_UNUSED(request)
-    return nullptr;
+    ZigbeeNetworkReply *reply = createNetworkReply(request);
+    // Send the request, and keep the reply until transposrt, zigbee trasmission and response arrived
+    connect(reply, &ZigbeeNetworkReply::finished, this, [this, request](){
+        m_pendingReplies.remove(request.requestId());
+    });
+
+    // Finish the reply right the way if the network is offline
+    if (!m_controller->available()) {
+        finishNetworkReply(reply, ZigbeeNetworkReply::ErrorNetworkOffline);
+        return reply;
+    }
+
+    ZigbeeInterfaceNxpReply *interfaceReply = m_controller->requestSendRequest(request);
+    connect(interfaceReply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply, interfaceReply](){
+        if (interfaceReply->status() != Nxp::StatusSuccess) {
+            qCWarning(dcZigbeeController()) << "Could send request to controller. SQN:" << interfaceReply->sequenceNumber() << interfaceReply->status();
+            finishNetworkReply(reply, ZigbeeNetworkReply::ErrorInterfaceError);
+            return;
+        }
+
+        // Note: this is a special case for nxp coordinator requests, they don't send a confirm because the request will not be sent trough the network
+        if (reply->request().destinationShortAddress() == 0x0000 && reply->request().profileId() == Zigbee::ZigbeeProfileDevice) {
+            qCDebug(dcZigbeeNetwork()) << "Finish reply since there will be no CONFIRM for local node requests.";
+            finishNetworkReply(reply);
+            return;
+        }
+
+        quint8 networkRequestId = interfaceReply->responseData().at(0);
+        qCDebug(dcZigbeeNetwork()) << "Request has network SQN" << networkRequestId;
+        reply->request().setRequestId(networkRequestId);
+        m_pendingReplies.insert(networkRequestId, reply);
+
+        // The request has been sent successfully to the device, start the timeout timer now
+        startWaitingReply(reply);
+    });
+
+    return reply;
 }
 
 ZigbeeNetworkReply *ZigbeeNetworkNxp::setPermitJoin(quint16 shortAddress, quint8 duration)
 {
-    Q_UNUSED(shortAddress)
-    Q_UNUSED(duration)
-    return nullptr;
+    // Get the power descriptor
+    ZigbeeNetworkRequest request;
+    request.setRequestId(generateSequenceNumber());
+    request.setDestinationAddressMode(Zigbee::DestinationAddressModeGroup);
+    request.setDestinationShortAddress(static_cast<quint16>(shortAddress));
+    request.setProfileId(Zigbee::ZigbeeProfileDevice); // ZDP
+    request.setClusterId(ZigbeeDeviceProfile::MgmtPermitJoinRequest);
+    request.setSourceEndpoint(0); // ZDO
+    request.setRadius(0);
+
+    // Build ASDU
+    QByteArray asdu;
+    QDataStream stream(&asdu, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << request.requestId();
+    stream << duration;
+    stream << static_cast<quint8>(0x01); // TrustCenter significance, always force to 1 according to Spec.
+    request.setTxOptions(Zigbee::ZigbeeTxOptions()); // no ACK for broadcasts
+    request.setAsdu(asdu);
+
+    qCDebug(dcZigbeeNetwork()) << "Send permit join request" << ZigbeeUtils::convertUint16ToHexString(request.destinationShortAddress()) << duration << "s";
+    return sendRequest(request);
+}
+
+void ZigbeeNetworkNxp::handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication)
+{
+    // Check if this is a device announcement
+    if (indication.clusterId == ZigbeeDeviceProfile::DeviceAnnounce) {
+        QDataStream stream(indication.asdu);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        quint8 sequenceNumber = 0; quint16 shortAddress = 0; quint64 ieeeAddress = 0; quint8 macFlag = 0;
+        stream >> sequenceNumber >> shortAddress >> ieeeAddress >> macFlag;
+        onDeviceAnnounced(shortAddress, ZigbeeAddress(ieeeAddress), macFlag);
+        return;
+    }
+
+    if (indication.destinationShortAddress == Zigbee::BroadcastAddressAllNodes ||
+            indication.destinationShortAddress == Zigbee::BroadcastAddressAllRouters ||
+            indication.destinationShortAddress == Zigbee::BroadcastAddressAllNonSleepingNodes) {
+        qCDebug(dcZigbeeNetwork()) << "Received unhandled broadcast ZDO indication" << indication;
+
+        // FIXME: check what we can do with such messages like permit join
+        return;
+    }
+
+    ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZDO indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
+        // FIXME: check if we want to create it since the device definitly exists within the network
+        return;
+    }
+
+    // Let the node handle this indication
+    handleNodeIndication(node, indication);
+}
+
+void ZigbeeNetworkNxp::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication)
+{
+    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(indication.asdu);
+    //qCDebug(dcZigbeeNetwork()) << "Handle ZCL indication" << indication << frame;
+
+    // Get the node
+    ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
+        // FIXME: maybe create and init the node, since it is in the network, but not recognized
+        // FIXME: maybe remove this node since we might have removed it but it did not respond, or we not explicitly allowed it to join.
+        return;
+    }
+    // Let the node handle this indication
+    handleNodeIndication(node, indication);
 }
 
 void ZigbeeNetworkNxp::onControllerAvailableChanged(bool available)
 {
     qCDebug(dcZigbeeNetwork()) << "Controller is" << (available ? "now available" : "not available any more");
     if (available) {
-        // Get controller state
 
+        m_controller->refreshControllerState();
         // Get network state, depending on the controller state
 
         //reset();
-        factoryResetNetwork();
+        //factoryResetNetwork();
     } else {
         setState(StateOffline);
     }
@@ -70,7 +180,6 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
             QString versionString = QString ("%1.%2.%3 - %4").arg(major).arg(minor).arg(patch).arg(sdkVersion);
             qCDebug(dcZigbeeNetwork()) << "Controller version" << versionString;
             m_controller->setFirmwareVersion(versionString);
-
 
             qCDebug(dcZigbeeNetwork()) << "Get the current network state";
             ZigbeeInterfaceNxpReply *reply = m_controller->requestNetworkState();
@@ -106,27 +215,18 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
                 ZigbeeNode *coordinatorNode = createNode(networkAddress, ZigbeeAddress(ieeeAddress), this);
                 m_coordinatorNode = coordinatorNode;
 
-                // TODO: initialize
+                // Network creation done when coordinator node is initialized
+                connect(coordinatorNode, &ZigbeeNode::stateChanged, this, [this, coordinatorNode](ZigbeeNode::State state){
+                    if (state == ZigbeeNode::StateInitialized) {
+                        qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
+                        setState(StateRunning);
+                        setPermitJoiningInternal(false);
+                        return;
+                    }
+                });
 
-                m_database->saveNode(m_coordinatorNode);
-                saveNetwork();
-                setState(StateRunning);
-
-//                // Network creation done when coordinator node is initialized
-//                connect(coordinatorNode, &ZigbeeNode::stateChanged, this, [this, coordinatorNode](ZigbeeNode::State state){
-//                    if (state == ZigbeeNode::StateInitialized) {
-//                        qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
-//                        m_initializing = false;
-//                        setState(StateRunning);
-//                        setPermitJoiningInternal(false);
-//                        return;
-//                    }
-//                });
-
-//                coordinatorNode->startInitialization();
-//                addUnitializedNode(coordinatorNode);
-
-
+                coordinatorNode->startInitialization();
+                addUnitializedNode(coordinatorNode);
             });
         });
         break;
@@ -226,10 +326,52 @@ void ZigbeeNetworkNxp::onInterfaceNotificationReceived(Nxp::Notification notific
     }
     default:
         qCWarning(dcZigbeeNetwork()) << "Unhandeld interface notification received" << notification << ZigbeeUtils::convertByteArrayToHexString(payload);
+        break;
+    }
+}
 
+void ZigbeeNetworkNxp::onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm)
+{
+    ZigbeeNetworkReply *reply = m_pendingReplies.value(confirm.requestId);
+    if (!reply) {
+        qCWarning(dcZigbeeNetwork()) << "Received confirmation but could not find any reply. Ignoring the confirmation";
+        return;
     }
 
+    setReplyResponseError(reply, static_cast<Zigbee::ZigbeeApsStatus>(confirm.zigbeeStatusCode));
+}
 
+void ZigbeeNetworkNxp::onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication)
+{
+    // Check if this indocation is related to any pending reply
+    if (indication.profileId == Zigbee::ZigbeeProfileDevice) {
+        handleZigbeeDeviceProfileIndication(indication);
+        return;
+    }
+
+    // Let the node handle this indication
+    handleZigbeeClusterLibraryIndication(indication);
+}
+
+void ZigbeeNetworkNxp::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities)
+{
+    qCDebug(dcZigbeeNetwork()) << "Device announced" << ZigbeeUtils::convertUint16ToHexString(shortAddress) << ieeeAddress.toString() << ZigbeeUtils::convertByteToHexString(macCapabilities);
+
+    // Lets check if this device is in the uninitialized node list, if so, remove it and recreate the device
+    if (hasUninitializedNode(ieeeAddress)) {
+        qCWarning(dcZigbeeNetwork()) << "Device announced but there is already an initialization running for it. Remove the device and restart the initialization.";
+        ZigbeeNode *uninitializedNode = getZigbeeNode(ieeeAddress);
+        removeUninitializedNode(uninitializedNode);
+    }
+
+    if (hasNode(ieeeAddress)) {
+        qCWarning(dcZigbeeNetwork()) << "Already known device announced. FIXME: Ignoring announcement" << ieeeAddress.toString();
+        return;
+    }
+
+    ZigbeeNode *node = createNode(shortAddress, ieeeAddress, macCapabilities, this);
+    addUnitializedNode(node);
+    node->startInitialization();
 }
 
 void ZigbeeNetworkNxp::setPermitJoiningInternal(bool permitJoining)
@@ -241,20 +383,49 @@ void ZigbeeNetworkNxp::setPermitJoiningInternal(bool permitJoining)
         duration = 255;
     }
 
-    // TODO: send broadcast message using ZDO and refrash
+    // Note: since compliance version >= 21 the value 255 is not any more Qt::endless.
+    // we need to refresh the command on timeout
 
-    qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator node to" << duration << "[s]";
-    ZigbeeInterfaceNxpReply *reply = m_controller->requestSetPermitJoinCoordinator(duration);
-    connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply, permitJoining](){
-        qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator finished" << reply->status();
-        m_permitJoining = permitJoining;
-        emit permitJoiningChanged(m_permitJoining);
+
+    ZigbeeNetworkReply *reply = setPermitJoin(Zigbee::BroadcastAddressAllRouters, duration);
+    connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply, permitJoining, duration](){
+        if (reply->zigbeeApsStatus() != Zigbee::ZigbeeApsStatusSuccess) {
+            qCDebug(dcZigbeeNetwork()) << "Could not set permit join to" << duration;
+            m_permitJoining = false;
+            emit permitJoiningChanged(m_permitJoining);
+            return;
+        }
+
+        qCDebug(dcZigbeeNetwork()) << "Permit join request finished successfully";
+        if (permitJoining) {
+            m_permitJoinRefreshTimer->start();
+        } else {
+            m_permitJoinRefreshTimer->stop();
+        }
+
+        if (m_permitJoining != permitJoining) {
+            m_permitJoining = permitJoining;
+            emit permitJoiningChanged(m_permitJoining);
+        }
+
+        qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator node to" << duration << "[s]";
+        ZigbeeInterfaceNxpReply *reply = m_controller->requestSetPermitJoinCoordinator(duration);
+        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
+            qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator finished" << reply->status();
+            if (reply->status() != Nxp::StatusSuccess) {
+                qCWarning(dcZigbeeNetwork()) << "Failed to set permit join status in coordinator";
+            }
+
+        });
     });
 }
 
 void ZigbeeNetworkNxp::startNetwork()
 {
     loadNetwork();
+
+    m_permitJoining = false;
+    emit permitJoiningChanged(m_permitJoining);
 
     if (!m_controller->enable(serialPortName(), serialBaudrate())) {
         m_permitJoining = false;
@@ -264,10 +435,7 @@ void ZigbeeNetworkNxp::startNetwork()
         return;
     }
 
-    m_permitJoining = false;
-    emit permitJoiningChanged(m_permitJoining);
-
-    // Get current state and load information
+    // Wait for available signal...
 }
 
 void ZigbeeNetworkNxp::stopNetwork()
@@ -287,6 +455,8 @@ void ZigbeeNetworkNxp::reset()
 void ZigbeeNetworkNxp::factoryResetNetwork()
 {
     qCDebug(dcZigbeeNetwork()) << "Factory reset network and forget all information. This cannot be undone.";
+    clearSettings();
+
     ZigbeeInterfaceNxpReply *reply = m_controller->requestFactoryResetController();
     connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
         qCDebug(dcZigbeeNetwork()) << "Factory reset reply finished" << reply->status();

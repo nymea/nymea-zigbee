@@ -411,7 +411,6 @@ void ZigbeeNetworkDeconz::setPermitJoiningInternal(bool permitJoining)
 
             qCDebug(dcZigbeeNetwork()) << "Set permit join configuration request finished" << reply->statusCode();
         });
-
     });
 }
 

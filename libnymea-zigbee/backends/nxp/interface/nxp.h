@@ -19,13 +19,18 @@ public:
 
         CommandStartNetwork = 0x07,
         CommandGetNetworkState = 0x08,
-        CommandSetPermitJoinCoordinator = 0x09
+        CommandSetPermitJoinCoordinator = 0x09,
+
+
+        CommandSendApsDataRequest = 0x20
     };
     Q_ENUM(Command)
 
     enum Notification {
         NotificationDeviceStatusChanged = 0x7D,
         NotificationNetworkStarted = 0x7E,
+        NotificationApsDataConfirm = 0x80,
+        NotificationApsDataIndication = 0x81,
         NotificationDebugMessage = 0xFE
     };
     Q_ENUM(Notification)

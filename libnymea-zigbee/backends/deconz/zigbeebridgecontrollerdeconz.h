@@ -146,9 +146,6 @@ signals:
     void networkStateChanged(Deconz::NetworkState networkState);
     void networkConfigurationParameterChanged(const DeconzNetworkConfiguration &networkConfiguration);
 
-    void apsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
-    void apsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
-
 private slots:
     void onInterfaceAvailableChanged(bool available);
     void onInterfacePackageReceived(const QByteArray &package);

@@ -30,6 +30,8 @@
 
 #include <QObject>
 
+#include "zigbee.h"
+
 class ZigbeeBridgeController : public QObject
 {
     Q_OBJECT
@@ -50,6 +52,10 @@ protected:
 signals:
     void availableChanged(bool available);
     void firmwareVersionChanged(const QString &firmwareVersion);
+
+    void apsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
+    void apsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
+
 };
 
 #endif // ZIGBEEBRIDGECONTROLLER_H
