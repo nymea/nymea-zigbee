@@ -29,8 +29,10 @@
 #define ZIGBEEBRIDGECONTROLLER_H
 
 #include <QObject>
-
+#include <QSerialPort>
 #include "zigbee.h"
+
+Q_DECLARE_METATYPE(QSerialPort::SerialPortError);
 
 class ZigbeeBridgeController : public QObject
 {
