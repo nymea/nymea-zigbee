@@ -43,6 +43,43 @@ bool ZigbeeBridgeController::available() const
     return m_available;
 }
 
+bool ZigbeeBridgeController::canUpdate() const
+{
+    return m_canUpdate;
+}
+
+bool ZigbeeBridgeController::updateRunning() const
+{
+    return m_updateRunning;
+}
+
+bool ZigbeeBridgeController::updateAvailable(const QString &currentVersion)
+{
+    Q_UNUSED(currentVersion)
+    return false;
+}
+
+QString ZigbeeBridgeController::updateFirmwareVersion() const
+{
+    return QString();
+}
+
+void ZigbeeBridgeController::startFirmwareUpdate()
+{
+    qCWarning(dcZigbeeController()) << "Cannot start firmware update. The feature is not implemented for this controller.";
+}
+
+void ZigbeeBridgeController::setSettingsDirectory(const QDir &settingsDirectory)
+{
+    qCDebug(dcZigbeeController()) << "Using settings directory" << settingsDirectory.canonicalPath();
+    m_settingsDirectory = settingsDirectory;
+
+    // Check if we have an update provider for the controller, if so,
+    // we can perform an automatic updates
+
+    initializeUpdateProvider();
+}
+
 void ZigbeeBridgeController::setAvailable(bool available)
 {
     if (m_available == available)
@@ -61,4 +98,9 @@ void ZigbeeBridgeController::setFirmwareVersion(const QString &firmwareVersion)
     qCDebug(dcZigbeeController()) << "Firmware version changed" << firmwareVersion;
     m_firmwareVersion = firmwareVersion;
     emit firmwareVersionChanged(m_firmwareVersion);
+}
+
+void ZigbeeBridgeController::initializeUpdateProvider()
+{
+    qCDebug(dcZigbeeController()) << "No firmware update provider configured for this controller.";
 }

@@ -28,6 +28,7 @@
 #ifndef ZIGBEENETWORK_H
 #define ZIGBEENETWORK_H
 
+#include <QDir>
 #include <QObject>
 #include <QSettings>
 
@@ -49,6 +50,7 @@ public:
         StateUninitialized,
         StateOffline,
         StateStarting,
+        StateUpdating,
         StateRunning,
         StateStopping
     };
@@ -134,6 +136,7 @@ private:
 
     // Network storage
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
+    QDir m_settingsDirectory;
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
 

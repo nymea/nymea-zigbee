@@ -8,6 +8,7 @@ SOURCES += \
     backends/deconz/interface/zigbeeinterfacedeconzreply.cpp \
     backends/deconz/zigbeebridgecontrollerdeconz.cpp \
     backends/deconz/zigbeenetworkdeconz.cpp \
+    backends/nxp/firmwareupdatehandlernxp.cpp \
     backends/nxp/interface/zigbeeinterfacenxp.cpp \
     backends/nxp/interface/zigbeeinterfacenxpreply.cpp \
     backends/nxp/zigbeebridgecontrollernxp.cpp \
@@ -63,6 +64,7 @@ HEADERS += \
     backends/deconz/interface/zigbeeinterfacedeconzreply.h \
     backends/deconz/zigbeebridgecontrollerdeconz.h \
     backends/deconz/zigbeenetworkdeconz.h \
+    backends/nxp/firmwareupdatehandlernxp.h \
     backends/nxp/interface/nxp.h \
     backends/nxp/interface/zigbeeinterfacenxp.h \
     backends/nxp/interface/zigbeeinterfacenxpreply.h \

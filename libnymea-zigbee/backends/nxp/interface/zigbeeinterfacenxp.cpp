@@ -298,6 +298,7 @@ void ZigbeeInterfaceNxp::disable()
 
     delete m_serialPort;
     m_serialPort = nullptr;
+
+    qCDebug(dcZigbeeInterface()) << "Interface disabled.";
     setAvailable(false);
-    qCDebug(dcZigbeeInterface()) << "Interface disabled";
 }

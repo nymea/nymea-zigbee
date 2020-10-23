@@ -56,11 +56,11 @@ QString ZigbeeNetwork::settingsFilenName() const
 
 void ZigbeeNetwork::setSettingsFileName(const QString &settingsFileName)
 {
-    if (m_settingsFileName == settingsFileName)
-        return;
-
     m_settingsFileName = settingsFileName;
     emit settingsFileNameChanged(m_settingsFileName);
+
+    m_settingsDirectory = QFileInfo(m_settingsFileName).canonicalPath();
+    bridgeController()->setSettingsDirectory(m_settingsDirectory);
 }
 
 QString ZigbeeNetwork::serialPortName() const

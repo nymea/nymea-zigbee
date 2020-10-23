@@ -1,3 +1,30 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*
+* Copyright 2013 - 2020, nymea GmbH
+* Contact: contact@nymea.io
+*
+* This file is part of nymea-zigbee.
+* This project including source code and documentation is protected by copyright law, and
+* remains the property of nymea GmbH. All rights, including reproduction, publication,
+* editing and translation, are reserved. The use of this project is subject to the terms of a
+* license agreement to be concluded with nymea GmbH in accordance with the terms
+* of use of nymea GmbH, available under https://nymea.io/license
+*
+* GNU Lesser General Public License Usage
+* Alternatively, this project may be redistributed and/or modified under the terms of the GNU
+* Lesser General Public License as published by the Free Software Foundation; version 3.
+* this project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU Lesser General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public License along with this project.
+* If not, see <https://www.gnu.org/licenses/>.
+*
+* For any further details and any questions please contact us under contact@nymea.io
+* or see our FAQ/Licensing Information on https://nymea.io/license/faq
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 #include "zigbeenetworknxp.h"
 #include "loggingcategory.h"
 #include "zigbeeutils.h"
@@ -13,6 +40,20 @@ ZigbeeNetworkNxp::ZigbeeNetworkNxp(QObject *parent) :
     connect(m_controller, &ZigbeeBridgeControllerNxp::controllerStateChanged, this, &ZigbeeNetworkNxp::onControllerStateChanged);
     connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataConfirmReceived, this, &ZigbeeNetworkNxp::onApsDataConfirmReceived);
     connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataIndicationReceived, this, &ZigbeeNetworkNxp::onApsDataIndicationReceived);
+    connect(m_controller, &ZigbeeBridgeControllerNxp::canUpdateChanged, this, [](bool canUpdate){
+        if (canUpdate) {
+            qCDebug(dcZigbeeNetwork()) << "The controller of this network can be updated.";
+        } else {
+            qCDebug(dcZigbeeNetwork()) << "The controller of this network can not be updated.";
+        }
+    });
+
+    connect(m_controller, &ZigbeeBridgeControllerNxp::updateRunningChanged, this, [this](bool updateRunning){
+        if (updateRunning) {
+            qCDebug(dcZigbeeNetwork()) << "The controller is performing an update.";
+            setState(StateUpdating);
+        }
+    });
 
     m_permitJoinRefreshTimer = new QTimer(this);
     m_permitJoinRefreshTimer->setInterval(250 * 1000);
@@ -97,6 +138,64 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::setPermitJoin(quint16 shortAddress, quint8
     return sendRequest(request);
 }
 
+bool ZigbeeNetworkNxp::processVersionReply(ZigbeeInterfaceNxpReply *reply)
+{
+    qCDebug(dcZigbeeNetwork()) << "Version reply finished" << reply->status();
+
+    if (reply->timendOut()) {
+        m_reconnectCounter++;
+        if (m_reconnectCounter >= 3) {
+            if (m_controller->canUpdate()) {
+                qCDebug(dcZigbeeNetwork()) << "Unable to get controller version.";
+                qCDebug(dcZigbeeNetwork()) << "Firmware update provider available. Try to flash the firmware, maybe that fixes the problem.";
+                if (!m_controller->updateRunning()) {
+                    clearSettings();
+                    qCDebug(dcZigbeeNetwork()) << "Starting firmware update...";
+                    m_controller->startFirmwareUpdate();
+                } else {
+                    qCWarning(dcZigbeeNetwork()) << "There is already an update running...";
+                }
+                return false;
+            } else {
+                qCDebug(dcZigbeeNetwork()) << "Unable to get controller version. There is no firmware upgrade available. Giving up.";
+                return false;
+            }
+        }
+
+        qCWarning(dcZigbeeNetwork()) << "Failed to read firmware version. Retry" << m_reconnectCounter << "/ 3";
+        ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
+        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
+            processVersionReply(reply);
+        });
+
+        return false;
+    }
+
+    QByteArray payload = reply->responseData();
+    QDataStream stream(&payload, QIODevice::ReadOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    quint8 major = 0; quint8 minor = 0; quint8 patch = 0; quint16 sdkVersion = 0;
+    stream >> major >> minor >> patch >> sdkVersion;
+
+    QString version = QString("%1.%2.%3").arg(major).arg(minor).arg(patch);
+    QString versionString = QString("%1 - %2").arg(version).arg(sdkVersion);
+    qCDebug(dcZigbeeNetwork()) << "Controller version" << versionString;
+    m_controller->setFirmwareVersion(versionString);
+
+    if (m_controller->canUpdate()) {
+        if (m_controller->updateAvailable(version)) {
+            qCDebug(dcZigbeeNetwork()) << "There is an update available for the this zigbee controller:" << version << "-->" << m_controller->updateFirmwareVersion();
+            qCDebug(dcZigbeeNetwork()) << "Starting firmware update...";
+            m_controller->startFirmwareUpdate();
+            return false;
+        } else {
+            qCDebug(dcZigbeeNetwork()) << "The current firmware is up to date.";
+        }
+    }
+
+    return true;
+}
+
 void ZigbeeNetworkNxp::handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication)
 {
     // Check if this is a device announcement
@@ -150,12 +249,15 @@ void ZigbeeNetworkNxp::onControllerAvailableChanged(bool available)
 {
     qCDebug(dcZigbeeNetwork()) << "Controller is" << (available ? "now available" : "not available any more");
     if (available) {
+        m_reconnectCounter = 0;
+        ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
+        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
+            // Retry or firmware upgrade if available
+            if (!processVersionReply(reply))
+                return;
 
-        m_controller->refreshControllerState();
-        // Get network state, depending on the controller state
-
-        //reset();
-        //factoryResetNetwork();
+            m_controller->refreshControllerState();
+        });
     } else {
         setState(StateOffline);
     }
@@ -167,19 +269,14 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
     switch (controllerState) {
     case ZigbeeBridgeControllerNxp::ControllerStateRunning: {
         setState(StateStarting);
+        m_reconnectCounter = 0;
+
         qCDebug(dcZigbeeNetwork()) << "Request controller version";
         ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
         connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
-            qCDebug(dcZigbeeNetwork()) << "Version reply finished" << reply->status();
-            QByteArray payload = reply->responseData();
-            QDataStream stream(&payload, QIODevice::ReadOnly);
-            stream.setByteOrder(QDataStream::LittleEndian);
-            quint8 major = 0; quint8 minor = 0; quint8 patch = 0; quint16 sdkVersion = 0;
-            stream >> major >> minor >> patch >> sdkVersion;
-
-            QString versionString = QString ("%1.%2.%3 - %4").arg(major).arg(minor).arg(patch).arg(sdkVersion);
-            qCDebug(dcZigbeeNetwork()) << "Controller version" << versionString;
-            m_controller->setFirmwareVersion(versionString);
+            // Retry or firmware upgrade if available
+            if (!processVersionReply(reply))
+                return;
 
             qCDebug(dcZigbeeNetwork()) << "Get the current network state";
             ZigbeeInterfaceNxpReply *reply = m_controller->requestNetworkState();
@@ -200,7 +297,6 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
 
                 setPanId(panId);
                 setChannel(channel);
-
 
                 // Initialize the coordinator node if not already done.
 
@@ -242,8 +338,9 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
         qCDebug(dcZigbeeNetwork()) << "Request controller version";
         ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
         connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
-            qCDebug(dcZigbeeNetwork()) << "Version reply finished" << reply->status();
-            //FIXME: error handling
+            // Retry or firmware upgrade if available
+            if (!processVersionReply(reply))
+                return;
 
             QByteArray payload = reply->responseData();
             QDataStream stream(&payload, QIODevice::ReadOnly);

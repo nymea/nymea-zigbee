@@ -25,61 +25,43 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEEBRIDGECONTROLLER_H
-#define ZIGBEEBRIDGECONTROLLER_H
+#ifndef FIRMWAREUPDATEHANDLERNXP_H
+#define FIRMWAREUPDATEHANDLERNXP_H
 
-#include <QDir>
 #include <QObject>
-#include <QSerialPort>
+#include <QFileInfo>
+#include <QProcess>
 
-#include "zigbee.h"
-
-Q_DECLARE_METATYPE(QSerialPort::SerialPortError);
-
-class ZigbeeBridgeController : public QObject
+class FirmwareUpdateHandlerNxp : public QObject
 {
     Q_OBJECT
-    friend class ZigbeeNetwork;
-
 public:
-    explicit ZigbeeBridgeController(QObject *parent = nullptr);
-    ~ZigbeeBridgeController() = default;
+    explicit FirmwareUpdateHandlerNxp(QObject *parent = nullptr);
+    FirmwareUpdateHandlerNxp(const QFileInfo &updateProviderConfgigurationFileInfo, QObject *parent = nullptr);
 
-    QString firmwareVersion() const;
-    bool available() const;
-
-    bool canUpdate() const;
     bool updateRunning() const;
+    bool isValid() const;
 
-    virtual bool updateAvailable(const QString &currentVersion);
-    virtual QString updateFirmwareVersion() const;
-    virtual void startFirmwareUpdate();
+    QString updateBinary() const;
+    QString availableFirmwareFileName() const;
+    QString availableFirmwareVersion() const;
 
-protected:
-    QString m_firmwareVersion;
-    bool m_available = false;
-    bool m_canUpdate = false;
-    bool m_updateRunning = false;
-    QDir m_settingsDirectory;
-
-    void setAvailable(bool available);
-    void setFirmwareVersion(const QString &firmwareVersion);
-
-    virtual void initializeUpdateProvider();
-
-private:
-    void setSettingsDirectory(const QDir &settingsDirectory);
+    void startUpdate();
 
 signals:
-    void availableChanged(bool available);
-    void firmwareVersionChanged(const QString &firmwareVersion);
-    void canUpdateChanged(bool canUpdate);
     void updateRunningChanged(bool updateRunning);
+    void updateFinished(bool success);
 
-    // APS notifications
-    void apsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
-    void apsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
+private:
+    QFileInfo m_updateProviderConfgigurationFileInfo;
+    bool m_valid = false;
+    QProcess *m_updateProcess = nullptr;
+
+    QString m_updateBinary;
+    QString m_updateReleaseFilePath;
+    QString m_availableFirmwareFileName;
+    QString m_availableFirmwareVersion;
 
 };
 
-#endif // ZIGBEEBRIDGECONTROLLER_H
+#endif // FIRMWAREUPDATEHANDLERNXP_H

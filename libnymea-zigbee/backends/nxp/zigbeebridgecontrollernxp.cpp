@@ -1,4 +1,31 @@
-﻿#include "zigbeebridgecontrollernxp.h"
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*
+* Copyright 2013 - 2020, nymea GmbH
+* Contact: contact@nymea.io
+*
+* This file is part of nymea-zigbee.
+* This project including source code and documentation is protected by copyright law, and
+* remains the property of nymea GmbH. All rights, including reproduction, publication,
+* editing and translation, are reserved. The use of this project is subject to the terms of a
+* license agreement to be concluded with nymea GmbH in accordance with the terms
+* of use of nymea GmbH, available under https://nymea.io/license
+*
+* GNU Lesser General Public License Usage
+* Alternatively, this project may be redistributed and/or modified under the terms of the GNU
+* Lesser General Public License as published by the Free Software Foundation; version 3.
+* this project is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU Lesser General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public License along with this project.
+* If not, see <https://www.gnu.org/licenses/>.
+*
+* For any further details and any questions please contact us under contact@nymea.io
+* or see our FAQ/Licensing Information on https://nymea.io/license/faq
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+#include "zigbeebridgecontrollernxp.h"
 #include "loggingcategory.h"
 #include "zigbeeutils.h"
 
@@ -205,6 +232,40 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestSendRequest(const Zig
     return interfaceReply;
 }
 
+bool ZigbeeBridgeControllerNxp::updateAvailable(const QString &currentVersion)
+{
+    if (!m_firmwareUpdateHandler)
+        return false;
+
+    if (m_firmwareUpdateHandler->availableFirmwareVersion() != currentVersion) {
+        return true;
+    }
+
+    return false;
+}
+
+QString ZigbeeBridgeControllerNxp::updateFirmwareVersion() const
+{
+    if (!m_firmwareUpdateHandler)
+        return QString();
+
+    return m_firmwareUpdateHandler->availableFirmwareVersion();
+}
+
+void ZigbeeBridgeControllerNxp::startFirmwareUpdate()
+{
+    if (!m_firmwareUpdateHandler)
+        return;
+
+    m_updateRunning = true;
+    emit updateRunningChanged(m_updateRunning);
+
+    qCDebug(dcZigbeeController()) << "Disable UART interface for update...";
+    m_interface->disable();
+
+    m_firmwareUpdateHandler->startUpdate();
+}
+
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::createReply(Nxp::Command command, quint8 sequenceNumber, const QString &requestName, const QByteArray &requestData, QObject *parent)
 {
     // Create the reply
@@ -344,6 +405,44 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestEnqueueSendDataIeeeAd
     }
 
     return createReply(Nxp::CommandSendApsDataRequest, m_sequenceNumber, "Request send ASP data request to IEEE address", message, this);
+}
+
+void ZigbeeBridgeControllerNxp::initializeUpdateProvider()
+{
+    QFileInfo updateProviderConfigurationFileInfo = QFileInfo(m_settingsDirectory.canonicalPath() + QDir::separator() + "zigbee-update-provider-nxp.conf");
+    if (!updateProviderConfigurationFileInfo.exists()) {
+        qCDebug(dcZigbeeController()) << "No firmware update provider configured for this controller.";
+        return;
+    }
+
+    qCDebug(dcZigbeeController()) << "Found update provider configuration" << updateProviderConfigurationFileInfo.absoluteFilePath();
+    m_firmwareUpdateHandler = new FirmwareUpdateHandlerNxp(updateProviderConfigurationFileInfo, this);
+    if (!m_firmwareUpdateHandler->isValid()) {
+        qCWarning(dcZigbeeController()) << "The firmware update provider is not valid. The firmware update is not available for this NXP zigbee controller.";
+        m_firmwareUpdateHandler->deleteLater();
+        m_firmwareUpdateHandler = nullptr;
+        return;
+    }
+
+    connect(m_firmwareUpdateHandler, &FirmwareUpdateHandlerNxp::updateFinished, this, [this](bool success){
+        if (success) {
+            qCDebug(dcZigbeeController()) << "Update finished successfully. Reenable controller";
+            enable(m_serialPort, m_baudrate);
+            m_updateRunning = false;
+            emit updateRunningChanged(m_updateRunning);
+        } else {
+            qCWarning(dcZigbeeController()) << "Update finished with errors. Can not continue.";
+            m_updateRunning = false;
+            emit updateRunningChanged(m_updateRunning);
+
+            // Fixme: check if we should to retry
+            disable();
+        }
+    });
+
+    qCDebug(dcZigbeeController()) << "The firmware update provider is valid. The firmware of this NXP controller can be updated.";
+    m_canUpdate = true;
+    emit canUpdateChanged(m_canUpdate);
 }
 
 void ZigbeeBridgeControllerNxp::onInterfaceAvailableChanged(bool available)
@@ -501,6 +600,8 @@ void ZigbeeBridgeControllerNxp::sendNextRequest()
 
 bool ZigbeeBridgeControllerNxp::enable(const QString &serialPort, qint32 baudrate)
 {
+    m_serialPort = serialPort;
+    m_baudrate = baudrate;
     return m_interface->enable(serialPort, baudrate);
 }
 
