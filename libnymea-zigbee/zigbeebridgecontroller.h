@@ -60,7 +60,7 @@ protected:
     bool m_available = false;
     bool m_canUpdate = false;
     bool m_updateRunning = false;
-    QDir m_settingsDirectory;
+    QDir m_settingsDirectory = QDir("/etc/nymea/");
 
     void setAvailable(bool available);
     void setFirmwareVersion(const QString &firmwareVersion);
