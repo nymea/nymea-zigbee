@@ -133,7 +133,7 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
     m_updateProcess->setProcessChannelMode(QProcess::MergedChannels);
     m_updateProcess->setProgram(m_updateBinary);
 
-    connect(m_updateProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus exitStatus) {
+    connect(m_updateProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus exitStatus) {
         qCDebug(dcZigbeeController()) << "Update process finihed" << exitCode << exitStatus;
         if (exitCode != 0) {
             emit updateFinished(false);
