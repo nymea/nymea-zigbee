@@ -266,6 +266,20 @@ void ZigbeeBridgeControllerNxp::startFirmwareUpdate()
     m_firmwareUpdateHandler->startUpdate();
 }
 
+void ZigbeeBridgeControllerNxp::startFactoryResetUpdate()
+{
+    if (!m_firmwareUpdateHandler)
+        return;
+
+    m_updateRunning = true;
+    emit updateRunningChanged(m_updateRunning);
+
+    qCDebug(dcZigbeeController()) << "Disable UART interface for factory reset update...";
+    m_interface->disable();
+
+    m_firmwareUpdateHandler->startFactoryReset();
+}
+
 ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::createReply(Nxp::Command command, quint8 sequenceNumber, const QString &requestName, const QByteArray &requestData, QObject *parent)
 {
     // Create the reply
@@ -440,9 +454,16 @@ void ZigbeeBridgeControllerNxp::initializeUpdateProvider()
         }
     });
 
+    connect(m_firmwareUpdateHandler, &FirmwareUpdateHandlerNxp::initiallyFlashedChanged, this, [this](bool initiallyFlashed){
+        qCDebug(dcZigbeeController()) << "Firmware initially flashed changed to" << initiallyFlashed;
+        m_initiallyFlashed = initiallyFlashed;
+    });
+
     qCDebug(dcZigbeeController()) << "The firmware update provider is valid. The firmware of this NXP controller can be updated.";
     m_canUpdate = true;
     emit canUpdateChanged(m_canUpdate);
+
+    m_initiallyFlashed = m_firmwareUpdateHandler->initiallyFlashed();
 }
 
 void ZigbeeBridgeControllerNxp::onInterfaceAvailableChanged(bool available)

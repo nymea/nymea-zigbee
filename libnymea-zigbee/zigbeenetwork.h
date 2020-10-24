@@ -136,7 +136,7 @@ private:
 
     // Network storage
     QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
-    QDir m_settingsDirectory;
+    QDir m_settingsDirectory = QDir("/etc/nymea/");
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
 

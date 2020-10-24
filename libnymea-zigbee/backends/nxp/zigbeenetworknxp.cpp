@@ -148,6 +148,7 @@ bool ZigbeeNetworkNxp::processVersionReply(ZigbeeInterfaceNxpReply *reply)
             if (m_controller->canUpdate()) {
                 qCDebug(dcZigbeeNetwork()) << "Unable to get controller version.";
                 qCDebug(dcZigbeeNetwork()) << "Firmware update provider available. Try to flash the firmware, maybe that fixes the problem.";
+                // FIXME: try 3 times, then give up or perform a factory flash
                 if (!m_controller->updateRunning()) {
                     clearSettings();
                     qCDebug(dcZigbeeNetwork()) << "Starting firmware update...";
@@ -249,6 +250,12 @@ void ZigbeeNetworkNxp::onControllerAvailableChanged(bool available)
 {
     qCDebug(dcZigbeeNetwork()) << "Controller is" << (available ? "now available" : "not available any more");
     if (available) {
+        if (m_controller->canUpdate() && !m_controller->initiallyFlashed()) {
+            qCDebug(dcZigbeeNetwork()) << "The firmware of the controller can be updated and has not been initially flashed. Perform a factory reset flash procedure...";
+            m_controller->startFactoryResetUpdate();
+            return;
+        }
+
         m_reconnectCounter = 0;
         ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
         connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){

@@ -48,6 +48,11 @@ bool ZigbeeBridgeController::canUpdate() const
     return m_canUpdate;
 }
 
+bool ZigbeeBridgeController::initiallyFlashed() const
+{
+    return m_initiallyFlashed;
+}
+
 bool ZigbeeBridgeController::updateRunning() const
 {
     return m_updateRunning;
@@ -69,9 +74,14 @@ void ZigbeeBridgeController::startFirmwareUpdate()
     qCWarning(dcZigbeeController()) << "Cannot start firmware update. The feature is not implemented for this controller.";
 }
 
+void ZigbeeBridgeController::startFactoryResetUpdate()
+{
+    qCWarning(dcZigbeeController()) << "Cannot start firmware factory reset update. The feature is not implemented for this controller.";
+}
+
 void ZigbeeBridgeController::setSettingsDirectory(const QDir &settingsDirectory)
 {
-    qCDebug(dcZigbeeController()) << "Using settings directory" << settingsDirectory.canonicalPath();
+    qCDebug(dcZigbeeController()) << "Using settings directory" << settingsDirectory.absolutePath();
     m_settingsDirectory = settingsDirectory;
 
     // Check if we have an update provider for the controller, if so,

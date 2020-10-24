@@ -49,16 +49,20 @@ public:
     bool available() const;
 
     bool canUpdate() const;
+    bool initiallyFlashed() const;
     bool updateRunning() const;
 
+    // Optional update/initialize procedure for the zigbee controller
     virtual bool updateAvailable(const QString &currentVersion);
     virtual QString updateFirmwareVersion() const;
     virtual void startFirmwareUpdate();
+    virtual void startFactoryResetUpdate();
 
 protected:
     QString m_firmwareVersion;
     bool m_available = false;
     bool m_canUpdate = false;
+    bool m_initiallyFlashed = false;
     bool m_updateRunning = false;
     QDir m_settingsDirectory = QDir("/etc/nymea/");
 

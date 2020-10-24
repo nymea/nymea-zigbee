@@ -39,25 +39,36 @@ public:
     explicit FirmwareUpdateHandlerNxp(QObject *parent = nullptr);
     FirmwareUpdateHandlerNxp(const QFileInfo &updateProviderConfgigurationFileInfo, QObject *parent = nullptr);
 
+    bool initiallyFlashed() const;
     bool updateRunning() const;
     bool isValid() const;
 
-    QString updateBinary() const;
     QString availableFirmwareFileName() const;
     QString availableFirmwareVersion() const;
 
     void startUpdate();
+    void startFactoryReset();
 
 signals:
     void updateRunningChanged(bool updateRunning);
     void updateFinished(bool success);
+    void initiallyFlashedChanged(bool initiallyFlashed);
 
 private:
     QFileInfo m_updateProviderConfgigurationFileInfo;
-    bool m_valid = false;
-    QProcess *m_updateProcess = nullptr;
 
-    QString m_updateBinary;
+    bool m_initiallyFlashed = false;
+    bool m_valid = false;
+
+    QProcess *m_updateProcess = nullptr;
+    QProcess *m_factoryResetProcess = nullptr;
+
+    QString m_updateProgram;
+    QStringList m_updateProgramParameters;
+
+    QString m_factoryResetProgram;
+    QStringList m_factoryResetParameters;
+
     QString m_updateReleaseFilePath;
     QString m_availableFirmwareFileName;
     QString m_availableFirmwareVersion;

@@ -34,10 +34,16 @@
 #include <QJsonParseError>
 
 /*
- * [UpdateProvider]
- * updateBinary=/usr/bin/maveo-zigbee-flasher
- * updateReleaseFile=/usr/share/maveo-zigbee-flasher/firmware/release.json
- */
+
+Example update provider configuration, if initiallyFlashed is false, a factory reset will be performed in any case
+
+[UpdateProvider]
+updateCommand=/usr/bin/maveo-zigbee-flasher -s /dev/ttymxc2 -p 131 -r 132
+updateReleaseFile=/usr/share/maveo-zigbee-flasher/firmware/release.json
+factoryResetCommand=/usr/bin/maveo-zigbee-flasher -s /dev/ttymxc2 -p 131 -r 132 -e
+initiallyFlashed=false
+
+*/
 
 FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(QObject *parent) :
     QObject(parent)
@@ -49,26 +55,68 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
     QObject(parent),
     m_updateProviderConfgigurationFileInfo(updateProviderConfgigurationFileInfo)
 {
-    qCDebug(dcZigbeeController()) << "Initialize NXP firmware update provider";
+    qCDebug(dcZigbeeController()) << "Initialize NXP firmware update provider from" << updateProviderConfgigurationFileInfo.absoluteFilePath();
 
     QSettings configuration(updateProviderConfgigurationFileInfo.absoluteFilePath(), QSettings::IniFormat, this);
     configuration.beginGroup("UpdateProvider");
 
-    // Verify the update provider binary
-    m_updateBinary = configuration.value("updateBinary").toString();
-    if (m_updateBinary.isEmpty()) {
-        qCWarning(dcZigbeeController()) << "Update provider configuration available but the update binary is not specified in" << m_updateProviderConfgigurationFileInfo.absoluteFilePath();
+    // Verify the update command
+    QString updateCommand = configuration.value("updateCommand").toString();
+    if (updateCommand.isEmpty()) {
+        qCWarning(dcZigbeeController()) << "Update provider configuration available but the update command is not specified in" << m_updateProviderConfgigurationFileInfo.absoluteFilePath();
         return;
     }
 
-    QFileInfo updateBinaryFileInfo(m_updateBinary);
-    if (!updateBinaryFileInfo.exists()) {
-        qCWarning(dcZigbeeController()) << "Update provider configuration available but the update binary does not exist" << updateBinaryFileInfo.absoluteFilePath();
+    QStringList updateCommandTokens = updateCommand.split(" ");
+    qCDebug(dcZigbeeController()) << "Update command tokens" << updateCommandTokens;
+    if (updateCommandTokens.count() == 0) {
+        qCWarning(dcZigbeeController()) << "Update provider configuration available but the update command could not be parsed correctly" << m_updateProviderConfgigurationFileInfo.absoluteFilePath();
         return;
     }
 
-    if (!updateBinaryFileInfo.isExecutable()) {
-        qCWarning(dcZigbeeController()) << "Update provider configuration available but the update binary is not executable" << updateBinaryFileInfo.absoluteFilePath();
+    m_updateProgram = updateCommandTokens.takeFirst();
+    m_updateProgramParameters << updateCommandTokens;
+
+    qCDebug(dcZigbeeController()) << "Update program:" << m_updateProgram << "Parameters:" << m_updateProgramParameters;
+
+    QFileInfo updateProgramFileInfo(m_updateProgram);
+    if (!updateProgramFileInfo.exists()) {
+        qCWarning(dcZigbeeController()) << "Update provider configuration available but the update binary does not exist" << updateProgramFileInfo.absoluteFilePath();
+        return;
+    }
+
+    if (!updateProgramFileInfo.isExecutable()) {
+        qCWarning(dcZigbeeController()) << "Update provider configuration available but the update binary is not executable" << updateProgramFileInfo.absoluteFilePath();
+        return;
+    }
+
+    // Verify the factory reset command
+    QString factoryResetCommand = configuration.value("factoryResetCommand").toString();
+    if (factoryResetCommand.isEmpty()) {
+        qCWarning(dcZigbeeController()) << "Update provider configuration available but the factory reset command is not specified in" << m_updateProviderConfgigurationFileInfo.absoluteFilePath();
+        return;
+    }
+
+    QStringList factoryResetCommandTokens = factoryResetCommand.split(" ");
+    qCDebug(dcZigbeeController()) << "Factory reset command tokens" << factoryResetCommandTokens;
+    if (factoryResetCommandTokens.count() == 0) {
+        qCWarning(dcZigbeeController()) << "Update provider configuration available but the factory reset command could not be parsed correctly" << m_updateProviderConfgigurationFileInfo.absoluteFilePath();
+        return;
+    }
+
+    m_factoryResetProgram = factoryResetCommandTokens.takeFirst();
+    m_factoryResetParameters << factoryResetCommandTokens;
+
+    qCDebug(dcZigbeeController()) << "Factory reset program:" << m_factoryResetProgram << "Parameters:" << m_factoryResetParameters;
+
+    QFileInfo factoryResetProgramFileInfo(m_factoryResetProgram);
+    if (!factoryResetProgramFileInfo.exists()) {
+        qCWarning(dcZigbeeController()) << "Update provider configuration available but the factory reset binary does not exist" << factoryResetProgramFileInfo.absoluteFilePath();
+        return;
+    }
+
+    if (!factoryResetProgramFileInfo.isExecutable()) {
+        qCWarning(dcZigbeeController()) << "Update provider configuration available but the factory reset binary is not executable" << updateProgramFileInfo.absoluteFilePath();
         return;
     }
 
@@ -126,12 +174,18 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
         return;
     }
 
-    qCDebug(dcZigbeeController()) << "Firmware update prvider available:" << firmwareFileInfo.absoluteFilePath() << "Version:" << m_availableFirmwareVersion;
+    // Check if the controller has been initially flashed
+    m_initiallyFlashed = configuration.value("initiallyFlashed", false).toBool();
+
     configuration.endGroup();
 
+    qCDebug(dcZigbeeController()) << "Firmware update provider available:" << firmwareFileInfo.fileName() << "Version:" << m_availableFirmwareVersion << "Initially flashed:" << m_initiallyFlashed;
+
+    // Set up update process
     m_updateProcess = new QProcess(this);
     m_updateProcess->setProcessChannelMode(QProcess::MergedChannels);
-    m_updateProcess->setProgram(m_updateBinary);
+    m_updateProcess->setProgram(m_updateProgram);
+    m_updateProcess->setArguments(m_updateProgramParameters);
 
     connect(m_updateProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus exitStatus) {
         qCDebug(dcZigbeeController()) << "Update process finihed" << exitCode << exitStatus;
@@ -143,10 +197,43 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
     });
 
     connect(m_updateProcess, &QProcess::readyRead, [=]() {
-        qCDebug(dcZigbeeController()) << "Update process:" << qUtf8Printable(m_updateProcess->readAll().replace(0x1B, '\r'));
+        qCDebug(dcZigbeeController()) << "Update process:" << qUtf8Printable(m_updateProcess->readAll());
+    });
+
+
+    // Set up factory reset process
+    m_factoryResetProcess = new QProcess(this);
+    m_factoryResetProcess->setProcessChannelMode(QProcess::MergedChannels);
+    m_factoryResetProcess->setProgram(m_factoryResetProgram);
+    m_factoryResetProcess->setArguments(m_factoryResetParameters);
+
+    connect(m_factoryResetProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus exitStatus) {
+        qCDebug(dcZigbeeController()) << "Factory reset process finihed" << exitCode << exitStatus;
+        if (exitCode != 0) {
+            emit updateFinished(false);
+        } else {
+            // The factory reset has been finished successfully
+            QSettings configuration(m_updateProviderConfgigurationFileInfo.absoluteFilePath(), QSettings::IniFormat, this);
+            configuration.beginGroup("UpdateProvider");
+            configuration.setValue("initiallyFlashed", true);
+            configuration.endGroup();
+            m_initiallyFlashed = true;
+            emit initiallyFlashedChanged(m_initiallyFlashed);
+
+            emit updateFinished(true);
+        }
+    });
+
+    connect(m_factoryResetProcess, &QProcess::readyRead, [=]() {
+        qCDebug(dcZigbeeController()) << "Factory reset process:" << qUtf8Printable(m_factoryResetProcess->readAll());
     });
 
     m_valid = true;
+}
+
+bool FirmwareUpdateHandlerNxp::initiallyFlashed() const
+{
+    return m_initiallyFlashed;
 }
 
 bool FirmwareUpdateHandlerNxp::updateRunning() const
@@ -157,11 +244,6 @@ bool FirmwareUpdateHandlerNxp::updateRunning() const
 bool FirmwareUpdateHandlerNxp::isValid() const
 {
     return m_valid;
-}
-
-QString FirmwareUpdateHandlerNxp::updateBinary() const
-{
-    return m_updateBinary;
 }
 
 QString FirmwareUpdateHandlerNxp::availableFirmwareFileName() const
@@ -185,4 +267,17 @@ void FirmwareUpdateHandlerNxp::startUpdate()
     qCDebug(dcZigbeeController()) << "Firmware file:" << m_availableFirmwareFileName;
     qCDebug(dcZigbeeController()) << "Firmware version:" << m_availableFirmwareVersion;
     m_updateProcess->start();
+}
+
+void FirmwareUpdateHandlerNxp::startFactoryReset()
+{
+    if (!m_factoryResetProcess) {
+        qCWarning(dcZigbeeController()) << "Cannot start factory reset process. The update provider is not vaild.";
+        return;
+    }
+
+    qCDebug(dcZigbeeController()) << "Starting factory reset for NXP controller";
+    qCDebug(dcZigbeeController()) << "Firmware file:" << m_availableFirmwareFileName;
+    qCDebug(dcZigbeeController()) << "Firmware version:" << m_availableFirmwareVersion;
+    m_factoryResetProcess->start();
 }

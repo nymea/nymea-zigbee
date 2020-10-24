@@ -56,10 +56,11 @@ QString ZigbeeNetwork::settingsFilenName() const
 
 void ZigbeeNetwork::setSettingsFileName(const QString &settingsFileName)
 {
+    qCDebug(dcZigbeeNetwork()) << "Using settings file" << settingsFileName;
     m_settingsFileName = settingsFileName;
     emit settingsFileNameChanged(m_settingsFileName);
 
-    m_settingsDirectory = QFileInfo(m_settingsFileName).canonicalPath();
+    m_settingsDirectory = QDir(QFileInfo(m_settingsFileName).absolutePath());
     bridgeController()->setSettingsDirectory(m_settingsDirectory);
 }
 

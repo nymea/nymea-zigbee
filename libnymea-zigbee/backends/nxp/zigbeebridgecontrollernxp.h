@@ -86,6 +86,7 @@ public:
     bool updateAvailable(const QString &currentVersion) override;
     QString updateFirmwareVersion() const override;
     void startFirmwareUpdate() override;
+    void startFactoryResetUpdate() override;
 
 signals:
     void controllerStateChanged(ControllerState controllerState);
