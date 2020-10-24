@@ -68,7 +68,7 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
     }
 
     QStringList updateCommandTokens = updateCommand.split(" ");
-    qCDebug(dcZigbeeController()) << "Update command tokens" << updateCommandTokens;
+    //qCDebug(dcZigbeeController()) << "Update command tokens" << updateCommandTokens;
     if (updateCommandTokens.count() == 0) {
         qCWarning(dcZigbeeController()) << "Update provider configuration available but the update command could not be parsed correctly" << m_updateProviderConfgigurationFileInfo.absoluteFilePath();
         return;
@@ -76,7 +76,6 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
 
     m_updateProgram = updateCommandTokens.takeFirst();
     m_updateProgramParameters << updateCommandTokens;
-
     qCDebug(dcZigbeeController()) << "Update program:" << m_updateProgram << "Parameters:" << m_updateProgramParameters;
 
     QFileInfo updateProgramFileInfo(m_updateProgram);
@@ -98,7 +97,7 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
     }
 
     QStringList factoryResetCommandTokens = factoryResetCommand.split(" ");
-    qCDebug(dcZigbeeController()) << "Factory reset command tokens" << factoryResetCommandTokens;
+    //qCDebug(dcZigbeeController()) << "Factory reset command tokens" << factoryResetCommandTokens;
     if (factoryResetCommandTokens.count() == 0) {
         qCWarning(dcZigbeeController()) << "Update provider configuration available but the factory reset command could not be parsed correctly" << m_updateProviderConfgigurationFileInfo.absoluteFilePath();
         return;
@@ -106,7 +105,6 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
 
     m_factoryResetProgram = factoryResetCommandTokens.takeFirst();
     m_factoryResetParameters << factoryResetCommandTokens;
-
     qCDebug(dcZigbeeController()) << "Factory reset program:" << m_factoryResetProgram << "Parameters:" << m_factoryResetParameters;
 
     QFileInfo factoryResetProgramFileInfo(m_factoryResetProgram);
