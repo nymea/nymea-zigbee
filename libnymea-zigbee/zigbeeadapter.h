@@ -39,6 +39,9 @@ class ZigbeeAdapter
     Q_PROPERTY(QString name READ name)
     Q_PROPERTY(QString description READ description)
     Q_PROPERTY(QString systemLocation READ systemLocation)
+    Q_PROPERTY(bool backendSuggestionAvailable READ backendSuggestionAvailable)
+    Q_PROPERTY(Zigbee::ZigbeeBackendType suggestedZigbeeBackendType READ suggestedZigbeeBackendType)
+    Q_PROPERTY(qint32 suggestedBaudRate READ suggestedBaudRate)
 
 public:
     explicit ZigbeeAdapter();
