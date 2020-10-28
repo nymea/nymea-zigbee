@@ -141,7 +141,7 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
                     endpoint->m_manufacturerName = basicCluster->attribute(ZigbeeClusterBasic::AttributeManufacturerName).dataType().toString();
 
                 if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeModelIdentifier))
-                    endpoint->m_modelIdentifier = basicCluster->attribute(ZigbeeClusterBasic::AttributeManufacturerName).dataType().toString();
+                    endpoint->m_modelIdentifier = basicCluster->attribute(ZigbeeClusterBasic::AttributeModelIdentifier).dataType().toString();
 
                 if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeSwBuildId))
                     endpoint->m_softwareBuildId = basicCluster->attribute(ZigbeeClusterBasic::AttributeSwBuildId).dataType().toString();

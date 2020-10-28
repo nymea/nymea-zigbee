@@ -11,8 +11,8 @@ Depending on your available hardware following gateway modules are supported
 
 > Note: the firmware erquires an entire rework and implement the APS layer
 
-* ~~JN5168 (SoM)~~
-* ~~JN5169 (USB Stick)~~
+* JN5168 (SoM)
+* JN5169 (USB Stick)
 
 ## deCONZ
 
