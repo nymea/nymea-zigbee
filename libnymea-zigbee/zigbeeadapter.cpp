@@ -72,14 +72,14 @@ void ZigbeeAdapter::setBackendSuggestionAvailable(bool backendSuggestionAvailabl
     m_backendSuggestionAvailable = backendSuggestionAvailable;
 }
 
-Zigbee::BackendType ZigbeeAdapter::suggestedBackendType() const
+Zigbee::ZigbeeBackendType ZigbeeAdapter::suggestedZigbeeBackendType() const
 {
-    return m_suggestedBackendType;
+    return m_suggestedZigbeeBackendType;
 }
 
-void ZigbeeAdapter::setSuggestedBackendType(Zigbee::BackendType backendType)
+void ZigbeeAdapter::setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendType backendType)
 {
-    m_suggestedBackendType = backendType;
+    m_suggestedZigbeeBackendType = backendType;
 }
 
 qint32 ZigbeeAdapter::suggestedBaudRate() const
@@ -97,7 +97,7 @@ QDebug operator<<(QDebug debug, const ZigbeeAdapter &adapter)
     debug.nospace() << "ZigbeeAdapter(" << adapter.name() << " - " << adapter.description();
     debug.nospace() << ", " << adapter.systemLocation();
     if (adapter.backendSuggestionAvailable()) {
-        debug.nospace() << "Suggested backend: " << adapter.suggestedBackendType();
+        debug.nospace() << "Suggested backend: " << adapter.suggestedZigbeeBackendType();
         debug.nospace() << ", " << adapter.suggestedBaudRate();
     }
 

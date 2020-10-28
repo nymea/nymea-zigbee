@@ -40,11 +40,11 @@ class Zigbee
     Q_GADGET
 
 public:
-    enum BackendType {
-        BackendTypeDeconz,
-        BackendTypeNxp
+    enum ZigbeeBackendType {
+        ZigbeeBackendTypeDeconz,
+        ZigbeeBackendTypeNxp
     };
-    Q_ENUM(BackendType)
+    Q_ENUM(ZigbeeBackendType)
 
     enum ZigbeeProfile {
         ZigbeeProfileDevice = 0x0000,

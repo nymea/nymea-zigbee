@@ -55,8 +55,8 @@ public:
     bool backendSuggestionAvailable() const;
     void setBackendSuggestionAvailable(bool backendSuggestionAvailable);
 
-    Zigbee::BackendType suggestedBackendType() const;
-    void setSuggestedBackendType(Zigbee::BackendType backendType);
+    Zigbee::ZigbeeBackendType suggestedZigbeeBackendType() const;
+    void setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendType backendType);
 
     qint32 suggestedBaudRate() const;
     void setSuggestedBaudRate(qint32 baudRate);
@@ -67,7 +67,7 @@ private:
     QString m_systemLocation;
 
     bool m_backendSuggestionAvailable = false;
-    Zigbee::BackendType m_suggestedBackendType = Zigbee::BackendTypeDeconz;
+    Zigbee::ZigbeeBackendType m_suggestedZigbeeBackendType = Zigbee::ZigbeeBackendTypeDeconz;
     qint32 m_suggestedBaudRate = 38400;
 };
 

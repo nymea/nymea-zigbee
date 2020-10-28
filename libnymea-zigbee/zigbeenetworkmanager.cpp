@@ -71,11 +71,11 @@ QList<ZigbeeAdapter> ZigbeeNetworkManager::availableAdapters()
         // Check if we recognize this adapter from USB information
         if (serialPortInfo.manufacturer().toLower().contains("dresden elektronik")) {
             adapter.setBackendSuggestionAvailable(true);
-            adapter.setSuggestedBackendType(Zigbee::BackendTypeDeconz);
+            adapter.setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendTypeDeconz);
             adapter.setSuggestedBaudRate(38400);
         } else if (serialPortInfo.manufacturer().toLower().contains("nxp")) {
             adapter.setBackendSuggestionAvailable(true);
-            adapter.setSuggestedBackendType(Zigbee::BackendTypeNxp);
+            adapter.setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendTypeNxp);
             adapter.setSuggestedBaudRate(115200);
         }
 
@@ -85,20 +85,20 @@ QList<ZigbeeAdapter> ZigbeeNetworkManager::availableAdapters()
     return adapters;
 }
 
-QStringList ZigbeeNetworkManager::availableBackendTypes()
+QStringList ZigbeeNetworkManager::availableZigbeeBackendTypes()
 {
     return {"deCONZ", "NXP"};
 }
 
-ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(Zigbee::BackendType backend, QObject *parent)
+ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(Zigbee::ZigbeeBackendType backend, QObject *parent)
 {
     // Note: required for generating random PAN ID
     srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
 
     switch (backend) {
-    case Zigbee::BackendTypeNxp:
+    case Zigbee::ZigbeeBackendTypeNxp:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));
-    case Zigbee::BackendTypeDeconz:
+    case Zigbee::ZigbeeBackendTypeDeconz:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(parent));
     }
 

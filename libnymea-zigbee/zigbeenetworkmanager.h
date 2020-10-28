@@ -38,8 +38,8 @@ class ZigbeeNetworkManager
     Q_GADGET
 public:
     static QList<ZigbeeAdapter> availableAdapters();
-    static QStringList availableBackendTypes();
-    static ZigbeeNetwork *createZigbeeNetwork(Zigbee::BackendType backend, QObject *parent = nullptr);
+    static QStringList availableZigbeeBackendTypes();
+    static ZigbeeNetwork *createZigbeeNetwork(Zigbee::ZigbeeBackendType backend, QObject *parent = nullptr);
 };
 
 Q_DECLARE_METATYPE(ZigbeeNetworkManager)
