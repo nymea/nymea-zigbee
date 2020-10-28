@@ -3,6 +3,9 @@ include(../config.pri)
 TARGET = nymea-zigbee1
 TEMPLATE = lib
 
+CONFIG += link_pkgconfig
+PKGCONFIG += libudev
+
 SOURCES += \
     backends/deconz/interface/zigbeeinterfacedeconz.cpp \
     backends/deconz/interface/zigbeeinterfacedeconzreply.cpp \
@@ -31,7 +34,6 @@ SOURCES += \
     zdo/zigbeedeviceobject.cpp \
     zdo/zigbeedeviceobjectreply.cpp \
     zdo/zigbeedeviceprofile.cpp \
-    zigbeeadapter.cpp \
     zigbeeadpu.cpp \
     zigbeebridgecontroller.cpp \
     zigbeechannelmask.cpp \
@@ -47,17 +49,11 @@ SOURCES += \
     zigbeenetworkrequest.cpp \
     zigbeenodeendpoint.cpp \
     zigbeesecurityconfiguration.cpp \
+    zigbeeuartadapter.cpp \
+    zigbeeuartadaptermonitor.cpp \
     zigbeeutils.cpp \
     zigbeenode.cpp \
-    zigbeeaddress.cpp \
-    #    nxp/interface/zigbeeinterface.cpp \
-    #    nxp/interface/zigbeeinterfacemessage.cpp \
-    #    nxp/interface/zigbeeinterfacerequest.cpp \
-    #    nxp/interface/zigbeeinterfacereply.cpp \
-    #    nxp/zigbeenetworknxp.cpp \
-    #    nxp/zigbeebridgecontrollernxp.cpp \
-    #    nxp/zigbeenodeendpointnxp.cpp \
-    #    nxp/zigbeenodenxp.cpp \
+    zigbeeaddress.cpp
 
 HEADERS += \
     backends/deconz/interface/deconz.h \
@@ -89,7 +85,6 @@ HEADERS += \
     zdo/zigbeedeviceobject.h \
     zdo/zigbeedeviceobjectreply.h \
     zdo/zigbeedeviceprofile.h \
-    zigbeeadapter.h \
     zigbeeadpu.h \
     zigbeebridgecontroller.h \
     zigbeechannelmask.h \
@@ -105,17 +100,11 @@ HEADERS += \
     zigbeenetworkrequest.h \
     zigbeenodeendpoint.h \
     zigbeesecurityconfiguration.h \
+    zigbeeuartadapter.h \
+    zigbeeuartadaptermonitor.h \
     zigbeeutils.h \
     zigbeenode.h \
-    zigbeeaddress.h \
-    #    nxp/interface/zigbeeinterface.h \
-    #    nxp/interface/zigbeeinterfacemessage.h \
-    #    nxp/interface/zigbeeinterfacerequest.h \
-    #    nxp/interface/zigbeeinterfacereply.h \
-    #    nxp/zigbeenetworknxp.h \
-    #    nxp/zigbeebridgecontrollernxp.h \
-    #    nxp/zigbeenodeendpointnxp.h \
-    #    nxp/zigbeenodenxp.h \
+    zigbeeaddress.h
 
 # install header file with relative subdirectory
 for (header, HEADERS) {

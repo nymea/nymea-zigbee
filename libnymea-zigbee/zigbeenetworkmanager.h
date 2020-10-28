@@ -30,14 +30,14 @@
 
 #include <QObject>
 
-#include "zigbeeadapter.h"
+#include "zigbeeuartadapter.h"
 #include "zigbeenetwork.h"
 
 class ZigbeeNetworkManager
 {
     Q_GADGET
+
 public:
-    static QList<ZigbeeAdapter> availableAdapters();
     static QStringList availableZigbeeBackendTypes();
     static ZigbeeNetwork *createZigbeeNetwork(Zigbee::ZigbeeBackendType backend, QObject *parent = nullptr);
 };

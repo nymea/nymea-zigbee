@@ -25,76 +25,76 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeeadapter.h"
+#include "zigbeeuartadapter.h"
 
-ZigbeeAdapter::ZigbeeAdapter()
+ZigbeeUartAdapter::ZigbeeUartAdapter()
 {
 
 }
 
-QString ZigbeeAdapter::name() const
+QString ZigbeeUartAdapter::name() const
 {
     return m_name;
 }
 
-void ZigbeeAdapter::setName(const QString &name)
+void ZigbeeUartAdapter::setName(const QString &name)
 {
     m_name = name;
 }
 
-QString ZigbeeAdapter::description() const
+QString ZigbeeUartAdapter::description() const
 {
     return m_description;
 }
 
-void ZigbeeAdapter::setDescription(const QString &description)
+void ZigbeeUartAdapter::setDescription(const QString &description)
 {
     m_description = description;
 }
 
-QString ZigbeeAdapter::systemLocation() const
+QString ZigbeeUartAdapter::systemLocation() const
 {
     return m_systemLocation;
 }
 
-void ZigbeeAdapter::setSystemLocation(const QString &systemLocation)
+void ZigbeeUartAdapter::setSystemLocation(const QString &systemLocation)
 {
     m_systemLocation = systemLocation;
 }
 
-bool ZigbeeAdapter::backendSuggestionAvailable() const
+bool ZigbeeUartAdapter::backendSuggestionAvailable() const
 {
     return m_backendSuggestionAvailable;
 }
 
-void ZigbeeAdapter::setBackendSuggestionAvailable(bool backendSuggestionAvailable)
+void ZigbeeUartAdapter::setBackendSuggestionAvailable(bool backendSuggestionAvailable)
 {
     m_backendSuggestionAvailable = backendSuggestionAvailable;
 }
 
-Zigbee::ZigbeeBackendType ZigbeeAdapter::suggestedZigbeeBackendType() const
+Zigbee::ZigbeeBackendType ZigbeeUartAdapter::suggestedZigbeeBackendType() const
 {
     return m_suggestedZigbeeBackendType;
 }
 
-void ZigbeeAdapter::setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendType backendType)
+void ZigbeeUartAdapter::setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendType backendType)
 {
     m_suggestedZigbeeBackendType = backendType;
 }
 
-qint32 ZigbeeAdapter::suggestedBaudRate() const
+qint32 ZigbeeUartAdapter::suggestedBaudRate() const
 {
     return m_suggestedBaudRate;
 }
 
-void ZigbeeAdapter::setSuggestedBaudRate(qint32 baudRate)
+void ZigbeeUartAdapter::setSuggestedBaudRate(qint32 baudRate)
 {
     m_suggestedBaudRate = baudRate;
 }
 
-QDebug operator<<(QDebug debug, const ZigbeeAdapter &adapter)
+QDebug operator<<(QDebug debug, const ZigbeeUartAdapter &adapter)
 {
-    debug.nospace() << "ZigbeeAdapter(" << adapter.name() << " - " << adapter.description();
+    debug.nospace() << "ZigbeeUartAdapter(" << adapter.name() << " - " << adapter.description();
     debug.nospace() << ", " << adapter.systemLocation();
     if (adapter.backendSuggestionAvailable()) {
         debug.nospace() << "Suggested backend: " << adapter.suggestedZigbeeBackendType();

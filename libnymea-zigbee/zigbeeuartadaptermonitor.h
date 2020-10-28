@@ -25,56 +25,40 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEEADAPTER_H
-#define ZIGBEEADAPTER_H
+#ifndef ZIGBEEUARTADAPTERMONITOR_H
+#define ZIGBEEUARTADAPTERMONITOR_H
 
 #include <QObject>
-#include <QDebug>
+#include <QSocketNotifier>
 
-#include "zigbee.h"
+#include <libudev.h>
 
-class ZigbeeAdapter
+#include "zigbeeuartadapter.h"
+
+class ZigbeeUartAdapterMonitor : public QObject
 {
-    Q_GADGET
-    Q_PROPERTY(QString name READ name)
-    Q_PROPERTY(QString description READ description)
-    Q_PROPERTY(QString systemLocation READ systemLocation)
-    Q_PROPERTY(bool backendSuggestionAvailable READ backendSuggestionAvailable)
-    Q_PROPERTY(Zigbee::ZigbeeBackendType suggestedZigbeeBackendType READ suggestedZigbeeBackendType)
-    Q_PROPERTY(qint32 suggestedBaudRate READ suggestedBaudRate)
-
+    Q_OBJECT
 public:
-    explicit ZigbeeAdapter();
+    explicit ZigbeeUartAdapterMonitor(QObject *parent = nullptr);
 
-    QString name() const;
-    void setName(const QString &name);
+    QList<ZigbeeUartAdapter> availableAdapters() const;
 
-    QString description() const;
-    void setDescription(const QString &description);
-
-    QString systemLocation() const;
-    void setSystemLocation(const QString &systemLocation);
-
-    bool backendSuggestionAvailable() const;
-    void setBackendSuggestionAvailable(bool backendSuggestionAvailable);
-
-    Zigbee::ZigbeeBackendType suggestedZigbeeBackendType() const;
-    void setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendType backendType);
-
-    qint32 suggestedBaudRate() const;
-    void setSuggestedBaudRate(qint32 baudRate);
+    bool isValid() const;
 
 private:
-    QString m_name;
-    QString m_description;
-    QString m_systemLocation;
+    bool m_isValid = false;
+    struct udev *m_udev = nullptr;
+    struct udev_monitor *m_monitor = nullptr;
+    QSocketNotifier *m_notifier = nullptr;
 
-    bool m_backendSuggestionAvailable = false;
-    Zigbee::ZigbeeBackendType m_suggestedZigbeeBackendType = Zigbee::ZigbeeBackendTypeDeconz;
-    qint32 m_suggestedBaudRate = 38400;
+    QHash<QString, ZigbeeUartAdapter> m_availableAdapters;
+
+    void addAdapterInternally(const QString &systemLocation);
+
+signals:
+    void adapterAdded(const ZigbeeUartAdapter &adapter);
+    void adapterRemoved(const ZigbeeUartAdapter &adapter);
+
 };
 
-QDebug operator<<(QDebug debug, const ZigbeeAdapter &adapter);
-
-
-#endif // ZIGBEEADAPTER_H
+#endif // ZIGBEEUARTADAPTERMONITOR_H

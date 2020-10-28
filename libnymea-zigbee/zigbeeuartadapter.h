@@ -25,30 +25,50 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeenetworkmanager.h"
-#include "loggingcategory.h"
+#ifndef ZIGBEEUARTADAPTER_H
+#define ZIGBEEUARTADAPTER_H
 
-#include "backends/nxp/zigbeenetworknxp.h"
-#include "backends/deconz/zigbeenetworkdeconz.h"
+#include <QString>
+#include <QDebug>
 
-#include <QDateTime>
+#include "zigbee.h"
 
-QStringList ZigbeeNetworkManager::availableZigbeeBackendTypes()
+class ZigbeeUartAdapter
 {
-    return {"deCONZ", "NXP"};
-}
+public:
+    explicit ZigbeeUartAdapter();
 
-ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(Zigbee::ZigbeeBackendType backend, QObject *parent)
-{
-    // Note: required for generating random PAN ID
-    srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
+    QString name() const;
+    void setName(const QString &name);
 
-    switch (backend) {
-    case Zigbee::ZigbeeBackendTypeNxp:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));
-    case Zigbee::ZigbeeBackendTypeDeconz:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(parent));
-    }
+    QString description() const;
+    void setDescription(const QString &description);
 
-    return nullptr;
-}
+    QString systemLocation() const;
+    void setSystemLocation(const QString &systemLocation);
+
+    bool backendSuggestionAvailable() const;
+    void setBackendSuggestionAvailable(bool backendSuggestionAvailable);
+
+    Zigbee::ZigbeeBackendType suggestedZigbeeBackendType() const;
+    void setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendType backendType);
+
+    qint32 suggestedBaudRate() const;
+    void setSuggestedBaudRate(qint32 baudRate);
+
+private:
+    QString m_name;
+    QString m_description;
+    QString m_systemLocation;
+
+    bool m_backendSuggestionAvailable = false;
+    Zigbee::ZigbeeBackendType m_suggestedZigbeeBackendType = Zigbee::ZigbeeBackendTypeDeconz;
+    qint32 m_suggestedBaudRate = 38400;
+};
+
+Q_DECLARE_METATYPE(ZigbeeUartAdapter)
+
+QDebug operator<<(QDebug debug, const ZigbeeUartAdapter &adapter);
+
+
+#endif // ZIGBEEADAPTER_H
