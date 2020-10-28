@@ -29,6 +29,7 @@
 #include "zigbeenetwork.h"
 #include "loggingcategory.h"
 #include "zdo/zigbeedeviceprofile.h"
+#include "zigbeebridgecontroller.h"
 
 #include <QDir>
 #include <QFileInfo>

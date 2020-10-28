@@ -25,23 +25,53 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEENETWORKMANAGER_H
-#define ZIGBEENETWORKMANAGER_H
+#ifndef ZIGBEEADAPTER_H
+#define ZIGBEEADAPTER_H
 
 #include <QObject>
+#include <QDebug>
 
-#include "zigbeeadapter.h"
-#include "zigbeenetwork.h"
+#include "zigbee.h"
 
-class ZigbeeNetworkManager
+class ZigbeeAdapter
 {
     Q_GADGET
+    Q_PROPERTY(QString name READ name)
+    Q_PROPERTY(QString description READ description)
+    Q_PROPERTY(QString systemLocation READ systemLocation)
+
 public:
-    static QList<ZigbeeAdapter> availableAdapters();
-    static QStringList availableBackendTypes();
-    static ZigbeeNetwork *createZigbeeNetwork(Zigbee::BackendType backend, QObject *parent = nullptr);
+    explicit ZigbeeAdapter();
+
+    QString name() const;
+    void setName(const QString &name);
+
+    QString description() const;
+    void setDescription(const QString &description);
+
+    QString systemLocation() const;
+    void setSystemLocation(const QString &systemLocation);
+
+    bool backendSuggestionAvailable() const;
+    void setBackendSuggestionAvailable(bool backendSuggestionAvailable);
+
+    Zigbee::BackendType suggestedBackendType() const;
+    void setSuggestedBackendType(Zigbee::BackendType backendType);
+
+    qint32 suggestedBaudRate() const;
+    void setSuggestedBaudRate(qint32 baudRate);
+
+private:
+    QString m_name;
+    QString m_description;
+    QString m_systemLocation;
+
+    bool m_backendSuggestionAvailable = false;
+    Zigbee::BackendType m_suggestedBackendType = Zigbee::BackendTypeDeconz;
+    qint32 m_suggestedBaudRate = 38400;
 };
 
-Q_DECLARE_METATYPE(ZigbeeNetworkManager)
+QDebug operator<<(QDebug debug, const ZigbeeAdapter &adapter);
 
-#endif // ZIGBEENETWORKMANAGER_H
+
+#endif // ZIGBEEADAPTER_H

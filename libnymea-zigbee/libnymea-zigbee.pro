@@ -31,6 +31,7 @@ SOURCES += \
     zdo/zigbeedeviceobject.cpp \
     zdo/zigbeedeviceobjectreply.cpp \
     zdo/zigbeedeviceprofile.cpp \
+    zigbeeadapter.cpp \
     zigbeeadpu.cpp \
     zigbeebridgecontroller.cpp \
     zigbeechannelmask.cpp \
@@ -88,6 +89,7 @@ HEADERS += \
     zdo/zigbeedeviceobject.h \
     zdo/zigbeedeviceobjectreply.h \
     zdo/zigbeedeviceprofile.h \
+    zigbeeadapter.h \
     zigbeeadpu.h \
     zigbeebridgecontroller.h \
     zigbeechannelmask.h \

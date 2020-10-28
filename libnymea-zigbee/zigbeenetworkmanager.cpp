@@ -32,21 +32,73 @@
 #include "backends/deconz/zigbeenetworkdeconz.h"
 
 #include <QDateTime>
+#include <QSerialPortInfo>
+
+QList<ZigbeeAdapter> ZigbeeNetworkManager::availableAdapters()
+{
+    QList<ZigbeeAdapter> adapters;
+    qCDebug(dcZigbeeNetwork()) << "Loading available adapters" ;
+    foreach (const QSerialPortInfo &serialPortInfo, QSerialPortInfo::availablePorts()) {
+        qCDebug(dcZigbeeNetwork()) << "Adapter candidate" << serialPortInfo.portName();
+        qCDebug(dcZigbeeNetwork()) << "   Description:" << serialPortInfo.description();
+        qCDebug(dcZigbeeNetwork()) << "   System location:" << serialPortInfo.systemLocation();
+        qCDebug(dcZigbeeNetwork()) << "   Manufacturer:" << serialPortInfo.manufacturer();
+        qCDebug(dcZigbeeNetwork()) << "   Serialnumber:" << serialPortInfo.serialNumber();
+
+        if (serialPortInfo.hasProductIdentifier()) {
+            qCDebug(dcZigbeeNetwork()) << "   Product identifier:" << serialPortInfo.productIdentifier();
+        }
+
+        if (serialPortInfo.hasVendorIdentifier()) {
+            qCDebug(dcZigbeeNetwork()) << "   Vendor identifier:" << serialPortInfo.vendorIdentifier();
+        }
+
+        // Check if we recognize this controller
+        ZigbeeAdapter adapter;
+        if (serialPortInfo.portName().isEmpty()) {
+            adapter.setName("Zigbee adapter");
+        } else {
+            adapter.setName(serialPortInfo.portName());
+        }
+
+        if (serialPortInfo.description().isEmpty()) {
+            adapter.setDescription("Unknown");
+        } else {
+            adapter.setDescription(serialPortInfo.description());
+        }
+        adapter.setSystemLocation(serialPortInfo.systemLocation());
+
+        // Check if we recognize this adapter from USB information
+        if (serialPortInfo.manufacturer().toLower().contains("dresden elektronik")) {
+            adapter.setBackendSuggestionAvailable(true);
+            adapter.setSuggestedBackendType(Zigbee::BackendTypeDeconz);
+            adapter.setSuggestedBaudRate(38400);
+        } else if (serialPortInfo.manufacturer().toLower().contains("nxp")) {
+            adapter.setBackendSuggestionAvailable(true);
+            adapter.setSuggestedBackendType(Zigbee::BackendTypeNxp);
+            adapter.setSuggestedBaudRate(115200);
+        }
+
+        adapters.append(adapter);
+    }
+
+    return adapters;
+}
 
 QStringList ZigbeeNetworkManager::availableBackendTypes()
 {
     return {"deCONZ", "NXP"};
 }
 
-ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(ZigbeeNetworkManager::BackendType backend, QObject *parent)
+ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(Zigbee::BackendType backend, QObject *parent)
 {
     // Note: required for generating random PAN ID
     srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
 
     switch (backend) {
-    case BackendTypeNxp:
+    case Zigbee::BackendTypeNxp:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));
-    case BackendTypeDeconz:
+    case Zigbee::BackendTypeDeconz:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(parent));
     }
 

@@ -30,7 +30,7 @@
 
 ZigbeeBridgeController::ZigbeeBridgeController(QObject *parent) : QObject(parent)
 {
-    qRegisterMetaType<QSerialPort::SerialPortError>();
+
 }
 
 QString ZigbeeBridgeController::firmwareVersion() const
