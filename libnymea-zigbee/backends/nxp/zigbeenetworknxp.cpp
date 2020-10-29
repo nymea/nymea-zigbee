@@ -313,6 +313,15 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
                 // Initialize the coordinator node if not already done.
 
                 if (m_coordinatorNode) {
+                    if (!macAddress().isNull() && ZigbeeAddress(ieeeAddress) != macAddress()) {
+                        qCWarning(dcZigbeeNetwork()) << "The mac address of the coordinator has changed since the network has been set up.";
+                        qCWarning(dcZigbeeNetwork()) << "The network is bound to a specific controller. Since the controller has changed the network can not be started.";
+                        qCWarning(dcZigbeeNetwork()) << "Please factory reset the network or plug in the original controller.";
+                        setError(ZigbeeNetwork::ErrorHardwareModuleChanged);
+                        stopNetwork();
+                        return;
+                    }
+
                     qCDebug(dcZigbeeNetwork()) << "We already have the coordinator node. Network starting done.";
                     m_database->saveNode(m_coordinatorNode);
                     setState(StateRunning);
@@ -500,8 +509,10 @@ void ZigbeeNetworkNxp::setPermitJoiningInternal(bool permitJoining)
     connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply, permitJoining, duration](){
         if (reply->zigbeeApsStatus() != Zigbee::ZigbeeApsStatusSuccess) {
             qCDebug(dcZigbeeNetwork()) << "Could not set permit join to" << duration;
-            m_permitJoining = false;
-            emit permitJoiningChanged(m_permitJoining);
+            if (m_permitJoining != false) {
+                m_permitJoining = false;
+                emit permitJoiningChanged(m_permitJoining);
+            }
             return;
         }
 
@@ -533,12 +544,12 @@ void ZigbeeNetworkNxp::startNetwork()
 {
     loadNetwork();
 
-    m_permitJoining = false;
-    emit permitJoiningChanged(m_permitJoining);
-
-    if (!m_controller->enable(serialPortName(), serialBaudrate())) {
+    if (m_permitJoining != false) {
         m_permitJoining = false;
         emit permitJoiningChanged(m_permitJoining);
+    }
+
+    if (!m_controller->enable(serialPortName(), serialBaudrate())) {
         setState(StateOffline);
         setError(ErrorHardwareUnavailable);
         return;
@@ -549,7 +560,7 @@ void ZigbeeNetworkNxp::startNetwork()
 
 void ZigbeeNetworkNxp::stopNetwork()
 {
-
+    m_controller->disable();
 }
 
 void ZigbeeNetworkNxp::reset()
@@ -570,4 +581,11 @@ void ZigbeeNetworkNxp::factoryResetNetwork()
     connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
         qCDebug(dcZigbeeNetwork()) << "Factory reset reply finished" << reply->status();
     });
+}
+
+void ZigbeeNetworkNxp::destroyNetwork()
+{
+    qCDebug(dcZigbeeNetwork()) << "Destroy network and delete the database";
+        m_controller->disable();
+    clearSettings();
 }

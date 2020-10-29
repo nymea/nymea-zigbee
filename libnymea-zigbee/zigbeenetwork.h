@@ -60,6 +60,7 @@ public:
     enum Error {
         ErrorNoError,
         ErrorHardwareUnavailable,
+        ErrorHardwareModuleChanged,
         ErrorZigbeeError
     };
     Q_ENUM(Error)
@@ -163,7 +164,6 @@ protected:
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, quint8 macCapabilities, QObject *parent);
     virtual void setPermitJoiningInternal(bool permitJoining) = 0;
 
-    void saveNetwork();
     void loadNetwork();
     void clearSettings();
 
@@ -215,6 +215,7 @@ public slots:
     virtual void stopNetwork() = 0;
     virtual void reset() = 0;
     virtual void factoryResetNetwork() = 0;
+    virtual void destroyNetwork() = 0;
 
 };
 

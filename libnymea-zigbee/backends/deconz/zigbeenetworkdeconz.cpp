@@ -291,6 +291,15 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
     }
     case CreateNetworkStateInitializeCoordinatorNode: {
         if (m_coordinatorNode) {
+            if (!macAddress().isNull() && m_coordinatorNode->extendedAddress() != macAddress()) {
+                qCWarning(dcZigbeeNetwork()) << "The mac address of the coordinator has changed since the network has been set up.";
+                qCWarning(dcZigbeeNetwork()) << "The network is bound to a specific controller. Since the controller has changed the network can not be started.";
+                qCWarning(dcZigbeeNetwork()) << "Please factory reset the network or plug in the original controller.";
+                setError(ZigbeeNetwork::ErrorHardwareModuleChanged);
+                stopNetwork();
+                return;
+            }
+
             qCDebug(dcZigbeeNetwork()) << "We already have the coordinator node. Network starting done.";
             m_database->saveNode(m_coordinatorNode);
             m_initializing = false;
@@ -384,8 +393,10 @@ void ZigbeeNetworkDeconz::setPermitJoiningInternal(bool permitJoining)
     connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply, permitJoining, duration](){
         if (reply->zigbeeApsStatus() != Zigbee::ZigbeeApsStatusSuccess) {
             qCDebug(dcZigbeeNetwork()) << "Could not set permit join to" << duration;
-            m_permitJoining = false;
-            emit permitJoiningChanged(m_permitJoining);
+            if (m_permitJoining != false) {
+                m_permitJoining = false;
+                emit permitJoiningChanged(m_permitJoining);
+            }
             return;
         }
         qCDebug(dcZigbeeNetwork()) << "Permit join request finished successfully";
@@ -543,13 +554,17 @@ void ZigbeeNetworkDeconz::onControllerAvailableChanged(bool available)
         qCWarning(dcZigbeeNetwork()) << "Hardware controller is not available any more.";
         setError(ErrorHardwareUnavailable);
         m_initializing = false;
-        m_permitJoining = false;
-        emit permitJoiningChanged(m_permitJoining);
+        if (m_permitJoining != false) {
+            m_permitJoining = false;
+            emit permitJoiningChanged(m_permitJoining);
+        }
         setState(StateOffline);
     } else {
         m_error = ErrorNoError;
-        m_permitJoining = false;
-        m_initializing = true;
+        if (m_permitJoining != false) {
+            m_permitJoining = false;
+            emit permitJoiningChanged(m_permitJoining);
+        }
         emit permitJoiningChanged(m_permitJoining);
         setState(StateStarting);
         qCDebug(dcZigbeeNetwork()) << "Hardware controller is now available.";
@@ -689,8 +704,10 @@ void ZigbeeNetworkDeconz::startNetwork()
         return;
     }
 
-    m_permitJoining = false;
-    emit permitJoiningChanged(m_permitJoining);
+    if (m_permitJoining != false) {
+        m_permitJoining = false;
+        emit permitJoiningChanged(m_permitJoining);
+    }
 
     // Note: wait for the controller available signal and start the initialization there
 
@@ -710,6 +727,7 @@ void ZigbeeNetworkDeconz::stopNetwork()
 
         qCDebug(dcZigbeeNetwork()) << "Network left successfully. SQN:" << reply->sequenceNumber();
         setState(StateOffline);
+        m_controller->disable();
     });
 }
 
@@ -726,4 +744,11 @@ void ZigbeeNetworkDeconz::factoryResetNetwork()
     setState(StateUninitialized);
     qCDebug(dcZigbeeNetwork()) << "The factory reset is finished. Start restart with a fresh network.";
     startNetwork();
+}
+
+void ZigbeeNetworkDeconz::destroyNetwork()
+{
+    qCDebug(dcZigbeeNetwork()) << "Destroy network and delete the database";
+    m_controller->disable();
+    clearSettings();
 }

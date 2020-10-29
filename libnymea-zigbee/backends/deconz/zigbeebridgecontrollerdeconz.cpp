@@ -1045,19 +1045,19 @@ QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState)
 
 QDebug operator<<(QDebug debug, const DeconzNetworkConfiguration &configuration)
 {
-    debug.nospace() << "Network configuration:" << "\n";
+    debug.nospace() << "Network configuration: " << "\n";
     debug.nospace() << " - Node type:" << configuration.nodeType << "\n";
-    debug.nospace() << " - IEEE address:" << configuration.ieeeAddress.toString() << "\n";
-    debug.nospace() << " - NWK address:" << ZigbeeUtils::convertUint16ToHexString(configuration.shortAddress) << "\n";
-    debug.nospace() << " - PAN ID:" << ZigbeeUtils::convertUint16ToHexString(configuration.panId) << "\n";
-    debug.nospace() << " - Extended PAN ID:" << ZigbeeUtils::convertUint64ToHexString(configuration.extendedPanId) << "\n";
-    debug.nospace() << " - APS Extended PAN ID:" << ZigbeeUtils::convertUint64ToHexString(configuration.apsExtendedPanId) << "\n";
-    debug.nospace() << " - Trust center IEEE address:" << configuration.trustCenterAddress.toString() << "\n";
-    debug.nospace() << " - Channel mask:" << ZigbeeChannelMask(configuration.channelMask) << "\n";
-    debug.nospace() << " - Channel:" << configuration.currentChannel << "\n";
-    debug.nospace() << " - Security mode:" << configuration.securityMode << "\n";
-    debug.nospace() << " - Protocol version:" << ZigbeeUtils::convertUint16ToHexString(configuration.protocolVersion) << "\n";
-    debug.nospace() << " - Network update ID:" << ZigbeeUtils::convertByteToHexString(configuration.networkUpdateId) << "\n";
-    debug.nospace() << " - Watchdog TTL:" << configuration.watchdogTimeout << "\n";
+    debug.nospace() << " - IEEE address: " << configuration.ieeeAddress.toString() << "\n";
+    debug.nospace() << " - NWK address: " << ZigbeeUtils::convertUint16ToHexString(configuration.shortAddress) << "\n";
+    debug.nospace() << " - PAN ID: " << ZigbeeUtils::convertUint16ToHexString(configuration.panId) << "\n";
+    debug.nospace() << " - Extended PAN ID: " << ZigbeeUtils::convertUint64ToHexString(configuration.extendedPanId) << "\n";
+    debug.nospace() << " - APS Extended PAN ID: " << ZigbeeUtils::convertUint64ToHexString(configuration.apsExtendedPanId) << "\n";
+    debug.nospace() << " - Trust center IEEE address: " << configuration.trustCenterAddress.toString() << "\n";
+    debug.nospace() << " - Channel mask: " << ZigbeeChannelMask(configuration.channelMask) << "\n";
+    debug.nospace() << " - Channel: " << configuration.currentChannel << "\n";
+    debug.nospace() << " - Security mode: " << configuration.securityMode << "\n";
+    debug.nospace() << " - Protocol version: " << ZigbeeUtils::convertUint16ToHexString(configuration.protocolVersion) << "\n";
+    debug.nospace() << " - Network update ID: " << ZigbeeUtils::convertByteToHexString(configuration.networkUpdateId) << "\n";
+    debug.nospace() << " - Watchdog TTL: " << configuration.watchdogTimeout << "\n";
     return debug.space();
 }

@@ -98,6 +98,7 @@ public slots:
     void stopNetwork() override;
     void reset() override;
     void factoryResetNetwork() override;
+    void destroyNetwork() override;
 
 };
 
