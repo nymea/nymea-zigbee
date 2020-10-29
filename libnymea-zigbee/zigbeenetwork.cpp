@@ -34,10 +34,16 @@
 #include <QDir>
 #include <QFileInfo>
 
-ZigbeeNetwork::ZigbeeNetwork(QObject *parent) :
-    QObject(parent)
+ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
+    QObject(parent),
+    m_networkUuid(networkUuid)
 {
 
+}
+
+QUuid ZigbeeNetwork::networkUuid() const
+{
+    return m_networkUuid;
 }
 
 ZigbeeNetwork::State ZigbeeNetwork::state() const
@@ -50,18 +56,17 @@ ZigbeeNetwork::Error ZigbeeNetwork::error() const
     return m_error;
 }
 
-QString ZigbeeNetwork::settingsFilenName() const
+QDir ZigbeeNetwork::settingsDirectory() const
 {
-    return m_settingsFileName;
+    return m_settingsDirectory;
 }
 
-void ZigbeeNetwork::setSettingsFileName(const QString &settingsFileName)
+void ZigbeeNetwork::setSettingsDirectory(const QDir &settingsDirectory)
 {
-    qCDebug(dcZigbeeNetwork()) << "Using settings file" << settingsFileName;
-    m_settingsFileName = settingsFileName;
-    emit settingsFileNameChanged(m_settingsFileName);
+    qCDebug(dcZigbeeNetwork()) << "Using settings directory" << settingsDirectory.absolutePath();
+    m_settingsDirectory = settingsDirectory;
+    emit settingsDirectoryChanged(m_settingsDirectory);
 
-    m_settingsDirectory = QDir(QFileInfo(m_settingsFileName).absolutePath());
     bridgeController()->setSettingsDirectory(m_settingsDirectory);
 }
 
@@ -91,6 +96,20 @@ void ZigbeeNetwork::setSerialBaudrate(qint32 baudrate)
 
     m_serialBaudrate = baudrate;
     emit serialBaudrateChanged(m_serialBaudrate);
+}
+
+ZigbeeAddress ZigbeeNetwork::macAddress() const
+{
+    return m_macAddress;
+}
+
+void ZigbeeNetwork::setMacAddress(const ZigbeeAddress &zigbeeAddress)
+{
+    if (m_macAddress == zigbeeAddress)
+        return;
+
+    m_macAddress = zigbeeAddress;
+    emit macAddressChanged(m_macAddress);
 }
 
 quint16 ZigbeeNetwork::panId()
@@ -315,39 +334,39 @@ ZigbeeNode *ZigbeeNetwork::createNode(quint16 shortAddress, const ZigbeeAddress 
 
 void ZigbeeNetwork::saveNetwork()
 {
-    qCDebug(dcZigbeeNetwork()) << "Save current network configuration to" << m_settingsFileName;
-    QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
-    settings.beginGroup("ZigbeeNetwork");
-    settings.setValue("panId", panId());
-    settings.setValue("channel", channel());
-    settings.setValue("networkKey", securityConfiguration().networkKey().toString());
-    settings.setValue("trustCenterLinkKey", securityConfiguration().globalTrustCenterLinkKey().toString());
-    settings.endGroup();
+//    qCDebug(dcZigbeeNetwork()) << "Save current network configuration to" << m_settingsFileName;
+//    QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
+//    settings.beginGroup("ZigbeeNetwork");
+//    settings.setValue("panId", panId());
+//    settings.setValue("channel", channel());
+//    settings.setValue("networkKey", securityConfiguration().networkKey().toString());
+//    settings.setValue("trustCenterLinkKey", securityConfiguration().globalTrustCenterLinkKey().toString());
+//    settings.endGroup();
 }
 
 void ZigbeeNetwork::loadNetwork()
 {
-    qCDebug(dcZigbeeNetwork()) << "Load current network configuration from" << m_settingsFileName;
-
+    qCDebug(dcZigbeeNetwork()) << "Loading network from settings directory" << m_settingsDirectory.absolutePath();
     if (!m_database) {
-        QDir storagePath = QFileInfo(m_settingsFileName).absoluteDir();
-        m_database = new ZigbeeNetworkDatabase(this, storagePath.absolutePath() + QDir::separator() + "zigbee-network.db", this);
+        QString networkDatabaseFileName = m_settingsDirectory.absolutePath() + QDir::separator() + QString("zigbee-network-%1.db").arg(m_networkUuid.toString());
+        qCDebug(dcZigbeeNetwork()) << "Using ZigBee network database" << QFileInfo(networkDatabaseFileName).fileName();
+        m_database = new ZigbeeNetworkDatabase(this, networkDatabaseFileName, this);
     }
 
-    QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
-    settings.beginGroup("ZigbeeNetwork");
-    quint16 panId = static_cast<quint16>(settings.value("panId", 0).toUInt());
-    setPanId(panId);
-    setChannel(settings.value("channel", 0).toUInt());
-    ZigbeeNetworkKey netKey(settings.value("networkKey", QString()).toString());
-    if (netKey.isValid())
-        m_securityConfiguration.setNetworkKey(netKey);
+//    QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
+//    settings.beginGroup("ZigbeeNetwork");
+//    quint16 panId = static_cast<quint16>(settings.value("panId", 0).toUInt());
+//    setPanId(panId);
+//    setChannel(settings.value("channel", 0).toUInt());
+//    ZigbeeNetworkKey netKey(settings.value("networkKey", QString()).toString());
+//    if (netKey.isValid())
+//        m_securityConfiguration.setNetworkKey(netKey);
 
-    ZigbeeNetworkKey tcKey(settings.value("trustCenterLinkKey", QString("5A6967426565416C6C69616E63653039")).toString());
-    if (!tcKey.isValid())
-        m_securityConfiguration.setGlobalTrustCenterlinkKey(tcKey);
+//    ZigbeeNetworkKey tcKey(settings.value("trustCenterLinkKey", QString("5A6967426565416C6C69616E63653039")).toString());
+//    if (!tcKey.isValid())
+//        m_securityConfiguration.setGlobalTrustCenterlinkKey(tcKey);
 
-    settings.endGroup(); // Network
+//    settings.endGroup(); // Network
 
     QList<ZigbeeNode *> nodes = m_database->loadNodes();
     foreach (ZigbeeNode *node, nodes) {
@@ -358,25 +377,32 @@ void ZigbeeNetwork::loadNetwork()
 
 void ZigbeeNetwork::clearSettings()
 {
+    // Note: this clears the database
     qCDebug(dcZigbeeNetwork()) << "Remove zigbee nodes from network";
     foreach (ZigbeeNode *node, m_nodes) {
         removeNode(node);
     }
 
+    qCDebug(dcZigbeeNetwork()) << "Clear all uninitialized nodes";
     foreach (ZigbeeNode *node, m_uninitializedNodes) {
+        qCDebug(dcZigbeeNetwork()) << "Remove uninitialized" << node;
         m_uninitializedNodes.removeAll(node);
         node->deleteLater();
     }
 
-    qCDebug(dcZigbeeNetwork()) << "Clear network settings" << m_settingsFileName;
-    QSettings settings(m_settingsFileName, QSettings::IniFormat, this);
-    settings.clear();
+    qCDebug(dcZigbeeNetwork()) << "Delete network database";
+    if (m_database) {
+        if (!m_database->wipeDatabase()) {
+            qCWarning(dcZigbeeNetwork()) << "Failed to wipe the network database" << m_database->databaseName();
+        }
+    }
 
     // Reset network configurations
     qCDebug(dcZigbeeNetwork()) << "Clear network properties";
-    m_extendedPanId = 0;
-    m_channel = 0;
-    m_securityConfiguration.clear();
+    setExtendedPanId(0);
+    setChannel(0);
+    setSecurityConfiguration(ZigbeeSecurityConfiguration());
+    setState(StateUninitialized);
     m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 }
 
@@ -512,6 +538,7 @@ void ZigbeeNetwork::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkR
         qCWarning(dcZigbeeNetwork()) << "Failed to send request to device" << reply->request() << reply->error();
         break;
     }
+
     // Stop the timer
     reply->m_timer->stop();
 

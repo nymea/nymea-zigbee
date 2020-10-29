@@ -30,8 +30,8 @@
 
 #include <QObject>
 
-#include "zigbeeuartadapter.h"
 #include "zigbeenetwork.h"
+#include "zigbeeuartadapter.h"
 
 class ZigbeeNetworkManager
 {
@@ -39,7 +39,7 @@ class ZigbeeNetworkManager
 
 public:
     static QStringList availableZigbeeBackendTypes();
-    static ZigbeeNetwork *createZigbeeNetwork(Zigbee::ZigbeeBackendType backend, QObject *parent = nullptr);
+    static ZigbeeNetwork *createZigbeeNetwork(const QUuid &networkUuid, Zigbee::ZigbeeBackendType backend, QObject *parent = nullptr);
 };
 
 Q_DECLARE_METATYPE(ZigbeeNetworkManager)

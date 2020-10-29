@@ -29,9 +29,9 @@
 #define ZIGBEENETWORK_H
 
 #include <QDir>
+#include <QUuid>
 #include <QObject>
 #include <QSettings>
-
 #include <QSqlDatabase>
 
 #include "zigbeenode.h"
@@ -64,16 +64,19 @@ public:
     };
     Q_ENUM(Error)
 
-    explicit ZigbeeNetwork(QObject *parent = nullptr);
+    explicit ZigbeeNetwork(const QUuid &networkUuid, QObject *parent = nullptr);
+
+    QUuid networkUuid() const;
 
     State state() const;
 
     Error error() const;
 
-    QString settingsFilenName() const;
-    void setSettingsFileName(const QString &settingsFileName);
+    QDir settingsDirectory() const;
+    void setSettingsDirectory(const QDir &settingsDirectory);
 
     virtual ZigbeeBridgeController *bridgeController() const = 0;
+    virtual Zigbee::ZigbeeBackendType backendType() const = 0;
 
     // Serial port configuration
     QString serialPortName() const;
@@ -81,6 +84,9 @@ public:
 
     qint32 serialBaudrate() const;
     void setSerialBaudrate(qint32 baudrate);
+
+    ZigbeeAddress macAddress() const;
+    void setMacAddress(const ZigbeeAddress &zigbeeAddress);
 
     // Network configurations
     quint16 panId();
@@ -119,11 +125,13 @@ public:
     void removeZigbeeNode(const ZigbeeAddress &address);
 
 private:
+    QUuid m_networkUuid;
     State m_state = StateUninitialized;
 
     // Serial port configuration
     QString m_serialPortName = "/dev/ttyUSB0";
     qint32 m_serialBaudrate = 115200;
+    ZigbeeAddress m_macAddress;
 
     // Continuouse ASP sequence number for network requests
     quint8 m_sequenceNumber = 0;
@@ -136,7 +144,6 @@ private:
     ZigbeeDeviceProfile::NodeType m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 
     // Network storage
-    QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
     QDir m_settingsDirectory = QDir("/etc/nymea/");
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
@@ -181,9 +188,10 @@ protected:
     void startWaitingReply(ZigbeeNetworkReply *reply);
 
 signals:
-    void settingsFileNameChanged(const QString &settingsFileName);
+    void settingsDirectoryChanged(const QDir &settingsDirectory);
     void serialPortNameChanged(const QString &serialPortName);
     void serialBaudrateChanged(qint32 serialBaudrate);
+    void macAddressChanged(const ZigbeeAddress &macAddress);
 
     void panIdChanged(quint16 panId);
     void extendedPanIdChanged(quint64 extendedPanId);

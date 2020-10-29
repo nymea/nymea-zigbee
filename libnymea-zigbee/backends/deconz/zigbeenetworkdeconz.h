@@ -49,9 +49,10 @@ public:
     };
     Q_ENUM(CreateNetworkState)
 
-    explicit ZigbeeNetworkDeconz(QObject *parent = nullptr);
+    explicit ZigbeeNetworkDeconz(const QUuid &networkUuid, QObject *parent = nullptr);
 
     ZigbeeBridgeController *bridgeController() const override;
+    Zigbee::ZigbeeBackendType backendType() const override;
 
     // Sending an APSDE-DATA.request, will be finished on APSDE-DATA.confirm
     ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) override;

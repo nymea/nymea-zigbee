@@ -38,16 +38,16 @@ QStringList ZigbeeNetworkManager::availableZigbeeBackendTypes()
     return {"deCONZ", "NXP"};
 }
 
-ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(Zigbee::ZigbeeBackendType backend, QObject *parent)
+ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(const QUuid &networkUuid, Zigbee::ZigbeeBackendType backend, QObject *parent)
 {
     // Note: required for generating random PAN ID
     srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
 
     switch (backend) {
     case Zigbee::ZigbeeBackendTypeNxp:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(parent));
+        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(networkUuid, parent));
     case Zigbee::ZigbeeBackendTypeDeconz:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(parent));
+        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(networkUuid, parent));
     }
 
     return nullptr;

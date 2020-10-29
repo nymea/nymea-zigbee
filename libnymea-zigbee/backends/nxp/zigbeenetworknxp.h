@@ -40,10 +40,10 @@ class ZigbeeNetworkNxp : public ZigbeeNetwork
 {
     Q_OBJECT
 public:
-    explicit ZigbeeNetworkNxp(QObject *parent = nullptr);
+    explicit ZigbeeNetworkNxp(const QUuid &networkUuid, QObject *parent = nullptr);
 
     ZigbeeBridgeController *bridgeController() const override;
-
+    Zigbee::ZigbeeBackendType backendType() const override;
     ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) override;
     ZigbeeNetworkReply *setPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
 

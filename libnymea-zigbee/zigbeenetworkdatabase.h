@@ -46,11 +46,15 @@ public:
     explicit ZigbeeNetworkDatabase(ZigbeeNetwork *network, const QString &databaseName, QObject *parent = nullptr);
     ~ZigbeeNetworkDatabase();
 
+    QString databaseName() const;
+
     QList<ZigbeeNode *> loadNodes();
+
     bool wipeDatabase();
 
 private:
     ZigbeeNetwork *m_network = nullptr;
+    QString m_databaseName;
     QSqlDatabase m_db;
 
     bool initDatabase();

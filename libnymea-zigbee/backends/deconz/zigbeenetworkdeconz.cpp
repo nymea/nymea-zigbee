@@ -32,8 +32,8 @@
 
 #include <QDataStream>
 
-ZigbeeNetworkDeconz::ZigbeeNetworkDeconz(QObject *parent) :
-    ZigbeeNetwork(parent)
+ZigbeeNetworkDeconz::ZigbeeNetworkDeconz(const QUuid &networkUuid, QObject *parent) :
+    ZigbeeNetwork(networkUuid, parent)
 {
     m_controller = new ZigbeeBridgeControllerDeconz(this);
     connect(m_controller, &ZigbeeBridgeControllerDeconz::availableChanged, this, &ZigbeeNetworkDeconz::onControllerAvailableChanged);
@@ -57,6 +57,11 @@ ZigbeeBridgeController *ZigbeeNetworkDeconz::bridgeController() const
         return nullptr;
 
     return qobject_cast<ZigbeeBridgeController *>(m_controller);
+}
+
+Zigbee::ZigbeeBackendType ZigbeeNetworkDeconz::backendType() const
+{
+    return Zigbee::ZigbeeBackendTypeDeconz;
 }
 
 ZigbeeNetworkReply *ZigbeeNetworkDeconz::sendRequest(const ZigbeeNetworkRequest &request)

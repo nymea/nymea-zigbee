@@ -36,10 +36,11 @@
 
 ZigbeeNetworkDatabase::ZigbeeNetworkDatabase(ZigbeeNetwork *network, const QString &databaseName, QObject *parent) :
     QObject(parent),
-    m_network(network)
+    m_network(network),
+    m_databaseName(databaseName)
 {
     m_db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), "zigbee");
-    m_db.setDatabaseName(databaseName);
+    m_db.setDatabaseName(m_databaseName);
     qCDebug(dcZigbeeNetworkDatabase()) << "Opening zigbee network database" << m_db.databaseName();
 
     if (!m_db.isValid()) {
@@ -61,6 +62,11 @@ ZigbeeNetworkDatabase::~ZigbeeNetworkDatabase()
         qCDebug(dcZigbeeNetworkDatabase()) << "Closing database" << m_db.databaseName();
         m_db.close();
     }
+}
+
+QString ZigbeeNetworkDatabase::databaseName() const
+{
+    return m_databaseName;
 }
 
 QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
@@ -176,6 +182,16 @@ bool ZigbeeNetworkDatabase::wipeDatabase()
     if (m_db.lastError().type() != QSqlError::NoError) {
         qCWarning(dcZigbeeNetworkDatabase()) << "Could not delete all node database entries." << m_db.lastError().databaseText() << m_db.lastError().driverText();
         return false;
+    }
+    m_db.close();
+
+    // Delete database file
+    QFile databaseFile(m_databaseName);
+    if (databaseFile.exists()) {
+        if (!databaseFile.remove()) {
+            qCWarning(dcZigbeeNetworkDatabase()) << "Could not delete database file" << m_databaseName;
+            return false;
+        }
     }
 
     return true;
