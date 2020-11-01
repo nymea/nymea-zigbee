@@ -36,6 +36,7 @@ ZigbeeNetworkNxp::ZigbeeNetworkNxp(const QUuid &networkUuid, QObject *parent) :
 {
     m_controller = new ZigbeeBridgeControllerNxp(this);
     connect(m_controller, &ZigbeeBridgeControllerNxp::availableChanged, this, &ZigbeeNetworkNxp::onControllerAvailableChanged);
+    connect(m_controller, &ZigbeeBridgeControllerNxp::firmwareVersionChanged, this, &ZigbeeNetworkNxp::firmwareVersionChanged);
     connect(m_controller, &ZigbeeBridgeControllerNxp::interfaceNotificationReceived, this, &ZigbeeNetworkNxp::onInterfaceNotificationReceived);
     connect(m_controller, &ZigbeeBridgeControllerNxp::controllerStateChanged, this, &ZigbeeNetworkNxp::onControllerStateChanged);
     connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataConfirmReceived, this, &ZigbeeNetworkNxp::onApsDataConfirmReceived);
@@ -324,8 +325,8 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
 
                     qCDebug(dcZigbeeNetwork()) << "We already have the coordinator node. Network starting done.";
                     m_database->saveNode(m_coordinatorNode);
-                    setState(StateRunning);
                     setPermitJoiningInternal(false);
+                    setState(StateRunning);
                     return;
                 }
 
@@ -355,7 +356,14 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
         setState(StateStarting);
         break;
     case ZigbeeBridgeControllerNxp::ControllerStateRunningUninitialized: {
+        // Create the database if there is no database available
         setState(StateStarting);
+        if (!m_database) {
+            QString networkDatabaseFileName = settingsDirectory().absolutePath() + QDir::separator() + QString("zigbee-network-%1.db").arg(networkUuid().toString().remove('{').remove('}'));
+            qCDebug(dcZigbeeNetwork()) << "Using ZigBee network database" << QFileInfo(networkDatabaseFileName).fileName();
+            m_database = new ZigbeeNetworkDatabase(this, networkDatabaseFileName, this);
+        }
+
         qCDebug(dcZigbeeNetwork()) << "Request controller version";
         ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
         connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
@@ -586,6 +594,6 @@ void ZigbeeNetworkNxp::factoryResetNetwork()
 void ZigbeeNetworkNxp::destroyNetwork()
 {
     qCDebug(dcZigbeeNetwork()) << "Destroy network and delete the database";
-        m_controller->disable();
+    m_controller->disable();
     clearSettings();
 }

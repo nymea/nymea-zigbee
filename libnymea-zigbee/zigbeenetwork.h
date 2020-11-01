@@ -90,6 +90,8 @@ public:
     void setMacAddress(const ZigbeeAddress &zigbeeAddress);
 
     // Network configurations
+    QString firmwareVersion() const;
+
     quint16 panId();
     void setPanId(quint16 panId);
 
@@ -107,6 +109,7 @@ public:
 
     bool permitJoining() const;
     void setPermitJoining(bool permitJoining);
+
 
     quint8 generateSequenceNumber();
 
@@ -148,6 +151,8 @@ private:
     QDir m_settingsDirectory = QDir("/etc/nymea/");
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
+
+    void printNetwork();
 
 private:
     void addNodeInternally(ZigbeeNode *node);
@@ -192,6 +197,7 @@ signals:
     void serialPortNameChanged(const QString &serialPortName);
     void serialBaudrateChanged(qint32 serialBaudrate);
     void macAddressChanged(const ZigbeeAddress &macAddress);
+    void firmwareVersionChanged(const QString &firmwareVersion);
 
     void panIdChanged(quint16 panId);
     void extendedPanIdChanged(quint64 extendedPanId);

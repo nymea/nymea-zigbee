@@ -62,43 +62,43 @@ void ZigbeeUartAdapter::setSystemLocation(const QString &systemLocation)
     m_systemLocation = systemLocation;
 }
 
-bool ZigbeeUartAdapter::backendSuggestionAvailable() const
+bool ZigbeeUartAdapter::hardwareRecognized() const
 {
-    return m_backendSuggestionAvailable;
+    return m_hardwareRecognized;
 }
 
-void ZigbeeUartAdapter::setBackendSuggestionAvailable(bool backendSuggestionAvailable)
+void ZigbeeUartAdapter::setHardwareRecognized(bool hardwareRecognized)
 {
-    m_backendSuggestionAvailable = backendSuggestionAvailable;
+    m_hardwareRecognized = hardwareRecognized;
 }
 
-Zigbee::ZigbeeBackendType ZigbeeUartAdapter::suggestedZigbeeBackendType() const
+Zigbee::ZigbeeBackendType ZigbeeUartAdapter::zigbeeBackend() const
 {
-    return m_suggestedZigbeeBackendType;
+    return m_zigbeeBackend;
 }
 
-void ZigbeeUartAdapter::setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendType backendType)
+void ZigbeeUartAdapter::setBackendType(Zigbee::ZigbeeBackendType backendType)
 {
-    m_suggestedZigbeeBackendType = backendType;
+    m_zigbeeBackend = backendType;
 }
 
-qint32 ZigbeeUartAdapter::suggestedBaudRate() const
+qint32 ZigbeeUartAdapter::baudRate() const
 {
-    return m_suggestedBaudRate;
+    return m_baudRate;
 }
 
-void ZigbeeUartAdapter::setSuggestedBaudRate(qint32 baudRate)
+void ZigbeeUartAdapter::setBaudRate(qint32 baudRate)
 {
-    m_suggestedBaudRate = baudRate;
+    m_baudRate = baudRate;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeUartAdapter &adapter)
 {
     debug.nospace() << "ZigbeeUartAdapter(" << adapter.name() << " - " << adapter.description();
     debug.nospace() << ", " << adapter.systemLocation();
-    if (adapter.backendSuggestionAvailable()) {
-        debug.nospace() << "Suggested backend: " << adapter.suggestedZigbeeBackendType();
-        debug.nospace() << ", " << adapter.suggestedBaudRate();
+    if (adapter.hardwareRecognized()) {
+        debug.nospace() << "Suggested backend: " << adapter.zigbeeBackend();
+        debug.nospace() << ", " << adapter.baudRate();
     }
 
     debug.nospace() << ")";

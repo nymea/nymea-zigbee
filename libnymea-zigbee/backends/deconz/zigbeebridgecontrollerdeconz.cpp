@@ -36,8 +36,6 @@
 ZigbeeBridgeControllerDeconz::ZigbeeBridgeControllerDeconz(QObject *parent) :
     ZigbeeBridgeController(parent)
 {
-    qRegisterMetaType<QSerialPort::SerialPortError>();
-
     m_interface = new ZigbeeInterfaceDeconz(this);
     connect(m_interface, &ZigbeeInterfaceDeconz::availableChanged, this, &ZigbeeBridgeControllerDeconz::onInterfaceAvailableChanged);
     connect(m_interface, &ZigbeeInterfaceDeconz::packageReceived, this, &ZigbeeBridgeControllerDeconz::onInterfacePackageReceived);

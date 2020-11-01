@@ -39,9 +39,9 @@ ZigbeeNetworkDatabase::ZigbeeNetworkDatabase(ZigbeeNetwork *network, const QStri
     m_network(network),
     m_databaseName(databaseName)
 {
-    m_db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), "zigbee");
+    m_connectionName = QFileInfo(m_databaseName).baseName();
+    m_db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), m_connectionName);
     m_db.setDatabaseName(m_databaseName);
-    qCDebug(dcZigbeeNetworkDatabase()) << "Opening zigbee network database" << m_db.databaseName();
 
     if (!m_db.isValid()) {
         qCWarning(dcZigbeeNetworkDatabase()) << "The zigbee network database is not valid" << m_db.databaseName();
@@ -49,6 +49,7 @@ ZigbeeNetworkDatabase::ZigbeeNetworkDatabase(ZigbeeNetwork *network, const QStri
         return;
     }
 
+    qCDebug(dcZigbeeNetworkDatabase()) << "Opening zigbee network database" << m_db.databaseName();
     if (!initDatabase()) {
         qCWarning(dcZigbeeNetworkDatabase()) << "Failed to initialize the database" << m_db.databaseName();
         // FIXME: rotate database
@@ -58,10 +59,9 @@ ZigbeeNetworkDatabase::ZigbeeNetworkDatabase(ZigbeeNetwork *network, const QStri
 
 ZigbeeNetworkDatabase::~ZigbeeNetworkDatabase()
 {
-    if (m_db.isOpen()) {
-        qCDebug(dcZigbeeNetworkDatabase()) << "Closing database" << m_db.databaseName();
-        m_db.close();
-    }
+    m_db.close();
+    m_db = QSqlDatabase();
+    QSqlDatabase::removeDatabase(m_connectionName);
 }
 
 QString ZigbeeNetworkDatabase::databaseName() const
@@ -184,6 +184,8 @@ bool ZigbeeNetworkDatabase::wipeDatabase()
         return false;
     }
     m_db.close();
+    m_db = QSqlDatabase();
+    QSqlDatabase::removeDatabase(m_connectionName);
 
     // Delete database file
     QFile databaseFile(m_databaseName);

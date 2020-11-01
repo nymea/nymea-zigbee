@@ -228,7 +228,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::MacCapabilities &macC
     debug.nospace() << "    Power source main power: " << macCapabilities.powerSourceFlagMainPower << "\n";
     debug.nospace() << "    Receiver on when idle: " << macCapabilities.receiverOnWhenIdle << "\n";
     debug.nospace() << "    Security capability: " << macCapabilities.securityCapability << "\n";
-    debug.nospace() << "    Allocate address: " << macCapabilities.allocateAddress << "\n";
+    debug.nospace() << "    Allocate address: " << macCapabilities.allocateAddress;
     return debug;
 }
 
@@ -241,7 +241,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::ServerMask &serverMas
     debug.nospace() << "    Backup binding cache: " << serverMask.backupBindingCache << "\n";
     debug.nospace() << "    Primary discovery cache: " << serverMask.primaryDiscoveryCache << "\n";
     debug.nospace() << "    Backup discovery cache: " << serverMask.backupDiscoveryCache << "\n";
-    debug.nospace() << "    Network manager: " << serverMask.networkManager << "\n";
+    debug.nospace() << "    Network manager: " << serverMask.networkManager;
     return debug;
 }
 
@@ -249,7 +249,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::DescriptorCapabilitie
 {
     debug.nospace() << "DescriptorCapabilities(" << ZigbeeUtils::convertByteToHexString(descriptorCapabilities.descriptorCapabilitiesFlag) << ")" << "\n";
     debug.nospace() << "    Extended active endpoint list available: " << descriptorCapabilities.extendedActiveEndpointListAvailable << "\n";
-    debug.nospace() << "    Extended simple descriptor list available: " << descriptorCapabilities.extendedSimpleDescriptorListAvailable << "\n";
+    debug.nospace() << "    Extended simple descriptor list available: " << descriptorCapabilities.extendedSimpleDescriptorListAvailable;
     return debug;
 }
 
@@ -259,6 +259,6 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::PowerDescriptor &powe
     debug.nospace() << "    Power mode: " << powerDescriptor.powerMode << "\n";
     debug.nospace() << "    Available power sources: " << powerDescriptor.availablePowerSources << "\n";
     debug.nospace() << "    Power source: " << powerDescriptor.powerSource << "\n";
-    debug.nospace() << "    Power level: " << powerDescriptor.powerLevel << "\n";
+    debug.nospace() << "    Power level: " << powerDescriptor.powerLevel;
     return debug;
 }

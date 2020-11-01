@@ -37,6 +37,7 @@ ZigbeeNetworkDeconz::ZigbeeNetworkDeconz(const QUuid &networkUuid, QObject *pare
 {
     m_controller = new ZigbeeBridgeControllerDeconz(this);
     connect(m_controller, &ZigbeeBridgeControllerDeconz::availableChanged, this, &ZigbeeNetworkDeconz::onControllerAvailableChanged);
+    connect(m_controller, &ZigbeeBridgeControllerDeconz::firmwareVersionChanged, this, &ZigbeeNetworkDeconz::firmwareVersionChanged);
     connect(m_controller, &ZigbeeBridgeControllerDeconz::apsDataConfirmReceived, this, &ZigbeeNetworkDeconz::onApsDataConfirmReceived);
     connect(m_controller, &ZigbeeBridgeControllerDeconz::apsDataIndicationReceived, this, &ZigbeeNetworkDeconz::onApsDataIndicationReceived);
 
@@ -188,9 +189,9 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
 
                 QByteArray paramData;
                 QDataStream stream(&paramData, QIODevice::WriteOnly);
-                stream << static_cast<quint64>(0);
+                stream << static_cast<quint64>(extendedPanId());
                 stream.setByteOrder(QDataStream::LittleEndian);
-                qCDebug(dcZigbeeNetwork()) << "Configure APS extended PANID" << 0;
+                qCDebug(dcZigbeeNetwork()) << "Configure APS extended PANID" << extendedPanId();
                 ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterApsExtendedPanId, paramData);
                 connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
                     if (reply->statusCode() != Deconz::StatusCodeSuccess) {
@@ -434,9 +435,17 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
 {
     qCDebug(dcZigbeeNetwork()) << "Start zigbee network internally";
 
+    if (!m_database) {
+        QString networkDatabaseFileName = settingsDirectory().absolutePath() + QDir::separator() + QString("zigbee-network-%1.db").arg(networkUuid().toString().remove('{').remove('}'));
+        qCDebug(dcZigbeeNetwork()) << "Using ZigBee network database" << QFileInfo(networkDatabaseFileName).fileName();
+        m_database = new ZigbeeNetworkDatabase(this, networkDatabaseFileName, this);
+    }
+
     m_createNewNetwork = false;
     // Check if we have to create a pan ID and select the channel
     if (panId() == 0 || !m_coordinatorNode) {
+        qCDebug(dcZigbeeNetwork()) << "Generate new extended PAN ID...";
+        setExtendedPanId(ZigbeeUtils::generateRandomPanId());
         m_createNewNetwork = true;
     }
 

@@ -224,13 +224,13 @@ void ZigbeeUartAdapterMonitor::addAdapterInternally(const QString &systemLocatio
 
         // Check if we recognize this adapter from USB information
         if (serialPortInfo.manufacturer().toLower().contains("dresden elektronik")) {
-            adapter.setBackendSuggestionAvailable(true);
-            adapter.setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendTypeDeconz);
-            adapter.setSuggestedBaudRate(38400);
+            adapter.setHardwareRecognized(true);
+            adapter.setBackendType(Zigbee::ZigbeeBackendTypeDeconz);
+            adapter.setBaudRate(38400);
         } else if (serialPortInfo.manufacturer().toLower().contains("nxp")) {
-            adapter.setBackendSuggestionAvailable(true);
-            adapter.setSuggestedZigbeeBackendType(Zigbee::ZigbeeBackendTypeNxp);
-            adapter.setSuggestedBaudRate(115200);
+            adapter.setHardwareRecognized(true);
+            adapter.setBackendType(Zigbee::ZigbeeBackendTypeNxp);
+            adapter.setBaudRate(115200);
         }
 
         qCDebug(dcZigbeeAdapterMonitor()) << "Added" << adapter;

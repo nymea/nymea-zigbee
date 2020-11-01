@@ -55,6 +55,7 @@ public:
 private:
     ZigbeeNetwork *m_network = nullptr;
     QString m_databaseName;
+    QString m_connectionName;
     QSqlDatabase m_db;
 
     bool initDatabase();

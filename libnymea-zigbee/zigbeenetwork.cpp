@@ -112,6 +112,15 @@ void ZigbeeNetwork::setMacAddress(const ZigbeeAddress &zigbeeAddress)
     emit macAddressChanged(m_macAddress);
 }
 
+QString ZigbeeNetwork::firmwareVersion() const
+{
+    if (bridgeController()) {
+        return bridgeController()->firmwareVersion();
+    } else {
+        return QString();
+    }
+}
+
 quint16 ZigbeeNetwork::panId()
 {
     return m_panId;
@@ -272,6 +281,34 @@ void ZigbeeNetwork::removeZigbeeNode(const ZigbeeAddress &address)
 
 }
 
+void ZigbeeNetwork::printNetwork()
+{
+    qCDebug(dcZigbeeNetwork()) << this;
+    foreach (ZigbeeNode *node, nodes()) {
+        qCDebug(dcZigbeeNetwork()) << " ---> " << node;
+        qCDebug(dcZigbeeNetwork()) << "  " << node->nodeDescriptor();
+        qCDebug(dcZigbeeNetwork()) << "  " << node->powerDescriptor();
+        qCDebug(dcZigbeeNetwork()) << "  Endpoints: " << node->endpoints().count();
+        foreach (ZigbeeNodeEndpoint *endpoint, node->endpoints()) {
+            qCDebug(dcZigbeeNetwork()) << "    - " << endpoint;
+            qCDebug(dcZigbeeNetwork()) << "      Input clusters:";
+            foreach (ZigbeeCluster *cluster, endpoint->inputClusters()) {
+                qCDebug(dcZigbeeNetwork()) << "      - " << cluster;
+                foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
+                    qCDebug(dcZigbeeNetwork()) << "        - " << attribute;
+                }
+            }
+            qCDebug(dcZigbeeNetwork()) << "      Output clusters:";
+            foreach (ZigbeeCluster *cluster, endpoint->outputClusters()) {
+                qCDebug(dcZigbeeNetwork()) << "      - " << cluster;
+                foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
+                    qCDebug(dcZigbeeNetwork()) << "        - " << attribute;
+                }
+            }
+        }
+    }
+}
+
 void ZigbeeNetwork::addNodeInternally(ZigbeeNode *node)
 {
     if (m_nodes.contains(node)) {
@@ -370,6 +407,8 @@ void ZigbeeNetwork::clearSettings()
         if (!m_database->wipeDatabase()) {
             qCWarning(dcZigbeeNetwork()) << "Failed to wipe the network database" << m_database->databaseName();
         }
+        m_database->deleteLater();
+        m_database = nullptr;
     }
 
     // Reset network configurations
@@ -444,7 +483,7 @@ void ZigbeeNetwork::setState(ZigbeeNetwork::State state)
     m_state = state;
 
     if (state == StateRunning) {
-        qCDebug(dcZigbeeNetwork()) << this;
+        printNetwork();
     }
     emit stateChanged(m_state);
 }
@@ -543,32 +582,11 @@ void ZigbeeNetwork::onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const 
 
 QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
 {
-    debug.nospace().noquote() << "ZigbeeNetwork (" << ZigbeeUtils::convertUint16ToHexString(network->panId())
-                              << ", Channel " << network->channel()
-                              << ")" << "\n";
-    foreach (ZigbeeNode *node, network->nodes()) {
-        debug.nospace().noquote() << " ---> " << node << "\n";
-        debug.nospace().noquote() << "  " << node->nodeDescriptor();
-        debug.nospace().noquote() << "  " << node->powerDescriptor();
-        debug.nospace().noquote() << "  Endpoints: " << node->endpoints().count() << "\n";
-        foreach (ZigbeeNodeEndpoint *endpoint, node->endpoints()) {
-            debug.nospace().noquote() << "    - " << endpoint << "\n";
-            debug.nospace().noquote() << "      Input clusters:" << "\n";
-            foreach (ZigbeeCluster *cluster, endpoint->inputClusters()) {
-                debug.nospace().noquote() << "      - " << cluster << "\n";
-                foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
-                    debug.nospace().noquote() << "        - " << attribute << "\n";
-                }
-            }
-            debug.nospace().noquote() << "      Output clusters:" << "\n";
-            foreach (ZigbeeCluster *cluster, endpoint->outputClusters()) {
-                debug.nospace().noquote() << "      - " << cluster << "\n";
-                foreach (const ZigbeeClusterAttribute &attribute, cluster->attributes()) {
-                    debug.nospace().noquote() << "        - " << attribute << "\n";
-                }
-            }
-        }
-    }
-
+    debug.nospace().noquote() << "ZigbeeNetwork(" << network->macAddress() << ", "
+                              << network->networkUuid().toString() << ", "
+                              << network->backendType() << ", "
+                              << "Channel: " << network->channel() << ", "
+                              << network->state()
+                              << ")";
     return debug.space();
 }
