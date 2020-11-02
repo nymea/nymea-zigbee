@@ -46,10 +46,6 @@ ZigbeeNetworkDeconz::ZigbeeNetworkDeconz(const QUuid &networkUuid, QObject *pare
     m_pollNetworkStateTimer->setSingleShot(false);
     connect(m_pollNetworkStateTimer, &QTimer::timeout, this, &ZigbeeNetworkDeconz::onPollNetworkStateTimeout);
 
-    m_permitJoinRefreshTimer = new QTimer(this);
-    m_permitJoinRefreshTimer->setInterval(250 * 1000);
-    m_permitJoinRefreshTimer->setSingleShot(false);
-    connect(m_permitJoinRefreshTimer, &QTimer::timeout, this, &ZigbeeNetworkDeconz::onPermitJoinRefreshTimout);
 }
 
 ZigbeeBridgeController *ZigbeeNetworkDeconz::bridgeController() const
@@ -95,7 +91,60 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::sendRequest(const ZigbeeNetworkRequest 
     return reply;
 }
 
-ZigbeeNetworkReply *ZigbeeNetworkDeconz::setPermitJoin(quint16 shortAddress, quint8 duration)
+void ZigbeeNetworkDeconz::setPermitJoining(quint8 duration, quint16 address)
+{
+    if (duration > 0) {
+        qCDebug(dcZigbeeNetwork()) << "Set permit join for" << duration << "s on" << ZigbeeUtils::convertUint16ToHexString(address);
+    } else {
+        qCDebug(dcZigbeeNetwork()) << "Disable permit join on"<< ZigbeeUtils::convertUint16ToHexString(address);
+    }
+
+    // Note: will be reseted if permit join will not work
+    setPermitJoiningEnabled(duration > 0);
+    setPermitJoiningDuration(duration);
+    setPermitJoiningRemaining(duration);
+
+    // Note: since compliance version >= 21 the value 255 is not any more endless.
+    // We need to refresh the command on timeout repeatedly if the duration is longer than 254 s
+
+    ZigbeeNetworkReply *reply = requestSetPermitJoin(address, duration);
+    connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply, duration, address](){
+        if (reply->zigbeeApsStatus() != Zigbee::ZigbeeApsStatusSuccess) {
+            qCWarning(dcZigbeeNetwork()) << "Could not set permit join to" << duration << ZigbeeUtils::convertUint16ToHexString(address) << reply->zigbeeApsStatus();
+            setPermitJoiningEnabled(false);
+            setPermitJoiningDuration(duration);
+            return;
+        }
+        qCDebug(dcZigbeeNetwork()) << "Permit join request finished successfully";
+
+        setPermitJoiningEnabled(duration > 0);
+        setPermitJoiningDuration(duration);
+        setPermitJoiningRemaining(duration);
+        if (duration > 0) {
+            m_permitJoinTimer->start();
+        } else {
+            m_permitJoinTimer->stop();
+        }
+
+        // Set the permit joining timeout network configuration parameter
+        QByteArray parameterData;
+        QDataStream stream(&parameterData, QIODevice::WriteOnly);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        stream << duration;
+
+        ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterPermitJoin, parameterData);
+        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [reply](){
+            if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+                qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
+                return;
+            }
+
+            qCDebug(dcZigbeeNetwork()) << "Set permit join configuration request finished" << reply->statusCode();
+        });
+    });
+}
+
+ZigbeeNetworkReply *ZigbeeNetworkDeconz::requestSetPermitJoin(quint16 shortAddress, quint8 duration)
 {
     // Get the power descriptor
     ZigbeeNetworkRequest request;
@@ -305,7 +354,7 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
             m_database->saveNode(m_coordinatorNode);
             m_initializing = false;
             setState(StateRunning);
-            setPermitJoiningInternal(false);
+            setPermitJoining(0);
             return;
         }
 
@@ -318,7 +367,7 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
                 qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
                 m_initializing = false;
                 setState(StateRunning);
-                setPermitJoiningInternal(false);
+                setPermitJoining(0);
                 return;
             }
         });
@@ -380,66 +429,9 @@ void ZigbeeNetworkDeconz::handleZigbeeClusterLibraryIndication(const Zigbee::Aps
     handleNodeIndication(node, indication);
 }
 
-void ZigbeeNetworkDeconz::setPermitJoiningInternal(bool permitJoining)
-{
-    quint8 duration = 0;
-    if (permitJoining == true) {
-        duration = 254;
-    }
-
-    // Note: since compliance version >= 21 the value 255 is not any more Qt::endless.
-    // we need to refresh the command on timeout
-
-    ZigbeeNetworkReply *reply = setPermitJoin(Zigbee::BroadcastAddressAllRouters, duration);
-    connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply, permitJoining, duration](){
-        if (reply->zigbeeApsStatus() != Zigbee::ZigbeeApsStatusSuccess) {
-            qCDebug(dcZigbeeNetwork()) << "Could not set permit join to" << duration;
-            if (m_permitJoining != false) {
-                m_permitJoining = false;
-                emit permitJoiningChanged(m_permitJoining);
-            }
-            return;
-        }
-        qCDebug(dcZigbeeNetwork()) << "Permit join request finished successfully";
-        if (permitJoining) {
-            m_permitJoinRefreshTimer->start();
-        } else {
-            m_permitJoinRefreshTimer->stop();
-        }
-
-        if (m_permitJoining != permitJoining) {
-            m_permitJoining = permitJoining;
-            emit permitJoiningChanged(m_permitJoining);
-        }
-
-        // Set the permit joining timeout network configuration parameter
-        QByteArray parameterData;
-        QDataStream stream(&parameterData, QIODevice::WriteOnly);
-        stream.setByteOrder(QDataStream::LittleEndian);
-        stream << duration;
-
-        ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterPermitJoin, parameterData);
-        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [reply](){
-            if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
-                // FIXME: set an appropriate error
-                return;
-            }
-
-            qCDebug(dcZigbeeNetwork()) << "Set permit join configuration request finished" << reply->statusCode();
-        });
-    });
-}
-
 void ZigbeeNetworkDeconz::startNetworkInternally()
 {
     qCDebug(dcZigbeeNetwork()) << "Start zigbee network internally";
-
-    if (!m_database) {
-        QString networkDatabaseFileName = settingsDirectory().absolutePath() + QDir::separator() + QString("zigbee-network-%1.db").arg(networkUuid().toString().remove('{').remove('}'));
-        qCDebug(dcZigbeeNetwork()) << "Using ZigBee network database" << QFileInfo(networkDatabaseFileName).fileName();
-        m_database = new ZigbeeNetworkDatabase(this, networkDatabaseFileName, this);
-    }
 
     m_createNewNetwork = false;
     // Check if we have to create a pan ID and select the channel
@@ -525,7 +517,7 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
                     if (m_controller->networkState() == Deconz::NetworkStateConnected) {
                         qCDebug(dcZigbeeNetwork()) << "The network is already running.";
                         m_initializing = false;
-                        setPermitJoining(false);
+                        setPermitJoiningEnabled(false);
                         // Set the permit joining timeout network configuration parameter
                         QByteArray parameterData;
                         QDataStream stream(&parameterData, QIODevice::WriteOnly);
@@ -563,18 +555,11 @@ void ZigbeeNetworkDeconz::onControllerAvailableChanged(bool available)
         qCWarning(dcZigbeeNetwork()) << "Hardware controller is not available any more.";
         setError(ErrorHardwareUnavailable);
         m_initializing = false;
-        if (m_permitJoining != false) {
-            m_permitJoining = false;
-            emit permitJoiningChanged(m_permitJoining);
-        }
+        setPermitJoiningEnabled(false);
         setState(StateOffline);
     } else {
         m_error = ErrorNoError;
-        if (m_permitJoining != false) {
-            m_permitJoining = false;
-            emit permitJoiningChanged(m_permitJoining);
-        }
-        emit permitJoiningChanged(m_permitJoining);
+        setPermitJoiningEnabled(false);
         setState(StateStarting);
         qCDebug(dcZigbeeNetwork()) << "Hardware controller is now available.";
         startNetworkInternally();
@@ -651,11 +636,6 @@ void ZigbeeNetworkDeconz::onPollNetworkStateTimeout()
     }
 }
 
-void ZigbeeNetworkDeconz::onPermitJoinRefreshTimout()
-{
-    setPermitJoiningInternal(true);
-}
-
 void ZigbeeNetworkDeconz::onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm)
 {
     ZigbeeNetworkReply *reply = m_pendingReplies.value(confirm.requestId);
@@ -705,22 +685,17 @@ void ZigbeeNetworkDeconz::startNetwork()
     loadNetwork();
 
     if (!m_controller->enable(serialPortName(), serialBaudrate())) {
-        m_permitJoining = false;
-        emit permitJoiningChanged(m_permitJoining);
+        setPermitJoiningEnabled(false);
         setState(StateOffline);
         setCreateNetworkState(CreateNetworkStateIdle);
         setError(ErrorHardwareUnavailable);
         return;
     }
 
-    if (m_permitJoining != false) {
-        m_permitJoining = false;
-        emit permitJoiningChanged(m_permitJoining);
-    }
+    setPermitJoiningEnabled(false);
+    m_initializing = true;
 
     // Note: wait for the controller available signal and start the initialization there
-
-    m_initializing = true;
 }
 
 void ZigbeeNetworkDeconz::stopNetwork()

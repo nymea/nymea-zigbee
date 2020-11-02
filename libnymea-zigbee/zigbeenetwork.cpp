@@ -38,7 +38,18 @@ ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
     QObject(parent),
     m_networkUuid(networkUuid)
 {
-
+    m_permitJoinTimer = new QTimer(this);
+    m_permitJoinTimer->setInterval(1000);
+    m_permitJoinTimer->setSingleShot(false);
+    connect(m_permitJoinTimer, &QTimer::timeout, this, [this](){
+        m_permitJoiningRemaining--;
+        if (m_permitJoiningRemaining <= 0) {
+            m_permitJoinTimer->stop();
+            setPermitJoining(0);
+        } else {
+            setPermitJoiningRemaining(m_permitJoiningRemaining);
+        }
+    });
 }
 
 QUuid ZigbeeNetwork::networkUuid() const
@@ -191,14 +202,51 @@ void ZigbeeNetwork::setSecurityConfiguration(const ZigbeeSecurityConfiguration &
     emit securityConfigurationChanged(m_securityConfiguration);
 }
 
-bool ZigbeeNetwork::permitJoining() const
+bool ZigbeeNetwork::permitJoiningEnabled() const
 {
-    return m_permitJoining;
+    return m_permitJoiningEnabled;
 }
 
-void ZigbeeNetwork::setPermitJoining(bool permitJoining)
+quint8 ZigbeeNetwork::permitJoiningDuration() const
 {
-    setPermitJoiningInternal(permitJoining);
+    return m_permitJoiningDuration;
+}
+
+quint8 ZigbeeNetwork::permitJoiningRemaining() const
+{
+    return m_permitJoiningRemaining;
+}
+
+void ZigbeeNetwork::setPermitJoiningEnabled(bool permitJoiningEnabled)
+{
+    if (m_permitJoiningEnabled == permitJoiningEnabled)
+        return;
+
+    m_permitJoiningEnabled = permitJoiningEnabled;
+    emit permitJoiningEnabledChanged(m_permitJoiningEnabled);
+
+    if (!m_permitJoiningEnabled) {
+        m_permitJoinTimer->stop();
+        setPermitJoiningRemaining(0);
+    }
+}
+
+void ZigbeeNetwork::setPermitJoiningDuration(quint8 duration)
+{
+    if (m_permitJoiningDuration == duration)
+        return;
+
+    m_permitJoiningDuration = duration;
+    emit permitJoinDurationChanged(m_permitJoiningDuration);
+}
+
+void ZigbeeNetwork::setPermitJoiningRemaining(quint8 remaining)
+{
+    if (m_permitJoiningRemaining == remaining)
+        return;
+
+    m_permitJoiningRemaining = remaining;
+    emit permitJoinRemainingChanged(m_permitJoiningRemaining);
 }
 
 quint8 ZigbeeNetwork::generateSequenceNumber()
@@ -407,7 +455,7 @@ void ZigbeeNetwork::clearSettings()
         if (!m_database->wipeDatabase()) {
             qCWarning(dcZigbeeNetwork()) << "Failed to wipe the network database" << m_database->databaseName();
         }
-        m_database->deleteLater();
+        delete m_database;
         m_database = nullptr;
     }
 
@@ -417,6 +465,7 @@ void ZigbeeNetwork::clearSettings()
     setChannel(0);
     setSecurityConfiguration(ZigbeeSecurityConfiguration());
     setState(StateUninitialized);
+    setPermitJoiningEnabled(false);
     m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 }
 
@@ -582,11 +631,11 @@ void ZigbeeNetwork::onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const 
 
 QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
 {
-    debug.nospace().noquote() << "ZigbeeNetwork(" << network->macAddress() << ", "
+    debug.nospace().noquote() << "ZigbeeNetwork(" << network->macAddress().toString() << ", "
                               << network->networkUuid().toString() << ", "
                               << network->backendType() << ", "
                               << "Channel: " << network->channel() << ", "
                               << network->state()
-                              << ")";
-    return debug.space();
+                              << ") ";
+    return debug;
 }

@@ -107,9 +107,10 @@ public:
     ZigbeeSecurityConfiguration securityConfiguration() const;
     void setSecurityConfiguration(const ZigbeeSecurityConfiguration &securityConfiguration);
 
-    bool permitJoining() const;
-    void setPermitJoining(bool permitJoining);
-
+    bool permitJoiningEnabled() const;
+    quint8 permitJoiningDuration() const;
+    quint8 permitJoiningRemaining() const;
+    virtual void setPermitJoining(quint8 duration, quint16 address = Zigbee::BroadcastAddressAllRouters) = 0;
 
     quint8 generateSequenceNumber();
 
@@ -161,13 +162,21 @@ private:
 protected:
     Error m_error = ErrorNoError;
     ZigbeeNode *m_coordinatorNode = nullptr;
-    bool m_permitJoining = false;
     ZigbeeSecurityConfiguration m_securityConfiguration;
     ZigbeeNetworkDatabase *m_database = nullptr;
 
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent);
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, quint8 macCapabilities, QObject *parent);
-    virtual void setPermitJoiningInternal(bool permitJoining) = 0;
+
+    // Permit join
+    QTimer *m_permitJoinTimer = nullptr;
+    bool m_permitJoiningEnabled = false;
+    quint8 m_permitJoiningDuration = 120;
+    quint8 m_permitJoiningRemaining = 0;
+
+    void setPermitJoiningEnabled(bool permitJoiningEnabled);
+    void setPermitJoiningDuration(quint8 duration);
+    void setPermitJoiningRemaining(quint8 remaining);
 
     void loadNetwork();
     void clearSettings();
@@ -208,7 +217,10 @@ signals:
     void nodeAdded(ZigbeeNode *node);
     void nodeRemoved(ZigbeeNode *node);
 
-    void permitJoiningChanged(bool permitJoining);
+    void permitJoiningEnabledChanged(bool permitJoiningEnabled);
+    void permitJoinDurationChanged(quint8 duration);
+    void permitJoinRemainingChanged(quint8 remaining);
+
     void errorOccured(Error error);
     void stateChanged(State state);
 

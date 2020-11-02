@@ -57,7 +57,7 @@ public:
     // Sending an APSDE-DATA.request, will be finished on APSDE-DATA.confirm
     ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) override;
 
-    ZigbeeNetworkReply *setPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
+    void setPermitJoining(quint8 duration, quint16 address = Zigbee::BroadcastAddressAllRouters) override;
 
 private:
     ZigbeeBridgeControllerDeconz *m_controller = nullptr;
@@ -66,12 +66,12 @@ private:
     bool m_createNewNetwork = false;
     bool m_initializing = false;
 
-    QTimer *m_permitJoinRefreshTimer = nullptr;
-
     QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
 
     QTimer *m_pollNetworkStateTimer = nullptr;
     void setCreateNetworkState(CreateNetworkState state);
+
+    ZigbeeNetworkReply *requestSetPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
 
     // ZDO
     void handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication);
@@ -80,13 +80,11 @@ private:
     void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
 
 protected:
-    void setPermitJoiningInternal(bool permitJoining) override;
     void startNetworkInternally();
 
 private slots:
     void onControllerAvailableChanged(bool available);
     void onPollNetworkStateTimeout();
-    void onPermitJoinRefreshTimout();
 
     void onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
     void onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);

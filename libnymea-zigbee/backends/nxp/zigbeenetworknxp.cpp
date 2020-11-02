@@ -55,13 +55,6 @@ ZigbeeNetworkNxp::ZigbeeNetworkNxp(const QUuid &networkUuid, QObject *parent) :
             setState(StateUpdating);
         }
     });
-
-    m_permitJoinRefreshTimer = new QTimer(this);
-    m_permitJoinRefreshTimer->setInterval(250 * 1000);
-    m_permitJoinRefreshTimer->setSingleShot(false);
-    connect(m_permitJoinRefreshTimer, &QTimer::timeout, this, [this](){
-        setPermitJoiningInternal(true);
-    });
 }
 
 ZigbeeBridgeController *ZigbeeNetworkNxp::bridgeController() const
@@ -118,7 +111,79 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
     return reply;
 }
 
-ZigbeeNetworkReply *ZigbeeNetworkNxp::setPermitJoin(quint16 shortAddress, quint8 duration)
+void ZigbeeNetworkNxp::setPermitJoining(quint8 duration, quint16 address)
+{
+    if (duration > 0) {
+        qCDebug(dcZigbeeNetwork()) << "Set permit join for" << duration << "s on" << ZigbeeUtils::convertUint16ToHexString(address);
+    } else {
+        qCDebug(dcZigbeeNetwork()) << "Disable permit join on"<< ZigbeeUtils::convertUint16ToHexString(address);
+    }
+
+    // Note: will be reseted if permit join will not work
+    setPermitJoiningEnabled(duration > 0);
+    setPermitJoiningDuration(duration);
+    setPermitJoiningRemaining(duration);
+
+    if (address == 0x0000) {
+        // Only the coordinator is allowed to join the network
+        qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator node only to" << duration << "[s]";
+        ZigbeeInterfaceNxpReply *reply = m_controller->requestSetPermitJoinCoordinator(duration);
+        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply, duration](){
+            qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator finished" << reply->status();
+            if (reply->status() != Nxp::StatusSuccess) {
+                qCWarning(dcZigbeeNetwork()) << "Failed to set permit join status in coordinator";
+                setPermitJoiningEnabled(false);
+                setPermitJoiningDuration(duration);
+            } else {
+                setPermitJoiningEnabled(duration > 0);
+                setPermitJoiningDuration(duration);
+                setPermitJoiningRemaining(duration);
+                if (duration > 0) {
+                    m_permitJoinTimer->start();
+                }
+            }
+        });
+
+        return;
+    }
+
+    // Note: since compliance version >= 21 the value 255 is not any more endless.
+    // We need to refresh the command on timeout if the duration is longer
+
+    ZigbeeNetworkReply *reply = requestSetPermitJoin(address, duration);
+    connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply, duration, address](){
+        if (reply->zigbeeApsStatus() != Zigbee::ZigbeeApsStatusSuccess) {
+            qCWarning(dcZigbeeNetwork()) << "Could not set permit join to" << duration << ZigbeeUtils::convertUint16ToHexString(address) << reply->zigbeeApsStatus();
+            setPermitJoiningEnabled(false);
+            setPermitJoiningDuration(duration);
+            m_permitJoinTimer->stop();
+            return;
+        }
+
+        qCDebug(dcZigbeeNetwork()) << "Permit join request finished successfully";
+        setPermitJoiningEnabled(duration > 0);
+        setPermitJoiningDuration(duration);
+        setPermitJoiningRemaining(duration);
+        if (duration > 0) {
+            m_permitJoinTimer->start();
+        } else {
+            m_permitJoinTimer->stop();
+        }
+
+        if (address == Zigbee::BroadcastAddressAllRouters || address == 0x0000) {
+            qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator node to" << duration << "[s]";
+            ZigbeeInterfaceNxpReply *reply = m_controller->requestSetPermitJoinCoordinator(duration);
+            connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
+                qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator finished" << reply->status();
+                if (reply->status() != Nxp::StatusSuccess) {
+                    qCWarning(dcZigbeeNetwork()) << "Failed to set permit join status in coordinator";
+                }
+            });
+        }
+    });
+}
+
+ZigbeeNetworkReply *ZigbeeNetworkNxp::requestSetPermitJoin(quint16 shortAddress, quint8 duration)
 {
     // Get the power descriptor
     ZigbeeNetworkRequest request;
@@ -325,7 +390,7 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
 
                     qCDebug(dcZigbeeNetwork()) << "We already have the coordinator node. Network starting done.";
                     m_database->saveNode(m_coordinatorNode);
-                    setPermitJoiningInternal(false);
+                    setPermitJoining(0);
                     setState(StateRunning);
                     return;
                 }
@@ -338,7 +403,7 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
                     if (state == ZigbeeNode::StateInitialized) {
                         qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
                         setState(StateRunning);
-                        setPermitJoiningInternal(false);
+                        setPermitJoining(0);
                         return;
                     }
                 });
@@ -500,62 +565,11 @@ void ZigbeeNetworkNxp::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress iee
     node->startInitialization();
 }
 
-void ZigbeeNetworkNxp::setPermitJoiningInternal(bool permitJoining)
-{
-    qCDebug(dcZigbeeNetwork()) << "Set permit join internal" << permitJoining;
-
-    quint8 duration = 0;
-    if (permitJoining) {
-        duration = 255;
-    }
-
-    // Note: since compliance version >= 21 the value 255 is not any more Qt::endless.
-    // we need to refresh the command on timeout
-
-
-    ZigbeeNetworkReply *reply = setPermitJoin(Zigbee::BroadcastAddressAllRouters, duration);
-    connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply, permitJoining, duration](){
-        if (reply->zigbeeApsStatus() != Zigbee::ZigbeeApsStatusSuccess) {
-            qCDebug(dcZigbeeNetwork()) << "Could not set permit join to" << duration;
-            if (m_permitJoining != false) {
-                m_permitJoining = false;
-                emit permitJoiningChanged(m_permitJoining);
-            }
-            return;
-        }
-
-        qCDebug(dcZigbeeNetwork()) << "Permit join request finished successfully";
-        if (permitJoining) {
-            m_permitJoinRefreshTimer->start();
-        } else {
-            m_permitJoinRefreshTimer->stop();
-        }
-
-        if (m_permitJoining != permitJoining) {
-            m_permitJoining = permitJoining;
-            emit permitJoiningChanged(m_permitJoining);
-        }
-
-        qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator node to" << duration << "[s]";
-        ZigbeeInterfaceNxpReply *reply = m_controller->requestSetPermitJoinCoordinator(duration);
-        connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [reply](){
-            qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator finished" << reply->status();
-            if (reply->status() != Nxp::StatusSuccess) {
-                qCWarning(dcZigbeeNetwork()) << "Failed to set permit join status in coordinator";
-            }
-
-        });
-    });
-}
-
 void ZigbeeNetworkNxp::startNetwork()
 {
     loadNetwork();
 
-    if (m_permitJoining != false) {
-        m_permitJoining = false;
-        emit permitJoiningChanged(m_permitJoining);
-    }
+    setPermitJoiningEnabled(false);
 
     if (!m_controller->enable(serialPortName(), serialBaudrate())) {
         setState(StateOffline);

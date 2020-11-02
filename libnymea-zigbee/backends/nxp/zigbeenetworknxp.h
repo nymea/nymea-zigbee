@@ -45,15 +45,14 @@ public:
     ZigbeeBridgeController *bridgeController() const override;
     Zigbee::ZigbeeBackendType backendType() const override;
     ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) override;
-    ZigbeeNetworkReply *setPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
+
+    void setPermitJoining(quint8 duration, quint16 address = Zigbee::BroadcastAddressAllRouters) override;
 
 private:
     ZigbeeBridgeControllerNxp *m_controller = nullptr;
     bool m_networkRunning = false;
     QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
     int m_reconnectCounter = 0;
-
-    QTimer *m_permitJoinRefreshTimer = nullptr;
 
     bool processVersionReply(ZigbeeInterfaceNxpReply *reply);
 
@@ -62,6 +61,8 @@ private:
 
     // ZCL
     void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
+
+    ZigbeeNetworkReply *requestSetPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
 
 private slots:
     void onControllerAvailableChanged(bool available);
@@ -73,8 +74,6 @@ private slots:
 
     void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
 
-protected:
-    void setPermitJoiningInternal(bool permitJoining) override;
 
 signals:
 
