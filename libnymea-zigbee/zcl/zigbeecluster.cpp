@@ -84,7 +84,7 @@ bool ZigbeeCluster::hasAttribute(quint16 attributeId) const
     return m_attributes.keys().contains(attributeId);
 }
 
-ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 attributeId)
+ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 attributeId) const
 {
     return m_attributes.value(attributeId);
 }

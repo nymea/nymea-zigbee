@@ -56,6 +56,8 @@ public:
 
     explicit ZigbeeClusterTemperatureMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    double temperature() const;
+
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 

@@ -87,7 +87,7 @@ public:
 
     QList<ZigbeeClusterAttribute> attributes() const;
     bool hasAttribute(quint16 attributeId) const;
-    ZigbeeClusterAttribute attribute(quint16 attributeId);
+    ZigbeeClusterAttribute attribute(quint16 attributeId) const;
 
     // ZCL global commands
     ZigbeeClusterReply *readAttributes(QList<quint16> attributes);

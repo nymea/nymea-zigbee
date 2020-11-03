@@ -36,6 +36,12 @@ ZigbeeClusterOccupancySensing::ZigbeeClusterOccupancySensing(ZigbeeNetwork *netw
 
 }
 
+bool ZigbeeClusterOccupancySensing::occupancy() const
+{
+    ZigbeeClusterAttribute occupancyAttribute = attribute(ZigbeeClusterOccupancySensing::AttributeOccupancy);
+    return occupancyAttribute.dataType().toBool();
+}
+
 void ZigbeeClusterOccupancySensing::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();

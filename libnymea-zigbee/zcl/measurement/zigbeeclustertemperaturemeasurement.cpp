@@ -36,6 +36,12 @@ ZigbeeClusterTemperatureMeasurement::ZigbeeClusterTemperatureMeasurement(ZigbeeN
 
 }
 
+double ZigbeeClusterTemperatureMeasurement::temperature() const
+{
+    ZigbeeClusterAttribute temperatureAttribute = attribute(ZigbeeClusterTemperatureMeasurement::AttributeMeasuredValue);
+    return temperatureAttribute.dataType().toUInt16() / 100.0;
+}
+
 void ZigbeeClusterTemperatureMeasurement::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();

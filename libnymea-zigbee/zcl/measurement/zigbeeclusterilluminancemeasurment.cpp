@@ -36,6 +36,12 @@ ZigbeeClusterIlluminanceMeasurment::ZigbeeClusterIlluminanceMeasurment(ZigbeeNet
 
 }
 
+quint16 ZigbeeClusterIlluminanceMeasurment::illuminance() const
+{
+    ZigbeeClusterAttribute illuminanceAttribute = attribute(ZigbeeClusterIlluminanceMeasurment::AttributeMeasuredValue);
+    return illuminanceAttribute.dataType().toUInt16();
+}
+
 void ZigbeeClusterIlluminanceMeasurment::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();

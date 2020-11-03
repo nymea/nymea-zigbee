@@ -36,6 +36,12 @@ ZigbeeClusterRelativeHumidityMeasurement::ZigbeeClusterRelativeHumidityMeasureme
 
 }
 
+double ZigbeeClusterRelativeHumidityMeasurement::humidity() const
+{
+    ZigbeeClusterAttribute humidityAttribute = attribute(ZigbeeClusterRelativeHumidityMeasurement::AttributeMeasuredValue);
+    return humidityAttribute.dataType().toUInt16() / 100.0;
+}
+
 void ZigbeeClusterRelativeHumidityMeasurement::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();

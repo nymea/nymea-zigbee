@@ -56,6 +56,8 @@ public:
 
     explicit ZigbeeClusterRelativeHumidityMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    double humidity() const;
+
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 

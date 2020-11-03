@@ -76,6 +76,12 @@ ZigbeeClusterReply *ZigbeeClusterOnOff::commandOnWithTimedOff(bool acceptOnlyWhe
     return executeClusterCommand(ZigbeeClusterOnOff::CommandOnWithTimedOff, payload);
 }
 
+bool ZigbeeClusterOnOff::powered() const
+{
+    ZigbeeClusterAttribute onOffAttribute = attribute(ZigbeeClusterOnOff::AttributeOnOff);
+    return onOffAttribute.dataType().toBool();
+}
+
 void ZigbeeClusterOnOff::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
