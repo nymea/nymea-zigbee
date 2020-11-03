@@ -29,6 +29,7 @@
 #include "zigbeenetworkdeconz.h"
 #include "loggingcategory.h"
 #include "zigbeeutils.h"
+#include "zigbeenetworkdatabase.h"
 
 #include <QDataStream>
 

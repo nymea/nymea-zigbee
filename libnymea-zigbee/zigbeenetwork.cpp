@@ -30,6 +30,7 @@
 #include "loggingcategory.h"
 #include "zdo/zigbeedeviceprofile.h"
 #include "zigbeebridgecontroller.h"
+#include "zigbeenetworkdatabase.h"
 
 #include <QDir>
 #include <QFileInfo>

@@ -32,15 +32,13 @@
 #include <QUuid>
 #include <QObject>
 #include <QSettings>
-#include <QSqlDatabase>
 
 #include "zigbeenode.h"
 #include "zigbeechannelmask.h"
-#include "zigbeenodeendpoint.h"
-#include "zigbeenetworkdatabase.h"
 #include "zigbeesecurityconfiguration.h"
 
 class ZigbeeBridgeController;
+class ZigbeeNetworkDatabase;
 
 class ZigbeeNetwork : public QObject
 {
