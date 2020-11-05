@@ -182,14 +182,14 @@ bool ZigbeeUartAdapterMonitor::isValid() const
     return m_isValid;
 }
 
-void ZigbeeUartAdapterMonitor::addAdapterInternally(const QString &systemLocation)
+void ZigbeeUartAdapterMonitor::addAdapterInternally(const QString &serialPort)
 {
     foreach (const QSerialPortInfo &serialPortInfo, QSerialPortInfo::availablePorts()) {
-        if (serialPortInfo.systemLocation() != systemLocation)
+        if (serialPortInfo.systemLocation() != serialPort)
             continue;
 
-        if (m_availableAdapters.keys().contains(systemLocation)) {
-            qCWarning(dcZigbeeAdapterMonitor()) << "The adapter" << systemLocation << "has already been added to the monitor.";
+        if (m_availableAdapters.keys().contains(serialPort)) {
+            qCWarning(dcZigbeeAdapterMonitor()) << "The adapter" << serialPort << "has already been added to the monitor.";
             continue;
         }
 
@@ -215,12 +215,14 @@ void ZigbeeUartAdapterMonitor::addAdapterInternally(const QString &systemLocatio
             adapter.setName(serialPortInfo.portName());
         }
 
+
         if (serialPortInfo.description().isEmpty()) {
             adapter.setDescription("Unknown");
         } else {
             adapter.setDescription(serialPortInfo.description());
         }
-        adapter.setSystemLocation(serialPortInfo.systemLocation());
+        adapter.setSerialPort(serialPortInfo.systemLocation());
+        adapter.setSerialNumber(serialPortInfo.serialNumber());
 
         // Check if we recognize this adapter from USB information
         if (serialPortInfo.manufacturer().toLower().contains("dresden elektronik")) {
@@ -234,7 +236,7 @@ void ZigbeeUartAdapterMonitor::addAdapterInternally(const QString &systemLocatio
         }
 
         qCDebug(dcZigbeeAdapterMonitor()) << "Added" << adapter;
-        m_availableAdapters.insert(adapter.systemLocation(), adapter);
+        m_availableAdapters.insert(adapter.serialPort(), adapter);
         emit adapterAdded(adapter);
     }
 

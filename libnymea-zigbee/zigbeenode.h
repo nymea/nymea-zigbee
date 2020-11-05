@@ -57,6 +57,8 @@ public:
     State state() const;
     bool connected() const;
 
+    QUuid networkUuid() const;
+
     ZigbeeDeviceObject *deviceObject() const;
 
     quint16 shortAddress() const;

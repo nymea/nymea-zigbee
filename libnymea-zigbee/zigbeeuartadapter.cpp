@@ -52,14 +52,24 @@ void ZigbeeUartAdapter::setDescription(const QString &description)
     m_description = description;
 }
 
-QString ZigbeeUartAdapter::systemLocation() const
+QString ZigbeeUartAdapter::serialPort() const
 {
-    return m_systemLocation;
+    return m_serialPort;
 }
 
-void ZigbeeUartAdapter::setSystemLocation(const QString &systemLocation)
+void ZigbeeUartAdapter::setSerialPort(const QString &serialPort)
 {
-    m_systemLocation = systemLocation;
+    m_serialPort = serialPort;
+}
+
+QString ZigbeeUartAdapter::serialNumber() const
+{
+    return m_serialNumber;
+}
+
+void ZigbeeUartAdapter::setSerialNumber(const QString &serialNumber)
+{
+    m_serialNumber = serialNumber;
 }
 
 bool ZigbeeUartAdapter::hardwareRecognized() const
@@ -95,7 +105,10 @@ void ZigbeeUartAdapter::setBaudRate(qint32 baudRate)
 QDebug operator<<(QDebug debug, const ZigbeeUartAdapter &adapter)
 {
     debug.nospace() << "ZigbeeUartAdapter(" << adapter.name() << " - " << adapter.description();
-    debug.nospace() << ", " << adapter.systemLocation();
+    debug.nospace() << ", " << adapter.serialPort();
+    if (!adapter.serialNumber().isEmpty()) {
+        debug.nospace() << ", " << adapter.serialNumber();
+    }
     if (adapter.hardwareRecognized()) {
         debug.nospace() << "Suggested backend: " << adapter.zigbeeBackend();
         debug.nospace() << ", " << adapter.baudRate();

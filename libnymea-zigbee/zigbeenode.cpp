@@ -51,6 +51,11 @@ bool ZigbeeNode::connected() const
     return m_connected;
 }
 
+QUuid ZigbeeNode::networkUuid() const
+{
+    return m_network->networkUuid();
+}
+
 ZigbeeDeviceObject *ZigbeeNode::deviceObject() const
 {
     return m_deviceObject;

@@ -44,8 +44,11 @@ public:
     QString description() const;
     void setDescription(const QString &description);
 
-    QString systemLocation() const;
-    void setSystemLocation(const QString &systemLocation);
+    QString serialPort() const;
+    void setSerialPort(const QString &serialPort);
+
+    QString serialNumber() const;
+    void setSerialNumber(const QString &serialNumber);
 
     bool hardwareRecognized() const;
     void setHardwareRecognized(bool hardwareRecognized);
@@ -59,7 +62,8 @@ public:
 private:
     QString m_name;
     QString m_description;
-    QString m_systemLocation;
+    QString m_serialPort;
+    QString m_serialNumber;
 
     bool m_hardwareRecognized = false;
     Zigbee::ZigbeeBackendType m_zigbeeBackend = Zigbee::ZigbeeBackendTypeDeconz;

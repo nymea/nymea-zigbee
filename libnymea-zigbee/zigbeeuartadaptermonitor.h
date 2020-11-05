@@ -53,7 +53,7 @@ private:
 
     QHash<QString, ZigbeeUartAdapter> m_availableAdapters;
 
-    void addAdapterInternally(const QString &systemLocation);
+    void addAdapterInternally(const QString &serialPort);
 
 signals:
     void adapterAdded(const ZigbeeUartAdapter &adapter);
