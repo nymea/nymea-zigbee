@@ -75,12 +75,21 @@ void ZigbeeClusterIdentify::setAttribute(const ZigbeeClusterAttribute &attribute
 
 void ZigbeeClusterIdentify::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
-    qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
-
-    // TODO: implement identify query response
+    Command command = static_cast<Command>(frame.header.command);
+    qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame << command;
 
     // Increase the tsn for continuouse id increasing on both sides
     m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
 
-    qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
+    switch (command) {
+    case CommandIdentifyQuery:
+        // We are not identifying, we can ignore the command according to the specs
+        qCDebug(dcZigbeeCluster()) << "Received identify query command. We ignore this request according to specs, since we are not identifying our selfs visually.";
+        break;
+    default:
+        qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame << command;
+        break;
+    }
+
+
 }

@@ -207,6 +207,11 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
         return new ZigbeeClusterIasZone(m_network, m_node, this, direction, this);
         break;
 
+        // OTA
+    case ZigbeeClusterLibrary::ClusterIdOtaUpgrade:
+        return new ZigbeeClusterOta(m_network, m_node, this, direction, this);
+        break;
+
     default:
         // Return a default cluster since we have no special implementation for this cluster, allowing to use generic clusters operations
         return new ZigbeeCluster(m_network, m_node, this, clusterId, direction, this);
@@ -244,7 +249,7 @@ void ZigbeeNodeEndpoint::handleZigbeeClusterLibraryIndication(const Zigbee::Apsd
         cluster = getOutputCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId));
         if (!cluster) {
             cluster = createCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId), ZigbeeCluster::Client);
-            qCWarning(dcZigbeeEndpoint()) << "Received a ZCL indication for a cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
+            qCDebug(dcZigbeeEndpoint()) << "Received a ZCL indication for a client cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
             addOutputCluster(cluster);
         }
         break;
@@ -253,7 +258,7 @@ void ZigbeeNodeEndpoint::handleZigbeeClusterLibraryIndication(const Zigbee::Apsd
         cluster = getInputCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId));
         if (!cluster) {
             cluster = createCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId), ZigbeeCluster::Server);
-            qCWarning(dcZigbeeEndpoint()) << "Received a ZCL indication for a cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
+            qCDebug(dcZigbeeEndpoint()) << "Received a ZCL indication for a server cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
             addInputCluster(cluster);
         }
         break;

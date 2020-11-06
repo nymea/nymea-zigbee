@@ -250,6 +250,50 @@ ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const Q
     return zclReply;
 }
 
+ZigbeeClusterReply *ZigbeeCluster::sendClusterServerResponse(quint8 command, quint8 transactionSequenceNumber, const QByteArray &payload)
+{
+    ZigbeeNetworkRequest request = createGeneralRequest();
+
+    // Build ZCL frame control
+    ZigbeeClusterLibrary::FrameControl frameControl;
+    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeClusterSpecific;
+    frameControl.manufacturerSpecific = false;
+    frameControl.direction = ZigbeeClusterLibrary::DirectionServerToClient;
+    frameControl.disableDefaultResponse = true;
+
+    // Build ZCL header
+    ZigbeeClusterLibrary::Header header;
+    header.frameControl = frameControl;
+    header.command = command;
+    header.transactionSequenceNumber = transactionSequenceNumber;
+
+    // Build ZCL frame
+    ZigbeeClusterLibrary::Frame frame;
+    frame.header = header;
+    frame.payload = payload;
+
+    request.setTxOptions(Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission));
+    request.setAsdu(ZigbeeClusterLibrary::buildFrame(frame));
+
+    ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
+    qCDebug(dcZigbeeCluster()) << "Send command response" << ZigbeeUtils::convertByteToHexString(command) << "TSN:" << ZigbeeUtils::convertByteToHexString(transactionSequenceNumber) << ZigbeeUtils::convertByteArrayToHexString(payload);
+    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
+    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
+        if (!verifyNetworkError(zclReply, networkReply)) {
+            qCWarning(dcZigbeeClusterLibrary()) << "Failed to send response"
+                                                << m_node << networkReply->error()
+                                                << networkReply->zigbeeApsStatus();
+            finishZclReply(zclReply);
+            return;
+        }
+
+        // Note: since this is a response to a request, we don't expect any additional indications and the reply is finished
+        finishZclReply(zclReply);
+    });
+
+    return zclReply;
+}
+
 ZigbeeNetworkRequest ZigbeeCluster::createGeneralRequest()
 {
     // Build the request
@@ -261,7 +305,7 @@ ZigbeeNetworkRequest ZigbeeCluster::createGeneralRequest()
     request.setClusterId(m_clusterId);
     request.setSourceEndpoint(0x01);
     request.setDestinationEndpoint(m_endpoint->endpointId());
-    request.setRadius(10);
+    request.setRadius(0);
     request.setTxOptions(Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission));
     return request;
 }
@@ -320,8 +364,6 @@ void ZigbeeCluster::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 
 void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const ZigbeeClusterLibrary::Frame &frame)
 {
-    qCDebug(dcZigbeeCluster()) << "Received data indication" << this << frame;
-
     // Check if this indication is for a pending reply
     if (m_pendingReplies.contains(frame.header.transactionSequenceNumber)) {
         ZigbeeClusterReply *reply = m_pendingReplies.value(frame.header.transactionSequenceNumber);

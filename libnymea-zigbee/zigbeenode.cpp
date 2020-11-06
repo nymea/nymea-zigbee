@@ -581,7 +581,7 @@ void ZigbeeNode::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataInd
     // Get the endpoint
     ZigbeeNodeEndpoint *endpoint = getEndpoint(indication.sourceEndpoint);
     if (!endpoint) {
-        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized endpoint. There is no such endpoint on" << this << "Creating the uninitialized endpoint";
+        qCDebug(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized endpoint. There is no such endpoint on" << this << "Creating the uninitialized endpoint";
         // Create the uninitialized endpoint for now and fetch information later
         endpoint = new ZigbeeNodeEndpoint(m_network, this, indication.sourceEndpoint, this);
         endpoint->setProfile(static_cast<Zigbee::ZigbeeProfile>(indication.profileId));

@@ -52,6 +52,8 @@
 
 #include "zcl/security/zigbeeclusteriaszone.h"
 
+#include "zcl/ota/zigbeeclusterota.h"
+
 class ZigbeeNode;
 class ZigbeeNetwork;
 

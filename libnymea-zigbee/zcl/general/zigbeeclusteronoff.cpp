@@ -113,7 +113,7 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
         if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {
             // Read the payload which is
             Command command = static_cast<Command>(frame.header.command);
-            qCDebug(dcZigbeeCluster()) << "Command sent from" << m_node << m_endpoint << this << command;
+            qCDebug(dcZigbeeCluster()) << "Received" << command << "from" << m_node << m_endpoint << this;
             switch (command) {
             case CommandOn:
                 emit commandSent(CommandOn);
