@@ -148,8 +148,8 @@ public:
         ClusterIdPumpConfigurationControl = 0x0200,
         ClusterIdThermostat               = 0x0201,
         ClusterIdFanControll              = 0x0202,
-        ClusterIdDehumiditationControll   = 0x0203,
-        ClusterIdThermostatUserControll   = 0x0204,
+        ClusterIdDehumiditationControl    = 0x0203,
+        ClusterIdThermostatUserControl    = 0x0204,
 
         // Lighting
         ClusterIdColorControl           = 0x0300,
