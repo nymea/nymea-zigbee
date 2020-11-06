@@ -245,10 +245,9 @@ QString ZigbeeUtils::convertUint64ToHexString(const quint64 &value)
 
 QString ZigbeeUtils::clusterIdToString(const ZigbeeClusterLibrary::ClusterId &clusterId)
 {
-    QMetaObject metaObject = ZigbeeClusterLibrary::staticMetaObject;
-    QMetaEnum metaEnum = metaObject.enumerator(metaObject.indexOfEnumerator("ClusterId"));
-    QString enumString = metaEnum.valueToKey(clusterId);
-    QString clusterName = enumString.remove("ZigbeeClusterLibrary::ClusterId(ClusterId").remove(")");
+    QMetaEnum metaEnum = QMetaEnum::fromType<ZigbeeClusterLibrary::ClusterId>();
+    QString enumString = QString(metaEnum.valueToKey(clusterId));
+    QString clusterName = enumString.remove("ClusterId").remove(")");
     if (clusterName.isEmpty())
         clusterName = "Unknown";
 
@@ -257,10 +256,10 @@ QString ZigbeeUtils::clusterIdToString(const ZigbeeClusterLibrary::ClusterId &cl
 
 QString ZigbeeUtils::profileIdToString(const Zigbee::ZigbeeProfile &profileId)
 {
-    QMetaObject metaObject = Zigbee::staticMetaObject;
-    QMetaEnum metaEnum = metaObject.enumerator(metaObject.indexOfEnumerator("ZigbeeProfile"));
-    QString enumString = metaEnum.valueToKey(profileId);
-    return enumString.remove("Zigbee::ZigbeeProfile(ZigbeeProfile").remove(")");
+    QMetaEnum metaEnum = QMetaEnum::fromType<Zigbee::ZigbeeProfile>();
+    QString enumString = QString(metaEnum.valueToKey(profileId));
+    QString profileName = enumString.remove("ZigbeeProfile").remove(")");
+    return profileName;
 }
 
 quint64 ZigbeeUtils::generateRandomPanId()

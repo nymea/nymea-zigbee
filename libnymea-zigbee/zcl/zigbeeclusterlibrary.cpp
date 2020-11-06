@@ -352,10 +352,11 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::ReadAttributeStatusR
 {
     debug.nospace() << "ReadAttributeStatusRecord("
                     << ZigbeeUtils::convertUint16ToHexString(attributeStatusRecord.attributeId) << ", "
-                    << attributeStatusRecord.attributeStatus << ", "
-                    << attributeStatusRecord.dataType
-                    << ")";
-
+                    << attributeStatusRecord.attributeStatus;
+    if (attributeStatusRecord.attributeStatus == ZigbeeClusterLibrary::StatusSuccess) {
+        debug.nospace() << ", " << attributeStatusRecord.dataType;
+    }
+    debug.nospace() << ")";
     return debug.space();
 }
 

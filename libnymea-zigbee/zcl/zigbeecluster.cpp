@@ -34,6 +34,7 @@
 #include "zigbeenetworkrequest.h"
 
 #include <QDataStream>
+#include <QMetaEnum>
 
 ZigbeeCluster::ZigbeeCluster(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, ZigbeeClusterLibrary::ClusterId clusterId, Direction direction, QObject *parent) :
     QObject(parent),
@@ -381,7 +382,11 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
                 QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> attributeStatusRecords = ZigbeeClusterLibrary::parseAttributeStatusRecords(frame.payload);
                 foreach (const ZigbeeClusterLibrary::ReadAttributeStatusRecord &attributeStatusRecord, attributeStatusRecords) {
                     qCDebug(dcZigbeeCluster()) << "Received read attribute status record" << this << attributeStatusRecord;
-                    setAttribute(ZigbeeClusterAttribute(attributeStatusRecord.attributeId, attributeStatusRecord.dataType));
+                    if (attributeStatusRecord.attributeStatus == ZigbeeClusterLibrary::StatusSuccess) {
+                        setAttribute(ZigbeeClusterAttribute(attributeStatusRecord.attributeId, attributeStatusRecord.dataType));
+                    } else {
+                        qCWarning(dcZigbeeCluster()) << "Reading attribute status record returned an error" << attributeStatusRecord;
+                    }
                 }
             }
         }
@@ -420,9 +425,16 @@ QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
 {
     debug.nospace().noquote() << "ZigbeeCluster("
                               << ZigbeeUtils::convertUint16ToHexString(static_cast<quint16>(cluster->clusterId())) << ", "
-                              << cluster->clusterName() << ", "
-                              << cluster->direction()
-                              << ")";
+                              << cluster->clusterName() << ", ";
+    switch (cluster->direction()) {
+    case ZigbeeCluster::Server:
+        debug.nospace().noquote() << "Servers)";
+        break;
+    case ZigbeeCluster::Client:
+        debug.nospace().noquote() << "Client)";
+        break;
+    }
+
     return debug.space();
 }
 
