@@ -99,6 +99,8 @@ void ZigbeeClusterOta::processDataIndication(ZigbeeClusterLibrary::Frame frame)
                 stream.setByteOrder(QDataStream::LittleEndian);
                 stream << static_cast<quint8>(StatuCodeNoImageAvailable);
 
+                // Note: if there would be an image available, the response would be success, followed by manufacturer code, image type, file version of image and file size
+
                 ZigbeeClusterReply *reply = sendClusterServerResponse(CommandQueryNextImageResponse, frame.header.transactionSequenceNumber, payload);
                 connect(reply, &ZigbeeClusterReply::finished, this, [](){
                     qCDebug(dcZigbeeCluster()) << "OTA image request response for image query sent successfully to requested node.";

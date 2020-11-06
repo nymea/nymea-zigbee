@@ -43,6 +43,8 @@
 #include "zcl/general/zigbeeclusterlevelcontrol.h"
 #include "zcl/general/zigbeeclusterpowerconfiguration.h"
 
+#include "zcl/closures/zigbeeclusterdoorlock.h"
+
 #include "zcl/measurement/zigbeeclusteroccupancysensing.h"
 #include "zcl/measurement/zigbeeclusterilluminancemeasurment.h"
 #include "zcl/measurement/zigbeeclustertemperaturemeasurement.h"

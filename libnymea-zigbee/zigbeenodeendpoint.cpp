@@ -30,8 +30,6 @@
 #include "zigbeenode.h"
 #include "loggingcategory.h"
 
-#include "zcl/general/zigbeeclusterbasic.h"
-
 quint8 ZigbeeNodeEndpoint::endpointId() const
 {
     return m_endpointId;
@@ -195,6 +193,11 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
         break;
     case ZigbeeClusterLibrary::ClusterIdOccupancySensing:
         return new ZigbeeClusterOccupancySensing(m_network, m_node, this, direction, this);
+        break;
+
+        // Colsures
+    case ZigbeeClusterLibrary::ClusterIdDoorLock:
+        return new ZigbeeClusterDoorLock(m_network, m_node, this, direction, this);
         break;
 
         // Lighting
