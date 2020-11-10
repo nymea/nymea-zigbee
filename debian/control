@@ -36,14 +36,3 @@ Depends: libnymea-zigbee1 (= ${binary:Version}),
   pkg-config
 Dscription: Qt 5 based library for ZigBee - development files
  Development files for Qt 5 based ZigBee library.
-
-
-Package: libnymea-zigbee1-dbg
-Priority: extra
-Architecture: any
-Section: debug
-Depends: libnymea-zigbee1 (= ${binary:Version}),
-  ${shlibs:Depends},
-  ${misc:Depends}
-Description: Qt 5 based library for ZigBee - debug symbols
- Debug Symbols for Qt 5 based ZigBee library.

@@ -15,9 +15,6 @@ $(PREPROCESS_FILES:.in=): %: %.in
 override_dh_install: $(PREPROCESS_FILES:.in=)
 	dh_install
 
-override_dh_strip:
-	dh_strip --dbg-package=libnymea-zigbee1-dbg
-
 override_dh_auto_clean:
 	dh_auto_clean
 	rm -rf $(PREPROCESS_FILES:.in=)
