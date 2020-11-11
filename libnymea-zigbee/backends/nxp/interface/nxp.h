@@ -57,6 +57,8 @@ public:
         NotificationNetworkStarted = 0x7E,
         NotificationApsDataConfirm = 0x80,
         NotificationApsDataIndication = 0x81,
+        NotificationNodeJoined = 0x90,
+        NotificationNodeLeft = 0x91,
         NotificationDebugMessage = 0xFE
     };
     Q_ENUM(Notification)

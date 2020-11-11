@@ -422,6 +422,11 @@ ZigbeeNode *ZigbeeNetwork::createNode(quint16 shortAddress, const ZigbeeAddress 
 
 void ZigbeeNetwork::loadNetwork()
 {
+    if (m_networkLoaded) {
+        qCDebug(dcZigbeeNetwork()) << "Network already loaded";
+        return;
+    }
+
     qCDebug(dcZigbeeNetwork()) << "Loading network from settings directory" << m_settingsDirectory.absolutePath();
     if (!m_database) {
         QString networkDatabaseFileName = m_settingsDirectory.absolutePath() + QDir::separator() + QString("zigbee-network-%1.db").arg(m_networkUuid.toString().remove('{').remove('}'));
@@ -434,6 +439,8 @@ void ZigbeeNetwork::loadNetwork()
         node->setState(ZigbeeNode::StateInitialized);
         addNodeInternally(node);
     }
+
+    m_networkLoaded = true;
 }
 
 void ZigbeeNetwork::clearSettings()
@@ -462,6 +469,7 @@ void ZigbeeNetwork::clearSettings()
 
     // Reset network configurations
     qCDebug(dcZigbeeNetwork()) << "Clear network properties";
+    m_networkLoaded = false;
     setExtendedPanId(0);
     setChannel(0);
     setSecurityConfiguration(ZigbeeSecurityConfiguration());

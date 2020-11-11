@@ -39,6 +39,8 @@ class ZigbeeNetwork;
 class ZigbeeNodeEndpoint;
 class ZigbeeClusterAttribute;
 
+class QSqlDatabase;
+
 class ZigbeeNetworkDatabase : public QObject
 {
     Q_OBJECT

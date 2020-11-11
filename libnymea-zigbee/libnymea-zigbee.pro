@@ -25,6 +25,7 @@ SOURCES += \
     zcl/lighting/zigbeeclustercolorcontrol.cpp \
     zcl/measurement/zigbeeclusterilluminancemeasurment.cpp \
     zcl/measurement/zigbeeclusteroccupancysensing.cpp \
+    zcl/measurement/zigbeeclusterpressuremeasurement.cpp \
     zcl/measurement/zigbeeclusterrelativehumiditymeasurement.cpp \
     zcl/measurement/zigbeeclustertemperaturemeasurement.cpp \
     zcl/ota/zigbeeclusterota.cpp \
@@ -79,6 +80,7 @@ HEADERS += \
     zcl/lighting/zigbeeclustercolorcontrol.h \
     zcl/measurement/zigbeeclusterilluminancemeasurment.h \
     zcl/measurement/zigbeeclusteroccupancysensing.h \
+    zcl/measurement/zigbeeclusterpressuremeasurement.h \
     zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h \
     zcl/measurement/zigbeeclustertemperaturemeasurement.h \
     zcl/ota/zigbeeclusterota.h \

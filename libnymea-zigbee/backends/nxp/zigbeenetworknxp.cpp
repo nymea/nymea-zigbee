@@ -42,6 +42,7 @@ ZigbeeNetworkNxp::ZigbeeNetworkNxp(const QUuid &networkUuid, QObject *parent) :
     connect(m_controller, &ZigbeeBridgeControllerNxp::controllerStateChanged, this, &ZigbeeNetworkNxp::onControllerStateChanged);
     connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataConfirmReceived, this, &ZigbeeNetworkNxp::onApsDataConfirmReceived);
     connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataIndicationReceived, this, &ZigbeeNetworkNxp::onApsDataIndicationReceived);
+    connect(m_controller, &ZigbeeBridgeControllerNxp::nodeLeft, this, &ZigbeeNetworkNxp::onNodeLeftIndication);
     connect(m_controller, &ZigbeeBridgeControllerNxp::canUpdateChanged, this, [](bool canUpdate){
         if (canUpdate) {
             qCDebug(dcZigbeeNetwork()) << "The controller of this network can be updated.";
@@ -564,6 +565,19 @@ void ZigbeeNetworkNxp::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress iee
     ZigbeeNode *node = createNode(shortAddress, ieeeAddress, macCapabilities, this);
     addUnitializedNode(node);
     node->startInitialization();
+}
+
+void ZigbeeNetworkNxp::onNodeLeftIndication(const ZigbeeAddress &ieeeAddress, bool rejoining)
+{
+    qCDebug(dcZigbeeNetwork()) << "Received node left indication" << ieeeAddress.toString() << "rejoining:" << rejoining;
+    if (!hasNode(ieeeAddress)) {
+        qCWarning(dcZigbeeNetwork()) << "Unknown node left the network" << ieeeAddress.toString();
+        return;
+    }
+
+    ZigbeeNode *node = getZigbeeNode(ieeeAddress);
+    qCDebug(dcZigbeeNetwork()) << node << "left the network";
+    removeNode(node);
 }
 
 void ZigbeeNetworkNxp::startNetwork()

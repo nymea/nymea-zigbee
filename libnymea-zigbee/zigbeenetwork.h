@@ -125,6 +125,8 @@ public:
 
     virtual ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) = 0;
 
+    void loadNetwork();
+
     void removeZigbeeNode(const ZigbeeAddress &address);
 
 private:
@@ -162,6 +164,7 @@ protected:
     ZigbeeNode *m_coordinatorNode = nullptr;
     ZigbeeSecurityConfiguration m_securityConfiguration;
     ZigbeeNetworkDatabase *m_database = nullptr;
+    bool m_networkLoaded = false;
 
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent);
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, quint8 macCapabilities, QObject *parent);
@@ -176,7 +179,6 @@ protected:
     void setPermitJoiningDuration(quint8 duration);
     void setPermitJoiningRemaining(quint8 remaining);
 
-    void loadNetwork();
     void clearSettings();
 
     bool hasUninitializedNode(const ZigbeeAddress &address) const;

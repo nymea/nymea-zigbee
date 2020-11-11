@@ -49,6 +49,7 @@
 #include "zcl/measurement/zigbeeclusterilluminancemeasurment.h"
 #include "zcl/measurement/zigbeeclustertemperaturemeasurement.h"
 #include "zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h"
+#include "zcl/measurement/zigbeeclusterpressuremeasurement.h"
 
 #include "zcl/lighting/zigbeeclustercolorcontrol.h"
 

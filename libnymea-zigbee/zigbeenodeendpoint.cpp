@@ -194,6 +194,9 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
     case ZigbeeClusterLibrary::ClusterIdOccupancySensing:
         return new ZigbeeClusterOccupancySensing(m_network, m_node, this, direction, this);
         break;
+    case ZigbeeClusterLibrary::ClusterIdPressureMeasurement:
+        return new ZigbeeClusterPressureMeasurement(m_network, m_node, this, direction, this);
+        break;
 
         // Colsures
     case ZigbeeClusterLibrary::ClusterIdDoorLock:

@@ -328,7 +328,7 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestEnqueueSendDataGroup(
     payloadStream << profileId;
     payloadStream << clusterId;
     payloadStream << sourceEndpoint;
-    payloadStream << static_cast<quint8>(0x00); // Network and application layer security
+    payloadStream << static_cast<quint8>(SecurityModeUnsecure);
     payloadStream << radius;
     payloadStream << static_cast<quint16>(asdu.size());
     for (int i = 0; i < asdu.size(); i++) {
@@ -364,7 +364,7 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestEnqueueSendDataShortA
     payloadStream << profileId;
     payloadStream << clusterId;
     payloadStream << sourceEndpoint;
-    payloadStream << static_cast<quint8>(0x00); // Network and application layer security
+    payloadStream << static_cast<quint8>(SecurityModeUnsecure);
     payloadStream << radius;
     payloadStream << static_cast<quint16>(asdu.size());
     for (int i = 0; i < asdu.size(); i++) {
@@ -400,7 +400,7 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestEnqueueSendDataIeeeAd
     payloadStream << profileId;
     payloadStream << clusterId;
     payloadStream << sourceEndpoint;
-    payloadStream << static_cast<quint8>(0x00); // Network and application layer security
+    payloadStream << static_cast<quint8>(SecurityModeUnsecure);
     payloadStream << radius;
     payloadStream << static_cast<quint16>(asdu.size());
     for (int i = 0; i < asdu.size(); i++) {
@@ -559,6 +559,18 @@ void ZigbeeBridgeControllerNxp::onInterfacePackageReceived(const QByteArray &pac
             emit apsDataIndicationReceived(indication);
             break;
         }
+        case Nxp::NotificationNodeJoined: {
+
+            break;
+        }
+        case Nxp::NotificationNodeLeft: {
+            QDataStream stream(&payload, QIODevice::ReadOnly);
+            stream.setByteOrder(QDataStream::LittleEndian);
+            quint64 ieeeAddress; quint8 rejoining;
+            stream >> ieeeAddress >> rejoining;
+            emit nodeLeft(ZigbeeAddress(ieeeAddress), static_cast<bool>(rejoining));
+            break;
+        }
         case Nxp::NotificationDebugMessage: {
             if (payload.isEmpty()) {
                 qCWarning(dcZigbeeController()) << "Received empty debug log notification";
@@ -567,9 +579,9 @@ void ZigbeeBridgeControllerNxp::onInterfacePackageReceived(const QByteArray &pac
             Nxp::LogLevel logLevel = static_cast<Nxp::LogLevel>(payload.at(0));
             QString debugMessage = QString::fromLocal8Bit(payload.right(payload.length() - 1));
             if (static_cast<quint8>(logLevel) <= static_cast<quint8>(Nxp::LogLevelWarning)) {
-                qCWarning(dcZigbeeController()) << "***** Controller DEBUG *****" << logLevel << debugMessage;
+                qCWarning(dcZigbeeControllerDebug()) << "====== Controller DEBUG" << logLevel << debugMessage;
             } else {
-                qCDebug(dcZigbeeController()) << "***** Controller DEBUG *****" << logLevel << debugMessage;
+                qCDebug(dcZigbeeControllerDebug()) << "====== Controller DEBUG" << logLevel << debugMessage;
             }
             break;
         }

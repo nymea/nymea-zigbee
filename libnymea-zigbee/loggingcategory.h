@@ -41,6 +41,7 @@ Q_DECLARE_LOGGING_CATEGORY(dcZigbeeController)
 Q_DECLARE_LOGGING_CATEGORY(dcZigbeeDeviceObject)
 Q_DECLARE_LOGGING_CATEGORY(dcZigbeeAdapterMonitor)
 Q_DECLARE_LOGGING_CATEGORY(dcZigbeeClusterLibrary)
+Q_DECLARE_LOGGING_CATEGORY(dcZigbeeControllerDebug)
 Q_DECLARE_LOGGING_CATEGORY(dcZigbeeNetworkDatabase)
 Q_DECLARE_LOGGING_CATEGORY(dcZigbeeInterfaceTraffic)
 

@@ -49,14 +49,17 @@ public:
         // Mains information
         AttributeMainsVoltage = 0x0000,
         AttributeMainsFrequency = 0x0001,
+
         // Mains settings
         AttributeMainsAlarmMask = 0x0010,
         AttributeMainsVoltageMinThreshold = 0x0011,
         AttributeMainsVoltageMaxThreshold = 0x0012,
         AttributeMainsVoltageDwellTripPoint = 0x0013,
+
         // Battery information
         AttributeBatteryVoltage = 0x0020,
         AttributeBatteryPercentageRemaining = 0x0021,
+
         // Battery settings
         AttributeBatteryManufacturer = 0x0030,
         AttributeBatterySize = 0x0031,
@@ -83,7 +86,6 @@ public:
     };
     Q_ENUM(MainsAlarmMask)
     Q_DECLARE_FLAGS(MainsAlarmMaskFlag, MainsAlarmMask)
-
 
     explicit ZigbeeClusterPowerConfiguration(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 

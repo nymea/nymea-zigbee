@@ -25,11 +25,10 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEECLUSTEROCCUPANCYSENSING_H
-#define ZIGBEECLUSTEROCCUPANCYSENSING_H
+#ifndef ZIGBEECLUSTERPRESSUREMEASUREMENT_H
+#define ZIGBEECLUSTERPRESSUREMEASUREMENT_H
 
 #include <QObject>
-
 #include "zcl/zigbeecluster.h"
 #include "zcl/zigbeeclusterreply.h"
 
@@ -38,7 +37,7 @@ class ZigbeeNetwork;
 class ZigbeeNodeEndpoint;
 class ZigbeeNetworkReply;
 
-class ZigbeeClusterOccupancySensing : public ZigbeeCluster
+class ZigbeeClusterPressureMeasurement : public ZigbeeCluster
 {
     Q_OBJECT
 
@@ -47,37 +46,33 @@ class ZigbeeClusterOccupancySensing : public ZigbeeCluster
 
 public:
     enum Attribute {
-        // Occupancy sensor information set
-        AttributeOccupancy = 0x0000,
-        AttributeOccupancySensorType = 0x0001,
+        AttributeMeasuredValue = 0x0000,
+        AttributeMinMeasuredValue = 0x0001,
+        AttributeMaxMeasuredValue = 0x0002,
+        AttributeTolerance = 0x0003,
 
-        // PRI configuration set
-        AttributePirOccupiedToUnoccupiedDelay = 0x0010,
-        AttributePirUnoccupiedToOccupiedDelay = 0x0011,
-        AttributePirUnoccupiedToOccupiedThreshold = 0x0012,
-
-        // Ultrasonic configuration set
-        AttributeUltrasonicOccupiedToUnoccupiedDelay = 0x0020,
-        AttributeUltrasonicUnoccupiedToOccupiedDelay = 0x0021,
-        AttributeUltrasonicUnoccupiedToOccupiedThreshold = 0x0022
+        // Extended pressure measurment information
+        AttributeScaledValue = 0x0010,
+        AttributeMinScaledValue = 0x0011,
+        AttributeMaxScaledValue = 0x0012,
+        AttributeScaledTolerance = 0x0013,
+        AttributeScale = 0x0014
     };
     Q_ENUM(Attribute)
 
-    enum OccupancySensorType {
-        OccupancySensorTypePir = 0x00,
-        OccupancySensorTypeUltrasonic = 0x01,
-        OccupancySensorTypePirAndUltrasonic = 0x02
-    };
-    Q_ENUM(OccupancySensorType)
-
-    explicit ZigbeeClusterOccupancySensing(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
+    explicit ZigbeeClusterPressureMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:
-    void occupancyChanged(bool occupied);
+    // kPa
+    void pressureChanged(double pressure);
+
+    // Pa
+    void pressureScaledChanged(double pressure);
+
 
 };
 
-#endif // ZIGBEECLUSTEROCCUPANCYSENSING_H
+#endif // ZIGBEECLUSTERPRESSUREMEASUREMENT_H

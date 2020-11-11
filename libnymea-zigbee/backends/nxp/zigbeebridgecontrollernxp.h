@@ -61,6 +61,15 @@ public:
     };
     Q_ENUM(ControllerState)
 
+    enum SecurityMode {
+        SecurityModeUnsecure = 0x00,
+        SecurityModeSecure = 0x01,
+        SecurityModeSecureNwk = 0x02,
+        SecurityModeExtendedNonde = 0x10,
+        SecurityModeWildProfile = 0x20
+    };
+    Q_ENUM(SecurityMode)
+
     ControllerState controllerState() const;
     void refreshControllerState();
 
@@ -91,6 +100,7 @@ public:
 signals:
     void controllerStateChanged(ControllerState controllerState);
     void interfaceNotificationReceived(Nxp::Notification notification, const QByteArray &data);
+    void nodeLeft(const ZigbeeAddress &address, bool rejoining);
 
 private:
     ZigbeeInterfaceNxp *m_interface = nullptr;

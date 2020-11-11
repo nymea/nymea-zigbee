@@ -73,7 +73,7 @@ private slots:
     void onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
 
     void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
-
+    void onNodeLeftIndication(const ZigbeeAddress &ieeeAddress, bool rejoining);
 
 signals:
 

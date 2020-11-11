@@ -51,7 +51,7 @@ public:
     bool operator!=(const ZigbeeAddress &other) const;
 
 private:
-     quint64 m_address;
+     quint64 m_address = 0;
 
 };
 
