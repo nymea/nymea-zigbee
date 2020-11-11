@@ -410,7 +410,7 @@ void ZigbeeNode::initBasicCluster()
     ZigbeeClusterBasic *basicCluster = endpoint->inputCluster<ZigbeeClusterBasic>(ZigbeeClusterLibrary::ClusterIdBasic);
     if (!basicCluster) {
         qCWarning(dcZigbeeNode()) << "Could not find basic cluster on" << this << "Set the node to initialized anyways.";
-        // Set the device initialized any ways since this ist just for convinience
+        // Set the device initialized any ways since this ist just for convenience
         setState(StateInitialized);
         return;
     }

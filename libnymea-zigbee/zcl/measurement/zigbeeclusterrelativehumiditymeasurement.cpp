@@ -47,7 +47,7 @@ void ZigbeeClusterRelativeHumidityMeasurement::setAttribute(const ZigbeeClusterA
         emit attributeChanged(attribute);
     }
 
-    // Parse the information for convinience
+    // Parse the information for convenience
     if (attribute.id() == AttributeMeasuredValue) {
         bool valueOk = false;
         quint16 value = attribute.dataType().toUInt16(&valueOk);

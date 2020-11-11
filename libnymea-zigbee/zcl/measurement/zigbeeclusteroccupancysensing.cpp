@@ -47,7 +47,7 @@ void ZigbeeClusterOccupancySensing::setAttribute(const ZigbeeClusterAttribute &a
         emit attributeChanged(attribute);
     }
 
-    // Parse the information for convinience
+    // Parse the information for convenience
     if (attribute.id() == AttributeOccupancy) {
         bool valueOk = false;
         bool value = attribute.dataType().toBool(&valueOk);

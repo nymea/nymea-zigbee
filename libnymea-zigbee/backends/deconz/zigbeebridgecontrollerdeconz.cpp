@@ -961,7 +961,7 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
     }
 
     // We got a notification, lets set the current sequence number to the notification id,
-    // so the next request will be a continuouse increase
+    // so the next request will be a continuous increase
     m_sequenceNumber = sequenceNumber + 1;
 
     // No request for this data, lets check which notification and process the data

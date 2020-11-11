@@ -113,7 +113,7 @@ void ZigbeeClusterLevelControl::setAttribute(const ZigbeeClusterAttribute &attri
         emit attributeChanged(attribute);
     }
 
-    // Parse the information for convinience
+    // Parse the information for convenience
     if (attribute.id() == AttributeCurrentLevel) {
         bool valueOk = false;
         quint8 value = attribute.dataType().toUInt8(&valueOk);
@@ -130,7 +130,7 @@ void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Fram
 {
     qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
 
-    // Increase the tsn for continuouse id increasing on both sides
+    // Increase the tsn for continuous id increasing on both sides
     m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
 
     switch (m_direction) {

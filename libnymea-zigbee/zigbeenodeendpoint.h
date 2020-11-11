@@ -98,7 +98,7 @@ public:
     ZigbeeCluster *getOutputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const;
     bool hasOutputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const;
 
-    // Convinience cast methods for getting a specific cluster object
+    // Convenience cast methods for getting a specific cluster object
     template<typename T>
     inline T* inputCluster(ZigbeeClusterLibrary::ClusterId clusterId)
     {

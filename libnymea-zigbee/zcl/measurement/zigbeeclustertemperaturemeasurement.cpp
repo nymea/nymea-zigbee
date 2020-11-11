@@ -47,7 +47,7 @@ void ZigbeeClusterTemperatureMeasurement::setAttribute(const ZigbeeClusterAttrib
         emit attributeChanged(attribute);
     }
 
-    // Parse the information for convinience
+    // Parse the information for convenience
     if (attribute.id() == AttributeMeasuredValue) {
         bool valueOk = false;
         qint16 value = attribute.dataType().toInt16(&valueOk);

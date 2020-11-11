@@ -136,7 +136,7 @@ private:
     qint32 m_serialBaudrate = 115200;
     ZigbeeAddress m_macAddress;
 
-    // Continuouse ASP sequence number for network requests
+    // Continuous ASP sequence number for network requests
     quint8 m_sequenceNumber = 0;
 
     // Network configurations

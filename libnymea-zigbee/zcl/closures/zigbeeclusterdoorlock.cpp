@@ -137,7 +137,7 @@ void ZigbeeClusterDoorLock::processDataIndication(ZigbeeClusterLibrary::Frame fr
 {
     //qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
 
-    // Increase the tsn for continuouse id increasing on both sides
+    // Increase the tsn for continuous id increasing on both sides
     m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
 
     qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;

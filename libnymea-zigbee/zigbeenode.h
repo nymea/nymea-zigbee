@@ -115,7 +115,7 @@ private:
     void initEndpoints();
     void initEndpoint(quint8 endpointId);
 
-    // For convinience and having base information about the first endpoint
+    // For convenience and having base information about the first endpoint
     void initBasicCluster();
     void readManufacturerName(ZigbeeClusterBasic *basicCluster);
     void readModelIdentifier(ZigbeeClusterBasic *basicCluster);

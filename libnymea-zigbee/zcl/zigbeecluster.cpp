@@ -356,7 +356,7 @@ void ZigbeeCluster::finishZclReply(ZigbeeClusterReply *zclReply)
 
 void ZigbeeCluster::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
-    // Increase the tsn for continuouse id increasing on both sides
+    // Increase the tsn for continuous id increasing on both sides
     m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
 
     // Warn about the unhandled cluster indication, you can override this method in cluster implementations
@@ -391,7 +391,7 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
             }
         }
 
-        // Increase the tsn for continuouse id increasing on both sides
+        // Increase the tsn for continuous id increasing on both sides
         m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
         return;
     }
@@ -411,7 +411,7 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
                 setAttribute(ZigbeeClusterAttribute(attributeId, dataType));
             }
 
-            // Increase the tsn for continuouse id increasing on both sides
+            // Increase the tsn for continuous id increasing on both sides
             m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
             return;
         }
