@@ -21,6 +21,7 @@ SOURCES += \
     zcl/general/zigbeeclusterlevelcontrol.cpp \
     zcl/general/zigbeeclusteronoff.cpp \
     zcl/general/zigbeeclusterpowerconfiguration.cpp \
+    zcl/hvac/zigbeeclusterthermostat.cpp \
     zcl/lighting/zigbeeclustercolorcontrol.cpp \
     zcl/measurement/zigbeeclusterilluminancemeasurment.cpp \
     zcl/measurement/zigbeeclusteroccupancysensing.cpp \
@@ -74,6 +75,7 @@ HEADERS += \
     zcl/general/zigbeeclusterlevelcontrol.h \
     zcl/general/zigbeeclusteronoff.h \
     zcl/general/zigbeeclusterpowerconfiguration.h \
+    zcl/hvac/zigbeeclusterthermostat.h \
     zcl/lighting/zigbeeclustercolorcontrol.h \
     zcl/measurement/zigbeeclusterilluminancemeasurment.h \
     zcl/measurement/zigbeeclusteroccupancysensing.h \
