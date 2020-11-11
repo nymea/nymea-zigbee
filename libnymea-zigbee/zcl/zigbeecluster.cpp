@@ -92,7 +92,7 @@ ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 attributeId)
 
 void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << attribute;
+    qCDebug(dcZigbeeCluster()) << "Updating attribute" << m_node << m_endpoint << this << attribute;
     if (hasAttribute(attribute.id())) {
         m_attributes[attribute.id()] = attribute;
         emit attributeChanged(attribute);

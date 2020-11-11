@@ -126,7 +126,6 @@ protected:
 
     virtual void processDataIndication(ZigbeeClusterLibrary::Frame frame);
 
-private:
     virtual void setAttribute(const ZigbeeClusterAttribute &attribute);
 
 signals:

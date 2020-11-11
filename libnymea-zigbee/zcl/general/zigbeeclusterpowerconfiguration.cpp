@@ -38,14 +38,7 @@ ZigbeeClusterPowerConfiguration::ZigbeeClusterPowerConfiguration(ZigbeeNetwork *
 
 void ZigbeeClusterPowerConfiguration::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    ZigbeeCluster::setAttribute(attribute);
 
     if (attribute.id() == AttributeBatteryPercentageRemaining) {
         bool valueOk = false;
