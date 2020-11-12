@@ -51,6 +51,16 @@ ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
             setPermitJoiningRemaining(m_permitJoiningRemaining);
         }
     });
+
+
+    connect(this, &ZigbeeNetwork::stateChanged, this, [this](ZigbeeNetwork::State state){
+        if (state != ZigbeeNetwork::StateRunning) {
+            foreach (ZigbeeNode *node, m_nodes) {
+                node->setReachable(false);
+            }
+        }
+
+    });
 }
 
 QUuid ZigbeeNetwork::networkUuid() const

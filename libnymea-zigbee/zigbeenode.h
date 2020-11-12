@@ -55,7 +55,7 @@ public:
     Q_ENUM(State)
 
     State state() const;
-    bool connected() const;
+    bool reachable() const;
 
     QUuid networkUuid() const;
 
@@ -94,7 +94,7 @@ private:
 
     ZigbeeDeviceObject *m_deviceObject = nullptr;
     QList<ZigbeeNodeEndpoint *> m_endpoints;
-    bool m_connected = false;
+    bool m_reachable = false;
     State m_state = StateUninitialized;
     quint8 m_lqi = 0;
     QDateTime m_lastSeen;
@@ -105,7 +105,7 @@ private:
     ZigbeeDeviceProfile::PowerDescriptor m_powerDescriptor;
 
     void setState(State state);
-    void setConnected(bool connected);
+    void setReachable(bool reachable);
 
     // Init methods
     int m_requestRetry = 0;
@@ -128,7 +128,7 @@ signals:
     void stateChanged(State state);
     void lqiChanged(quint8 lqi);
     void lastSeenChanged(const QDateTime &lastSeen);
-    void connectedChanged(bool connected);
+    void reachableChanged(bool reachable);
     void clusterAdded(ZigbeeCluster *cluster);
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
 

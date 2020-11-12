@@ -57,6 +57,8 @@ public:
 
     // Management request
     ZigbeeDeviceObjectReply *requestMgmtLeaveNetwork(bool rejoin = false, bool removeChildren = false);
+    ZigbeeDeviceObjectReply *requestMgmtLqi(quint8 startIndex = 0x00);
+
 
     // TODO: write all requests
 

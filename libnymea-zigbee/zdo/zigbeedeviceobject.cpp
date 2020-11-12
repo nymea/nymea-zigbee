@@ -332,6 +332,63 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLeaveNetwork(bool rejoin
     return zdoReply;
 }
 
+ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLqi(quint8 startIndex)
+{
+    qCDebug(dcZigbeeDeviceObject()) << "Request lqi table from" << m_node << "start index" << startIndex;
+
+    // Build APS request
+    ZigbeeNetworkRequest request = buildZdoRequest(ZigbeeDeviceProfile::MgmtLqiRequest);
+
+    // Generate a new transaction sequence number for this device object
+    quint8 transactionSequenceNumber = m_transactionSequenceNumber++;
+
+    QByteArray asdu;
+    QDataStream stream(&asdu, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << startIndex;
+
+    // Set the ZDO frame as APS request payload
+    request.setAsdu(asdu);
+
+    // Create the device object reply and wait for the response indication
+    ZigbeeDeviceObjectReply *zdoReply = createZigbeeDeviceObjectReply(request, transactionSequenceNumber);
+
+    // Send the request, on finished read the confirm information
+    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
+    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+        if (!verifyNetworkError(zdoReply, networkReply)) {
+            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
+                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
+                                              << m_node << networkReply->error()
+                                              << networkReply->zigbeeApsStatus();
+            finishZdoReply(zdoReply);
+            return;
+        }
+
+        // The request was successfully sent to the device
+        // Now check if the expected indication response received already
+        if (zdoReply->isComplete()) {
+            qCDebug(dcZigbeeDeviceObject()) << "Successfully received response for" << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId());
+            // TODO: pars child table
+//            QByteArray response = zdoReply->responseAdpu().payload;
+//            QDataStream stream(&response, QIODevice::ReadOnly);
+//            stream.setByteOrder(QDataStream::LittleEndian);
+//            quint8 statusValue; quint8 tableEntries; quint8 startIndex;
+
+//            ZigbeeDeviceProfile::Status status;
+
+
+
+
+            finishZdoReply(zdoReply);
+            return;
+        }
+        // We received the confirmation but not yet the indication
+    });
+
+    return zdoReply;
+}
+
 ZigbeeNetworkRequest ZigbeeDeviceObject::buildZdoRequest(quint16 zdoRequest)
 {
     ZigbeeNetworkRequest request;

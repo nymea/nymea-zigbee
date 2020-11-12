@@ -46,9 +46,9 @@ ZigbeeNode::State ZigbeeNode::state() const
     return m_state;
 }
 
-bool ZigbeeNode::connected() const
+bool ZigbeeNode::reachable() const
 {
-    return m_connected;
+    return m_reachable;
 }
 
 QUuid ZigbeeNode::networkUuid() const
@@ -127,14 +127,14 @@ void ZigbeeNode::setState(ZigbeeNode::State state)
     emit stateChanged(m_state);
 }
 
-void ZigbeeNode::setConnected(bool connected)
+void ZigbeeNode::setReachable(bool reachable)
 {
-    if (m_connected == connected)
+    if (m_reachable == reachable)
         return;
 
-    qCDebug(dcZigbeeNode()) << "Connected changed"  << this << connected;
-    m_connected = connected;
-    emit connectedChanged(m_connected);
+    qCDebug(dcZigbeeNode()) << "Reachable changed"  << this << reachable;
+    m_reachable = reachable;
+    emit reachableChanged(m_reachable);
 }
 
 void ZigbeeNode::startInitialization()
@@ -590,6 +590,9 @@ void ZigbeeNode::handleDataIndication(const Zigbee::ApsdeDataIndication &indicat
         emit lqiChanged(m_lqi);
     }
 
+    // Data received from this node, it is reachable for sure
+    setReachable(true);
+
     // Update the UTC timestamp of last seen for reachable verification
     if (m_lastSeen != QDateTime::currentDateTimeUtc()) {
         m_lastSeen = QDateTime::currentDateTimeUtc();
@@ -602,7 +605,7 @@ void ZigbeeNode::handleDataIndication(const Zigbee::ApsdeDataIndication &indicat
         return;
     }
 
-    // Else let the node handle this indication
+    // Let the clusters handle this indication
     handleZigbeeClusterLibraryIndication(indication);
 }
 
