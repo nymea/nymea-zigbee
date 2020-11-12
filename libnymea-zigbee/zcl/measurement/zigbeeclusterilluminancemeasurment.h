@@ -63,7 +63,11 @@ public:
 
     explicit ZigbeeClusterIlluminanceMeasurment(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    quint16 illuminance() const;
+
 private:
+    quint16 m_illuminance = 0;
+
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:

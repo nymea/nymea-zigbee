@@ -102,24 +102,24 @@ ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStopWithOnOff()
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandStopWithOnOff);
 }
 
+quint8 ZigbeeClusterLevelControl::currentLevel() const
+{
+    return m_currentLevel;
+}
+
 void ZigbeeClusterLevelControl::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 
     // Parse the information for convenience
     if (attribute.id() == AttributeCurrentLevel) {
         bool valueOk = false;
         quint8 value = attribute.dataType().toUInt8(&valueOk);
         if (valueOk) {
-            qCDebug(dcZigbeeCluster()) << "CurrentLevel state changed on" << m_node << m_endpoint << this << value;
-            emit currentLevelChanged(value);
+            m_currentLevel = value;
+            qCDebug(dcZigbeeCluster()) << "CurrentLevel state changed on" << m_node << m_endpoint << this << m_currentLevel;
+            emit currentLevelChanged(m_currentLevel);
         } else {
             qCWarning(dcZigbeeCluster()) << "Failed to parse attribute data"  << m_node << m_endpoint << this << attribute;
         }

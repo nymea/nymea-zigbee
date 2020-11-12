@@ -114,7 +114,6 @@ protected:
     // Global commands
     ZigbeeClusterReply *executeGlobalCommand(quint8 command, const QByteArray &payload = QByteArray());
 
-
     // Cluster specific
     ZigbeeClusterReply *createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame);
     ZigbeeClusterReply *executeClusterCommand(quint8 command, const QByteArray &payload = QByteArray());
@@ -125,6 +124,8 @@ protected:
     void finishZclReply(ZigbeeClusterReply *zclReply);
 
     virtual void processDataIndication(ZigbeeClusterLibrary::Frame frame);
+
+    void updateOrAddAttribute(const ZigbeeClusterAttribute &attribute);
 
 private:
     virtual void setAttribute(const ZigbeeClusterAttribute &attribute);

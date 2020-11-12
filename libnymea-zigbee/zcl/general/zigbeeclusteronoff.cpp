@@ -76,24 +76,24 @@ ZigbeeClusterReply *ZigbeeClusterOnOff::commandOnWithTimedOff(bool acceptOnlyWhe
     return executeClusterCommand(ZigbeeClusterOnOff::CommandOnWithTimedOff, payload);
 }
 
+bool ZigbeeClusterOnOff::power() const
+{
+    return m_power;
+}
+
 void ZigbeeClusterOnOff::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 
     // Parse the information for convenience
     if (attribute.id() == AttributeOnOff) {
         bool valueOk = false;
         bool value = attribute.dataType().toBool(&valueOk);
         if (valueOk) {
-            qCDebug(dcZigbeeCluster()) << "OnOff state changed on" << m_node << m_endpoint << this << value;
-            emit powerChanged(value);
+            m_power = value;
+            qCDebug(dcZigbeeCluster()) << "OnOff state changed on" << m_node << m_endpoint << this << m_power;
+            emit powerChanged(m_power);
         } else {
             qCWarning(dcZigbeeCluster()) << "Failed to parse attribute data"  << m_node << m_endpoint << this << attribute;
         }

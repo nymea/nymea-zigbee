@@ -36,23 +36,23 @@ ZigbeeClusterPowerConfiguration::ZigbeeClusterPowerConfiguration(ZigbeeNetwork *
 
 }
 
+double ZigbeeClusterPowerConfiguration::batteryPercentage() const
+{
+    return m_batteryPercentage;
+}
+
 void ZigbeeClusterPowerConfiguration::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 
     if (attribute.id() == AttributeBatteryPercentageRemaining) {
         bool valueOk = false;
         quint8 value = attribute.dataType().toUInt8(&valueOk);
         if (valueOk) {
-            qCDebug(dcZigbeeCluster()) << "PowerConfiguration attribute changed on" << m_node << m_endpoint << this << value;
-            emit batteryPercentageChanged(value / 2.0);
+            m_batteryPercentage = value / 2.0;
+            qCDebug(dcZigbeeCluster()) << "PowerConfiguration remaining battery percentage changed on" << m_node << m_endpoint << this << m_batteryPercentage << "%";
+            emit batteryPercentageChanged(m_batteryPercentage);
         } else {
             qCWarning(dcZigbeeCluster()) << "Failed to parse attribute data"  << m_node << m_endpoint << this << attribute;
         }

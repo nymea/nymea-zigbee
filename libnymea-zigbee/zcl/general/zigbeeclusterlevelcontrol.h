@@ -94,7 +94,11 @@ public:
     ZigbeeClusterReply *commandStepWithOnOff(FadeMode fadeMode, quint8 stepSize = 0x01, quint16 transitionTime = 0xffff);
     ZigbeeClusterReply *commandStopWithOnOff();
 
+    quint8 currentLevel() const;
+
 private:
+    quint8 m_currentLevel = 0;
+
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 protected:

@@ -113,13 +113,7 @@ ZigbeeClusterDoorLock::DoorState ZigbeeClusterDoorLock::doorState() const
 void ZigbeeClusterDoorLock::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 
     switch (attribute.id()) {
     case AttributeLockState:
@@ -135,10 +129,22 @@ void ZigbeeClusterDoorLock::setAttribute(const ZigbeeClusterAttribute &attribute
 
 void ZigbeeClusterDoorLock::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
-    //qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
+    qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
 
     // Increase the tsn for continuous id increasing on both sides
     m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
 
-    qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
+    switch (m_direction) {
+    case Client:
+        // If the client cluster sends data to a server cluster (independent which), the command was executed on the device like button pressed
+        if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {
+            // Read the payload which is
+            Command command = static_cast<Command>(frame.header.command);
+            qCDebug(dcZigbeeCluster()) << "Received" << command << "from" << m_node << m_endpoint << this;
+        }
+        break;
+    case Server:
+        qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
+        break;
+    }
 }

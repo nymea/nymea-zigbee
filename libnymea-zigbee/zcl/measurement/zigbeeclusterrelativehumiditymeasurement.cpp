@@ -36,25 +36,24 @@ ZigbeeClusterRelativeHumidityMeasurement::ZigbeeClusterRelativeHumidityMeasureme
 
 }
 
+double ZigbeeClusterRelativeHumidityMeasurement::humidity() const
+{
+    return m_humidity;
+}
+
 void ZigbeeClusterRelativeHumidityMeasurement::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 
     // Parse the information for convenience
     if (attribute.id() == AttributeMeasuredValue) {
         bool valueOk = false;
         quint16 value = attribute.dataType().toUInt16(&valueOk);
         if (valueOk) {
-            double humidity = value / 100.0;
-            qCDebug(dcZigbeeCluster()) << "Humidity changed on" << m_node << m_endpoint << this << humidity << "%";
-            emit humidityChanged(humidity);
+            m_humidity = value / 100.0;
+            qCDebug(dcZigbeeCluster()) << "Humidity changed on" << m_node << m_endpoint << this << m_humidity << "%";
+            emit humidityChanged(m_humidity);
         }
     }
 }

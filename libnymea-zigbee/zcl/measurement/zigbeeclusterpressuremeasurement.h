@@ -62,7 +62,12 @@ public:
 
     explicit ZigbeeClusterPressureMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    double pressure() const;
+    double pressureScaled() const;
+
 private:
+    double m_pressure = 0;
+    double m_pressureScaled = 0;
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:

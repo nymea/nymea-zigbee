@@ -89,7 +89,11 @@ public:
 
     explicit ZigbeeClusterPowerConfiguration(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    double batteryPercentage() const;
+
 private:
+    double m_batteryPercentage = 0;
+
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:

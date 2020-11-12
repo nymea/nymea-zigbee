@@ -36,25 +36,24 @@ ZigbeeClusterTemperatureMeasurement::ZigbeeClusterTemperatureMeasurement(ZigbeeN
 
 }
 
+double ZigbeeClusterTemperatureMeasurement::temperature() const
+{
+    return m_temperature;
+}
+
 void ZigbeeClusterTemperatureMeasurement::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 
     // Parse the information for convenience
     if (attribute.id() == AttributeMeasuredValue) {
         bool valueOk = false;
         qint16 value = attribute.dataType().toInt16(&valueOk);
         if (valueOk) {
-            double temperature = value / 100.0;
-            qCDebug(dcZigbeeCluster()) << "Temperature changed on" << m_node << m_endpoint << this << temperature << "°C";
-            emit temperatureChanged(temperature);
+            m_temperature = value / 100.0;
+            qCDebug(dcZigbeeCluster()) << "Temperature changed on" << m_node << m_endpoint << this << m_temperature << "°C";
+            emit temperatureChanged(m_temperature);
         }
     }
 }

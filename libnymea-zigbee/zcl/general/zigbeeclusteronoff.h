@@ -79,7 +79,11 @@ public:
     ZigbeeClusterReply *commandOnWithRecallGlobalScene();
     ZigbeeClusterReply *commandOnWithTimedOff(bool acceptOnlyWhenOn, quint16 onTime, quint16 offWaitTime);
 
+    bool power() const;
+
 private:
+    bool m_power = false;
+
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 protected:

@@ -36,24 +36,24 @@ ZigbeeClusterIlluminanceMeasurment::ZigbeeClusterIlluminanceMeasurment(ZigbeeNet
 
 }
 
+quint16 ZigbeeClusterIlluminanceMeasurment::illuminance() const
+{
+    return m_illuminance;
+}
+
 void ZigbeeClusterIlluminanceMeasurment::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 
     // Parse the information for convenience
     if (attribute.id() == AttributeMeasuredValue) {
         bool valueOk = false;
         quint16 value = attribute.dataType().toUInt16(&valueOk);
         if (valueOk) {
-            qCDebug(dcZigbeeCluster()) << "Illuminance changed on" << m_node << m_endpoint << this << value << "lux";
-            emit illuminanceChanged(value);
+            m_illuminance = value;
+            qCDebug(dcZigbeeCluster()) << "Illuminance changed on" << m_node << m_endpoint << this << m_illuminance << "lux";
+            emit illuminanceChanged(m_illuminance);
         }
     }
 }

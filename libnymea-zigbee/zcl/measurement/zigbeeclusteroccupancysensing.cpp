@@ -36,24 +36,24 @@ ZigbeeClusterOccupancySensing::ZigbeeClusterOccupancySensing(ZigbeeNetwork *netw
 
 }
 
+bool ZigbeeClusterOccupancySensing::occupied() const
+{
+    return m_occupied;
+}
+
 void ZigbeeClusterOccupancySensing::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 
     // Parse the information for convenience
     if (attribute.id() == AttributeOccupancy) {
         bool valueOk = false;
         bool value = attribute.dataType().toBool(&valueOk);
         if (valueOk) {
-            qCDebug(dcZigbeeCluster()) << "Occupancy changed on" << m_node << m_endpoint << this << value;
-            emit occupancyChanged(value);
+            m_occupied = value;
+            qCDebug(dcZigbeeCluster()) << "Occupancy changed on" << m_node << m_endpoint << this << m_occupied;
+            emit occupancyChanged(m_occupied);
         }
     }
 }

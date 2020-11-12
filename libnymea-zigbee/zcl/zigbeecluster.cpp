@@ -93,13 +93,7 @@ ZigbeeClusterAttribute ZigbeeCluster::attribute(quint16 attributeId)
 void ZigbeeCluster::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << attribute;
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 }
 
 ZigbeeClusterReply *ZigbeeCluster::readAttributes(QList<quint16> attributes)
@@ -361,6 +355,17 @@ void ZigbeeCluster::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 
     // Warn about the unhandled cluster indication, you can override this method in cluster implementations
     qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
+}
+
+void ZigbeeCluster::updateOrAddAttribute(const ZigbeeClusterAttribute &attribute)
+{
+    if (hasAttribute(attribute.id())) {
+        m_attributes[attribute.id()] = attribute;
+        emit attributeChanged(attribute);
+    } else {
+        m_attributes.insert(attribute.id(), attribute);
+        emit attributeChanged(attribute);
+    }
 }
 
 void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const ZigbeeClusterLibrary::Frame &frame)

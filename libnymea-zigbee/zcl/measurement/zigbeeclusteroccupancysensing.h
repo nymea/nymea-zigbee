@@ -72,7 +72,11 @@ public:
 
     explicit ZigbeeClusterOccupancySensing(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    bool occupied() const;
+
 private:
+    bool m_occupied = false;
+
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:

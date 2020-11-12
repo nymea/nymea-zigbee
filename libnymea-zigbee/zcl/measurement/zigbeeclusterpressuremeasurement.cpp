@@ -36,33 +36,37 @@ ZigbeeClusterPressureMeasurement::ZigbeeClusterPressureMeasurement(ZigbeeNetwork
 
 }
 
+double ZigbeeClusterPressureMeasurement::pressure() const
+{
+    return m_pressure;
+}
+
+double ZigbeeClusterPressureMeasurement::pressureScaled() const
+{
+    return m_pressureScaled;
+}
+
 void ZigbeeClusterPressureMeasurement::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    if (hasAttribute(attribute.id())) {
-        m_attributes[attribute.id()] = attribute;
-        emit attributeChanged(attribute);
-    } else {
-        m_attributes.insert(attribute.id(), attribute);
-        emit attributeChanged(attribute);
-    }
+    updateOrAddAttribute(attribute);
 
     // Parse the information for convinience
     if (attribute.id() == AttributeMeasuredValue) {
         bool valueOk = false;
         qint16 value = attribute.dataType().toInt16(&valueOk);
         if (valueOk) {
-            double pressure = value / 10.0;
-            qCDebug(dcZigbeeCluster()) << "Pressure changed on" << m_node << m_endpoint << this << pressure << "kPa";
-            emit pressureChanged(pressure);
+            m_pressure = value / 10.0;
+            qCDebug(dcZigbeeCluster()) << "Pressure changed on" << m_node << m_endpoint << this << m_pressure << "kPa";
+            emit pressureChanged(m_pressure);
         }
     } else if (attribute.id() == AttributeScaledValue) {
         bool valueOk = false;
         qint16 value = attribute.dataType().toInt16(&valueOk);
         if (valueOk) {
-            double pressureScaled = value / 10.0;
-            qCDebug(dcZigbeeCluster()) << "Pressure scaled changed on" << m_node << m_endpoint << this << pressureScaled << "Pa";
-            emit pressureScaledChanged(pressureScaled);
+            m_pressureScaled = value / 10.0;
+            qCDebug(dcZigbeeCluster()) << "Pressure scaled changed on" << m_node << m_endpoint << this << m_pressureScaled << "Pa";
+            emit pressureScaledChanged(m_pressureScaled);
         }
     }
 }

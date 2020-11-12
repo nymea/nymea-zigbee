@@ -571,7 +571,7 @@ void ZigbeeNetworkNxp::onNodeLeftIndication(const ZigbeeAddress &ieeeAddress, bo
 {
     qCDebug(dcZigbeeNetwork()) << "Received node left indication" << ieeeAddress.toString() << "rejoining:" << rejoining;
     if (!hasNode(ieeeAddress)) {
-        qCWarning(dcZigbeeNetwork()) << "Unknown node left the network" << ieeeAddress.toString();
+        qCDebug(dcZigbeeNetwork()) << "Node left the network" << ieeeAddress.toString();
         return;
     }
 

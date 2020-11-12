@@ -97,7 +97,7 @@ public:
         ZoneStatusTest = 0x0100,
         ZoneStatusBatteryDefect = 0x0200
     };
-    Q_ENUM(ZoneStatus)
+    Q_FLAG(ZoneStatus)
     Q_DECLARE_FLAGS(ZoneStatusFlags, ZoneStatus)
 
     enum EnrollResponseCode {
@@ -136,7 +136,5 @@ signals:
     void zoneEnrollRequest(ZoneType zoneType, quint16 manufacturerCode);
 
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ZigbeeClusterIasZone::ZoneStatusFlags)
 
 #endif // ZIGBEECLUSTERIASZONE_H
