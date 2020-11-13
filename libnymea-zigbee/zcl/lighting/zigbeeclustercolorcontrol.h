@@ -135,7 +135,7 @@ public:
         ColorCapabilityXY = 0x08,
         ColorCapabilityColorTemperature = 0x10
     };
-    Q_ENUM(ColorCapability)
+    Q_FLAG(ColorCapability)
     Q_DECLARE_FLAGS(ColorCapabilities, ColorCapability)
 
     enum Command {
@@ -189,7 +189,7 @@ public:
         ColorLoopUpdateTime = 0x04,
         ColorLoopUpdateStartHue = 0x08
     };
-    Q_ENUM(ColorLoopUpdate)
+    Q_FLAG(ColorLoopUpdate)
     Q_DECLARE_FLAGS(ColorLoopUpdateFlags, ColorLoopUpdate)
 
     enum ColorLoopAction {
@@ -231,15 +231,19 @@ public:
     ZigbeeClusterReply *commandMoveColorTemperature(MoveMode moveMode, quint16 rate, quint16 minColorTemperature, quint16 maxColorTemperature);
     ZigbeeClusterReply *commandStepColorTemperature(StepMode stepMode, quint16 stepSize, quint16 transitionTime, quint16 minColorTemperature, quint16 maxColorTemperature);
 
+    quint16 colorTemperatureMireds() const;
+
+signals:
+    void colorTemperatureMiredsChanged(quint16 colorTemperatureMireds);
+
 private:
+    quint16 m_colorTemperatureMireds = 0;
+
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ZigbeeClusterColorControl::ColorCapabilities)
-Q_DECLARE_OPERATORS_FOR_FLAGS(ZigbeeClusterColorControl::ColorLoopUpdateFlags)
 
 #endif // ZIGBEECLUSTERCOLORCONTROL_H

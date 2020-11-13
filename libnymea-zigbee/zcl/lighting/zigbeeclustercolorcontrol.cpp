@@ -213,10 +213,32 @@ ZigbeeClusterReply *ZigbeeClusterColorControl::commandStepColorTemperature(Zigbe
     return executeClusterCommand(ZigbeeClusterColorControl::CommandStepColorTemperature, payload);
 }
 
+quint16 ZigbeeClusterColorControl::colorTemperatureMireds() const
+{
+    return m_colorTemperatureMireds;
+}
+
 void ZigbeeClusterColorControl::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Attribute changed" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
     updateOrAddAttribute(attribute);
+
+    switch (attribute.id()) {
+    case AttributeColorTemperatureMireds: {
+        bool valueOk = false;
+        quint16 value = attribute.dataType().toUInt16(&valueOk);
+        if (valueOk) {
+            m_colorTemperatureMireds = value;
+            qCDebug(dcZigbeeCluster()) << "Color temperature mired changed on" << m_node << m_endpoint << this << m_colorTemperatureMireds;
+            emit colorTemperatureMiredsChanged(m_colorTemperatureMireds);
+        } else {
+            qCWarning(dcZigbeeCluster()) << "Failed to parse attribute data"  << m_node << m_endpoint << this << attribute;
+        }
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void ZigbeeClusterColorControl::processDataIndication(ZigbeeClusterLibrary::Frame frame)
