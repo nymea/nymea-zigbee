@@ -30,6 +30,8 @@
 
 #include <QSerialPortInfo>
 
+#include <libudev.h>
+
 ZigbeeUartAdapterMonitor::ZigbeeUartAdapterMonitor(QObject *parent) : QObject(parent)
 {
     qRegisterMetaType<ZigbeeUartAdapter>();

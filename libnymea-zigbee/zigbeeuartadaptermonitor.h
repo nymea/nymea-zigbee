@@ -31,8 +31,6 @@
 #include <QObject>
 #include <QSocketNotifier>
 
-#include <libudev.h>
-
 #include "zigbeeuartadapter.h"
 
 class ZigbeeUartAdapterMonitor : public QObject
