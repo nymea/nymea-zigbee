@@ -49,7 +49,24 @@ public:
         AttributeAbsMaxCoolSetpointLimit = 0x0006,
         AttributePICoolingDemand = 0x0007,
         AttributePIHeatingDemand = 0x0008,
-        AttributeHVACSystemTypeConfiguration = 0x0009
+        AttributeHVACSystemTypeConfiguration = 0x0009,
+
+        AttributeLocalTemperatureCalibratioon = 0x0010,
+        AttributeOccupiedCoolingSetpoint = 0x0011,
+        AttributeOccupiedHeatingSetpoint = 0x0012,
+        AttributeUnoccupiedCoolingSetpoint = 0x0013,
+        AttributeUnoccupiedHeatingSetpoint = 0x0014,
+        AttributeMinHeatSetpointLimit = 0x0015,
+        AttributeMaxHeatSetpointLimit = 0x0016,
+        AttributeMinCoolSetpointLimit = 0x0017,
+        AttributeMaxCoolSetpointLimit = 0x0018,
+        AttributeMinSetpointDeadBand = 0x0019,
+        AttributeRemoteSensing = 0x001a,
+        AttributeControlSequenceOfOperation = 0x001b,
+        AttributeSystemMode = 0x001c,
+        AttributeAlarmMask = 0x001d,
+        AttributeThermostatRunningMode = 0x001e
+
     };
     Q_ENUM(Attribute)
 

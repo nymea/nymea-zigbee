@@ -102,7 +102,7 @@ ZigbeeCluster *ZigbeeNodeEndpoint::getInputCluster(ZigbeeClusterLibrary::Cluster
 
 bool ZigbeeNodeEndpoint::hasInputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const
 {
-    return m_inputClusters.keys().contains(clusterId);
+    return m_inputClusters.contains(clusterId);
 }
 
 QList<ZigbeeCluster *> ZigbeeNodeEndpoint::outputClusters() const
@@ -117,7 +117,7 @@ ZigbeeCluster *ZigbeeNodeEndpoint::getOutputCluster(ZigbeeClusterLibrary::Cluste
 
 bool ZigbeeNodeEndpoint::hasOutputCluster(ZigbeeClusterLibrary::ClusterId clusterId) const
 {
-    return m_outputClusters.keys().contains(clusterId);
+    return m_outputClusters.contains(clusterId);
 }
 
 ZigbeeNodeEndpoint::ZigbeeNodeEndpoint(ZigbeeNetwork *network, ZigbeeNode *node, quint8 endpointId, QObject *parent) :
@@ -167,56 +167,46 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
     // General
     case ZigbeeClusterLibrary::ClusterIdBasic:
         return new ZigbeeClusterBasic(m_network, m_node, this, direction, this);
-        break;
     case ZigbeeClusterLibrary::ClusterIdPowerConfiguration:
         return new ZigbeeClusterPowerConfiguration(m_network, m_node, this, direction, this);
-        break;
     case ZigbeeClusterLibrary::ClusterIdIdentify:
         return new ZigbeeClusterIdentify(m_network, m_node, this, direction, this);
-        break;
     case ZigbeeClusterLibrary::ClusterIdOnOff:
         return new ZigbeeClusterOnOff(m_network, m_node, this, direction, this);
-        break;
     case ZigbeeClusterLibrary::ClusterIdLevelControl:
         return new ZigbeeClusterLevelControl(m_network, m_node, this, direction, this);
-        break;
 
         // Measurement
     case ZigbeeClusterLibrary::ClusterIdIlluminanceMeasurement:
         return new ZigbeeClusterIlluminanceMeasurment(m_network, m_node, this, direction, this);
-        break;
     case ZigbeeClusterLibrary::ClusterIdTemperatureMeasurement:
         return new ZigbeeClusterTemperatureMeasurement(m_network, m_node, this, direction, this);
-        break;
     case ZigbeeClusterLibrary::ClusterIdRelativeHumidityMeasurement:
         return new ZigbeeClusterRelativeHumidityMeasurement(m_network, m_node, this, direction, this);
-        break;
     case ZigbeeClusterLibrary::ClusterIdOccupancySensing:
         return new ZigbeeClusterOccupancySensing(m_network, m_node, this, direction, this);
-        break;
     case ZigbeeClusterLibrary::ClusterIdPressureMeasurement:
         return new ZigbeeClusterPressureMeasurement(m_network, m_node, this, direction, this);
-        break;
 
         // Colsures
     case ZigbeeClusterLibrary::ClusterIdDoorLock:
         return new ZigbeeClusterDoorLock(m_network, m_node, this, direction, this);
-        break;
 
         // Lighting
     case ZigbeeClusterLibrary::ClusterIdColorControl:
         return new ZigbeeClusterColorControl(m_network, m_node, this, direction, this);
-        break;
 
         // Security
     case ZigbeeClusterLibrary::ClusterIdIasZone:
         return new ZigbeeClusterIasZone(m_network, m_node, this, direction, this);
-        break;
 
         // OTA
     case ZigbeeClusterLibrary::ClusterIdOtaUpgrade:
         return new ZigbeeClusterOta(m_network, m_node, this, direction, this);
-        break;
+
+        // HVAC
+    case ZigbeeClusterLibrary::ClusterIdThermostat:
+        return new ZigbeeClusterThermostat(m_network, m_node, this, direction, this);
 
     default:
         // Return a default cluster since we have no special implementation for this cluster, allowing to use generic clusters operations

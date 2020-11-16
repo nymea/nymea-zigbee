@@ -57,6 +57,8 @@
 
 #include "zcl/ota/zigbeeclusterota.h"
 
+#include "zcl/hvac/zigbeeclusterthermostat.h"
+
 class ZigbeeNode;
 class ZigbeeNetwork;
 
