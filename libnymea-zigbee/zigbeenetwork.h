@@ -37,8 +37,8 @@
 #include "zigbeechannelmask.h"
 #include "zigbeesecurityconfiguration.h"
 
-class ZigbeeBridgeController;
 class ZigbeeNetworkDatabase;
+class ZigbeeBridgeController;
 
 class ZigbeeNetwork : public QObject
 {

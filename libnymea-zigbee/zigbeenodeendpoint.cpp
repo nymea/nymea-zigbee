@@ -256,7 +256,15 @@ void ZigbeeNodeEndpoint::handleZigbeeClusterLibraryIndication(const Zigbee::Apsd
         if (!cluster) {
             cluster = createCluster(static_cast<ZigbeeClusterLibrary::ClusterId>(indication.clusterId), ZigbeeCluster::Client);
             qCDebug(dcZigbeeEndpoint()) << "Received a ZCL indication for a client cluster which does not exist yet on" << m_node << this << "Creating" << cluster;
+
             addOutputCluster(cluster);
+            if (m_initialized) {
+                // Note: if the node has already been initialized and the cluster did not exist until now,
+                // we need to store the new cluster in the database before updating the attribute. This is required
+                // only for devices which are out of spec and do not list the new cluster in the simple descriptor.
+
+
+            }
         }
         break;
     case ZigbeeClusterLibrary::DirectionServerToClient:

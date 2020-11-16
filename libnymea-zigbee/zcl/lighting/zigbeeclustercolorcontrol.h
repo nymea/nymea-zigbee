@@ -232,12 +232,15 @@ public:
     ZigbeeClusterReply *commandStepColorTemperature(StepMode stepMode, quint16 stepSize, quint16 transitionTime, quint16 minColorTemperature, quint16 maxColorTemperature);
 
     quint16 colorTemperatureMireds() const;
+    ColorCapabilities colorCapabilities() const;
 
 signals:
     void colorTemperatureMiredsChanged(quint16 colorTemperatureMireds);
+    void colorCapabilitiesChanged(ColorCapabilities colorCapabilities);
 
 private:
     quint16 m_colorTemperatureMireds = 0;
+    ColorCapabilities m_colorCapabilities = ColorCapabilities();
 
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 

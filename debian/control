@@ -22,7 +22,8 @@ Depends: ${shlibs:Depends},
          ${misc:Depends},
          libqt5network5,
          libqt5gui5,
-         libqt5serialport5
+         libqt5serialport5,
+         libqt5sql5-sqlite
 Description: Qt 5 based library for ZigBee
  Qt 5 based library for ZigBee.
 
@@ -34,5 +35,5 @@ Depends: libnymea-zigbee1 (= ${binary:Version}),
   ${shlibs:Depends},
   ${misc:Depends},
   pkg-config
-Dscription: Qt 5 based library for ZigBee - development files
+Description: Qt 5 based library for ZigBee - development files
  Development files for Qt 5 based ZigBee library.

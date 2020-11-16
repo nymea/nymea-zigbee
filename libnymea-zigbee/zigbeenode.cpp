@@ -168,7 +168,8 @@ void ZigbeeNode::initNodeDescriptor()
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read node descriptor from" << this << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
-                emit nodeInitializationFailed();
+                qCWarning(dcZigbeeNode()) << this << "is out of spec. A device must implement the node descriptor. Continue anyways with the power decriptor...";
+                initPowerDescriptor();
             }
             return;
         }
@@ -373,6 +374,10 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
 
         m_uninitializedEndpoints.removeAll(endpointId);
         endpoint->m_initialized = true;
+
+        // Connect after initialization for out of spec nodes
+        connect(endpoint, &ZigbeeNodeEndpoint::inputClusterAdded, this, &ZigbeeNode::clusterAdded);
+        connect(endpoint, &ZigbeeNodeEndpoint::outputClusterAdded, this, &ZigbeeNode::clusterAdded);
 
         if (m_uninitializedEndpoints.isEmpty()) {
             // Note: if we are initializing the coordinator, we can stop here

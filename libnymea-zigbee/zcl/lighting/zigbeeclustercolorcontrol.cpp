@@ -218,6 +218,11 @@ quint16 ZigbeeClusterColorControl::colorTemperatureMireds() const
     return m_colorTemperatureMireds;
 }
 
+ZigbeeClusterColorControl::ColorCapabilities ZigbeeClusterColorControl::colorCapabilities() const
+{
+    return m_colorCapabilities;
+}
+
 void ZigbeeClusterColorControl::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Attribute changed" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
@@ -231,6 +236,18 @@ void ZigbeeClusterColorControl::setAttribute(const ZigbeeClusterAttribute &attri
             m_colorTemperatureMireds = value;
             qCDebug(dcZigbeeCluster()) << "Color temperature mired changed on" << m_node << m_endpoint << this << m_colorTemperatureMireds;
             emit colorTemperatureMiredsChanged(m_colorTemperatureMireds);
+        } else {
+            qCWarning(dcZigbeeCluster()) << "Failed to parse attribute data"  << m_node << m_endpoint << this << attribute;
+        }
+        break;
+    }
+    case AttributeColorCapabilities: {
+        bool valueOk = false;
+        quint16 value = attribute.dataType().toUInt16(&valueOk);
+        if (valueOk) {
+            m_colorCapabilities = static_cast<ZigbeeClusterColorControl::ColorCapabilities>(value);
+            qCDebug(dcZigbeeCluster()) << "Color capabilities changed on" << m_node << m_endpoint << this << m_colorCapabilities;
+            emit colorCapabilitiesChanged(m_colorCapabilities);
         } else {
             qCWarning(dcZigbeeCluster()) << "Failed to parse attribute data"  << m_node << m_endpoint << this << attribute;
         }
