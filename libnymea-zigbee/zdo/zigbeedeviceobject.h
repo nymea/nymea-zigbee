@@ -50,8 +50,7 @@ public:
     // TODO: implement other device and service discovery methods
 
     // End device binding
-//    ZigbeeDeviceObjectReply *requestBindGroup(quint16 clusterId, quint16 groupAddress, quint8 destinationEndpoint);
-//    ZigbeeDeviceObjectReply *requestBindShortAddress();
+    ZigbeeDeviceObjectReply *requestBindShortAddress(quint8 sourceEndpointId, quint16 clusterId, quint16 destinationAddress);
     ZigbeeDeviceObjectReply *requestBindIeeeAddress(quint8 sourceEndpointId, quint16 clusterId, const ZigbeeAddress &destinationIeeeAddress, quint8 destinationEndpointId);
 
 
