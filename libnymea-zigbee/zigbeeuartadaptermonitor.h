@@ -40,6 +40,7 @@ public:
     explicit ZigbeeUartAdapterMonitor(QObject *parent = nullptr);
 
     QList<ZigbeeUartAdapter> availableAdapters() const;
+    bool hasAdapter(const QString &serialPort) const;
 
     bool isValid() const;
 

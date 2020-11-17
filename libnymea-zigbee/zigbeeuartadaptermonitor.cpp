@@ -179,6 +179,11 @@ QList<ZigbeeUartAdapter> ZigbeeUartAdapterMonitor::availableAdapters() const
     return m_availableAdapters.values();
 }
 
+bool ZigbeeUartAdapterMonitor::hasAdapter(const QString &serialPort) const
+{
+    return m_availableAdapters.contains(serialPort);
+}
+
 bool ZigbeeUartAdapterMonitor::isValid() const
 {
     return m_isValid;
