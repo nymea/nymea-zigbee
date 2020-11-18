@@ -42,57 +42,69 @@ ZigbeeUartAdapterMonitor::ZigbeeUartAdapterMonitor(QObject *parent) : QObject(pa
         return;
     }
 
+    foreach (const QSerialPortInfo &serialPortInfo, QSerialPortInfo::availablePorts()) {
+        addAdapterInternally(serialPortInfo.systemLocation());
+    }
+
+
     // Read initially all tty devices
-    struct udev_enumerate *enumerate = udev_enumerate_new(m_udev);
-    if (!enumerate) {
-        qCWarning(dcZigbeeAdapterMonitor()) << "Could not create udev enumerate for initial device reading for the adapter monitor.";
-        udev_unref(m_udev);
-        m_udev = nullptr;
-        return;
-    }
+    //    struct udev_enumerate *enumerate = udev_enumerate_new(m_udev);
+    //    if (!enumerate) {
+    //        qCWarning(dcZigbeeAdapterMonitor()) << "Could not create udev enumerate for initial device reading for the adapter monitor.";
+    //        udev_unref(m_udev);
+    //        m_udev = nullptr;
+    //        return;
+    //    }
 
-    udev_enumerate_add_match_subsystem(enumerate, "tty");
+    //    udev_enumerate_add_match_subsystem(enumerate, "tty");
 
-    if (udev_enumerate_scan_devices(enumerate) < 0) {
-        qCWarning(dcZigbeeAdapterMonitor()) << "Failed to scan devices from udev enumerate.";
-        udev_enumerate_unref(enumerate);
-        enumerate = nullptr;
-        udev_unref(m_udev);
-        m_udev = nullptr;
-        return;
-    }
+    //    if (udev_enumerate_scan_devices(enumerate) < 0) {
+    //        qCWarning(dcZigbeeAdapterMonitor()) << "Failed to scan devices from udev enumerate.";
+    //        udev_enumerate_unref(enumerate);
+    //        enumerate = nullptr;
+    //        udev_unref(m_udev);
+    //        m_udev = nullptr;
+    //        return;
+    //    }
 
-    qCDebug(dcZigbeeAdapterMonitor()) << "Load initial list of available serial ports...";
-    struct udev_list_entry *devices = nullptr;
-    devices = udev_enumerate_get_list_entry(enumerate);
-    struct udev_list_entry *dev_list_entry = nullptr;
-    udev_list_entry_foreach(dev_list_entry, devices) {
-        struct udev_device *device = nullptr;
-        const char *path;
-        path = udev_list_entry_get_name(dev_list_entry);
-        device = udev_device_new_from_syspath(m_udev, path);
+    //    qCDebug(dcZigbeeAdapterMonitor()) << "Load initial list of available serial ports...";
+    //    struct udev_list_entry *devices = nullptr;
+    //    devices = udev_enumerate_get_list_entry(enumerate);
+    //    struct udev_list_entry *dev_list_entry = nullptr;
+    //    udev_list_entry_foreach(dev_list_entry, devices) {
+    //        struct udev_device *device = nullptr;
+    //        const char *path;
+    //        path = udev_list_entry_get_name(dev_list_entry);
+    //        device = udev_device_new_from_syspath(m_udev, path);
 
-        // Print properties
-        struct udev_list_entry *properties = udev_device_get_properties_list_entry(device);
-        struct udev_list_entry *property_list_entry = nullptr;
-        udev_list_entry_foreach(property_list_entry, properties) {
-            qCDebug(dcZigbeeAdapterMonitor()) << " - Property" << udev_list_entry_get_name(property_list_entry) << udev_list_entry_get_value(property_list_entry);
-        }
+    //        // Filter out virtual devices
+    //        QString devicePath = QString::fromLatin1(udev_device_get_property_value(device,"DEVPATH"));
+    //        QString systemPath = QString::fromLatin1(udev_device_get_property_value(device,"DEVNAME"));
 
-        QString devicePath = QString::fromLatin1(udev_device_get_property_value(device,"DEVNAME"));
-        QString manufacturerString = QString::fromLatin1(udev_device_get_property_value(device,"ID_VENDOR_ENC"));
-        QString descriptionString = QString::fromLatin1(udev_device_get_property_value(device,"ID_MODEL_ENC"));
-        QString serialNumberString = QString::fromLatin1(udev_device_get_property_value(device, "ID_SERIAL_SHORT"));
+    //        if (!devicePath.contains("/virtual/tty/")) {
+    //            // Print properties
+    //            struct udev_list_entry *properties = udev_device_get_properties_list_entry(device);
+    //            struct udev_list_entry *property_list_entry = nullptr;
+    //            udev_list_entry_foreach(property_list_entry, properties) {
+    //                qCDebug(dcZigbeeAdapterMonitor()) << " - Property" << udev_list_entry_get_name(property_list_entry) << udev_list_entry_get_value(property_list_entry);
+    //            }
 
-        // Clean up this device since we have all information
-        udev_device_unref(device);
+    //            QString manufacturerString = QString::fromLatin1(udev_device_get_property_value(device,"ID_VENDOR_ENC"));
+    //            QString descriptionString = QString::fromLatin1(udev_device_get_property_value(device,"ID_MODEL_ENC"));
+    //            QString serialNumberString = QString::fromLatin1(udev_device_get_property_value(device, "ID_SERIAL_SHORT"));
 
-        qCDebug(dcZigbeeAdapterMonitor()) << "[+]" << devicePath  << manufacturerString << descriptionString << serialNumberString;
-        addAdapterInternally(devicePath);
-    }
+    //            qCDebug(dcZigbeeAdapterMonitor()) << "[+]" << systemPath  << manufacturerString << descriptionString << serialNumberString;
+    //            addAdapterInternally(systemPath);
+    //        } else {
+    //            qCDebug(dcZigbeeAdapterMonitor()) << "Skipping virtual tty device" << systemPath << "-->" << devicePath;
+    //        }
 
-    udev_enumerate_unref(enumerate);
-    enumerate = nullptr;
+    //        // Clean up this device since we have all information
+    //        udev_device_unref(device);
+    //    }
+
+    //    udev_enumerate_unref(enumerate);
+    //    enumerate = nullptr;
 
     // Create udev monitor
     m_monitor = udev_monitor_new_from_netlink(m_udev, "udev");
@@ -140,8 +152,15 @@ ZigbeeUartAdapterMonitor::ZigbeeUartAdapterMonitor(QObject *parent) : QObject(pa
             return;
         }
 
+        QString systemPath = QString::fromLatin1(udev_device_get_property_value(device,"DEVNAME"));
+        QString devicePath = QString::fromLatin1(udev_device_get_property_value(device,"DEVPATH"));
+        if (devicePath.contains("/virtual/tty/")) {
+            qCDebug(dcZigbeeAdapterMonitor()) << "Skipping virtual tty device" << systemPath << "-->" << devicePath;
+            return;
+        }
+
+
         QString actionString = QString::fromLatin1(udev_device_get_action(device));
-        QString devicePath = QString::fromLatin1(udev_device_get_property_value(device,"DEVNAME"));
         QString manufacturerString = QString::fromLatin1(udev_device_get_property_value(device,"ID_VENDOR_ENC"));
         QString descriptionString = QString::fromLatin1(udev_device_get_property_value(device,"ID_MODEL_ENC"));
         QString serialNumberString = QString::fromLatin1(udev_device_get_property_value(device, "ID_SERIAL_SHORT"));
@@ -154,16 +173,16 @@ ZigbeeUartAdapterMonitor::ZigbeeUartAdapterMonitor(QObject *parent) : QObject(pa
             return;
 
         if (actionString == "add") {
-            qCDebug(dcZigbeeAdapterMonitor()) << "[+]" << devicePath << serialNumberString;
-            if (!m_availableAdapters.contains(devicePath)) {
-                addAdapterInternally(devicePath);
+            qCDebug(dcZigbeeAdapterMonitor()) << "[+]" << systemPath << serialNumberString;
+            if (!m_availableAdapters.contains(systemPath)) {
+                addAdapterInternally(systemPath);
             }
         }
 
         if (actionString == "remove") {
-            qCDebug(dcZigbeeAdapterMonitor()) << "[-]" << devicePath << serialNumberString;
-            if (m_availableAdapters.contains(devicePath)) {
-                ZigbeeUartAdapter adapter = m_availableAdapters.take(devicePath);
+            qCDebug(dcZigbeeAdapterMonitor()) << "[-]" << systemPath << serialNumberString;
+            if (m_availableAdapters.contains(systemPath)) {
+                ZigbeeUartAdapter adapter = m_availableAdapters.take(systemPath);
                 qCDebug(dcZigbeeAdapterMonitor()) << "Removed" << adapter;
                 emit adapterRemoved(adapter);
             }
