@@ -38,6 +38,7 @@ class ZigbeeUartAdapterMonitor : public QObject
     Q_OBJECT
 public:
     explicit ZigbeeUartAdapterMonitor(QObject *parent = nullptr);
+    ~ZigbeeUartAdapterMonitor();
 
     QList<ZigbeeUartAdapter> availableAdapters() const;
     bool hasAdapter(const QString &serialPort) const;
