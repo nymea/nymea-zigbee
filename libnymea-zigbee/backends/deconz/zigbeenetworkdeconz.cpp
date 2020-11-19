@@ -72,13 +72,13 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::sendRequest(const ZigbeeNetworkRequest 
     });
 
     // Finish the reply right the way if the network is offline
-    if (!m_controller->available()) {
+    if (!m_controller->available() || state() != ZigbeeNetwork::StateRunning) {
         finishNetworkReply(reply, ZigbeeNetworkReply::ErrorNetworkOffline);
         return reply;
     }
 
     ZigbeeInterfaceDeconzReply *interfaceReply = m_controller->requestSendRequest(request);
-    connect(interfaceReply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply, interfaceReply](){
+    connect(interfaceReply, &ZigbeeInterfaceDeconzReply::finished, reply, [this, reply, interfaceReply](){
         if (interfaceReply->statusCode() != Deconz::StatusCodeSuccess) {
             qCWarning(dcZigbeeController()) << "Could send request to controller. SQN:" << interfaceReply->sequenceNumber() << interfaceReply->statusCode();
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorInterfaceError);

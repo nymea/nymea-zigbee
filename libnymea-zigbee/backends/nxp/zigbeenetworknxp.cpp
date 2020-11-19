@@ -81,13 +81,13 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
     });
 
     // Finish the reply right the way if the network is offline
-    if (!m_controller->available()) {
+    if (!m_controller->available() || state() != ZigbeeNetwork::StateRunning) {
         finishNetworkReply(reply, ZigbeeNetworkReply::ErrorNetworkOffline);
         return reply;
     }
 
     ZigbeeInterfaceNxpReply *interfaceReply = m_controller->requestSendRequest(request);
-    connect(interfaceReply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply, interfaceReply](){
+    connect(interfaceReply, &ZigbeeInterfaceNxpReply::finished, reply, [this, reply, interfaceReply](){
         if (interfaceReply->status() != Nxp::StatusSuccess) {
             qCWarning(dcZigbeeController()) << "Could send request to controller. SQN:" << interfaceReply->sequenceNumber() << interfaceReply->status();
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorInterfaceError);
@@ -102,7 +102,7 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
         }
 
         quint8 networkRequestId = interfaceReply->responseData().at(0);
-        qCDebug(dcZigbeeNetwork()) << "Request has network SQN" << networkRequestId;
+        //qCDebug(dcZigbeeNetwork()) << "Request has network SQN" << networkRequestId;
         reply->request().setRequestId(networkRequestId);
         m_pendingReplies.insert(networkRequestId, reply);
 
