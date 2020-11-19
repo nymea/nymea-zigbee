@@ -72,7 +72,7 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::sendRequest(const ZigbeeNetworkRequest 
     });
 
     // Finish the reply right the way if the network is offline
-    if (!m_controller->available() || state() != ZigbeeNetwork::StateRunning) {
+    if (!m_controller->available() || state() == ZigbeeNetwork::StateOffline) {
         finishNetworkReply(reply, ZigbeeNetworkReply::ErrorNetworkOffline);
         return reply;
     }
