@@ -32,6 +32,7 @@
 #include <QObject>
 
 #include "zigbee.h"
+#include "zigbeeaddress.h"
 
 class ZigbeeDeviceProfile
 {
@@ -276,6 +277,17 @@ public:
         PowerLevel powerLevel = PowerLevelFull;
     } PowerDescriptor;
 
+    typedef struct BindingTableListRecord {
+        ZigbeeAddress sourceAddress;
+        quint8 sourceEndpoint;
+        quint16 clusterId;
+        Zigbee::DestinationAddressMode destinationAddressMode; // Note: group or unicast
+        quint16 destinationAddressShort; // Only for destination address 0x01
+        ZigbeeAddress destinationAddress;  // Only for destination address 0x03
+        quint8 destinationEndpoint; // Only for destination address 0x03
+    } BindingTableListRecord;
+
+
     static NodeDescriptor parseNodeDescriptor(const QByteArray &payload);
     static MacCapabilities parseMacCapabilities(quint8 macCapabilitiesFlag);
     static ServerMask parseServerMask(quint16 serverMaskFlag);
@@ -290,5 +302,6 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::MacCapabilities &macC
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::ServerMask &serverMask);
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::DescriptorCapabilities &descriptorCapabilities);
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::PowerDescriptor &powerDescriptor);
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::BindingTableListRecord &bindingTableListRecord);
 
 #endif // ZIGBEEDEVICEPROFILE_H

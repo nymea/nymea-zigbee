@@ -200,7 +200,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &deviceAdpu)
     debug.nospace() << "DeviceAdpu(SQN: " << deviceAdpu.transactionSequenceNumber << ", ";
     debug.nospace() << deviceAdpu.status << ", ";
     debug.nospace() << ZigbeeUtils::convertUint16ToHexString(deviceAdpu.addressOfInterest) << ", ";
-    debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(deviceAdpu.payload) << ")";
+    debug.nospace() << "Payload: " << ZigbeeUtils::convertByteArrayToHexString(deviceAdpu.payload) << ")";
     return debug.space();
 }
 
@@ -260,5 +260,24 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::PowerDescriptor &powe
     debug.nospace() << "    Available power sources: " << powerDescriptor.availablePowerSources << "\n";
     debug.nospace() << "    Power source: " << powerDescriptor.powerSource << "\n";
     debug.nospace() << "    Power level: " << powerDescriptor.powerLevel;
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::BindingTableListRecord &bindingTableListRecord)
+{
+    debug.nospace() << "BindingTableListRecord(" << bindingTableListRecord.sourceAddress.toString() << ", ";
+    debug.nospace() << "source endpoint: " << bindingTableListRecord.sourceEndpoint << ", ";
+    debug.nospace() << "cluster: " << static_cast<ZigbeeClusterLibrary::ClusterId>(bindingTableListRecord.clusterId) << " --> ";
+    switch (bindingTableListRecord.destinationAddressMode) {
+    case Zigbee::DestinationAddressModeGroup:
+        debug.nospace() << "destination address (group): " << ZigbeeUtils::convertUint16ToHexString(bindingTableListRecord.destinationAddressShort) << ") ";
+        break;
+    case Zigbee::DestinationAddressModeIeeeAddress:
+        debug.nospace() << "destination address (unicast): " << bindingTableListRecord.destinationAddress.toString() << ", ";
+        debug.nospace() << "destination endpoint: " << bindingTableListRecord.destinationEndpoint << ") ";
+        break;
+    default:
+        break;
+    }
     return debug;
 }

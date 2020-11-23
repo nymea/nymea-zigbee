@@ -154,6 +154,58 @@ void ZigbeeNode::startInitialization()
     initNodeDescriptor();
 }
 
+void ZigbeeNode::readBindingTableEntries()
+{
+    ZigbeeDeviceObjectReply * reply = deviceObject()->requestMgmtBind();
+    connect(reply, &ZigbeeDeviceObjectReply::finished, this, [=](){
+        if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeDeviceObject()) << "Failed to read binding table" << reply->error();
+            return;
+        }
+
+        // The request finished, but we received a ZDP error.
+        if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
+            qCWarning(dcZigbeeNode()) << this << "failed to read node descriptor" << reply->responseAdpu().status;
+            return;
+        }
+
+        qCDebug(dcZigbeeDeviceObject()) << "Bind table payload" << ZigbeeUtils::convertByteArrayToHexString(reply->responseData());
+        QByteArray response = reply->responseData();
+        QDataStream stream(&response, QIODevice::ReadOnly);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        quint8 sqn; quint8 statusInt; quint8 entriesCount; quint8 startIndex; quint8 bindingTableListCount;
+        stream >> sqn >> statusInt >> entriesCount >> startIndex >> bindingTableListCount;
+        ZigbeeDeviceProfile::Status status = static_cast<ZigbeeDeviceProfile::Status>(statusInt);
+        qCDebug(dcZigbeeDeviceObject()) << "SQN:" << sqn << status << "entries:" << entriesCount << "index:" << startIndex << "list count:" << bindingTableListCount;
+
+        QList<ZigbeeDeviceProfile::BindingTableListRecord> bindingTableRecords;
+        for (int i = 0; i < bindingTableListCount; i++) {
+            quint64 sourceAddress; quint8 addressMode;
+            ZigbeeDeviceProfile::BindingTableListRecord record;
+            stream >> sourceAddress;
+            record.sourceAddress = ZigbeeAddress(sourceAddress);
+
+            stream >> record.sourceEndpoint >> record.clusterId >> addressMode;
+            record.destinationAddressMode = static_cast<Zigbee::DestinationAddressMode>(addressMode);
+
+            if (addressMode == Zigbee::DestinationAddressModeGroup) {
+                stream >> record.destinationAddressShort;
+            } else if (addressMode == Zigbee::DestinationAddressModeIeeeAddress) {
+                quint64 destinationAddressIeee;
+                stream >> destinationAddressIeee >> record.destinationEndpoint;
+                record.destinationAddress = ZigbeeAddress(destinationAddressIeee);
+            } else {
+                qCWarning(dcZigbeeDeviceObject()) << "Invalid destination address mode in binding table record.";
+                break;
+            }
+            qCDebug(dcZigbeeDeviceObject()) << record;
+            bindingTableRecords << record;
+        }
+
+        // TODO: continue reading if there are more entries
+    });
+}
+
 void ZigbeeNode::initNodeDescriptor()
 {
     qCDebug(dcZigbeeNode()) << "Requst node descriptor from" << this;
@@ -636,6 +688,6 @@ QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {
     debug.nospace().noquote() << "ZigbeeNode(" << ZigbeeUtils::convertUint16ToHexString(node->shortAddress());
     debug.nospace().noquote() << ", " << node->extendedAddress().toString();
-    debug.nospace().noquote() << ") ";
-    return debug;
+    debug.nospace().noquote() << ")";
+    return debug.space().quote();
 }

@@ -29,6 +29,7 @@
 #include "zigbeenetworkreply.h"
 #include "loggingcategory.h"
 #include "zigbeenetwork.h"
+#include "zigbeeutils.h"
 
 #include <QDataStream>
 
@@ -124,8 +125,17 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
             case CommandToggle:
                 emit commandSent(CommandToggle);
                 break;
+            case CommandOnWithTimedOff: {
+                QByteArray payload = frame.payload;
+                QDataStream payloadStream(&payload, QIODevice::ReadOnly);
+                payloadStream.setByteOrder(QDataStream::LittleEndian);
+                quint8 acceptOnlyWhenOnInt = 0; quint16 onTime; quint16 offTime;
+                payloadStream >> acceptOnlyWhenOnInt >> onTime >> offTime;
+                emit commandOnWithTimedOffSent(static_cast<bool>(acceptOnlyWhenOnInt), onTime, offTime);
+                break;
+            }
             default:
-                qCWarning(dcZigbeeCluster()) << "Unhandled command sent from" << m_node << m_endpoint << this << command;
+                qCWarning(dcZigbeeCluster()) << "Unhandled command sent from" << m_node << m_endpoint << this << command << ZigbeeUtils::convertByteArrayToHexString(frame.payload);
                 break;
             }
         }

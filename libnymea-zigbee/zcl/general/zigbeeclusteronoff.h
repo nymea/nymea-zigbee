@@ -95,7 +95,8 @@ signals:
 
     // Client cluster signals
     void commandSent(Command command);
-
+    // On and off time is in 1/10 seconds
+    void commandOnWithTimedOffSent(bool acceptOnlyWhenOn, quint16 onTime, quint16 offTime);
 };
 
 #endif // ZIGBEECLUSTERONOFF_H

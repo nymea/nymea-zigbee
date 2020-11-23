@@ -85,6 +85,8 @@ public:
     // This method starts the node initialization phase (read descriptors and endpoints)
     void startInitialization();
 
+    void readBindingTableEntries();
+
 private:
     ZigbeeNode(ZigbeeNetwork *network, quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent = nullptr);
 
