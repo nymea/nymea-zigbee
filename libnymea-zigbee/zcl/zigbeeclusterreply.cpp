@@ -42,6 +42,11 @@ Zigbee::ZigbeeNwkLayerStatus ZigbeeClusterReply::zigbeeNwkStatus() const
     return m_zigbeeNwkStatus;
 }
 
+Zigbee::ZigbeeMacLayerStatus ZigbeeClusterReply::zigbeeMacStatus() const
+{
+    return m_zigbeeMacStatus;
+}
+
 ZigbeeNetworkRequest ZigbeeClusterReply::request() const
 {
     return m_request;

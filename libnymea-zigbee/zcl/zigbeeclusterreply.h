@@ -44,7 +44,9 @@ public:
         ErrorNoError, // All OK, no error occured, the message was transported successfully
         ErrorTimeout, // The request timeouted
         ErrorZigbeeApsStatusError, // An APS transport error occured. See zigbeeApsStatus()
-        ErrorZigbeeNwkStatusError, // An NWK layer error occured. See zigbeeNwkStatus()
+        ErrorZigbeeNwkStatusError, // A NWK layer error occured. See zigbeeNwkStatus()
+        ErrorZigbeeMacStatusError, // A MAC layer error occured. See zigbeeNwkStatus()
+        ErrorZigbeeClusterLibraryError, // A ZCL error occured. See zigbeeClusterLibraryStatus()
         ErrorInterfaceError, // A transport interface error occured. Could not communicate with the hardware.
         ErrorNetworkOffline // The network is offline. Cannot send any requests
     };
@@ -53,6 +55,8 @@ public:
     Error error() const;
     Zigbee::ZigbeeApsStatus zigbeeApsStatus() const;
     Zigbee::ZigbeeNwkLayerStatus zigbeeNwkStatus() const;
+    Zigbee::ZigbeeMacLayerStatus zigbeeMacStatus() const;
+    ZigbeeClusterLibrary::Status zigbeeClusterLibraryStatus() const;
 
     ZigbeeNetworkRequest request() const;
     ZigbeeClusterLibrary::Frame requestFrame() const;
@@ -78,6 +82,8 @@ private:
     bool m_apsConfirmReceived = false;
     Zigbee::ZigbeeApsStatus m_zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess;
     Zigbee::ZigbeeNwkLayerStatus m_zigbeeNwkStatus = Zigbee::ZigbeeNwkLayerStatusSuccess;
+    Zigbee::ZigbeeMacLayerStatus m_zigbeeMacStatus = Zigbee::ZigbeeMacLayerStatusSuccess;
+    ZigbeeClusterLibrary::Status m_zigbeeClusterLibraryStatus = ZigbeeClusterLibrary::StatusSuccess;
 
     ZigbeeClusterLibrary::Command m_expectedResponse;
 

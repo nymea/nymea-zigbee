@@ -85,6 +85,7 @@ public:
     // This method starts the node initialization phase (read descriptors and endpoints)
     void startInitialization();
 
+    void removeAllBindings();
     void readBindingTableEntries();
 
 private:

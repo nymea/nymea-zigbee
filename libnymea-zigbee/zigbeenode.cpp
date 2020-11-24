@@ -154,18 +154,17 @@ void ZigbeeNode::startInitialization()
     initNodeDescriptor();
 }
 
+void ZigbeeNode::removeAllBindings()
+{
+
+}
+
 void ZigbeeNode::readBindingTableEntries()
 {
-    ZigbeeDeviceObjectReply * reply = deviceObject()->requestMgmtBind();
+    ZigbeeDeviceObjectReply *reply = deviceObject()->requestMgmtBind();
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [=](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to read binding table" << reply->error();
-            return;
-        }
-
-        // The request finished, but we received a ZDP error.
-        if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
-            qCWarning(dcZigbeeNode()) << this << "failed to read node descriptor" << reply->responseAdpu().status;
+            qCWarning(dcZigbeeNode()) << "Failed to read binding table" << reply->error();
             return;
         }
 
@@ -226,13 +225,6 @@ void ZigbeeNode::initNodeDescriptor()
             return;
         }
 
-        // The request finished, but we received a ZDP error.
-        if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
-            qCWarning(dcZigbeeNode()) << this << "failed to read node descriptor" << reply->responseAdpu().status;
-            emit nodeInitializationFailed();
-            return;
-        }
-
         qCDebug(dcZigbeeNode()) << this << "reading node descriptor finished successfully.";
         m_nodeDescriptor = ZigbeeDeviceProfile::parseNodeDescriptor(reply->responseAdpu().payload);
         qCDebug(dcZigbeeNode()) << m_nodeDescriptor;
@@ -261,22 +253,14 @@ void ZigbeeNode::initPowerDescriptor()
             return;
         }
 
-        ZigbeeDeviceProfile::Adpu adpu = reply->responseAdpu();
-        if (adpu.status != ZigbeeDeviceProfile::StatusSuccess) {
-            qCWarning(dcZigbeeNode()) << "Failed to read power descriptor from" << this << adpu.status;
-            // FIXME: decide what to do, remove the node again from network or continue without powerdescriptor
-            return;
-        }
-
         qCDebug(dcZigbeeNode()) << this << "reading power descriptor finished successfully.";
-        m_requestRetry = 0;
-
-        QDataStream stream(adpu.payload);
+        QDataStream stream(reply->responseAdpu().payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         quint16 powerDescriptorFlag = 0;
         stream >> powerDescriptorFlag;
         m_powerDescriptor = ZigbeeDeviceProfile::parsePowerDescriptor(powerDescriptorFlag);
         qCDebug(dcZigbeeNode()) << m_powerDescriptor;
+        m_requestRetry = 0;
 
         // Continue with endpoint fetching
         initEndpoints();
@@ -301,15 +285,7 @@ void ZigbeeNode::initEndpoints()
             return;
         }
 
-        if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
-            qCWarning(dcZigbeeNode()) << "Failed to read active endpoints" << reply->responseAdpu().status;
-            emit nodeInitializationFailed();
-            return;
-        }
-
         qCDebug(dcZigbeeNode()) << this << "reading active endpoints finished successfully.";
-        m_requestRetry = 0;
-
         QDataStream stream(reply->responseAdpu().payload);
         stream.setByteOrder(QDataStream::LittleEndian);
         quint8 endpointCount = 0;
@@ -325,6 +301,8 @@ void ZigbeeNode::initEndpoints()
         for (int i = 0; i < m_uninitializedEndpoints.count(); i++) {
             qCDebug(dcZigbeeNode()) << " -" << ZigbeeUtils::convertByteToHexString(m_uninitializedEndpoints.at(i));
         }
+
+        m_requestRetry = 0;
 
         // If there a no endpoints or all endpoints have already be initialized, continue with reading the basic cluster information
         if (m_uninitializedEndpoints.isEmpty()) {
@@ -357,15 +335,8 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
             return;
         }
 
-        if (reply->responseAdpu().status != ZigbeeDeviceProfile::StatusSuccess) {
-            qCWarning(dcZigbeeNode()) << this << "failed to read simple descriptor from endpoint" << endpointId << reply->responseAdpu().status;
-            emit nodeInitializationFailed();
-            return;
-        }
-
         qCDebug(dcZigbeeNode()) << this << "reading simple descriptor for endpoint" << endpointId << "finished successfully.";
         m_requestRetry = 0;
-
         quint8 length = 0; quint8 endpointId = 0; quint16 profileId = 0; quint16 deviceId = 0; quint8 deviceVersion = 0;
         quint8 inputClusterCount = 0; quint8 outputClusterCount = 0;
         QList<quint16> inputClusters;

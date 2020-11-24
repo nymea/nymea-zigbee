@@ -68,10 +68,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestNodeDescriptor()
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
-                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
-                                              << m_node << networkReply->error()
-                                              << networkReply->zigbeeApsStatus();
             finishZdoReply(zdoReply);
             return;
         }
@@ -115,10 +111,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestPowerDescriptor()
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
-                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
-                                              << m_node << networkReply->error()
-                                              << networkReply->zigbeeApsStatus();
             finishZdoReply(zdoReply);
             return;
         }
@@ -161,10 +153,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestActiveEndpoints()
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
-                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
-                                              << m_node << networkReply->error()
-                                              << networkReply->zigbeeApsStatus();
             finishZdoReply(zdoReply);
             return;
         }
@@ -207,10 +195,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestSimpleDescriptor(quint8 endp
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
-                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
-                                              << m_node << networkReply->error()
-                                              << networkReply->zigbeeApsStatus();
             finishZdoReply(zdoReply);
             return;
         }
@@ -258,10 +242,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestBindShortAddress(quint8 sour
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
-                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
-                                              << m_node << networkReply->error()
-                                              << networkReply->zigbeeApsStatus();
             finishZdoReply(zdoReply);
             return;
         }
@@ -310,10 +290,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestBindIeeeAddress(quint8 sourc
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
-                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
-                                              << m_node << networkReply->error()
-                                              << networkReply->zigbeeApsStatus();
             finishZdoReply(zdoReply);
             return;
         }
@@ -365,10 +341,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLeaveNetwork(bool rejoin
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
-                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
-                                              << m_node << networkReply->error()
-                                              << networkReply->zigbeeApsStatus();
             finishZdoReply(zdoReply);
             return;
         }
@@ -410,10 +382,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLqi(quint8 startIndex)
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
-                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
-                                              << m_node << networkReply->error()
-                                              << networkReply->zigbeeApsStatus();
             finishZdoReply(zdoReply);
             return;
         }
@@ -467,10 +435,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtBind(quint8 startIndex)
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
-            qCWarning(dcZigbeeDeviceObject()) << "Failed to send request"
-                                              << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId())
-                                              << m_node << networkReply->error()
-                                              << networkReply->zigbeeApsStatus();
             finishZdoReply(zdoReply);
             return;
         }
@@ -479,7 +443,6 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtBind(quint8 startIndex)
         // Now check if the expected indication response received already
         if (zdoReply->isComplete()) {
             qCDebug(dcZigbeeDeviceObject()) << "Successfully received response for" << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId());
-
             finishZdoReply(zdoReply);
             return;
         }
@@ -520,28 +483,36 @@ bool ZigbeeDeviceObject::verifyNetworkError(ZigbeeDeviceObjectReply *zdoReply, Z
         // The request has been transported successfully to he destination, now
         // wait for the expected indication or check if we already recieved it
         zdoReply->m_apsConfirmReceived = true;
-        zdoReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
-        zdoReply->m_zigbeeNwkStatus = networkReply->zigbeeNwkStatus();
         success = true;
         break;
     case ZigbeeNetworkReply::ErrorInterfaceError:
         zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorInterfaceError;
+        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request" << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId()) << m_node << networkReply->error();
         break;
     case ZigbeeNetworkReply::ErrorTimeout:
         zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorTimeout;
+        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request" << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId()) << m_node << networkReply->error();
         break;
     case ZigbeeNetworkReply::ErrorNetworkOffline:
         zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorNetworkOffline;
+        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request" << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId()) << m_node << networkReply->error();
+        break;
+    case ZigbeeNetworkReply::ErrorZigbeeMacStatusError:
+        zdoReply->setZigbeeMacLayerStatus(networkReply->zigbeeMacStatus());
+        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request" << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId()) << m_node << networkReply->zigbeeMacStatus();
+        zdoReply->m_apsConfirmReceived = true;
         break;
     case ZigbeeNetworkReply::ErrorZigbeeApsStatusError:
         zdoReply->m_apsConfirmReceived = true;
-        zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorZigbeeApsStatusError;
-        zdoReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
+        zdoReply->setZigbeeApsStatus(networkReply->zigbeeApsStatus());
+        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request" << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId()) << m_node << networkReply->zigbeeApsStatus();
+        zdoReply->m_apsConfirmReceived = true;
         break;
     case ZigbeeNetworkReply::ErrorZigbeeNwkStatusError:
         zdoReply->m_apsConfirmReceived = true;
-        zdoReply->m_error = ZigbeeDeviceObjectReply::ErrorZigbeeNwkStatusError;
-        zdoReply->m_zigbeeNwkStatus = networkReply->zigbeeNwkStatus();
+        zdoReply->setZigbeeNwkLayerStatus(networkReply->zigbeeNwkStatus());
+        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request" << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId()) << m_node << networkReply->zigbeeNwkStatus();
+        zdoReply->m_apsConfirmReceived = true;
         break;
     }
 
@@ -550,21 +521,17 @@ bool ZigbeeDeviceObject::verifyNetworkError(ZigbeeDeviceObjectReply *zdoReply, Z
 
 void ZigbeeDeviceObject::finishZdoReply(ZigbeeDeviceObjectReply *zdoReply)
 {
+    // Note: here all layer errors have already been set
     switch(zdoReply->error()) {
     case ZigbeeDeviceObjectReply::ErrorNoError:
         qCDebug(dcZigbeeDeviceObject()) << "Reply finished successfully" << zdoReply->request();
         break;
-    case ZigbeeDeviceObjectReply::ErrorZigbeeApsStatusError:
-        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request to device" << zdoReply->request() << zdoReply->error() << zdoReply->zigbeeApsStatus();
-        break;
-    case ZigbeeDeviceObjectReply::ErrorZigbeeNwkStatusError:
-        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request to device" << zdoReply->request() << zdoReply->error() << zdoReply->zigbeeNwkStatus();
+    case ZigbeeDeviceObjectReply::ErrorZigbeeDeviceObjectStatusError:
+        qCWarning(dcZigbeeDeviceObject()) << "Reply finished with error" << zdoReply->request() << zdoReply->zigbeeDeviceObjectStatus();
         break;
     default:
-        qCWarning(dcZigbeeDeviceObject()) << "Failed to send request to device" << zdoReply->request() << zdoReply->error();
         break;
     }
-
 
     m_pendingReplies.remove(zdoReply->transactionSequenceNumber());
     zdoReply->finished();
@@ -578,6 +545,7 @@ void ZigbeeDeviceObject::processApsDataIndication(const Zigbee::ApsdeDataIndicat
     if (zdoReply && indication.clusterId == (zdoReply->request().clusterId() | 0x8000)) {
         zdoReply->m_responseData = indication.asdu;
         zdoReply->m_responseAdpu = asdu;
+        zdoReply->setZigbeeDeviceObjectStatus(asdu.status);
         zdoReply->m_zdpIndicationReceived = true;
         if (zdoReply->isComplete()) {
             finishZdoReply(zdoReply);

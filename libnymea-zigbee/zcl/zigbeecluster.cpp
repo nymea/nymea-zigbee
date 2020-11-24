@@ -171,7 +171,6 @@ ZigbeeClusterReply *ZigbeeCluster::executeGlobalCommand(quint8 command, const QB
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {
-            qCWarning(dcZigbeeClusterLibrary()) << "Failed to read attributes from" << m_node << m_endpoint << this << networkReply->error();
             finishZclReply(zclReply);
             return;
         }
@@ -227,9 +226,6 @@ ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const Q
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {
-            qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request"
-                                                << m_node << networkReply->error()
-                                                << networkReply->zigbeeApsStatus();
             finishZclReply(zclReply);
             return;
         }
@@ -275,9 +271,6 @@ ZigbeeClusterReply *ZigbeeCluster::sendClusterServerResponse(quint8 command, qui
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
     connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {
-            qCWarning(dcZigbeeClusterLibrary()) << "Failed to send response"
-                                                << m_node << networkReply->error()
-                                                << networkReply->zigbeeApsStatus();
             finishZclReply(zclReply);
             return;
         }
@@ -313,28 +306,37 @@ bool ZigbeeCluster::verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetwo
         // The request has been transported successfully to he destination, now
         // wait for the expected indication or check if we already recieved it
         zclReply->m_apsConfirmReceived = true;
-        zclReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
-        zclReply->m_zigbeeNwkStatus = networkReply->zigbeeNwkStatus();
         success = true;
         break;
     case ZigbeeNetworkReply::ErrorTimeout:
         zclReply->m_error = ZigbeeClusterReply::ErrorTimeout;
+        qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request to" << m_node << zclReply->error();
         break;
     case ZigbeeNetworkReply::ErrorInterfaceError:
         zclReply->m_error = ZigbeeClusterReply::ErrorInterfaceError;
+        qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request to" << m_node << zclReply->error();
         break;
     case ZigbeeNetworkReply::ErrorNetworkOffline:
         zclReply->m_error = ZigbeeClusterReply::ErrorNetworkOffline;
+        qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request to" << m_node << zclReply->error();
         break;
     case ZigbeeNetworkReply::ErrorZigbeeApsStatusError:
         zclReply->m_apsConfirmReceived = true;
         zclReply->m_error = ZigbeeClusterReply::ErrorZigbeeApsStatusError;
         zclReply->m_zigbeeApsStatus = networkReply->zigbeeApsStatus();
+        qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request to" << m_node << zclReply->zigbeeApsStatus();
         break;
     case ZigbeeNetworkReply::ErrorZigbeeNwkStatusError:
         zclReply->m_apsConfirmReceived = true;
         zclReply->m_error = ZigbeeClusterReply::ErrorZigbeeNwkStatusError;
         zclReply->m_zigbeeNwkStatus = networkReply->zigbeeNwkStatus();
+        qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request to" << m_node << zclReply->zigbeeNwkStatus();
+        break;
+    case ZigbeeNetworkReply::ErrorZigbeeMacStatusError:
+        zclReply->m_apsConfirmReceived = true;
+        zclReply->m_error = ZigbeeClusterReply::ErrorZigbeeMacStatusError;
+        zclReply->m_zigbeeMacStatus = networkReply->zigbeeMacStatus();
+        qCWarning(dcZigbeeClusterLibrary()) << "Failed to send request to" << m_node << zclReply->zigbeeMacStatus();
         break;
     }
 
@@ -345,6 +347,7 @@ void ZigbeeCluster::finishZclReply(ZigbeeClusterReply *zclReply)
 {
     m_pendingReplies.remove(zclReply->transactionSequenceNumber());
     qCDebug(dcZigbeeCluster()) << "ZigbeeClusterReply finished" << zclReply->request() << zclReply->requestFrame() << zclReply->responseFrame();
+    // FIXME: Set the status
     zclReply->finished();
 }
 

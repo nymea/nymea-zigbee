@@ -37,6 +37,11 @@ ZigbeeNetworkRequest ZigbeeNetworkReply::request() const
     return m_request;
 }
 
+Zigbee::ZigbeeMacLayerStatus ZigbeeNetworkReply::zigbeeMacStatus() const
+{
+    return m_zigbeeMacStatus;
+}
+
 Zigbee::ZigbeeApsStatus ZigbeeNetworkReply::zigbeeApsStatus() const
 {
     return m_zigbeeApsStatus;

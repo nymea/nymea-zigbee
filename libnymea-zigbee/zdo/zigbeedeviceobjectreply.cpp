@@ -34,6 +34,38 @@ ZigbeeDeviceObjectReply::ZigbeeDeviceObjectReply(const ZigbeeNetworkRequest &req
 
 }
 
+void ZigbeeDeviceObjectReply::setZigbeeApsStatus(Zigbee::ZigbeeApsStatus status)
+{
+    m_zigbeeApsStatus = status;
+    if (status != Zigbee::ZigbeeApsStatusSuccess) {
+        m_error = ErrorZigbeeApsStatusError;
+    }
+}
+
+void ZigbeeDeviceObjectReply::setZigbeeNwkLayerStatus(Zigbee::ZigbeeNwkLayerStatus status)
+{
+    m_zigbeeNwkStatus = status;
+    if (status != Zigbee::ZigbeeNwkLayerStatusSuccess) {
+        m_error = ErrorZigbeeNwkStatusError;
+    }
+}
+
+void ZigbeeDeviceObjectReply::setZigbeeMacLayerStatus(Zigbee::ZigbeeMacLayerStatus status)
+{
+    m_zigbeeMacStatus = status;
+    if (status != Zigbee::ZigbeeMacLayerStatusSuccess) {
+        m_error = ErrorZigbeeMacStatusError;
+    }
+}
+
+void ZigbeeDeviceObjectReply::setZigbeeDeviceObjectStatus(ZigbeeDeviceProfile::Status status)
+{
+    m_zigbeeDeviceObjectStatus = status;
+    if (status != ZigbeeDeviceProfile::StatusSuccess) {
+        m_error = ErrorZigbeeDeviceObjectStatusError;
+    }
+}
+
 ZigbeeDeviceObjectReply::Error ZigbeeDeviceObjectReply::error() const
 {
     return m_error;
@@ -47,6 +79,11 @@ Zigbee::ZigbeeApsStatus ZigbeeDeviceObjectReply::zigbeeApsStatus() const
 Zigbee::ZigbeeNwkLayerStatus ZigbeeDeviceObjectReply::zigbeeNwkStatus() const
 {
     return m_zigbeeNwkStatus;
+}
+
+Zigbee::ZigbeeMacLayerStatus ZigbeeDeviceObjectReply::zigbeeMacStatus() const
+{
+    return m_zigbeeMacStatus;
 }
 
 ZigbeeNetworkRequest ZigbeeDeviceObjectReply::request() const

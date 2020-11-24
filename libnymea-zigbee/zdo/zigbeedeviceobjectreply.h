@@ -43,9 +43,11 @@ public:
     enum Error {
         ErrorNoError, // All OK, no error occured, the message was transported successfully
         ErrorTimeout, // The request timeouted
-        ErrorZigbeeApsStatusError, // An APS transport error occured. See zigbeeApsStatus()
-        ErrorZigbeeNwkStatusError, // An NWK layer error occured. See zigbeeNwkStatus()
         ErrorInterfaceError, // A transport interface error occured. Could not communicate with the hardware.
+        ErrorZigbeeApsStatusError, // An APS transport error occured. See zigbeeApsStatus()
+        ErrorZigbeeNwkStatusError, // A NWK layer error occured. See zigbeeNwkStatus()
+        ErrorZigbeeMacStatusError, // A MAC layer error occured. See zigbeeMacStatus()
+        ErrorZigbeeDeviceObjectStatusError, // A ZDP error occured. See zigbeeDeviceObjectStatus()
         ErrorNetworkOffline // The network is offline. Cannot send any requests
     };
     Q_ENUM(Error)
@@ -53,6 +55,8 @@ public:
     Error error() const;
     Zigbee::ZigbeeApsStatus zigbeeApsStatus() const;
     Zigbee::ZigbeeNwkLayerStatus zigbeeNwkStatus() const;
+    Zigbee::ZigbeeMacLayerStatus zigbeeMacStatus() const;
+    ZigbeeDeviceProfile::Status zigbeeDeviceObjectStatus() const;
 
     ZigbeeNetworkRequest request() const;
     quint8 transactionSequenceNumber() const;
@@ -60,7 +64,6 @@ public:
 
     QByteArray responseData() const;
     ZigbeeDeviceProfile::Adpu responseAdpu() const;
-
 
     bool isComplete() const;
 
@@ -73,12 +76,21 @@ private:
     ZigbeeNetworkRequest m_request;
     quint8 m_transactionSequenceNumber = 0;
 
-    // APS transport
-    bool m_apsConfirmReceived = false;
+    // Transport layer errors
     Zigbee::ZigbeeApsStatus m_zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess;
+    void setZigbeeApsStatus(Zigbee::ZigbeeApsStatus status);
+
     Zigbee::ZigbeeNwkLayerStatus m_zigbeeNwkStatus = Zigbee::ZigbeeNwkLayerStatusSuccess;
+    void setZigbeeNwkLayerStatus(Zigbee::ZigbeeNwkLayerStatus status);
+
+    Zigbee::ZigbeeMacLayerStatus m_zigbeeMacStatus = Zigbee::ZigbeeMacLayerStatusSuccess;
+    void setZigbeeMacLayerStatus(Zigbee::ZigbeeMacLayerStatus status);
+
+    ZigbeeDeviceProfile::Status m_zigbeeDeviceObjectStatus = ZigbeeDeviceProfile::StatusSuccess;
+    void setZigbeeDeviceObjectStatus(ZigbeeDeviceProfile::Status status);
 
     // ZDP response data
+    bool m_apsConfirmReceived = false;
     bool m_zdpIndicationReceived = false;
     ZigbeeDeviceProfile::ZdoCommand m_expectedResponse;
     QByteArray m_responseData;

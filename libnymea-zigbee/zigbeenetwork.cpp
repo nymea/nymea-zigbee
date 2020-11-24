@@ -599,9 +599,12 @@ void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::Zig
     } else {
         // There has been an error while transporting the request to the device
         // Note: if the APS status is >= 0xc1, it has to interpreted as NWK layer error
-        if (zigbeeApsStatus >= 0xc1) {
+        if (zigbeeApsStatus >= 0xc1 && zigbeeApsStatus <= 0xd3) {
             reply->m_zigbeeNwkStatus = static_cast<Zigbee::ZigbeeNwkLayerStatus>(static_cast<quint8>(zigbeeApsStatus));
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeNwkStatusError);
+        } else if (zigbeeApsStatus >= 0xE0 && zigbeeApsStatus <= 0xF4) {
+            reply->m_zigbeeMacStatus = static_cast<Zigbee::ZigbeeMacLayerStatus>(static_cast<quint8>(zigbeeApsStatus));
+            finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeMacStatusError);
         } else {
             reply->m_zigbeeApsStatus = zigbeeApsStatus;
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeApsStatusError);
@@ -622,6 +625,9 @@ void ZigbeeNetwork::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkR
         break;
     case ZigbeeNetworkReply::ErrorZigbeeNwkStatusError:
         qCWarning(dcZigbeeNetwork()) << "Failed to send request to device" << reply->request() << reply->error() << reply->zigbeeNwkStatus();
+        break;
+    case ZigbeeNetworkReply::ErrorZigbeeMacStatusError:
+        qCWarning(dcZigbeeNetwork()) << "Failed to send request to device" << reply->request() << reply->error() << reply->zigbeeMacStatus();
         break;
     default:
         qCWarning(dcZigbeeNetwork()) << "Failed to send request to device" << reply->request() << reply->error();

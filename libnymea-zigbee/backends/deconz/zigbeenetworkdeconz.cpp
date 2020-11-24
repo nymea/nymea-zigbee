@@ -46,7 +46,6 @@ ZigbeeNetworkDeconz::ZigbeeNetworkDeconz(const QUuid &networkUuid, QObject *pare
     m_pollNetworkStateTimer->setInterval(1000);
     m_pollNetworkStateTimer->setSingleShot(false);
     connect(m_pollNetworkStateTimer, &QTimer::timeout, this, &ZigbeeNetworkDeconz::onPollNetworkStateTimeout);
-
 }
 
 ZigbeeBridgeController *ZigbeeNetworkDeconz::bridgeController() const

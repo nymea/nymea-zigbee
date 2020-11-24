@@ -78,12 +78,12 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
     // Send the request, and keep the reply until transposrt, zigbee trasmission and response arrived
     connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply](){
         if (!m_pendingReplies.values().contains(reply)) {
-            qCWarning(dcZigbeeNetwork()) << "Reply finished but not in the pending replies list" << reply;
+            qCWarning(dcZigbeeNetwork()) << "#### Reply finished but not in the pending replies list" << reply;
             return;
         }
         quint8 requestId = m_pendingReplies.key(reply);
         m_pendingReplies.remove(requestId);
-        //qCWarning(dcZigbeeNetwork()) << "#### Removed network reply" << reply << "ID:" << requestId << "Current reply count" << m_pendingReplies.count();
+        qCWarning(dcZigbeeNetwork()) << "#### Removed network reply" << reply << "ID:" << requestId << "Current reply count" << m_pendingReplies.count();
     });
 
     // Finish the reply right the way if the network is offline
@@ -110,7 +110,7 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
         quint8 networkRequestId = interfaceReply->responseData().at(0);
         //qCDebug(dcZigbeeNetwork()) << "Request has network SQN" << networkRequestId;
         reply->request().setRequestId(networkRequestId);
-        //qCWarning(dcZigbeeNetwork()) << "#### Insert network reply" << reply << "ID:" << networkRequestId << "Current reply count" << m_pendingReplies.count();
+        qCWarning(dcZigbeeNetwork()) << "#### Insert network reply" << reply << "ID:" << networkRequestId << "Current reply count" << m_pendingReplies.count();
         m_pendingReplies.insert(networkRequestId, reply);
         // The request has been sent successfully to the device, start the timeout timer now
         startWaitingReply(reply);

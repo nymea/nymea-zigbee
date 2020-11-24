@@ -278,6 +278,32 @@ public:
     };
     Q_ENUM(Manufacturer)
 
+    enum ZigbeeMacLayerStatus {
+        ZigbeeMacLayerStatusSuccess = 0x00,
+        ZigbeeMacLayerStatusBeaconLoss = 0xE0,
+        ZigbeeMacLayerStatusChannelAccessFailure = 0xE1,
+        ZigbeeMacLayerStatusDenied = 0xE2,
+        ZigbeeMacLayerStatusDisableTrxFailure = 0xE3,
+        ZigbeeMacLayerStatusFailedSecurityCheck = 0xE4,
+        ZigbeeMacLayerStatusFrameToLong = 0xE5,
+        ZigbeeMacLayerStatusInvalidGts = 0xE6,
+        ZigbeeMacLayerStatusInvalidHandle = 0xE7,
+        ZigbeeMacLayerStatusInvalidParameter = 0xE8,
+        ZigbeeMacLayerStatusNoAck = 0xE9,
+        ZigbeeMacLayerStatusNoBeacon = 0xEA,
+        ZigbeeMacLayerStatusNoData = 0xEB,
+        ZigbeeMacLayerStatusNoShortAddress = 0xEC,
+        ZigbeeMacLayerStatusOutOfCap = 0xED,
+        ZigbeeMacLayerStatusPanIdConflict = 0xEE,
+        ZigbeeMacLayerStatusRealignment = 0xEF,
+        ZigbeeMacLayerStatusTransactionExpired = 0xF0,
+        ZigbeeMacLayerStatusTransactionOverflow = 0xF1,
+        ZigbeeMacLayerStatusTxActive = 0xF2,
+        ZigbeeMacLayerStatusUnavailableKey = 0xF3,
+        ZigbeeMacLayerStatusUnsupportedAttribute = 0xF4
+    };
+    Q_ENUM(ZigbeeMacLayerStatus)
+
     enum ZigbeeNwkLayerStatus {
         ZigbeeNwkLayerStatusSuccess = 0x00,
         ZigbeeNwkLayerStatusInvalidParameter = 0xc1,

@@ -45,9 +45,10 @@ public:
     enum Error {
         ErrorNoError,
         ErrorTimeout,
-        ErrorZigbeeApsStatusError,
-        ErrorZigbeeNwkStatusError,
         ErrorInterfaceError,
+        ErrorZigbeeMacStatusError,
+        ErrorZigbeeNwkStatusError,
+        ErrorZigbeeApsStatusError,
         ErrorNetworkOffline
     };
     Q_ENUM(Error)
@@ -55,8 +56,9 @@ public:
     Error error() const;
 
     ZigbeeNetworkRequest request() const;
-    Zigbee::ZigbeeApsStatus zigbeeApsStatus() const;
+    Zigbee::ZigbeeMacLayerStatus zigbeeMacStatus() const;
     Zigbee::ZigbeeNwkLayerStatus zigbeeNwkStatus() const;
+    Zigbee::ZigbeeApsStatus zigbeeApsStatus() const;
 
 private:
     explicit ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent = nullptr);
@@ -64,6 +66,7 @@ private:
     QTimer *m_timer = nullptr;
 
     Error m_error = ErrorNoError;
+    Zigbee::ZigbeeMacLayerStatus m_zigbeeMacStatus = Zigbee::ZigbeeMacLayerStatusSuccess;
     Zigbee::ZigbeeApsStatus m_zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess;
     Zigbee::ZigbeeNwkLayerStatus m_zigbeeNwkStatus = Zigbee::ZigbeeNwkLayerStatusSuccess;
 
