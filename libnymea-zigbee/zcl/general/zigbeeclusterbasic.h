@@ -187,14 +187,14 @@ public:
         AlarmMaskGeneralHardwareFault = 0x01,
         AlarmMaskGeneralSoftwareFault = 0x02
     };
-    Q_ENUM(AlarmMask)
+    Q_FLAG(AlarmMask)
     Q_DECLARE_FLAGS(AlarmMasks, AlarmMask)
 
     enum DiableLocalConfig {
         DiableLocalConfigReset = 0x01,
         DiableLocalConfigDeviceConfiguration = 0x02
     };
-    Q_ENUM(DiableLocalConfig)
+    Q_FLAG(DiableLocalConfig)
     Q_DECLARE_FLAGS(DiableLocalConfigs, DiableLocalConfig)
 
     explicit ZigbeeClusterBasic(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
@@ -205,8 +205,5 @@ private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ZigbeeClusterBasic::AlarmMasks)
-Q_DECLARE_OPERATORS_FOR_FLAGS(ZigbeeClusterBasic::DiableLocalConfigs)
 
 #endif // ZIGBEECLUSTERBASIC_H

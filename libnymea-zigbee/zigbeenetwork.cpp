@@ -611,6 +611,7 @@ void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::Zig
 
 void ZigbeeNetwork::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error)
 {
+    qCDebug(dcZigbeeNetwork()) << "Finish network reply" << reply << error;
     reply->m_error = error;
     switch(reply->error()) {
     case ZigbeeNetworkReply::ErrorNoError:

@@ -17,6 +17,7 @@ SOURCES += \
     backends/nxp/zigbeebridgecontrollernxp.cpp \
     backends/nxp/zigbeenetworknxp.cpp \
     zcl/closures/zigbeeclusterdoorlock.cpp \
+    zcl/general/zigbeeclustergroups.cpp \
     zcl/general/zigbeeclusteridentify.cpp \
     zcl/general/zigbeeclusterlevelcontrol.cpp \
     zcl/general/zigbeeclusteronoff.cpp \
@@ -72,6 +73,7 @@ HEADERS += \
     backends/nxp/zigbeebridgecontrollernxp.h \
     backends/nxp/zigbeenetworknxp.h \
     zcl/closures/zigbeeclusterdoorlock.h \
+    zcl/general/zigbeeclustergroups.h \
     zcl/general/zigbeeclusteridentify.h \
     zcl/general/zigbeeclusterlevelcontrol.h \
     zcl/general/zigbeeclusteronoff.h \

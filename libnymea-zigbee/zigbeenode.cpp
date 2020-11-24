@@ -505,7 +505,7 @@ void ZigbeeNode::readManufacturerName(ZigbeeClusterBasic *basicCluster)
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to read manufacturer name from" << this << basicCluster << m_requestRetry << "/" << "3 attempts.";
-                readManufacturerName(basicCluster);
+                QTimer::singleShot(1000, this, [=](){readManufacturerName(basicCluster);});
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read manufacturer name from" << this << basicCluster << "after 3 attempts. Giving up and continue...";
                 m_requestRetry = 0;
@@ -564,7 +564,7 @@ void ZigbeeNode::readModelIdentifier(ZigbeeClusterBasic *basicCluster)
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to read model identifier from" << this << basicCluster << m_requestRetry << "/" << "3 attempts.";
-                readModelIdentifier(basicCluster);
+                QTimer::singleShot(1000, this, [=](){readModelIdentifier(basicCluster);});
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read model identifier from" << this << basicCluster << "after 3 attempts. Giving up and continue...";
                 m_requestRetry = 0;
@@ -605,11 +605,11 @@ void ZigbeeNode::readSoftwareBuildId(ZigbeeClusterBasic *basicCluster)
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to read model identifier from" << this << basicCluster << m_requestRetry << "/" << "3 attempts.";
-                readModelIdentifier(basicCluster);
+                QTimer::singleShot(1000, this, [=](){readSoftwareBuildId(basicCluster);});
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read model identifier from" << this << basicCluster << "after 3 attempts. Giving up and continue...";
                 m_requestRetry = 0;
-                readSoftwareBuildId(basicCluster);
+                setState(StateInitialized);
             }
             return;
         }
