@@ -25,24 +25,42 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeeclusterbasic.h"
-#include "loggingcategory.h"
+#ifndef ZIGBEEREPLY_H
+#define ZIGBEEREPLY_H
 
-#include <QDataStream>
+#include <QObject>
 
-ZigbeeClusterBasic::ZigbeeClusterBasic(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdBasic, direction, parent)
+#include "zigbee.h"
+
+class ZigbeeReply : public QObject
 {
+    Q_OBJECT
 
-}
+    friend class ZigbeeNode;
+    friend class ZigbeeNetwork;
+    friend class ZigbeeNodeEndpoint;
 
-ZigbeeClusterReply *ZigbeeClusterBasic::resetToFactoryDefaults()
-{
-    return executeClusterCommand(ZigbeeClusterBasic::CommandResetToFactoryDefaults);
-}
+public:
+    enum Error {
+        ErrorNoError,
+        ErrorTimeout,
+        ErrorInterfaceError,
+        ErrorZigbeeError,
+        ErrorNetworkOffline
+    };
+    Q_ENUM(Error)
 
-void ZigbeeClusterBasic::setAttribute(const ZigbeeClusterAttribute &attribute)
-{
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
-}
+    Error error() const;
+
+protected:
+    explicit ZigbeeReply(QObject *parent = nullptr);
+
+    Error m_error = ErrorNoError;
+
+    void finishReply(Error error = ErrorNoError);
+
+signals:
+    void finished();
+};
+
+#endif // ZIGBEEREPLY_H

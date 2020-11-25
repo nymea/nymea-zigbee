@@ -117,6 +117,11 @@ ZigbeeDeviceProfile::PowerDescriptor ZigbeeNode::powerDescriptor() const
     return m_powerDescriptor;
 }
 
+QList<ZigbeeDeviceProfile::BindingTableListRecord> ZigbeeNode::bindingTableRecords() const
+{
+    return m_bindingTableRecords;
+}
+
 void ZigbeeNode::setState(ZigbeeNode::State state)
 {
     if (m_state == state)
@@ -154,22 +159,42 @@ void ZigbeeNode::startInitialization()
     initNodeDescriptor();
 }
 
-void ZigbeeNode::removeAllBindings()
+ZigbeeReply *ZigbeeNode::removeAllBindings()
 {
+    ZigbeeReply *reply = new ZigbeeReply(this);
 
-}
-
-void ZigbeeNode::readBindingTableEntries()
-{
-    ZigbeeDeviceObjectReply *reply = deviceObject()->requestMgmtBind();
-    connect(reply, &ZigbeeDeviceObjectReply::finished, this, [=](){
-        if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
-            qCWarning(dcZigbeeNode()) << "Failed to read binding table" << reply->error();
+    ZigbeeReply *readBindingsReply = readBindingTableEntries();
+    connect(readBindingsReply, &ZigbeeReply::finished, reply, [=](){
+        if (readBindingsReply->error()) {
+            qCWarning(dcZigbeeNode()) << "Failed to remove all bindings because the current bindings could not be fetched from node" << this;
+            reply->finishReply(readBindingsReply->error());
             return;
         }
 
-        qCDebug(dcZigbeeDeviceObject()) << "Bind table payload" << ZigbeeUtils::convertByteArrayToHexString(reply->responseData());
-        QByteArray response = reply->responseData();
+        qCDebug(dcZigbeeNode()) << "Current binding table records:";
+        foreach (const ZigbeeDeviceProfile::BindingTableListRecord &binding, m_bindingTableRecords) {
+            qCDebug(dcZigbeeNode()) << binding;
+        }
+
+        // Remove bindings sequentially and finish reply if error occures or all bindings removed
+        removeNextBinding(reply);
+    });
+    return reply;
+}
+
+ZigbeeReply *ZigbeeNode::readBindingTableEntries()
+{
+    ZigbeeReply *reply = new ZigbeeReply(this);
+    ZigbeeDeviceObjectReply *zdoReply = deviceObject()->requestMgmtBind();
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [=](){
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Failed to read binding table" << zdoReply->error();
+            reply->finishReply(ZigbeeReply::ErrorZigbeeError);
+            return;
+        }
+
+        qCDebug(dcZigbeeDeviceObject()) << "Bind table payload" << ZigbeeUtils::convertByteArrayToHexString(zdoReply->responseData());
+        QByteArray response = zdoReply->responseData();
         QDataStream stream(&response, QIODevice::ReadOnly);
         stream.setByteOrder(QDataStream::LittleEndian);
         quint8 sqn; quint8 statusInt; quint8 entriesCount; quint8 startIndex; quint8 bindingTableListCount;
@@ -177,7 +202,7 @@ void ZigbeeNode::readBindingTableEntries()
         ZigbeeDeviceProfile::Status status = static_cast<ZigbeeDeviceProfile::Status>(statusInt);
         qCDebug(dcZigbeeDeviceObject()) << "SQN:" << sqn << status << "entries:" << entriesCount << "index:" << startIndex << "list count:" << bindingTableListCount;
 
-        QList<ZigbeeDeviceProfile::BindingTableListRecord> bindingTableRecords;
+        m_bindingTableRecords.clear();
         for (int i = 0; i < bindingTableListCount; i++) {
             quint64 sourceAddress; quint8 addressMode;
             ZigbeeDeviceProfile::BindingTableListRecord record;
@@ -198,11 +223,15 @@ void ZigbeeNode::readBindingTableEntries()
                 break;
             }
             qCDebug(dcZigbeeDeviceObject()) << record;
-            bindingTableRecords << record;
+            m_bindingTableRecords << record;
         }
 
         // TODO: continue reading if there are more entries
+
+        emit bindingTableRecordsChanged();
+        reply->finishReply();
     });
+    return reply;
 }
 
 void ZigbeeNode::initNodeDescriptor()
@@ -418,6 +447,31 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
     });
 }
 
+void ZigbeeNode::removeNextBinding(ZigbeeReply *reply)
+{
+    // If we have no bindings left, finish the given reply
+    if (m_bindingTableRecords.isEmpty()) {
+        reply->finishReply();
+        return;
+    }
+
+    ZigbeeDeviceProfile::BindingTableListRecord record = m_bindingTableRecords.last();
+    ZigbeeDeviceObjectReply *zdoReply = m_deviceObject->requestUnbind(record);
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, reply, [=](){
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Failed to remove" << record << zdoReply->error();
+            reply->finishReply(ZigbeeReply::ErrorZigbeeError);
+            return;
+        }
+
+        // Successfully removed
+        m_bindingTableRecords.removeLast();
+        emit bindingTableRecordsChanged();
+
+        removeNextBinding(reply);
+    });
+}
+
 void ZigbeeNode::initBasicCluster()
 {
     // Get the first endpoint which implements the basic cluster
@@ -476,7 +530,7 @@ void ZigbeeNode::readManufacturerName(ZigbeeClusterBasic *basicCluster)
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to read manufacturer name from" << this << basicCluster << m_requestRetry << "/" << "3 attempts.";
-                QTimer::singleShot(1000, this, [=](){readManufacturerName(basicCluster);});
+                QTimer::singleShot(1000, this, [=](){ readManufacturerName(basicCluster); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read manufacturer name from" << this << basicCluster << "after 3 attempts. Giving up and continue...";
                 m_requestRetry = 0;
@@ -535,7 +589,7 @@ void ZigbeeNode::readModelIdentifier(ZigbeeClusterBasic *basicCluster)
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to read model identifier from" << this << basicCluster << m_requestRetry << "/" << "3 attempts.";
-                QTimer::singleShot(1000, this, [=](){readModelIdentifier(basicCluster);});
+                QTimer::singleShot(1000, this, [=](){ readModelIdentifier(basicCluster); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read model identifier from" << this << basicCluster << "after 3 attempts. Giving up and continue...";
                 m_requestRetry = 0;
@@ -576,7 +630,7 @@ void ZigbeeNode::readSoftwareBuildId(ZigbeeClusterBasic *basicCluster)
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to read model identifier from" << this << basicCluster << m_requestRetry << "/" << "3 attempts.";
-                QTimer::singleShot(1000, this, [=](){readSoftwareBuildId(basicCluster);});
+                QTimer::singleShot(1000, this, [=](){ readSoftwareBuildId(basicCluster); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read model identifier from" << this << basicCluster << "after 3 attempts. Giving up and continue...";
                 m_requestRetry = 0;

@@ -53,6 +53,7 @@ SOURCES += \
     zigbeenetworkreply.cpp \
     zigbeenetworkrequest.cpp \
     zigbeenodeendpoint.cpp \
+    zigbeereply.cpp \
     zigbeesecurityconfiguration.cpp \
     zigbeeuartadapter.cpp \
     zigbeeuartadaptermonitor.cpp \
@@ -109,6 +110,7 @@ HEADERS += \
     zigbeenetworkreply.h \
     zigbeenetworkrequest.h \
     zigbeenodeendpoint.h \
+    zigbeereply.h \
     zigbeesecurityconfiguration.h \
     zigbeeuartadapter.h \
     zigbeeuartadaptermonitor.h \

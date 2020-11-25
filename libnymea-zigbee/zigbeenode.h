@@ -32,6 +32,7 @@
 #include <QDateTime>
 
 #include "zigbee.h"
+#include "zigbeereply.h"
 #include "zigbeeaddress.h"
 #include "zigbeenodeendpoint.h"
 #include "zdo/zigbeedeviceobject.h"
@@ -82,11 +83,14 @@ public:
     QList<ZigbeeDeviceProfile::PowerSource> availablePowerSources() const;
     ZigbeeDeviceProfile::PowerLevel powerLevel() const;
 
+    // Only available if fetched
+    QList<ZigbeeDeviceProfile::BindingTableListRecord> bindingTableRecords() const;
+
     // This method starts the node initialization phase (read descriptors and endpoints)
     void startInitialization();
 
-    void removeAllBindings();
-    void readBindingTableEntries();
+    ZigbeeReply *removeAllBindings();
+    ZigbeeReply *readBindingTableEntries();
 
 private:
     ZigbeeNode(ZigbeeNetwork *network, quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent = nullptr);
@@ -107,6 +111,8 @@ private:
     ZigbeeDeviceProfile::MacCapabilities m_macCapabilities;
     ZigbeeDeviceProfile::PowerDescriptor m_powerDescriptor;
 
+    QList<ZigbeeDeviceProfile::BindingTableListRecord> m_bindingTableRecords;
+
     void setState(State state);
     void setReachable(bool reachable);
 
@@ -117,6 +123,8 @@ private:
     void initPowerDescriptor();
     void initEndpoints();
     void initEndpoint(quint8 endpointId);
+
+    void removeNextBinding(ZigbeeReply *reply);
 
     // For convenience and having base information about the first endpoint
     void initBasicCluster();
@@ -132,6 +140,7 @@ signals:
     void lqiChanged(quint8 lqi);
     void lastSeenChanged(const QDateTime &lastSeen);
     void reachableChanged(bool reachable);
+    void bindingTableRecordsChanged();
     void clusterAdded(ZigbeeCluster *cluster);
     void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
 

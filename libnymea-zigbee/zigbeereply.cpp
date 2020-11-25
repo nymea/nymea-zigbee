@@ -25,24 +25,21 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeeclusterbasic.h"
-#include "loggingcategory.h"
+#include "zigbeereply.h"
 
-#include <QDataStream>
+ZigbeeReply::Error ZigbeeReply::error() const
+{
+    return m_error;
+}
 
-ZigbeeClusterBasic::ZigbeeClusterBasic(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
-    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdBasic, direction, parent)
+ZigbeeReply::ZigbeeReply(QObject *parent) : QObject(parent)
 {
 
 }
 
-ZigbeeClusterReply *ZigbeeClusterBasic::resetToFactoryDefaults()
+void ZigbeeReply::finishReply(ZigbeeReply::Error error)
 {
-    return executeClusterCommand(ZigbeeClusterBasic::CommandResetToFactoryDefaults);
-}
-
-void ZigbeeClusterBasic::setAttribute(const ZigbeeClusterAttribute &attribute)
-{
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
+    m_error = error;
+    emit finished();
+    deleteLater();
 }

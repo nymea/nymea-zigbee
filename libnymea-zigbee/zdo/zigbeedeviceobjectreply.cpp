@@ -86,6 +86,11 @@ Zigbee::ZigbeeMacLayerStatus ZigbeeDeviceObjectReply::zigbeeMacStatus() const
     return m_zigbeeMacStatus;
 }
 
+ZigbeeDeviceProfile::Status ZigbeeDeviceObjectReply::zigbeeDeviceObjectStatus() const
+{
+    return m_zigbeeDeviceObjectStatus;
+}
+
 ZigbeeNetworkRequest ZigbeeDeviceObjectReply::request() const
 {
     return m_request;

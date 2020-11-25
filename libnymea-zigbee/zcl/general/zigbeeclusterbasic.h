@@ -58,6 +58,11 @@ public:
     };
     Q_ENUM(Attribute)
 
+    enum Command {
+       CommandResetToFactoryDefaults = 0x00
+    };
+    Q_ENUM(Command)
+
     // Enum for AttributePowerSource(0x0007)
     enum AttributePowerSourceValue {
         AttributePowerSourceValueUnknown = 0x00,
@@ -199,7 +204,7 @@ public:
 
     explicit ZigbeeClusterBasic(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
-    // TODO: reset all clusters to factory defaults command 0x00, optional
+    ZigbeeClusterReply *resetToFactoryDefaults();
 
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
