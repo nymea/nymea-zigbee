@@ -19,6 +19,7 @@ SOURCES += \
     zcl/closures/zigbeeclusterdoorlock.cpp \
     zcl/general/zigbeeclusteranaloginput.cpp \
     zcl/general/zigbeeclusteranalogoutput.cpp \
+    zcl/general/zigbeeclusteranalogvalue.cpp \
     zcl/general/zigbeeclustergroups.cpp \
     zcl/general/zigbeeclusteridentify.cpp \
     zcl/general/zigbeeclusterlevelcontrol.cpp \
@@ -79,6 +80,7 @@ HEADERS += \
     zcl/closures/zigbeeclusterdoorlock.h \
     zcl/general/zigbeeclusteranaloginput.h \
     zcl/general/zigbeeclusteranalogoutput.h \
+    zcl/general/zigbeeclusteranalogvalue.h \
     zcl/general/zigbeeclustergroups.h \
     zcl/general/zigbeeclusteridentify.h \
     zcl/general/zigbeeclusterlevelcontrol.h \

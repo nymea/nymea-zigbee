@@ -45,6 +45,7 @@
 #include "zcl/general/zigbeeclustergroups.h"
 #include "zcl/general/zigbeeclusteranaloginput.h"
 #include "zcl/general/zigbeeclusteranalogoutput.h"
+#include "zcl/general/zigbeeclusteranalogvalue.h"
 #include "zcl/general/zigbeeclustermultistateinput.h"
 
 #include "zcl/closures/zigbeeclusterdoorlock.h"

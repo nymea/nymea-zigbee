@@ -181,6 +181,8 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
         return new ZigbeeClusterAnalogInput(m_network, m_node, this, direction, this);
     case ZigbeeClusterLibrary::ClusterIdAnalogOutput:
         return new ZigbeeClusterAnalogOutput(m_network, m_node, this, direction, this);
+    case ZigbeeClusterLibrary::ClusterIdAnalogValue:
+        return new ZigbeeClusterAnalogValue(m_network, m_node, this, direction, this);
     case ZigbeeClusterLibrary::ClusterIdMultistateInput:
         return new ZigbeeClusterMultistateInput(m_network, m_node, this, direction, this);
 
