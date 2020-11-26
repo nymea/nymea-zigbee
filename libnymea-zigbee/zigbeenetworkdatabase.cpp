@@ -167,10 +167,7 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
             }
 
             node->m_endpoints.append(endpoint);
-
-            // Connect after initialization for out of spec nodes
-            connect(endpoint, &ZigbeeNodeEndpoint::inputClusterAdded, node, &ZigbeeNode::clusterAdded);
-            connect(endpoint, &ZigbeeNodeEndpoint::outputClusterAdded, node, &ZigbeeNode::clusterAdded);
+            node->setupEndpointInternal(endpoint);
         }
         nodes.append(node);
     }

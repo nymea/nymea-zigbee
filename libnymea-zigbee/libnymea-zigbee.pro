@@ -20,6 +20,7 @@ SOURCES += \
     zcl/general/zigbeeclustergroups.cpp \
     zcl/general/zigbeeclusteridentify.cpp \
     zcl/general/zigbeeclusterlevelcontrol.cpp \
+    zcl/general/zigbeeclustermultistateinput.cpp \
     zcl/general/zigbeeclusteronoff.cpp \
     zcl/general/zigbeeclusterpowerconfiguration.cpp \
     zcl/hvac/zigbeeclusterthermostat.cpp \
@@ -77,6 +78,7 @@ HEADERS += \
     zcl/general/zigbeeclustergroups.h \
     zcl/general/zigbeeclusteridentify.h \
     zcl/general/zigbeeclusterlevelcontrol.h \
+    zcl/general/zigbeeclustermultistateinput.h \
     zcl/general/zigbeeclusteronoff.h \
     zcl/general/zigbeeclusterpowerconfiguration.h \
     zcl/hvac/zigbeeclusterthermostat.h \

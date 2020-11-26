@@ -427,9 +427,7 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
         m_uninitializedEndpoints.removeAll(endpointId);
         endpoint->m_initialized = true;
 
-        // Connect after initialization for out of spec nodes
-        connect(endpoint, &ZigbeeNodeEndpoint::inputClusterAdded, this, &ZigbeeNode::clusterAdded);
-        connect(endpoint, &ZigbeeNodeEndpoint::outputClusterAdded, this, &ZigbeeNode::clusterAdded);
+        setupEndpointInternal(endpoint);
 
         if (m_uninitializedEndpoints.isEmpty()) {
             // Note: if we are initializing the coordinator, we can stop here
@@ -469,6 +467,16 @@ void ZigbeeNode::removeNextBinding(ZigbeeReply *reply)
         emit bindingTableRecordsChanged();
 
         removeNextBinding(reply);
+    });
+}
+
+void ZigbeeNode::setupEndpointInternal(ZigbeeNodeEndpoint *endpoint)
+{
+    // Connect after initialization for out of spec nodes
+    connect(endpoint, &ZigbeeNodeEndpoint::inputClusterAdded, this, &ZigbeeNode::clusterAdded);
+    connect(endpoint, &ZigbeeNodeEndpoint::outputClusterAdded, this, &ZigbeeNode::clusterAdded);
+    connect(endpoint, &ZigbeeNodeEndpoint::clusterAttributeChanged, this, [this, endpoint](ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute){
+        emit endpointClusterAttributeChanged(endpoint, cluster, attribute);
     });
 }
 

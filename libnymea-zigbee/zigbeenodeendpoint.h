@@ -43,6 +43,7 @@
 #include "zcl/general/zigbeeclusterlevelcontrol.h"
 #include "zcl/general/zigbeeclusterpowerconfiguration.h"
 #include "zcl/general/zigbeeclustergroups.h"
+#include "zcl/general/zigbeeclustermultistateinput.h"
 
 #include "zcl/closures/zigbeeclusterdoorlock.h"
 

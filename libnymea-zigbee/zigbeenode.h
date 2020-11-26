@@ -126,6 +126,8 @@ private:
 
     void removeNextBinding(ZigbeeReply *reply);
 
+    void setupEndpointInternal(ZigbeeNodeEndpoint *endpoint);
+
     // For convenience and having base information about the first endpoint
     void initBasicCluster();
     void readManufacturerName(ZigbeeClusterBasic *basicCluster);
@@ -142,7 +144,7 @@ signals:
     void reachableChanged(bool reachable);
     void bindingTableRecordsChanged();
     void clusterAdded(ZigbeeCluster *cluster);
-    void clusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
+    void endpointClusterAttributeChanged(ZigbeeNodeEndpoint *endpoint, ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
 
 public slots:
     void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
