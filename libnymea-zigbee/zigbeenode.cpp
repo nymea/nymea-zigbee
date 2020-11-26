@@ -721,6 +721,7 @@ QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {
     debug.nospace().noquote() << "ZigbeeNode(" << ZigbeeUtils::convertUint16ToHexString(node->shortAddress());
     debug.nospace().noquote() << ", " << node->extendedAddress().toString();
+    debug.nospace().noquote() << ", RX on:" << node->macCapabilities().receiverOnWhenIdle;
     debug.nospace().noquote() << ")";
     return debug.space().quote();
 }

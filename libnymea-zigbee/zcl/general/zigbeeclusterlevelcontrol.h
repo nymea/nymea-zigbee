@@ -107,7 +107,8 @@ protected:
 signals:
     void currentLevelChanged(quint8 level);
     void commandSent(ZigbeeClusterLevelControl::Command command, const QByteArray &parameter = QByteArray());
-
+    void commandMoveSent(MoveMode moveMode, quint8 rate = 0xff);
+    void commandStepSent(FadeMode fadeMode, quint8 stepSize, quint16 transitionTime);
 
 };
 

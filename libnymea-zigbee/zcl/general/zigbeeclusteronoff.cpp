@@ -125,6 +125,15 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
             case CommandToggle:
                 emit commandSent(CommandToggle);
                 break;
+            case CommandOffWithEffect: {
+                QByteArray payload = frame.payload;
+                QDataStream payloadStream(&payload, QIODevice::ReadOnly);
+                payloadStream.setByteOrder(QDataStream::LittleEndian);
+                quint8 effectValue = 0; quint16 effectVariant;
+                payloadStream >> effectValue >> effectVariant;
+                emit commandOffWithEffectSent(static_cast<Effect>(effectValue), effectVariant);
+                break;
+            }
             case CommandOnWithTimedOff: {
                 QByteArray payload = frame.payload;
                 QDataStream payloadStream(&payload, QIODevice::ReadOnly);

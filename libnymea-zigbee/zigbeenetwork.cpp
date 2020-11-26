@@ -669,6 +669,6 @@ QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
                               << network->backendType() << ", "
                               << "Channel: " << network->channel() << ", "
                               << network->state()
-                              << ") ";
-    return debug.space();
+                              << ")";
+    return debug.space().quote();
 }

@@ -273,6 +273,7 @@ public:
         Cirronet                = 0x1000,
         Chipcon                 = 0x1001,
         Ember                   = 0x1003,
+        Philips                 = 0x100b,
         Ikea                    = 0x117C,
         FeiBit                  = 0x117E
     };

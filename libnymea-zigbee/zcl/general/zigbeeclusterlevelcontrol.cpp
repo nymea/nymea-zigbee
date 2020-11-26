@@ -141,6 +141,31 @@ void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Fram
             Command command = static_cast<Command>(frame.header.command);
             qCDebug(dcZigbeeCluster()) << "Command sent from" << m_node << m_endpoint << this << command;
             emit commandSent(command, frame.payload);
+
+            switch (command) {
+            case CommandStep: {
+                QByteArray payload = frame.payload;
+                QDataStream payloadStream(&payload, QIODevice::ReadOnly);
+                payloadStream.setByteOrder(QDataStream::LittleEndian);
+                quint8 fadeModeValue = 0; quint8 stepSize; quint16 transitionTime;
+                payloadStream >> fadeModeValue >> stepSize >> transitionTime;
+                emit commandStepSent(static_cast<FadeMode>(fadeModeValue), stepSize, transitionTime);
+                break;
+            }
+            case CommandMove: {
+                QByteArray payload = frame.payload;
+                QDataStream payloadStream(&payload, QIODevice::ReadOnly);
+                payloadStream.setByteOrder(QDataStream::LittleEndian);
+                quint8 moveModeValue = 0; quint8 rate;;
+                payloadStream >> moveModeValue >> rate;
+                emit commandMoveSent(static_cast<MoveMode>(moveModeValue), rate);
+                break;
+            }
+            default:
+                qCDebug(dcZigbeeCluster()) << "Command received without special implementation";
+                break;
+            }
+
         }
         break;
     case Server:

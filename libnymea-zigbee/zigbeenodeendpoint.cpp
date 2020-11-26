@@ -303,6 +303,6 @@ QDebug operator<<(QDebug debug, ZigbeeNodeEndpoint *endpoint)
         debug.nospace().noquote() << ", " << static_cast<Zigbee::GreenPowerDevice>(endpoint->deviceId());
     }
 
-    debug.nospace().noquote() << ") ";
-    return debug;
+    debug.nospace().noquote() << ")";
+    return debug.space().quote();
 }
