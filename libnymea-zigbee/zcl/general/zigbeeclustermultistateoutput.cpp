@@ -25,39 +25,17 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEECLUSTERMULTISTATEINPUT_H
-#define ZIGBEECLUSTERMULTISTATEINPUT_H
+#include "zigbeeclustermultistateoutput.h"
+#include "loggingcategory.h"
 
-#include <QObject>
-
-#include "zcl/zigbeecluster.h"
-
-class ZigbeeClusterMultistateInput : public ZigbeeCluster
+ZigbeeClusterMultistateOutput::ZigbeeClusterMultistateOutput(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
+    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdMultistateOutput, direction, parent)
 {
-    Q_OBJECT
 
-    friend class ZigbeeNode;
-    friend class ZigbeeNetwork;
+}
 
-public:
-    enum Attribute {
-        AttributeDescription = 0x001C,
-        AttributeOutOfService = 0x0051,
-        AttributePresentValue = 0x0055,
-        AttributePriorityArray = 0x0057,
-        AttributeReliability = 0x0067,
-        AttributeRelinquishDefault = 0x0068,
-        AttributeStatusFlags = 0x006F,
-        AttributeEngineeringUnits = 0x0075,
-        AttributeApplicationType = 0x0100
-    };
-    Q_ENUM(Attribute)
-
-    explicit ZigbeeClusterMultistateInput(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
-
-private:
-    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
-
-};
-
-#endif // ZIGBEECLUSTERMULTISTATEINPUT_H
+void ZigbeeClusterMultistateOutput::setAttribute(const ZigbeeClusterAttribute &attribute)
+{
+    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
+    updateOrAddAttribute(attribute);
+}

@@ -50,6 +50,7 @@
 #include "zcl/general/zigbeeclusterbinaryoutput.h"
 #include "zcl/general/zigbeeclusterbinaryvalue.h"
 #include "zcl/general/zigbeeclustermultistateinput.h"
+#include "zcl/general/zigbeeclustermultistateoutput.h"
 
 #include "zcl/closures/zigbeeclusterdoorlock.h"
 

@@ -191,6 +191,8 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
         return new ZigbeeClusterBinaryValue(m_network, m_node, this, direction, this);
     case ZigbeeClusterLibrary::ClusterIdMultistateInput:
         return new ZigbeeClusterMultistateInput(m_network, m_node, this, direction, this);
+    case ZigbeeClusterLibrary::ClusterIdMultistateOutput:
+        return new ZigbeeClusterMultistateOutput(m_network, m_node, this, direction, this);
 
         // Measurement
     case ZigbeeClusterLibrary::ClusterIdIlluminanceMeasurement:
