@@ -21,6 +21,7 @@ SOURCES += \
     zcl/general/zigbeeclusteranalogoutput.cpp \
     zcl/general/zigbeeclusteranalogvalue.cpp \
     zcl/general/zigbeeclusterbinaryinput.cpp \
+    zcl/general/zigbeeclusterbinaryoutput.cpp \
     zcl/general/zigbeeclustergroups.cpp \
     zcl/general/zigbeeclusteridentify.cpp \
     zcl/general/zigbeeclusterlevelcontrol.cpp \
@@ -83,6 +84,7 @@ HEADERS += \
     zcl/general/zigbeeclusteranalogoutput.h \
     zcl/general/zigbeeclusteranalogvalue.h \
     zcl/general/zigbeeclusterbinaryinput.h \
+    zcl/general/zigbeeclusterbinaryoutput.h \
     zcl/general/zigbeeclustergroups.h \
     zcl/general/zigbeeclusteridentify.h \
     zcl/general/zigbeeclusterlevelcontrol.h \
