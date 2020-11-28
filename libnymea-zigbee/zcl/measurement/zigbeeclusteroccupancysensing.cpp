@@ -54,6 +54,8 @@ void ZigbeeClusterOccupancySensing::setAttribute(const ZigbeeClusterAttribute &a
             m_occupied = value;
             qCDebug(dcZigbeeCluster()) << "Occupancy changed on" << m_node << m_endpoint << this << m_occupied;
             emit occupancyChanged(m_occupied);
+        } else {
+            qCWarning(dcZigbeeCluster()) << "Failed to convert value from attribute" << m_node << m_endpoint << this << attribute;
         }
     }
 }

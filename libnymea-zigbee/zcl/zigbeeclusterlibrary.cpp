@@ -264,9 +264,9 @@ QByteArray ZigbeeClusterLibrary::buildAttributeReportingConfiguration(const Zigb
     stream << static_cast<quint8>(reportingConfiguration.dataType);
     stream << reportingConfiguration.minReportingInterval;
     stream << reportingConfiguration.maxReportingInterval;
-    for (int i = 0; i < reportingConfiguration.reportableChange.count(); i++) {
+
+    for (int i = 0; i < reportingConfiguration.reportableChange.count(); i++)
         stream << static_cast<quint8>(reportingConfiguration.reportableChange.at(i));
-    }
 
     // Note: for reporting the timeoutPeriod is omitted
     if (reportingConfiguration.direction == ReportingDirectionReceiving) {
