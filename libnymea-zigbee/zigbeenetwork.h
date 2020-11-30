@@ -175,6 +175,8 @@ protected:
     quint8 m_permitJoiningDuration = 120;
     quint8 m_permitJoiningRemaining = 0;
 
+    QTimer *m_reachableRefreshTimer = nullptr;
+
     void setPermitJoiningEnabled(bool permitJoiningEnabled);
     void setPermitJoiningDuration(quint8 duration);
     void setPermitJoiningRemaining(quint8 remaining);
@@ -187,6 +189,8 @@ protected:
     void addUnitializedNode(ZigbeeNode *node);
     void removeNode(ZigbeeNode *node);
     void removeUninitializedNode(ZigbeeNode *node);
+
+    void setNodeReachable(ZigbeeNode *node, bool reachable);
 
     void setState(State state);
     void setError(Error error);
@@ -227,6 +231,7 @@ signals:
 private slots:
     void onNodeStateChanged(ZigbeeNode::State state);
     void onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
+    void evaluateNodeReachableStates();
 
 public slots:
     virtual void startNetwork() = 0;

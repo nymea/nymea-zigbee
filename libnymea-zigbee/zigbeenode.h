@@ -56,6 +56,9 @@ public:
     Q_ENUM(State)
 
     State state() const;
+
+    // Note: For sleepy devices this indicates best effort.
+    // If a device does not send any data within 6h, it will be assumed to no reachable
     bool reachable() const;
 
     QUuid networkUuid() const;

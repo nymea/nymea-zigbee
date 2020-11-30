@@ -323,7 +323,8 @@ public:
         ZigbeeNwkLayerStatusRouteDiscoveryFailed = 0xd0,
         ZigbeeNwkLayerStatusRouteError = 0xd1,
         ZigbeeNwkLayerStatusBtTableFull = 0xd2,
-        ZigbeeNwkLayerStatusFrameNotBuffered = 0xd3
+        ZigbeeNwkLayerStatusFrameNotBuffered = 0xd3,
+        ZigbeeNwkLayerStatusFrameBuffered = 0xd4
     };
     Q_ENUM(ZigbeeNwkLayerStatus)
 

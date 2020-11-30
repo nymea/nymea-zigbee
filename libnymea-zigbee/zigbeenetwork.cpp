@@ -53,13 +53,21 @@ ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
     });
 
 
+    m_reachableRefreshTimer = new QTimer(this);
+    m_reachableRefreshTimer->setInterval(300000);
+    m_reachableRefreshTimer->setSingleShot(false);
+    connect(m_reachableRefreshTimer, &QTimer::timeout, this, &ZigbeeNetwork::evaluateNodeReachableStates);
+
     connect(this, &ZigbeeNetwork::stateChanged, this, [this](ZigbeeNetwork::State state){
-        if (state != ZigbeeNetwork::StateRunning) {
+        if (state == ZigbeeNetwork::StateRunning) {
+            evaluateNodeReachableStates();
+            m_reachableRefreshTimer->start();
+        } else {
             foreach (ZigbeeNode *node, m_nodes) {
                 node->setReachable(false);
             }
+            m_reachableRefreshTimer->stop();
         }
-
     });
 }
 
@@ -549,6 +557,11 @@ void ZigbeeNetwork::removeUninitializedNode(ZigbeeNode *node)
     node->deleteLater();
 }
 
+void ZigbeeNetwork::setNodeReachable(ZigbeeNode *node, bool reachable)
+{
+    node->setReachable(reachable);
+}
+
 void ZigbeeNetwork::setState(ZigbeeNetwork::State state)
 {
     if (m_state == state)
@@ -599,7 +612,7 @@ void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::Zig
     } else {
         // There has been an error while transporting the request to the device
         // Note: if the APS status is >= 0xc1, it has to interpreted as NWK layer error
-        if (zigbeeApsStatus >= 0xc1 && zigbeeApsStatus <= 0xd3) {
+        if (zigbeeApsStatus >= 0xc1 && zigbeeApsStatus <= 0xd4) {
             reply->m_zigbeeNwkStatus = static_cast<Zigbee::ZigbeeNwkLayerStatus>(static_cast<quint8>(zigbeeApsStatus));
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeNwkStatusError);
         } else if (zigbeeApsStatus >= 0xE0 && zigbeeApsStatus <= 0xF4) {
@@ -660,6 +673,32 @@ void ZigbeeNetwork::onNodeStateChanged(ZigbeeNode::State state)
 void ZigbeeNetwork::onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute)
 {
     m_database->saveAttribute(cluster, attribute);
+}
+
+void ZigbeeNetwork::evaluateNodeReachableStates()
+{
+    qCDebug(dcZigbeeNetwork()) << "Evaluate reachable state of nodes";
+    foreach (ZigbeeNode *node, m_nodes) {
+        if (node->macCapabilities().receiverOnWhenIdle && node->shortAddress() != 0x0000) {
+            ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestMgmtLqi();
+            connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [=](){
+                if (zdoReply->error()) {
+                    qCWarning(dcZigbeeNetwork()) << node << "seems not to be reachable" << zdoReply->error();
+                    setNodeReachable(node, false);
+                }
+            });
+        } else {
+            // Note: sleeping devices should send some message within 6 hours,
+            // otherwise the device might not be reachable any more
+            int msSinceLastSeen = node->lastSeen().msecsTo(QDateTime::currentDateTimeUtc());
+            qCDebug(dcZigbeeNetwork()) << node << "last seen" << QTime::fromMSecsSinceStartOfDay(msSinceLastSeen).toString();
+            if (msSinceLastSeen < 1000*60*60*6) {
+                setNodeReachable(node, true);
+            } else {
+                setNodeReachable(node, false);
+            }
+        }
+    }
 }
 
 QDebug operator<<(QDebug debug, ZigbeeNetwork *network)

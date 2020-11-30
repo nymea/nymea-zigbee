@@ -244,7 +244,7 @@ void ZigbeeNode::initNodeDescriptor()
             m_requestRetry++;
             if (m_requestRetry < 3) {
                 qCDebug(dcZigbeeNode()) << "Retry to request node descriptor" << m_requestRetry << "/" << "3";
-                initNodeDescriptor();
+                QTimer::singleShot(1000, this, [=](){ initNodeDescriptor(); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read node descriptor from" << this << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
@@ -273,7 +273,7 @@ void ZigbeeNode::initPowerDescriptor()
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to request power descriptor from" << this << m_requestRetry << "/" << "3 attempts.";
-                initPowerDescriptor();
+                QTimer::singleShot(1000, this, [=](){ initPowerDescriptor(); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read power descriptor from" << this << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
@@ -305,7 +305,7 @@ void ZigbeeNode::initEndpoints()
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to request active endpoints from" << this << m_requestRetry << "/" << "3 attempts.";
-                initEndpoints();
+                QTimer::singleShot(1000, this, [=](){ initEndpoints(); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read active endpoints from" << this << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
@@ -355,7 +355,7 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
             if (m_requestRetry < 3) {
                 m_requestRetry++;
                 qCDebug(dcZigbeeNode()) << "Retry to request simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << m_requestRetry << "/" << "3 attempts.";
-                initEndpoint(endpointId);
+                QTimer::singleShot(1000, this, [=](){ initEndpoint(endpointId); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << "after 3 attempts. Giving up.";
                 m_requestRetry = 0;
@@ -721,7 +721,19 @@ QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {
     debug.nospace().noquote() << "ZigbeeNode(" << ZigbeeUtils::convertUint16ToHexString(node->shortAddress());
     debug.nospace().noquote() << ", " << node->extendedAddress().toString();
-    debug.nospace().noquote() << ", RX on:" << node->macCapabilities().receiverOnWhenIdle;
+    switch (node->nodeDescriptor().nodeType) {
+    case ZigbeeDeviceProfile::NodeTypeCoordinator:
+        debug.nospace().noquote() << ", Coordinator";
+        break;
+    case ZigbeeDeviceProfile::NodeTypeRouter:
+        debug.nospace().noquote() << ", Router";
+        break;
+    case ZigbeeDeviceProfile::NodeTypeEndDevice:
+        debug.nospace().noquote() << ", End device";
+        break;
+    }
+
+    debug.nospace().noquote() << ", RxOn:" << node->macCapabilities().receiverOnWhenIdle;
     debug.nospace().noquote() << ")";
     return debug.space().quote();
 }

@@ -671,8 +671,15 @@ void ZigbeeNetworkDeconz::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress 
     }
 
     if (hasNode(ieeeAddress)) {
-        qCWarning(dcZigbeeNetwork()) << "Already known device announced. FIXME: Ignoring announcement" << ieeeAddress.toString();
-        return;
+        ZigbeeNode *node = getZigbeeNode(ieeeAddress);
+        if (shortAddress == node->shortAddress()) {
+            qCDebug(dcZigbeeNetwork()) << "Already known device announced and is reachable again" << node;
+            setNodeReachable(node, true);
+            return;
+        } else {
+            qCDebug(dcZigbeeNetwork()) << "Already known device announced with different network address. Removing node and reinitialize...";
+            removeNode(node);
+        }
     }
 
     ZigbeeNode *node = createNode(shortAddress, ieeeAddress, macCapabilities, this);

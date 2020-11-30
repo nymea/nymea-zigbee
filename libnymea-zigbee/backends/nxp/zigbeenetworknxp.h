@@ -51,9 +51,15 @@ public:
 private:
     ZigbeeBridgeControllerNxp *m_controller = nullptr;
     bool m_networkRunning = false;
-    QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
-    int m_reconnectCounter = 0;
 
+    QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
+    QQueue<ZigbeeNetworkReply *> m_replyQueue;
+    ZigbeeNetworkReply *m_currentReply = nullptr;
+
+    void sendNextReply();
+    void finishReplyInternally(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError);
+
+    int m_reconnectCounter = 0;
     bool processVersionReply(ZigbeeInterfaceNxpReply *reply);
 
     // ZDO
