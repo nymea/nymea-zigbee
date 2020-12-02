@@ -292,7 +292,6 @@ public:
     static MacCapabilities parseMacCapabilities(quint8 macCapabilitiesFlag);
     static ServerMask parseServerMask(quint16 serverMaskFlag);
     static DescriptorCapabilities parseDescriptorCapabilities(quint8 descriptorCapabilitiesFlag);
-
     static PowerDescriptor parsePowerDescriptor(quint16 powerDescriptorFlag);
 };
 

@@ -197,7 +197,7 @@ ZigbeeDeviceProfile::Adpu ZigbeeDeviceProfile::parseAdpu(const QByteArray &adpu)
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &deviceAdpu)
 {
-    debug.nospace() << "DeviceAdpu(SQN: " << deviceAdpu.transactionSequenceNumber << ", ";
+    debug.nospace() << "DeviceProfileAdpu(SQN: " << deviceAdpu.transactionSequenceNumber << ", ";
     debug.nospace() << deviceAdpu.status << ", ";
     debug.nospace() << ZigbeeUtils::convertUint16ToHexString(deviceAdpu.addressOfInterest) << ", ";
     debug.nospace() << "Payload: " << ZigbeeUtils::convertByteArrayToHexString(deviceAdpu.payload) << ")";
@@ -210,12 +210,12 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NodeDescriptor &nodeD
     debug.nospace() << "    Complex descriptor available: " << nodeDescriptor.complexDescriptorAvailable << "\n";
     debug.nospace() << "    User descriptor available: " << nodeDescriptor.userDescriptorAvailable << "\n";
     debug.nospace() << "    " << nodeDescriptor.frequencyBand << "\n";
-    debug.nospace() << "    " << nodeDescriptor.macCapabilities;
+    debug.nospace() << "    " << nodeDescriptor.macCapabilities << "\n";
     debug.nospace() << "    Manufacturer code: " << ZigbeeUtils::convertUint16ToHexString(nodeDescriptor.manufacturerCode) << "(" << nodeDescriptor.manufacturerCode << ")" << "\n";
     debug.nospace() << "    Maximum buffer size: " << nodeDescriptor.maximumBufferSize << "\n";
     debug.nospace() << "    Maximum RX size: " << nodeDescriptor.maximumRxSize << "\n";
     debug.nospace() << "    Maximum TX size: " << nodeDescriptor.maximumTxSize << "\n";
-    debug.nospace() << "    " << nodeDescriptor.serverMask;
+    debug.nospace() << "    " << nodeDescriptor.serverMask << "\n";
     debug.nospace() << "    " << nodeDescriptor.descriptorCapabilities;
     return debug;
 }

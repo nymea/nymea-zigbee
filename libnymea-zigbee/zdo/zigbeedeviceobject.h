@@ -50,10 +50,10 @@ public:
     // TODO: implement other device and service discovery methods
 
     // End device binding
-    ZigbeeDeviceObjectReply *requestBindShortAddress(quint8 sourceEndpointId, quint16 clusterId, quint16 destinationAddress);
+    ZigbeeDeviceObjectReply *requestBindGroupAddress(quint8 sourceEndpointId, quint16 clusterId, quint16 destinationAddress);
     ZigbeeDeviceObjectReply *requestBindIeeeAddress(quint8 sourceEndpointId, quint16 clusterId, const ZigbeeAddress &destinationIeeeAddress, quint8 destinationEndpointId);
-
     ZigbeeDeviceObjectReply *requestUnbind(const ZigbeeDeviceProfile::BindingTableListRecord &bindingRecord);
+    ZigbeeDeviceObjectReply *requestBindRegister(const ZigbeeAddress &ieeeAddress);
 
     // Management request
     ZigbeeDeviceObjectReply *requestMgmtLeaveNetwork(bool rejoin = false, bool removeChildren = false);

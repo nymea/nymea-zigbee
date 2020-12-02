@@ -68,7 +68,8 @@ public:
         StatusProtocolError = 0x01,
         StatusUnknownCommand = 0x02,
         StatusInvalidCrc = 0x03,
-        StatusStackError = 0x04
+        StatusStackError = 0x04,
+        StatusTimeout = 0xff
     };
     Q_ENUM(Status)
 

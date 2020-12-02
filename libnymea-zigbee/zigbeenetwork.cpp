@@ -691,8 +691,9 @@ void ZigbeeNetwork::evaluateNodeReachableStates()
             // Note: sleeping devices should send some message within 6 hours,
             // otherwise the device might not be reachable any more
             int msSinceLastSeen = node->lastSeen().msecsTo(QDateTime::currentDateTimeUtc());
-            qCDebug(dcZigbeeNetwork()) << node << "last seen" << QTime::fromMSecsSinceStartOfDay(msSinceLastSeen).toString();
-            if (msSinceLastSeen < 1000*60*60*6) {
+            qCDebug(dcZigbeeNetwork()) << node << "has been seen the last time" << QTime::fromMSecsSinceStartOfDay(msSinceLastSeen).toString() << "ago.";
+            // 6 Hours = 6 * 60 * 60 * 1000 = 21600000 ms
+            if (msSinceLastSeen < 21600000) {
                 setNodeReachable(node, true);
             } else {
                 setNodeReachable(node, false);

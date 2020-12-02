@@ -94,6 +94,7 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
 
     // Enqueu reply and send next one if we have enouth capacity
     m_replyQueue.enqueue(reply);
+    qCDebug(dcZigbeeNetwork()) << "=== Pending replies count (enqueued)" << m_replyQueue.count();
     sendNextReply();
 
     return reply;
@@ -181,6 +182,8 @@ void ZigbeeNetworkNxp::sendNextReply()
 
 
     ZigbeeNetworkReply *reply = m_replyQueue.dequeue();
+    qCDebug(dcZigbeeNetwork()) << "=== Pending replies count (dequeued)" << m_replyQueue.count();
+
     ZigbeeInterfaceNxpReply *interfaceReply = m_controller->requestSendRequest(reply->request());
     connect(interfaceReply, &ZigbeeInterfaceNxpReply::finished, reply, [this, reply, interfaceReply](){
         if (interfaceReply->status() != Nxp::StatusSuccess) {
@@ -246,7 +249,6 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::requestSetPermitJoin(quint16 shortAddress,
 bool ZigbeeNetworkNxp::processVersionReply(ZigbeeInterfaceNxpReply *reply)
 {
     qCDebug(dcZigbeeNetwork()) << "Version reply finished" << reply->status();
-
     if (reply->timendOut()) {
         m_reconnectCounter++;
         if (m_reconnectCounter >= 3) {
@@ -271,7 +273,9 @@ bool ZigbeeNetworkNxp::processVersionReply(ZigbeeInterfaceNxpReply *reply)
         qCWarning(dcZigbeeNetwork()) << "Failed to read firmware version. Retry" << m_reconnectCounter << "/ 3";
         ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();
         connect(reply, &ZigbeeInterfaceNxpReply::finished, this, [this, reply](){
-            processVersionReply(reply);
+            if (processVersionReply(reply)) {
+                m_controller->refreshControllerState();
+            }
         });
 
         return false;
@@ -436,22 +440,25 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
                 connect(coordinatorNode, &ZigbeeNode::stateChanged, this, [this, coordinatorNode](ZigbeeNode::State state){
                     if (state == ZigbeeNode::StateInitialized) {
                         qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
-                        //                        ZigbeeClusterGroups *groupsCluster = coordinatorNode->getEndpoint(0x01)->inputCluster<ZigbeeClusterGroups>(ZigbeeClusterLibrary::ClusterIdGroups);
-                        //                        if (!groupsCluster) {
-                        //                            qCWarning(dcZigbeeNetwork()) << "Failed to get groups cluster from coordinator. The coordinator will not be in default group 0x0000";
-                        //                            setState(StateRunning);
-                        //                            setPermitJoining(0);
-                        //                            return;
-                        //                        }
+                        /* Note: this currently has been hardcoded into the firmware. TODO: implement appropriate method for binding coordinator to group
 
-                        //                        ZigbeeClusterReply *reply = groupsCluster->addGroup(0x0000, "Default");
-                        //                        connect(reply, &ZigbeeClusterReply::finished, this, [=](){
-                        //                            if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
-                        //                                qCWarning(dcZigbeeNetwork()) << "Failed to add coordinator to default group 0x0000. The coordinator will not be in default group 0x0000";
-                        //                            }
-                        //                            setState(StateRunning);
-                        //                            setPermitJoining(0);
-                        //                        });
+                        ZigbeeClusterGroups *groupsCluster = coordinatorNode->getEndpoint(0x01)->inputCluster<ZigbeeClusterGroups>(ZigbeeClusterLibrary::ClusterIdGroups);
+                        if (!groupsCluster) {
+                            qCWarning(dcZigbeeNetwork()) << "Failed to get groups cluster from coordinator. The coordinator will not be in default group 0x0000";
+                            setState(StateRunning);
+                            setPermitJoining(0);
+                            return;
+                        }
+
+                        ZigbeeClusterReply *reply = groupsCluster->addGroup(0x0000, "Default");
+                        connect(reply, &ZigbeeClusterReply::finished, this, [=](){
+                            if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
+                                qCWarning(dcZigbeeNetwork()) << "Failed to add coordinator to default group 0x0000. The coordinator will not be in default group 0x0000";
+                            }
+                            setState(StateRunning);
+                            setPermitJoining(0);
+                        });
+                        */
 
                         setState(StateRunning);
                         setPermitJoining(0);
@@ -613,8 +620,10 @@ void ZigbeeNetworkNxp::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress iee
             setNodeReachable(node, true);
             return;
         } else {
-            qCDebug(dcZigbeeNetwork()) << "Already known device announced with different network address. Removing node and reinitialize...";
-            removeNode(node);
+            qCWarning(dcZigbeeNetwork()) << "Already known device announced with different network address. FIXME: update the network address or reinitialize node...";
+
+
+            //removeNode(node);
         }
     }
 

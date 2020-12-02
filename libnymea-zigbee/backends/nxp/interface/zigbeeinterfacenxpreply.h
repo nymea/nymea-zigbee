@@ -71,7 +71,7 @@ private:
     QByteArray m_requestData;
 
     // Response content
-    Nxp::Status m_status = Nxp::StatusUnknownCommand; // FIXME
+    Nxp::Status m_status = Nxp::StatusUnknownCommand;
     QByteArray m_responseData;
 
     void setFinished();

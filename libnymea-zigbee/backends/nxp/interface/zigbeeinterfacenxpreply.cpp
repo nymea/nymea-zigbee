@@ -98,6 +98,8 @@ void ZigbeeInterfaceNxpReply::setFinished()
 void ZigbeeInterfaceNxpReply::onTimeout()
 {
     m_timeout = true;
+    m_status = Nxp::StatusTimeout;
+
     emit timeout();
     emit finished();
 }
