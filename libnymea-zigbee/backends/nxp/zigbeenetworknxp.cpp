@@ -225,12 +225,12 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::requestSetPermitJoin(quint16 shortAddress,
     // Get the power descriptor
     ZigbeeNetworkRequest request;
     request.setRequestId(generateSequenceNumber());
-    request.setDestinationAddressMode(Zigbee::DestinationAddressModeGroup);
+    request.setDestinationAddressMode(Zigbee::DestinationAddressModeShortAddress);
     request.setDestinationShortAddress(static_cast<quint16>(shortAddress));
     request.setProfileId(Zigbee::ZigbeeProfileDevice); // ZDP
     request.setClusterId(ZigbeeDeviceProfile::MgmtPermitJoinRequest);
     request.setSourceEndpoint(0); // ZDO
-    request.setRadius(0);
+    request.setRadius(10);
 
     // Build ASDU
     QByteArray asdu;

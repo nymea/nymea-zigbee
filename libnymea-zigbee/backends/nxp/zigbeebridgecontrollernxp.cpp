@@ -328,7 +328,7 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestEnqueueSendDataGroup(
     payloadStream << profileId;
     payloadStream << clusterId;
     payloadStream << sourceEndpoint;
-    payloadStream << static_cast<quint8>(SecurityModeUnsecure);
+    payloadStream << static_cast<quint8>(txOptions);
     payloadStream << radius;
     payloadStream << static_cast<quint16>(asdu.size());
     for (int i = 0; i < asdu.size(); i++) {
@@ -364,7 +364,7 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestEnqueueSendDataShortA
     payloadStream << profileId;
     payloadStream << clusterId;
     payloadStream << sourceEndpoint;
-    payloadStream << static_cast<quint8>(SecurityModeUnsecure);
+    payloadStream << static_cast<quint8>(txOptions);
     payloadStream << radius;
     payloadStream << static_cast<quint16>(asdu.size());
     for (int i = 0; i < asdu.size(); i++) {
@@ -400,7 +400,7 @@ ZigbeeInterfaceNxpReply *ZigbeeBridgeControllerNxp::requestEnqueueSendDataIeeeAd
     payloadStream << profileId;
     payloadStream << clusterId;
     payloadStream << sourceEndpoint;
-    payloadStream << static_cast<quint8>(SecurityModeUnsecure);
+    payloadStream << static_cast<quint8>(txOptions);
     payloadStream << radius;
     payloadStream << static_cast<quint16>(asdu.size());
     for (int i = 0; i < asdu.size(); i++) {
