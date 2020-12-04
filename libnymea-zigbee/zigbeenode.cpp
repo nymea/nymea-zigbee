@@ -92,6 +92,21 @@ ZigbeeNodeEndpoint *ZigbeeNode::getEndpoint(quint8 endpointId) const
     return nullptr;
 }
 
+QString ZigbeeNode::manufacturerName() const
+{
+    return m_manufacturerName;
+}
+
+QString ZigbeeNode::modelName() const
+{
+    return m_modelName;
+}
+
+QString ZigbeeNode::version() const
+{
+    return m_version;
+}
+
 quint8 ZigbeeNode::lqi() const
 {
     return m_lqi;
@@ -522,6 +537,8 @@ void ZigbeeNode::readManufacturerName(ZigbeeClusterBasic *basicCluster)
         QString manufacturerName = basicCluster->attribute(attributeId).dataType().toString(&valueOk);
         if (valueOk) {
             endpoints().first()->m_manufacturerName = manufacturerName;
+            m_manufacturerName = manufacturerName;
+            emit manufacturerNameChanged(m_manufacturerName);
         } else {
             qCWarning(dcZigbeeNode()) << "Could not convert manufacturer name attribute data to string" << basicCluster->attribute(attributeId).dataType();
         }
@@ -557,6 +574,8 @@ void ZigbeeNode::readManufacturerName(ZigbeeClusterBasic *basicCluster)
             QString manufacturerName = attributeStatusRecord.dataType.toString(&valueOk);
             if (valueOk) {
                 endpoints().first()->m_manufacturerName = manufacturerName;
+                m_manufacturerName = manufacturerName;
+                emit manufacturerNameChanged(m_manufacturerName);
             } else {
                 qCWarning(dcZigbeeNode()) << "Could not convert manufacturer name attribute data to string" << attributeStatusRecord.dataType;
             }
@@ -581,6 +600,8 @@ void ZigbeeNode::readModelIdentifier(ZigbeeClusterBasic *basicCluster)
         QString modelIdentifier = basicCluster->attribute(attributeId).dataType().toString(&valueOk);
         if (valueOk) {
             endpoints().first()->m_modelIdentifier= modelIdentifier;
+            m_modelName = modelIdentifier;
+            emit modelNameChanged(m_modelName);
         } else {
             qCWarning(dcZigbeeNode()) << "Could not convert model identifier attribute data to string" << basicCluster->attribute(attributeId).dataType();
         }
@@ -616,6 +637,8 @@ void ZigbeeNode::readModelIdentifier(ZigbeeClusterBasic *basicCluster)
             QString modelIdentifier = attributeStatusRecord.dataType.toString(&valueOk);
             if (valueOk) {
                 endpoints().first()->m_modelIdentifier = modelIdentifier;
+                m_modelName = modelIdentifier;
+                emit modelNameChanged(m_modelName);
             } else {
                 qCWarning(dcZigbeeNode()) << "Could not convert model identifier attribute data to string" << attributeStatusRecord.dataType;
             }
@@ -657,6 +680,8 @@ void ZigbeeNode::readSoftwareBuildId(ZigbeeClusterBasic *basicCluster)
             QString softwareBuildId = attributeStatusRecord.dataType.toString(&valueOk);
             if (valueOk) {
                 endpoints().first()->m_softwareBuildId = softwareBuildId;
+                m_version = softwareBuildId;
+                emit versionChanged(m_version);
             } else {
                 qCWarning(dcZigbeeNode()) << "Could not convert software build id attribute data to string" << attributeStatusRecord.dataType;
             }

@@ -31,6 +31,10 @@
 #include <QObject>
 #include <QSocketNotifier>
 
+#ifdef DISABLE_UDEV
+#include <QTimer>
+#endif
+
 #include "zigbeeuartadapter.h"
 
 class ZigbeeUartAdapterMonitor : public QObject
@@ -47,9 +51,14 @@ public:
 
 private:
     bool m_isValid = false;
+
+#ifdef DISABLE_UDEV
+    QTimer *m_timer = nullptr;
+#else
     struct udev *m_udev = nullptr;
     struct udev_monitor *m_monitor = nullptr;
     QSocketNotifier *m_notifier = nullptr;
+#endif
 
     QHash<QString, ZigbeeUartAdapter> m_availableAdapters;
 

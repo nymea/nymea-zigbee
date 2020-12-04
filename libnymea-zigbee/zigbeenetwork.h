@@ -192,6 +192,9 @@ protected:
 
     void setNodeReachable(ZigbeeNode *node, bool reachable);
 
+    // Set the coordinator infromation since they cannot be fetched
+    void setNodeInformation(ZigbeeNode *node, const QString &manufacturerName, const QString &modelName, const QString &version);
+
     void setState(State state);
     void setError(Error error);
 
@@ -218,8 +221,12 @@ signals:
     void channelMaskChanged(const ZigbeeChannelMask &channelMask);
     void securityConfigurationChanged(const ZigbeeSecurityConfiguration &securityConfiguration);
 
+    // Will be emitted if node has joined and the initialization has been finished
     void nodeAdded(ZigbeeNode *node);
     void nodeRemoved(ZigbeeNode *node);
+
+    // Will be emited when a node joined and starts initializing
+    void nodeJoined(ZigbeeNode *node);
 
     void permitJoiningEnabledChanged(bool permitJoiningEnabled);
     void permitJoinDurationChanged(quint8 duration);

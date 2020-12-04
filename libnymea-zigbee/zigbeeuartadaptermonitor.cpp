@@ -30,21 +30,47 @@
 
 #include <QSerialPortInfo>
 
+#ifndef DISABLE_UDEV
 #include <libudev.h>
+#endif
 
 ZigbeeUartAdapterMonitor::ZigbeeUartAdapterMonitor(QObject *parent) : QObject(parent)
 {
     qRegisterMetaType<ZigbeeUartAdapter>();
 
+    // Read initially all tty devices
+    foreach (const QSerialPortInfo &serialPortInfo, QSerialPortInfo::availablePorts()) {
+        addAdapterInternally(serialPortInfo.systemLocation());
+    }
+
+#ifdef DISABLE_UDEV
+    m_timer = new QTimer(this);
+    m_timer->setInterval(5000);
+    m_timer->setSingleShot(false);
+    connect(m_timer, &QTimer::timeout, this, [=](){
+        QStringList availablePorts;
+        // Add a new adapter if not in the list already
+        foreach (const QSerialPortInfo &serialPortInfo, QSerialPortInfo::availablePorts()) {
+            availablePorts.append(serialPortInfo.systemLocation());
+            if (!m_availableAdapters.contains(serialPortInfo.systemLocation())) {
+                addAdapterInternally(serialPortInfo.systemLocation());
+            }
+        }
+        // Remove adapters no longer available
+        foreach (const QString &systemLocation, m_availableAdapters.keys()) {
+            if (!availablePorts.contains(systemLocation)) {
+                emit adapterRemoved(m_availableAdapters.take(systemLocation));
+            }
+        }
+
+    });
+
+#else
+    // Init udev
     m_udev = udev_new();
     if (!m_udev) {
         qCWarning(dcZigbeeAdapterMonitor()) << "Could not initialize udev for the adapter monitor";
         return;
-    }
-
-    // Read initially all tty devices
-    foreach (const QSerialPortInfo &serialPortInfo, QSerialPortInfo::availablePorts()) {
-        addAdapterInternally(serialPortInfo.systemLocation());
     }
 
     // Create udev monitor
@@ -124,11 +150,15 @@ ZigbeeUartAdapterMonitor::ZigbeeUartAdapterMonitor(QObject *parent) : QObject(pa
     });
 
     m_notifier->setEnabled(true);
+#endif
+
     m_isValid = true;
 }
 
 ZigbeeUartAdapterMonitor::~ZigbeeUartAdapterMonitor()
 {
+#ifndef DISABLE_UDEV
+
     if (m_notifier)
         delete m_notifier;
 
@@ -137,7 +167,7 @@ ZigbeeUartAdapterMonitor::~ZigbeeUartAdapterMonitor()
 
     if (m_udev)
         udev_unref(m_udev);
-
+#endif
 }
 
 QList<ZigbeeUartAdapter> ZigbeeUartAdapterMonitor::availableAdapters() const

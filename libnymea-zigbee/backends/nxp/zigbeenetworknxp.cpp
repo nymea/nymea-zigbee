@@ -415,7 +415,6 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
                 setChannel(channel);
 
                 // Initialize the coordinator node if not already done.
-
                 if (m_coordinatorNode) {
                     if (!macAddress().isNull() && ZigbeeAddress(ieeeAddress) != macAddress()) {
                         qCWarning(dcZigbeeNetwork()) << "The mac address of the coordinator has changed since the network has been set up.";
@@ -427,6 +426,7 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
                     }
 
                     qCDebug(dcZigbeeNetwork()) << "We already have the coordinator node. Network starting done.";
+                    setNodeInformation(m_coordinatorNode, "NXP", "JN516x", bridgeController()->firmwareVersion());
                     m_database->saveNode(m_coordinatorNode);
                     setPermitJoining(0);
                     setState(StateRunning);
@@ -440,6 +440,7 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
                 connect(coordinatorNode, &ZigbeeNode::stateChanged, this, [this, coordinatorNode](ZigbeeNode::State state){
                     if (state == ZigbeeNode::StateInitialized) {
                         qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
+                        setNodeInformation(m_coordinatorNode, "NXP", "JN516x", bridgeController()->firmwareVersion());
                         /* Note: this currently has been hardcoded into the firmware. TODO: implement appropriate method for binding coordinator to group
 
                         ZigbeeClusterGroups *groupsCluster = coordinatorNode->getEndpoint(0x01)->inputCluster<ZigbeeClusterGroups>(ZigbeeClusterLibrary::ClusterIdGroups);

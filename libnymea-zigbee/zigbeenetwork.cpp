@@ -541,6 +541,7 @@ void ZigbeeNetwork::addUnitializedNode(ZigbeeNode *node)
     });
 
     m_uninitializedNodes.append(node);
+    emit nodeJoined(node);
 }
 
 void ZigbeeNetwork::removeNode(ZigbeeNode *node)
@@ -560,6 +561,18 @@ void ZigbeeNetwork::removeUninitializedNode(ZigbeeNode *node)
 void ZigbeeNetwork::setNodeReachable(ZigbeeNode *node, bool reachable)
 {
     node->setReachable(reachable);
+}
+
+void ZigbeeNetwork::setNodeInformation(ZigbeeNode *node, const QString &manufacturerName, const QString &modelName, const QString &version)
+{
+    node->m_manufacturerName = manufacturerName;
+    emit node->manufacturerNameChanged(node->manufacturerName());
+
+    node->m_modelName = modelName;
+    emit node->modelNameChanged(node->modelName());
+
+    node->m_version = version;
+    emit node->versionChanged(node->version());
 }
 
 void ZigbeeNetwork::setState(ZigbeeNetwork::State state)

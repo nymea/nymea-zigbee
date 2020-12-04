@@ -3,8 +3,14 @@ include(../config.pri)
 TARGET = nymea-zigbee1
 TEMPLATE = lib
 
-CONFIG += link_pkgconfig
-PKGCONFIG += libudev
+
+disable_udev {
+    message(Build without libudev support)
+    DEFINES += DISABLE_UDEV
+} else {
+    CONFIG += link_pkgconfig
+    PKGCONFIG += libudev
+}
 
 SOURCES += \
     backends/deconz/interface/zigbeeinterfacedeconz.cpp \

@@ -139,19 +139,24 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
                 }
             }
 
-            // Set the basic cluster attributes if present
+            // Set the basic cluster attributes if present to endpoint and node
             if (endpoint->hasInputCluster(ZigbeeClusterLibrary::ClusterIdBasic)) {
                 ZigbeeClusterBasic *basicCluster = endpoint->inputCluster<ZigbeeClusterBasic>(ZigbeeClusterLibrary::ClusterIdBasic);
 
-                if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeManufacturerName))
-                    endpoint->m_manufacturerName = basicCluster->attribute(ZigbeeClusterBasic::AttributeManufacturerName).dataType().toString();
+                if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeManufacturerName)) {
+                    endpoint->setManufacturerName(basicCluster->attribute(ZigbeeClusterBasic::AttributeManufacturerName).dataType().toString());
+                    node->m_manufacturerName = endpoint->manufacturerName();
+                }
 
-                if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeModelIdentifier))
-                    endpoint->m_modelIdentifier = basicCluster->attribute(ZigbeeClusterBasic::AttributeModelIdentifier).dataType().toString();
+                if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeModelIdentifier)) {
+                    endpoint->setModelIdentifier(basicCluster->attribute(ZigbeeClusterBasic::AttributeModelIdentifier).dataType().toString());
+                    node->m_modelName = endpoint->modelIdentifier();
+                }
 
-                if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeSwBuildId))
-                    endpoint->m_softwareBuildId = basicCluster->attribute(ZigbeeClusterBasic::AttributeSwBuildId).dataType().toString();
-
+                if (basicCluster->hasAttribute(ZigbeeClusterBasic::AttributeSwBuildId)) {
+                    endpoint->setSoftwareBuildId(basicCluster->attribute(ZigbeeClusterBasic::AttributeSwBuildId).dataType().toString());
+                    node->m_version = endpoint->softwareBuildId();
+                }
             }
 
             // Load output clusters for this endpoint

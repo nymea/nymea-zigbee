@@ -72,6 +72,11 @@ public:
     bool hasEndpoint(quint8 endpointId) const;
     ZigbeeNodeEndpoint *getEndpoint(quint8 endpointId) const;
 
+    // Basic cluster infomation
+    QString manufacturerName() const;
+    QString modelName() const;
+    QString version() const;
+
     quint8 lqi() const;
     QDateTime lastSeen() const;
 
@@ -101,6 +106,11 @@ private:
     ZigbeeNetwork *m_network;
     quint16 m_shortAddress = 0;
     ZigbeeAddress m_extendedAddress;
+
+    // Basic cluster infomation
+    QString m_manufacturerName;
+    QString m_modelName;
+    QString m_version;
 
     ZigbeeDeviceObject *m_deviceObject = nullptr;
     QList<ZigbeeNodeEndpoint *> m_endpoints;
@@ -144,6 +154,9 @@ signals:
     void stateChanged(State state);
     void lqiChanged(quint8 lqi);
     void lastSeenChanged(const QDateTime &lastSeen);
+    void manufacturerNameChanged(const QString &manufacturerName);
+    void modelNameChanged(const QString &modelName);
+    void versionChanged(const QString &version);
     void reachableChanged(bool reachable);
     void bindingTableRecordsChanged();
     void clusterAdded(ZigbeeCluster *cluster);
