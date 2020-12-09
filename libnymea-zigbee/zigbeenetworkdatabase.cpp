@@ -435,8 +435,21 @@ bool ZigbeeNetworkDatabase::saveNode(ZigbeeNode *node)
 
 bool ZigbeeNetworkDatabase::updateNodeLqi(ZigbeeNode *node, quint8 lqi)
 {
-    qCDebug(dcZigbeeNetworkDatabase()) << "Update nod LQI" << node << lqi;
+    qCDebug(dcZigbeeNetworkDatabase()) << "Update node LQI" << node << lqi;
     QString queryString = QString("UPDATE nodes SET lqi = \"%1\" WHERE ieeeAddress = \"%2\";").arg(lqi).arg(node->extendedAddress().toString());
+    m_db.exec(queryString);
+    if (m_db.lastError().type() != QSqlError::NoError) {
+        qCWarning(dcZigbeeNetworkDatabase()) << "Could not update node LQI value in the database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();
+        return false;
+    }
+
+    return true;
+}
+
+bool ZigbeeNetworkDatabase::updateNodeNetworkAddress(ZigbeeNode *node, quint16 networkAddress)
+{
+    qCDebug(dcZigbeeNetworkDatabase()) << "Update node network address" << node << ZigbeeUtils::convertUint16ToHexString(networkAddress);
+    QString queryString = QString("UPDATE nodes SET shortAddress = \"%1\" WHERE ieeeAddress = \"%2\";").arg(networkAddress).arg(node->extendedAddress().toString());
     m_db.exec(queryString);
     if (m_db.lastError().type() != QSqlError::NoError) {
         qCWarning(dcZigbeeNetworkDatabase()) << "Could not update node LQI value in the database." << queryString << m_db.lastError().databaseText() << m_db.lastError().driverText();

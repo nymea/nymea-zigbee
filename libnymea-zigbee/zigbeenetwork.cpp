@@ -298,6 +298,12 @@ ZigbeeNode *ZigbeeNetwork::getZigbeeNode(quint16 shortAddress) const
         }
     }
 
+    foreach (ZigbeeNode *node, m_temporaryNodes) {
+        if (node->shortAddress() == shortAddress) {
+            return node;
+        }
+    }
+
     return nullptr;
 }
 
@@ -631,10 +637,13 @@ void ZigbeeNetwork::handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataI
         return;
     }
 
+    // Check if we have a node, uninitalized node or temporary node
     ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
     if (!node) {
         qCWarning(dcZigbeeNetwork()) << "Received a ZDO indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
-        // FIXME: check if we want to create it since the device definitly exists within the network
+        // Maybe the network address has changed due to parent node switching. Lets fetch the IEEE address and check again if know this node.
+        // If the node is known, the network address gets updated, otherwise the leave network command will be sent.
+        verifyUnrecognizedNode(indication.sourceShortAddress);
         return;
     }
 
@@ -650,11 +659,15 @@ void ZigbeeNetwork::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeData
     // Get the node
     ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
     if (!node) {
-        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
-        // FIXME: maybe create and init the node, since it is in the network, but not recognized
-        // FIXME: maybe remove this node since we might have removed it but it did not respond, or we not explicitly allowed it to join.
+        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication from an unrecognized node. Checking IEEE address for this node" << indication;
+
+        // Maybe the network address has changed due to parent node switching. Lets fetch the IEEE address and check again if know this node.
+        // If the node is known, the network address gets updated, otherwise the leave network command will be sent.
+
+        verifyUnrecognizedNode(indication.sourceShortAddress);
         return;
     }
+
     // Let the node handle this indication
     handleNodeIndication(node, indication);
 }
@@ -677,15 +690,88 @@ void ZigbeeNetwork::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAd
             setNodeReachable(node, true);
             return;
         } else {
-            qCWarning(dcZigbeeNetwork()) << "Already known device announced with different network address. FIXME: update the network address or reinitialize node...";
-            //removeNode(node);
-
+            qCDebug(dcZigbeeNetwork()) << "Already known device announced with different network address. Updating the network address internally of this node...";
+            updateNodeNetworkAddress(node, shortAddress);
+            return;
         }
     }
 
     ZigbeeNode *node = createNode(shortAddress, ieeeAddress, macCapabilities, this);
     addUnitializedNode(node);
     node->startInitialization();
+}
+
+void ZigbeeNetwork::verifyUnrecognizedNode(quint16 shortAddress)
+{
+    // 1. Create a temporary node for message handling
+    // 2. Get the IEEE address
+    // 3. Check if we have a node for this address
+    //    Yes -> update the network address and save database
+    //    No -> send management leave request to the node
+
+    ZigbeeNode *node = new ZigbeeNode(this, shortAddress, ZigbeeAddress(), this);
+    m_temporaryNodes.append(node);
+
+    qCDebug(dcZigbeeNetwork()) << "Start verify process for unrecognized node" << node;
+    qCDebug(dcZigbeeNetwork()) << "Request IEEE address from unrecognized node" << node;
+    ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestIeeeAddress();
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, node, [=](){
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Failed to request IEEE address from unrecognized" << node << zdoReply->error();
+            // Remove and delete this temporary node since we did not know the IEEE address
+            m_temporaryNodes.removeAll(node);
+            node->deleteLater();
+            return;
+        }
+
+        QByteArray response = zdoReply->responseData();
+        QDataStream stream(&response, QIODevice::ReadOnly);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        quint8 sqn; quint8 statusInt; quint64 ieeeAddressInt;
+        stream >> sqn >> statusInt >> ieeeAddressInt;
+        ZigbeeDeviceProfile::Status status = static_cast<ZigbeeDeviceProfile::Status>(statusInt);
+        ZigbeeAddress ieeeAddress(ieeeAddressInt);
+        qCDebug(dcZigbeeDeviceObject()) << "Get IEEE address from unrecognized node finished" << status << ieeeAddress.toString() << node << ZigbeeUtils::convertByteArrayToHexString(zdoReply->responseData());
+
+        if (hasNode(ieeeAddress)) {
+            // We know this node with this IEEE address, let's update the network address and save the new address in the database
+            qCDebug(dcZigbeeNetwork()) << "Found node for unrecognized network address with IEEE address" << ieeeAddress.toString() << "Updating the network address internally...";
+            m_temporaryNodes.removeAll(node);
+            node->deleteLater();
+
+            ZigbeeNode *existingNode = getZigbeeNode(ieeeAddress);
+            updateNodeNetworkAddress(existingNode, shortAddress);
+            return;
+        } else {
+            // We don't know any node with this ieeeAddress. Let's try to make it leave the network
+            qCWarning(dcZigbeeNetwork()) << "Could not find any node with IEEE address" << ieeeAddress.toString() << "Requesting node to leave the network" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+
+            qCDebug(dcZigbeeNetwork()) << "Request unrecognized" << node << "to leave the newtork";
+            ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestMgmtLeaveNetwork();
+            connect(zdoReply, &ZigbeeDeviceObjectReply::finished, node, [=](){
+                if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+                    qCWarning(dcZigbeeNode()) << "Failed to request unrecognized node to leave the network" << node << zdoReply->error();
+                    m_temporaryNodes.removeAll(node);
+                    node->deleteLater();
+                    return;
+                }
+
+                qCDebug(dcZigbeeNetwork()) << "Removed unrecognized node successfully from the network" << node;
+                m_temporaryNodes.removeAll(node);
+                node->deleteLater();
+            });
+        }
+    });
+}
+
+void ZigbeeNetwork::updateNodeNetworkAddress(ZigbeeNode *node, quint16 shortAddress)
+{
+    qCDebug(dcZigbeeNetwork()) << "Network address of" << node << "has changed to" << ZigbeeUtils::convertUint16ToHexString(shortAddress);
+    node->m_shortAddress = shortAddress;
+    emit node->shortAddressChanged(shortAddress);
+
+    m_database->updateNodeNetworkAddress(node, shortAddress);
+    setNodeReachable(node, true);
 }
 
 ZigbeeNetworkReply *ZigbeeNetwork::createNetworkReply(const ZigbeeNetworkRequest &request)

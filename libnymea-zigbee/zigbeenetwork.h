@@ -152,6 +152,7 @@ private:
     QDir m_settingsDirectory = QDir("/etc/nymea/");
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
+    QList<ZigbeeNode *> m_temporaryNodes;
 
     void printNetwork();
 
@@ -209,6 +210,9 @@ protected:
     void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
 
     void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
+
+    void verifyUnrecognizedNode(quint16 shortAddress);
+    void updateNodeNetworkAddress(ZigbeeNode *node, quint16 shortAddress);
 
     // Network reply methods
     ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());

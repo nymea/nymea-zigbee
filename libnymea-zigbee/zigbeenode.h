@@ -152,6 +152,7 @@ private:
 signals:
     void nodeInitializationFailed();
     void stateChanged(State state);
+    void shortAddressChanged(quint16 shortAddress);
     void lqiChanged(quint8 lqi);
     void lastSeenChanged(const QDateTime &lastSeen);
     void manufacturerNameChanged(const QString &manufacturerName);
