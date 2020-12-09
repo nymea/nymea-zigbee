@@ -122,6 +122,11 @@ ZigbeeDeviceProfile::NodeDescriptor ZigbeeNode::nodeDescriptor() const
     return m_nodeDescriptor;
 }
 
+bool ZigbeeNode::nodeDescriptorAvailable() const
+{
+    return m_nodeDescriptorAvailable;
+}
+
 ZigbeeDeviceProfile::MacCapabilities ZigbeeNode::macCapabilities() const
 {
     return m_macCapabilities;
@@ -130,6 +135,11 @@ ZigbeeDeviceProfile::MacCapabilities ZigbeeNode::macCapabilities() const
 ZigbeeDeviceProfile::PowerDescriptor ZigbeeNode::powerDescriptor() const
 {
     return m_powerDescriptor;
+}
+
+bool ZigbeeNode::powerDescriptorAvailable() const
+{
+    return m_powerDescriptorAvailable;
 }
 
 QList<ZigbeeDeviceProfile::BindingTableListRecord> ZigbeeNode::bindingTableRecords() const
@@ -251,17 +261,17 @@ ZigbeeReply *ZigbeeNode::readBindingTableEntries()
 
 void ZigbeeNode::initNodeDescriptor()
 {
-    qCDebug(dcZigbeeNode()) << "Requst node descriptor from" << this;
+    qCDebug(dcZigbeeNode()) << "Request node descriptor from" << this;
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestNodeDescriptor();
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read node descriptor" << reply->error();
             m_requestRetry++;
-            if (m_requestRetry < 3) {
-                qCDebug(dcZigbeeNode()) << "Retry to request node descriptor" << m_requestRetry << "/" << "3";
-                QTimer::singleShot(1000, this, [=](){ initNodeDescriptor(); });
+            if (m_requestRetry < m_requestRetriesMax) {
+                qCDebug(dcZigbeeNode()) << "Retry to request node descriptor" << m_requestRetry << "/" << m_requestRetriesMax;
+                QTimer::singleShot(500, this, [=](){ initNodeDescriptor(); });
             } else {
-                qCWarning(dcZigbeeNode()) << "Failed to read node descriptor from" << this << "after 3 attempts. Giving up.";
+                qCWarning(dcZigbeeNode()) << "Failed to read node descriptor from" << this << "after" << m_requestRetriesMax << "attempts.";
                 m_requestRetry = 0;
                 qCWarning(dcZigbeeNode()) << this << "is out of spec. A device must implement the node descriptor. Continue anyways with the power decriptor...";
                 initPowerDescriptor();
@@ -272,6 +282,7 @@ void ZigbeeNode::initNodeDescriptor()
         qCDebug(dcZigbeeNode()) << this << "reading node descriptor finished successfully.";
         m_nodeDescriptor = ZigbeeDeviceProfile::parseNodeDescriptor(reply->responseAdpu().payload);
         qCDebug(dcZigbeeNode()) << m_nodeDescriptor;
+        m_nodeDescriptorAvailable = true;
         m_requestRetry = 0;
 
         // Continue with the power descriptor
@@ -281,18 +292,19 @@ void ZigbeeNode::initNodeDescriptor()
 
 void ZigbeeNode::initPowerDescriptor()
 {
+    qCDebug(dcZigbeeNode()) << "Request power descriptor from" << this;
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestPowerDescriptor();
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read power descriptor" << reply->error();
-            if (m_requestRetry < 3) {
+            if (m_requestRetry < m_requestRetriesMax) {
                 m_requestRetry++;
-                qCDebug(dcZigbeeNode()) << "Retry to request power descriptor from" << this << m_requestRetry << "/" << "3 attempts.";
-                QTimer::singleShot(1000, this, [=](){ initPowerDescriptor(); });
+                qCDebug(dcZigbeeNode()) << "Retry to request power descriptor from" << this << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
+                QTimer::singleShot(500, this, [=](){ initPowerDescriptor(); });
             } else {
-                qCWarning(dcZigbeeNode()) << "Failed to read power descriptor from" << this << "after 3 attempts. Giving up.";
-                m_requestRetry = 0;
-                emit nodeInitializationFailed();
+                qCWarning(dcZigbeeNode()) << "Failed to read power descriptor from" << this << "after" << m_requestRetriesMax << "attempts. Giving up reading power descriptor.";
+                qCWarning(dcZigbeeNode()) << this << "is out of spec. A device must implement the power descriptor. Continue anyways with the endpoint initialization...";
+                initEndpoints();
             }
             return;
         }
@@ -304,6 +316,7 @@ void ZigbeeNode::initPowerDescriptor()
         stream >> powerDescriptorFlag;
         m_powerDescriptor = ZigbeeDeviceProfile::parsePowerDescriptor(powerDescriptorFlag);
         qCDebug(dcZigbeeNode()) << m_powerDescriptor;
+        m_powerDescriptorAvailable = true;
         m_requestRetry = 0;
 
         // Continue with endpoint fetching
@@ -313,18 +326,19 @@ void ZigbeeNode::initPowerDescriptor()
 
 void ZigbeeNode::initEndpoints()
 {
+    qCDebug(dcZigbeeNode()) << "Request active endpoints from" << this;
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestActiveEndpoints();
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read active endpoints" << reply->error();
-            if (m_requestRetry < 3) {
+            if (m_requestRetry < m_requestRetriesMax) {
                 m_requestRetry++;
-                qCDebug(dcZigbeeNode()) << "Retry to request active endpoints from" << this << m_requestRetry << "/" << "3 attempts.";
-                QTimer::singleShot(1000, this, [=](){ initEndpoints(); });
+                qCDebug(dcZigbeeNode()) << "Retry to request active endpoints from" << this << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
+                QTimer::singleShot(500, this, [=](){ initEndpoints(); });
             } else {
-                qCWarning(dcZigbeeNode()) << "Failed to read active endpoints from" << this << "after 3 attempts. Giving up.";
+                qCWarning(dcZigbeeNode()) << "Failed to read active endpoints from" << this << "after" << m_requestRetriesMax << "attempts. Giving up reading endpoints.";
                 m_requestRetry = 0;
-                emit nodeInitializationFailed();
+                setState(StateInitialized);
             }
             return;
         }
@@ -367,14 +381,20 @@ void ZigbeeNode::initEndpoint(quint8 endpointId)
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply, endpointId](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read simple descriptor for endpoint" << endpointId << reply->error();
-            if (m_requestRetry < 3) {
+            if (m_requestRetry < m_requestRetriesMax) {
                 m_requestRetry++;
-                qCDebug(dcZigbeeNode()) << "Retry to request simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << m_requestRetry << "/" << "3 attempts.";
-                QTimer::singleShot(1000, this, [=](){ initEndpoint(endpointId); });
+                qCDebug(dcZigbeeNode()) << "Retry to request simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
+                QTimer::singleShot(500, this, [=](){ initEndpoint(endpointId); });
             } else {
-                qCWarning(dcZigbeeNode()) << "Failed to read simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << "after 3 attempts. Giving up.";
+                qCWarning(dcZigbeeNode()) << "Failed to read simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << "after" << m_requestRetriesMax << "attempts. Giving up initializing endpoint" << endpointId;
                 m_requestRetry = 0;
-                emit nodeInitializationFailed();
+                if (m_uninitializedEndpoints.isEmpty()) {
+                    // Continue with the basic cluster attributes
+                    initBasicCluster();
+                } else {
+                    // Fetch next endpoint
+                    initEndpoint(m_uninitializedEndpoints.first());
+                }
             }
             return;
         }
@@ -491,6 +511,51 @@ void ZigbeeNode::setupEndpointInternal(ZigbeeNodeEndpoint *endpoint)
     connect(endpoint, &ZigbeeNodeEndpoint::inputClusterAdded, this, &ZigbeeNode::clusterAdded);
     connect(endpoint, &ZigbeeNodeEndpoint::outputClusterAdded, this, &ZigbeeNode::clusterAdded);
     connect(endpoint, &ZigbeeNodeEndpoint::clusterAttributeChanged, this, [this, endpoint](ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute){
+        if (cluster->clusterId() == ZigbeeClusterLibrary::ClusterIdBasic && attribute.id() == ZigbeeClusterBasic::AttributeManufacturerName) {
+            bool valueOk = false;
+            QString manufacturerName = attribute.dataType().toString(&valueOk);
+            if (valueOk) {
+                if (m_manufacturerName != manufacturerName) {
+                    m_manufacturerName = manufacturerName;
+                    emit manufacturerNameChanged(m_manufacturerName);
+                    endpoint->m_manufacturerName = manufacturerName;
+                    emit endpoint->manufacturerNameChanged(m_manufacturerName);
+                }
+            } else {
+                qCWarning(dcZigbeeNode()) << "Could not convert manufacturer name attribute data to string" << attribute.dataType();
+            }
+        }
+
+        if (cluster->clusterId() == ZigbeeClusterLibrary::ClusterIdBasic && attribute.id() == ZigbeeClusterBasic::AttributeModelIdentifier) {
+            bool valueOk = false;
+            QString modelName = attribute.dataType().toString(&valueOk);
+            if (valueOk) {
+                if (m_modelName != modelName) {
+                    m_modelName = modelName;
+                    emit modelNameChanged(m_modelName);
+                    endpoint->m_modelIdentifier = modelName;
+                    emit endpoint->modelIdentifierChanged(m_modelName);
+                }
+            } else {
+                qCWarning(dcZigbeeNode()) << "Could not convert model identifier attribute data to string" << attribute.dataType();
+            }
+        }
+
+        if (cluster->clusterId() == ZigbeeClusterLibrary::ClusterIdBasic && attribute.id() == ZigbeeClusterBasic::AttributeSwBuildId) {
+            bool valueOk = false;
+            QString version = attribute.dataType().toString(&valueOk);
+            if (valueOk) {
+                if (m_version != version) {
+                    m_version = version;
+                    emit versionChanged(m_version);
+                    endpoint->m_softwareBuildId = version;
+                    emit endpoint->softwareBuildIdChanged(m_version);
+                }
+            } else {
+                qCWarning(dcZigbeeNode()) << "Could not convert software build id attribute data to string" << attribute.dataType();
+            }
+        }
+
         emit endpointClusterAttributeChanged(endpoint, cluster, attribute);
     });
 }
@@ -552,12 +617,12 @@ void ZigbeeNode::readManufacturerName(ZigbeeClusterBasic *basicCluster)
     connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
         if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
-            if (m_requestRetry < 3) {
+            if (m_requestRetry < m_requestRetriesMax) {
                 m_requestRetry++;
-                qCDebug(dcZigbeeNode()) << "Retry to read manufacturer name from" << this << basicCluster << m_requestRetry << "/" << "3 attempts.";
-                QTimer::singleShot(1000, this, [=](){ readManufacturerName(basicCluster); });
+                qCDebug(dcZigbeeNode()) << "Retry to read manufacturer name from" << this << basicCluster << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
+                QTimer::singleShot(500, this, [=](){ readManufacturerName(basicCluster); });
             } else {
-                qCWarning(dcZigbeeNode()) << "Failed to read manufacturer name from" << this << basicCluster << "after 3 attempts. Giving up and continue...";
+                qCWarning(dcZigbeeNode()) << "Failed to read manufacturer name from" << this << basicCluster << "after" << m_requestRetriesMax << "attempts. Giving up and continue...";
                 m_requestRetry = 0;
                 readModelIdentifier(basicCluster);
             }
@@ -615,12 +680,12 @@ void ZigbeeNode::readModelIdentifier(ZigbeeClusterBasic *basicCluster)
     connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
         if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
-            if (m_requestRetry < 3) {
+            if (m_requestRetry < m_requestRetriesMax) {
                 m_requestRetry++;
-                qCDebug(dcZigbeeNode()) << "Retry to read model identifier from" << this << basicCluster << m_requestRetry << "/" << "3 attempts.";
-                QTimer::singleShot(1000, this, [=](){ readModelIdentifier(basicCluster); });
+                qCDebug(dcZigbeeNode()) << "Retry to read model identifier from" << this << basicCluster << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
+                QTimer::singleShot(500, this, [=](){ readModelIdentifier(basicCluster); });
             } else {
-                qCWarning(dcZigbeeNode()) << "Failed to read model identifier from" << this << basicCluster << "after 3 attempts. Giving up and continue...";
+                qCWarning(dcZigbeeNode()) << "Failed to read model identifier from" << this << basicCluster << "after" << m_requestRetriesMax << "attempts. Giving up and continue...";
                 m_requestRetry = 0;
                 readSoftwareBuildId(basicCluster);
             }
@@ -658,12 +723,12 @@ void ZigbeeNode::readSoftwareBuildId(ZigbeeClusterBasic *basicCluster)
     connect(reply, &ZigbeeClusterReply::finished, this, [this, basicCluster, reply, attributeId](){
         if (reply->error() != ZigbeeClusterReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read basic cluster attribute" << attributeId << reply->error();
-            if (m_requestRetry < 3) {
+            if (m_requestRetry < m_requestRetriesMax) {
                 m_requestRetry++;
-                qCDebug(dcZigbeeNode()) << "Retry to read model identifier from" << this << basicCluster << m_requestRetry << "/" << "3 attempts.";
-                QTimer::singleShot(1000, this, [=](){ readSoftwareBuildId(basicCluster); });
+                qCDebug(dcZigbeeNode()) << "Retry to read model identifier from" << this << basicCluster << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
+                QTimer::singleShot(500, this, [=](){ readSoftwareBuildId(basicCluster); });
             } else {
-                qCWarning(dcZigbeeNode()) << "Failed to read model identifier from" << this << basicCluster << "after 3 attempts. Giving up and continue...";
+                qCWarning(dcZigbeeNode()) << "Failed to read model identifier from" << this << basicCluster << "after" << m_requestRetriesMax << "attempts. Giving up and continue...";
                 m_requestRetry = 0;
                 setState(StateInitialized);
             }
@@ -688,12 +753,6 @@ void ZigbeeNode::readSoftwareBuildId(ZigbeeClusterBasic *basicCluster)
         }
 
         // Finished with reading basic cluster, the node is initialized.
-        // TODO: read other interesting cluster information
-
-
-        // Bind client clusters to the sensor group
-        // Configure reporting
-
         setState(StateInitialized);
     });
 }
@@ -736,6 +795,7 @@ void ZigbeeNode::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataInd
         endpoint = new ZigbeeNodeEndpoint(m_network, this, indication.sourceEndpoint, this);
         endpoint->setProfile(static_cast<Zigbee::ZigbeeProfile>(indication.profileId));
         // Note: the endpoint is not initializd yet, but keep it anyways
+        setupEndpointInternal(endpoint);
         m_endpoints.append(endpoint);
     }
 

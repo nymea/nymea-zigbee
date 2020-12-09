@@ -360,8 +360,25 @@ void ZigbeeNetwork::printNetwork()
     qCDebug(dcZigbeeNetwork()) << this;
     foreach (ZigbeeNode *node, nodes()) {
         qCDebug(dcZigbeeNetwork()) << " ---> " << node;
-        qCDebug(dcZigbeeNetwork()) << "  " << node->nodeDescriptor();
-        qCDebug(dcZigbeeNetwork()) << "  " << node->powerDescriptor();
+        if (!node->manufacturerName().isEmpty())
+            qCDebug(dcZigbeeNetwork()) << "  Manufacturer:" << node->manufacturerName();
+
+        if (!node->modelName().isEmpty())
+            qCDebug(dcZigbeeNetwork()) << "  Model:" << node->modelName();
+
+        if (!node->version().isEmpty())
+            qCDebug(dcZigbeeNetwork()) << "  Version:" << node->version();
+
+        if (node->nodeDescriptorAvailable()) {
+            qCDebug(dcZigbeeNetwork()) << "  " << node->nodeDescriptor();
+        } else {
+            qCDebug(dcZigbeeNetwork()) << "  Node descriptor not available.";
+        }
+        if (node->powerDescriptorAvailable()) {
+            qCDebug(dcZigbeeNetwork()) << "  " << node->powerDescriptor();
+        } else {
+            qCDebug(dcZigbeeNetwork()) << "  Power descriptor not available.";
+        }
         qCDebug(dcZigbeeNetwork()) << "  Endpoints: " << node->endpoints().count();
         foreach (ZigbeeNodeEndpoint *endpoint, node->endpoints()) {
             qCDebug(dcZigbeeNetwork()) << "    - " << endpoint;
@@ -719,8 +736,21 @@ void ZigbeeNetwork::verifyUnrecognizedNode(quint16 shortAddress)
         if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Failed to request IEEE address from unrecognized" << node << zdoReply->error();
             // Remove and delete this temporary node since we did not know the IEEE address
-            m_temporaryNodes.removeAll(node);
-            node->deleteLater();
+            qCDebug(dcZigbeeNetwork()) << "Request unrecognized" << node << "to leave the newtork";
+            ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestMgmtLeaveNetwork();
+            connect(zdoReply, &ZigbeeDeviceObjectReply::finished, node, [=](){
+                if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+                    qCWarning(dcZigbeeNode()) << "Failed to request unrecognized node to leave the network" << node << zdoReply->error();
+                    m_temporaryNodes.removeAll(node);
+                    node->deleteLater();
+                    return;
+                }
+
+                qCDebug(dcZigbeeNetwork()) << "Removed unrecognized node successfully from the network" << node;
+                m_temporaryNodes.removeAll(node);
+                node->deleteLater();
+            });
+
             return;
         }
 

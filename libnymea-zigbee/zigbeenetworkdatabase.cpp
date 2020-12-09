@@ -85,9 +85,15 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
 
         // Build the node object
         ZigbeeNode *node = new ZigbeeNode(m_network, shortAddress, ZigbeeAddress(ieeeAddress), m_network);
-        node->m_nodeDescriptor = ZigbeeDeviceProfile::parseNodeDescriptor(nodeDescriptor);
+        if (!nodeDescriptor.isEmpty()) {
+            node->m_nodeDescriptor = ZigbeeDeviceProfile::parseNodeDescriptor(nodeDescriptor);
+            node->m_nodeDescriptorAvailable = true;
+        }
         node->m_macCapabilities = node->nodeDescriptor().macCapabilities;
-        node->m_powerDescriptor = ZigbeeDeviceProfile::parsePowerDescriptor(powerDescriptor);
+        if (powerDescriptor != 0x0000) {
+            node->m_powerDescriptor = ZigbeeDeviceProfile::parsePowerDescriptor(powerDescriptor);
+            node->m_powerDescriptorAvailable = true;
+        }
         node->m_lqi = lqi;
         node->m_lastSeen = QDateTime::fromMSecsSinceEpoch(lastSeen * 1000);
 

@@ -82,14 +82,12 @@ public:
 
     // Information from descriptors
     ZigbeeDeviceProfile::NodeDescriptor nodeDescriptor() const;
-    ZigbeeDeviceProfile::MacCapabilities macCapabilities() const;
-    ZigbeeDeviceProfile::PowerDescriptor powerDescriptor() const;
+    bool nodeDescriptorAvailable() const;
 
-    // Information from node power descriptor
-    ZigbeeDeviceProfile::PowerMode powerMode() const;
-    ZigbeeDeviceProfile::PowerSource powerSource() const;
-    QList<ZigbeeDeviceProfile::PowerSource> availablePowerSources() const;
-    ZigbeeDeviceProfile::PowerLevel powerLevel() const;
+    ZigbeeDeviceProfile::MacCapabilities macCapabilities() const;
+
+    ZigbeeDeviceProfile::PowerDescriptor powerDescriptor() const;
+    bool powerDescriptorAvailable() const;
 
     // Only available if fetched
     QList<ZigbeeDeviceProfile::BindingTableListRecord> bindingTableRecords() const;
@@ -123,6 +121,8 @@ private:
     ZigbeeDeviceProfile::NodeDescriptor m_nodeDescriptor;
     ZigbeeDeviceProfile::MacCapabilities m_macCapabilities;
     ZigbeeDeviceProfile::PowerDescriptor m_powerDescriptor;
+    bool m_nodeDescriptorAvailable = false;
+    bool m_powerDescriptorAvailable = false;
 
     QList<ZigbeeDeviceProfile::BindingTableListRecord> m_bindingTableRecords;
 
@@ -131,6 +131,7 @@ private:
 
     // Init methods
     int m_requestRetry = 0;
+    int m_requestRetriesMax = 2;
     QList<quint8> m_uninitializedEndpoints;
     void initNodeDescriptor();
     void initPowerDescriptor();
