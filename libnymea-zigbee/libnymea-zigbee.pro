@@ -3,13 +3,13 @@ include(../config.pri)
 TARGET = nymea-zigbee1
 TEMPLATE = lib
 
-
-disable_udev {
+CONFIG += link_pkgconfig
+packagesExist(libudev) {
+    message(Build with libudev support)
+    PKGCONFIG += libudev
+} else {
     message(Build without libudev support)
     DEFINES += DISABLE_UDEV
-} else {
-    CONFIG += link_pkgconfig
-    PKGCONFIG += libudev
 }
 
 SOURCES += \

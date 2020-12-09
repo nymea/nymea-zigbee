@@ -64,7 +64,7 @@ ZigbeeUartAdapterMonitor::ZigbeeUartAdapterMonitor(QObject *parent) : QObject(pa
         }
 
     });
-
+    m_timer->start();
 #else
     // Init udev
     m_udev = udev_new();
