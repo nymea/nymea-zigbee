@@ -202,6 +202,14 @@ protected:
 
     void handleNodeIndication(ZigbeeNode *node, const Zigbee::ApsdeDataIndication indication);
 
+    // ZDO
+    void handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication);
+
+    // ZCL
+    void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
+
+    void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
+
     // Network reply methods
     ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());
     void setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeApsStatus zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess);

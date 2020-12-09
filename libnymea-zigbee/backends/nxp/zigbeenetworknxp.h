@@ -62,12 +62,6 @@ private:
     int m_reconnectCounter = 0;
     bool processVersionReply(ZigbeeInterfaceNxpReply *reply);
 
-    // ZDO
-    void handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication);
-
-    // ZCL
-    void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
-
     ZigbeeNetworkReply *requestSetPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
 
 private slots:
@@ -78,7 +72,6 @@ private slots:
     void onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
     void onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
 
-    void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
     void onNodeLeftIndication(const ZigbeeAddress &ieeeAddress, bool rejoining);
 
 signals:

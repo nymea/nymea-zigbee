@@ -34,6 +34,7 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QDataStream>
 
 ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
     QObject(parent),
@@ -607,6 +608,84 @@ bool ZigbeeNetwork::networkConfigurationAvailable() const
 void ZigbeeNetwork::handleNodeIndication(ZigbeeNode *node, const Zigbee::ApsdeDataIndication indication)
 {
     node->handleDataIndication(indication);
+}
+
+void ZigbeeNetwork::handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication)
+{
+    // Check if this is a device announcement
+    if (indication.clusterId == ZigbeeDeviceProfile::DeviceAnnounce) {
+        QDataStream stream(indication.asdu);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        quint8 sequenceNumber = 0; quint16 shortAddress = 0; quint64 ieeeAddress = 0; quint8 macFlag = 0;
+        stream >> sequenceNumber >> shortAddress >> ieeeAddress >> macFlag;
+        onDeviceAnnounced(shortAddress, ZigbeeAddress(ieeeAddress), macFlag);
+        return;
+    }
+
+    if (indication.destinationShortAddress == Zigbee::BroadcastAddressAllNodes ||
+            indication.destinationShortAddress == Zigbee::BroadcastAddressAllRouters ||
+            indication.destinationShortAddress == Zigbee::BroadcastAddressAllNonSleepingNodes) {
+        qCDebug(dcZigbeeNetwork()) << "Received unhandled broadcast ZDO indication" << indication;
+
+        // FIXME: check what we can do with such messages like permit join
+        return;
+    }
+
+    ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZDO indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
+        // FIXME: check if we want to create it since the device definitly exists within the network
+        return;
+    }
+
+    // Let the node handle this indication
+    handleNodeIndication(node, indication);
+}
+
+void ZigbeeNetwork::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication)
+{
+    ZigbeeClusterLibrary::Frame frame = ZigbeeClusterLibrary::parseFrameData(indication.asdu);
+    //qCDebug(dcZigbeeNetwork()) << "Handle ZCL indication" << indication << frame;
+
+    // Get the node
+    ZigbeeNode *node = getZigbeeNode(indication.sourceShortAddress);
+    if (!node) {
+        qCWarning(dcZigbeeNetwork()) << "Received a ZCL indication for an unrecognized node. There is no such node in the system. Ignoring indication" << indication;
+        // FIXME: maybe create and init the node, since it is in the network, but not recognized
+        // FIXME: maybe remove this node since we might have removed it but it did not respond, or we not explicitly allowed it to join.
+        return;
+    }
+    // Let the node handle this indication
+    handleNodeIndication(node, indication);
+}
+
+void ZigbeeNetwork::onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities)
+{
+    qCDebug(dcZigbeeNetwork()) << "Device announced" << ZigbeeUtils::convertUint16ToHexString(shortAddress) << ieeeAddress.toString() << ZigbeeUtils::convertByteToHexString(macCapabilities);
+
+    // Lets check if this device is in the uninitialized node list, if so, remove it and recreate the device
+    if (hasUninitializedNode(ieeeAddress)) {
+        qCWarning(dcZigbeeNetwork()) << "Device announced but there is already an initialization running for it. Remove the device and restart the initialization.";
+        ZigbeeNode *uninitializedNode = getZigbeeNode(ieeeAddress);
+        removeUninitializedNode(uninitializedNode);
+    }
+
+    if (hasNode(ieeeAddress)) {
+        ZigbeeNode *node = getZigbeeNode(ieeeAddress);
+        if (shortAddress == node->shortAddress()) {
+            qCDebug(dcZigbeeNetwork()) << "Already known device announced and is reachable again" << node;
+            setNodeReachable(node, true);
+            return;
+        } else {
+            qCWarning(dcZigbeeNetwork()) << "Already known device announced with different network address. FIXME: update the network address or reinitialize node...";
+            //removeNode(node);
+
+        }
+    }
+
+    ZigbeeNode *node = createNode(shortAddress, ieeeAddress, macCapabilities, this);
+    addUnitializedNode(node);
+    node->startInitialization();
 }
 
 ZigbeeNetworkReply *ZigbeeNetwork::createNetworkReply(const ZigbeeNetworkRequest &request)

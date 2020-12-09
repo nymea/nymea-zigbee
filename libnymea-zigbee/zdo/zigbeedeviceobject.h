@@ -43,6 +43,8 @@ public:
     explicit ZigbeeDeviceObject(ZigbeeNetwork *network, ZigbeeNode *node, QObject *parent = nullptr);
 
     // Device and service discovery
+    ZigbeeDeviceObjectReply *requestNetworkAddress();
+    ZigbeeDeviceObjectReply *requestIeeeAddress();
     ZigbeeDeviceObjectReply *requestNodeDescriptor();
     ZigbeeDeviceObjectReply *requestPowerDescriptor();
     ZigbeeDeviceObjectReply *requestActiveEndpoints();

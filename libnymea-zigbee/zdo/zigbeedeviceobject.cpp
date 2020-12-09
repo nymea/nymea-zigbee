@@ -42,6 +42,104 @@ ZigbeeDeviceObject::ZigbeeDeviceObject(ZigbeeNetwork *network, ZigbeeNode *node,
 
 }
 
+ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestNetworkAddress()
+{
+    qCDebug(dcZigbeeDeviceObject()) << "Request network address from" << m_node;
+
+    // Build APS request and make ieee address request
+    ZigbeeNetworkRequest request;
+    request.setRequestId(m_network->generateSequenceNumber());
+    request.setDestinationAddressMode(Zigbee::DestinationAddressModeIeeeAddress);
+    request.setDestinationIeeeAddress(m_node->extendedAddress());
+    request.setDestinationEndpoint(0); // ZDO
+    request.setProfileId(Zigbee::ZigbeeProfileDevice); // ZDP
+    request.setClusterId(ZigbeeDeviceProfile::NetworkAddressRequest);
+    request.setSourceEndpoint(0); // ZDO
+
+    // Generate a new transaction sequence number for this device object
+    quint8 transactionSequenceNumber = m_transactionSequenceNumber++;
+
+    // Build ZDO frame
+    QByteArray asdu;
+    QDataStream stream(&asdu, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << transactionSequenceNumber;
+    stream << m_node->extendedAddress().toUInt64();
+    stream << static_cast<quint8>(0); // Note: 0 = single device response, 1 = extended request
+    stream << static_cast<quint8>(0); // Start index
+
+    // Set the ZDO frame as APS request payload
+    request.setAsdu(asdu);
+
+    // Create the device object reply and wait for the response indication
+    ZigbeeDeviceObjectReply *zdoReply = createZigbeeDeviceObjectReply(request, transactionSequenceNumber);
+
+    // Send the request, on finished read the confirm information
+    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
+    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+        if (!verifyNetworkError(zdoReply, networkReply)) {
+            finishZdoReply(zdoReply);
+            return;
+        }
+
+        // The request was successfully sent to the device
+        // Now check if the expected indication response received already
+        if (zdoReply->isComplete()) {
+            finishZdoReply(zdoReply);
+            return;
+        }
+
+        // We received the confirmation but not yet the indication
+    });
+
+    return zdoReply;
+}
+
+ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestIeeeAddress()
+{
+    qCDebug(dcZigbeeDeviceObject()) << "Request IEEE address from" << m_node;
+
+    // Build APS request
+    ZigbeeNetworkRequest request = buildZdoRequest(ZigbeeDeviceProfile::IeeeAddressRequest);
+
+    // Generate a new transaction sequence number for this device object
+    quint8 transactionSequenceNumber = m_transactionSequenceNumber++;
+
+    // Build ZDO frame
+    QByteArray asdu;
+    QDataStream stream(&asdu, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << transactionSequenceNumber << m_node->shortAddress();
+    stream << static_cast<quint8>(0); // Note: 0 = single device response, 1 = extended request
+    stream << static_cast<quint8>(0); // Start index
+
+    // Set the ZDO frame as APS request payload
+    request.setAsdu(asdu);
+
+    // Create the device object reply and wait for the response indication
+    ZigbeeDeviceObjectReply *zdoReply = createZigbeeDeviceObjectReply(request, transactionSequenceNumber);
+
+    // Send the request, on finished read the confirm information
+    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
+    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+        if (!verifyNetworkError(zdoReply, networkReply)) {
+            finishZdoReply(zdoReply);
+            return;
+        }
+
+        // The request was successfully sent to the device
+        // Now check if the expected indication response received already
+        if (zdoReply->isComplete()) {
+            finishZdoReply(zdoReply);
+            return;
+        }
+
+        // We received the confirmation but not yet the indication
+    });
+
+    return zdoReply;
+}
+
 ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestNodeDescriptor()
 {
     qCDebug(dcZigbeeDeviceObject()) << "Request node descriptor from" << m_node;
