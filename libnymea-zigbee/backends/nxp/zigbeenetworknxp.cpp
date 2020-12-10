@@ -94,7 +94,7 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
 
     // Enqueu reply and send next one if we have enouth capacity
     m_replyQueue.enqueue(reply);
-    qCDebug(dcZigbeeNetwork()) << "=== Pending replies count (enqueued)" << m_replyQueue.count();
+    //qCDebug(dcZigbeeNetwork()) << "=== Pending replies count (enqueued)" << m_replyQueue.count();
     sendNextReply();
 
     return reply;
@@ -182,7 +182,7 @@ void ZigbeeNetworkNxp::sendNextReply()
 
 
     ZigbeeNetworkReply *reply = m_replyQueue.dequeue();
-    qCDebug(dcZigbeeNetwork()) << "=== Pending replies count (dequeued)" << m_replyQueue.count();
+    //qCDebug(dcZigbeeNetwork()) << "=== Pending replies count (dequeued)" << m_replyQueue.count();
 
     ZigbeeInterfaceNxpReply *interfaceReply = m_controller->requestSendRequest(reply->request());
     connect(interfaceReply, &ZigbeeInterfaceNxpReply::finished, reply, [this, reply, interfaceReply](){

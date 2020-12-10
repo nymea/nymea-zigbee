@@ -414,8 +414,6 @@ void ZigbeeNetwork::addNodeInternally(ZigbeeNode *node)
         emit macAddressChanged(m_macAddress);
     }
 
-    // FIXME: check when and how the note will be reachable
-
     // Update database metrics of the node
     connect(node, &ZigbeeNode::lqiChanged, this, [this, node](quint8 lqi){
         m_database->updateNodeLqi(node, lqi);
@@ -467,6 +465,31 @@ ZigbeeNode *ZigbeeNetwork::createNode(quint16 shortAddress, const ZigbeeAddress 
     ZigbeeNode *node = createNode(shortAddress, extendedAddress, parent);
     node->m_macCapabilities = ZigbeeDeviceProfile::parseMacCapabilities(macCapabilities);
     return node;
+}
+
+void ZigbeeNetwork::evaluateNextNodeReachableState()
+{
+    if (m_reachableRefreshAddresses.isEmpty())
+        return;
+
+    ZigbeeAddress address = m_reachableRefreshAddresses.takeFirst();
+    ZigbeeNode *node = getZigbeeNode(address);
+    if (!node) {
+        // Not does not exit any more...continue
+        evaluateNextNodeReachableState();
+        return;
+    }
+
+    // Make a lqi request in order to check if the node is reachable
+    ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestMgmtLqi();
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [=](){
+        if (zdoReply->error()) {
+            qCWarning(dcZigbeeNetwork()) << node << "seems not to be reachable" << zdoReply->error();
+            setNodeReachable(node, false);
+        }
+
+        evaluateNextNodeReachableState();
+    });
 }
 
 void ZigbeeNetwork::loadNetwork()
@@ -757,11 +780,12 @@ void ZigbeeNetwork::verifyUnrecognizedNode(quint16 shortAddress)
         QByteArray response = zdoReply->responseData();
         QDataStream stream(&response, QIODevice::ReadOnly);
         stream.setByteOrder(QDataStream::LittleEndian);
-        quint8 sqn; quint8 statusInt; quint64 ieeeAddressInt;
-        stream >> sqn >> statusInt >> ieeeAddressInt;
+        quint8 sqn; quint8 statusInt; quint64 ieeeAddressInt; quint16 nwkAddress;
+        stream >> sqn >> statusInt >> ieeeAddressInt >> nwkAddress;
         ZigbeeDeviceProfile::Status status = static_cast<ZigbeeDeviceProfile::Status>(statusInt);
         ZigbeeAddress ieeeAddress(ieeeAddressInt);
-        qCDebug(dcZigbeeDeviceObject()) << "Get IEEE address from unrecognized node finished" << status << ieeeAddress.toString() << node << ZigbeeUtils::convertByteArrayToHexString(zdoReply->responseData());
+        node->m_extendedAddress = ieeeAddress;
+        qCDebug(dcZigbeeDeviceObject()) << "Get IEEE address from unrecognized node finished" << status << ieeeAddress.toString() << ZigbeeUtils::convertUint16ToHexString(nwkAddress) << ZigbeeUtils::convertByteArrayToHexString(zdoReply->responseData());
 
         if (hasNode(ieeeAddress)) {
             // We know this node with this IEEE address, let's update the network address and save the new address in the database
@@ -886,15 +910,11 @@ void ZigbeeNetwork::onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const 
 void ZigbeeNetwork::evaluateNodeReachableStates()
 {
     qCDebug(dcZigbeeNetwork()) << "Evaluate reachable state of nodes";
+    m_reachableRefreshAddresses.clear();
+
     foreach (ZigbeeNode *node, m_nodes) {
         if (node->macCapabilities().receiverOnWhenIdle && node->shortAddress() != 0x0000) {
-            ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestMgmtLqi();
-            connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [=](){
-                if (zdoReply->error()) {
-                    qCWarning(dcZigbeeNetwork()) << node << "seems not to be reachable" << zdoReply->error();
-                    setNodeReachable(node, false);
-                }
-            });
+            m_reachableRefreshAddresses.append(node->extendedAddress());
         } else {
             // Note: sleeping devices should send some message within 6 hours,
             // otherwise the device might not be reachable any more
@@ -908,6 +928,8 @@ void ZigbeeNetwork::evaluateNodeReachableStates()
             }
         }
     }
+
+    evaluateNextNodeReachableState();
 }
 
 QDebug operator<<(QDebug debug, ZigbeeNetwork *network)

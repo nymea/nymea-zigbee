@@ -177,6 +177,8 @@ protected:
     quint8 m_permitJoiningRemaining = 0;
 
     QTimer *m_reachableRefreshTimer = nullptr;
+    QList<ZigbeeAddress> m_reachableRefreshAddresses;
+    void evaluateNextNodeReachableState();
 
     void setPermitJoiningEnabled(bool permitJoiningEnabled);
     void setPermitJoiningDuration(quint8 duration);
