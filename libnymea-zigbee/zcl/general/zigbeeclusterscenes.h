@@ -25,72 +25,52 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef NXP_H
-#define NXP_H
+#ifndef ZIGBEECLUSTERSCENES_H
+#define ZIGBEECLUSTERSCENES_H
 
 #include <QObject>
 
-class Nxp
+#include "zcl/zigbeecluster.h"
+
+class ZigbeeClusterScenes : public ZigbeeCluster
 {
-    Q_GADGET
+    Q_OBJECT
 public:
+    enum Attribute {
+        AttributeSceneCount = 0x0000,
+        AttributeCurrentScene = 0x0001,
+        AttributeCurrentGroup = 0x0002,
+        AttributeSceneValid = 0x0003,
+        AttributeNameSupported = 0x0004,
+        AttributeLastConfiguredBy = 0x0005 // Optional
+    };
+    Q_ENUM(Attribute)
+
     enum Command {
-        CommandGetVersion = 0x00,
-        CommandGetControllerState = 0x01,
-        CommandSoftReset = 0x02,
-        CommandFactoryReset = 0x03,
-
-        CommandSetPanId = 0x04,
-        CommandSetChannelMask = 0x05,
-        CommandSetSecurityKey = 0x06,
-
-        CommandStartNetwork = 0x07,
-        CommandGetNetworkState = 0x08,
-        CommandSetPermitJoinCoordinator = 0x09,
-
-        CommandSendApsDataRequest = 0x20
+        CommandAddScene = 0x00,
+        CommandViewScene = 0x01,
+        CommandRemoveScene = 0x02,
+        CommandRemoveAllScenes = 0x03,
+        CommandStoreScene = 0x04,
+        CommandRecallScene = 0x05,
+        CommandGetSceneMembership = 0x06,
+        CommandEnhancedAddScene= 0x40, // O
+        CommandEnhancedViewScene= 0x41, // O
+        CommandCopyScene= 0x42 // O
     };
     Q_ENUM(Command)
 
-    enum Notification {
-        NotificationDeviceStatusChanged = 0x7D,
-        NotificationNetworkStarted = 0x7E,
-        NotificationApsDataConfirm = 0x80,
-        NotificationApsDataIndication = 0x81,
-        NotificationApsDataAck = 0x82,
-        NotificationNodeJoined = 0x90,
-        NotificationNodeLeft = 0x91,
-        NotificationDebugMessage = 0xFE
-    };
-    Q_ENUM(Notification)
+    explicit ZigbeeClusterScenes(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
-    enum Status {
-        StatusSuccess = 0x00,
-        StatusProtocolError = 0x01,
-        StatusUnknownCommand = 0x02,
-        StatusInvalidCrc = 0x03,
-        StatusStackError = 0x04,
-        StatusTimeout = 0xff
-    };
-    Q_ENUM(Status)
+signals:
+    void commandSent(quint8 command, const QByteArray &payload);
 
-    enum LogLevel {
-        LogLevelEmergency = 0x00,
-        LogLevelAlert = 0x01,
-        LogLevelCritical = 0x02,
-        LogLevelError = 0x03,
-        LogLevelWarning = 0x04,
-        LogLevelNotice = 0x05,
-        LogLevelInfo = 0x06,
-        LogLevelDebug = 0x07
-    };
-    Q_ENUM(LogLevel)
+private:
+    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
-    enum KeyType {
-        KeyTypeGlobalLinkKey = 0x00,
-        KeyTypeUniqueLinkKey = 0x01
-    };
-    Q_ENUM(KeyType)
+protected:
+    void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
+
 };
 
-#endif // NXP_H
+#endif // ZIGBEECLUSTERSCENES_H

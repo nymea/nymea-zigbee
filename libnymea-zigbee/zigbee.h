@@ -320,11 +320,12 @@ public:
         ZigbeeNwkLayerStatusMaxFrmCntr = 0xcc,
         ZigbeeNwkLayerStatusNoKey = 0xcd,
         ZigbeeNwkLayerStatusBadCcmOutput = 0xce,
+        ZigbeeNwkLayerStatusNoRoutingCapacity = 0xef, // Resource problem on the hardware
         ZigbeeNwkLayerStatusRouteDiscoveryFailed = 0xd0,
         ZigbeeNwkLayerStatusRouteError = 0xd1,
         ZigbeeNwkLayerStatusBtTableFull = 0xd2,
         ZigbeeNwkLayerStatusFrameNotBuffered = 0xd3,
-        ZigbeeNwkLayerStatusFrameBuffered = 0xd4
+        ZigbeeNwkLayerStatusFrameBuffered = 0xd4 // Buffered until route discovery has been done
     };
     Q_ENUM(ZigbeeNwkLayerStatus)
 
@@ -377,6 +378,16 @@ public:
         qint8 rssi = 0;
     } ApsdeDataIndication;
 
+    typedef  struct ApsdeDataAck {
+        quint8 requestId = 0;
+        quint8 destinationAddressMode = Zigbee::DestinationAddressModeShortAddress;
+        quint16 destinationAddress = 0;
+        quint8 destinationEndpoint = 0;
+        quint8 sourceEndpoint = 0;
+        quint16 profileId = 0;
+        quint16 clusterId = 0;
+        quint8 zigbeeStatusCode = 0;
+    } ApsdeDataAck;
 
     ///* Manufacturer Codes */
     ///* Codes less than 0x1000 were issued for RF4CE */
@@ -1069,11 +1080,11 @@ public:
     //#define ZBEE_MFG_SWANN                      "Swann Communications"
     //#define ZBEE_MFG_TI                         "Texas Instruments"
 
-
 };
 
 QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataConfirm &confirm);
 QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataIndication &indication);
+QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataAck &acknowledgement);
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Zigbee::ZigbeeChannels)
 Q_DECLARE_OPERATORS_FOR_FLAGS(Zigbee::ZigbeeTxOptions)

@@ -83,6 +83,7 @@ signals:
     // APS notifications
     void apsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
     void apsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
+    void apsDataAckReceived(const Zigbee::ApsdeDataAck &acknowledgement);
 
 };
 

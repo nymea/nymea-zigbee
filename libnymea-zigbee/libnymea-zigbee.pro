@@ -37,6 +37,7 @@ SOURCES += \
     zcl/general/zigbeeclustermultistatevalue.cpp \
     zcl/general/zigbeeclusteronoff.cpp \
     zcl/general/zigbeeclusterpowerconfiguration.cpp \
+    zcl/general/zigbeeclusterscenes.cpp \
     zcl/hvac/zigbeeclusterthermostat.cpp \
     zcl/lighting/zigbeeclustercolorcontrol.cpp \
     zcl/measurement/zigbeeclusterilluminancemeasurment.cpp \
@@ -103,6 +104,7 @@ HEADERS += \
     zcl/general/zigbeeclustermultistatevalue.h \
     zcl/general/zigbeeclusteronoff.h \
     zcl/general/zigbeeclusterpowerconfiguration.h \
+    zcl/general/zigbeeclusterscenes.h \
     zcl/hvac/zigbeeclusterthermostat.h \
     zcl/lighting/zigbeeclustercolorcontrol.h \
     zcl/measurement/zigbeeclusterilluminancemeasurment.h \

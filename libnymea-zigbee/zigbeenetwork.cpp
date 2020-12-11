@@ -843,9 +843,16 @@ void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::Zig
         finishNetworkReply(reply);
     } else {
         // There has been an error while transporting the request to the device
-        // Note: if the APS status is >= 0xc1, it has to interpreted as NWK layer error
         if (zigbeeApsStatus >= 0xc1 && zigbeeApsStatus <= 0xd4) {
             reply->m_zigbeeNwkStatus = static_cast<Zigbee::ZigbeeNwkLayerStatus>(static_cast<quint8>(zigbeeApsStatus));
+            if (reply->zigbeeNwkStatus() == Zigbee::ZigbeeNwkLayerStatusFrameBuffered) {
+                // The frame has been buffered and will be sent once the route has been discovered.
+                // If the ACK will arrive, the frame was sent successfully, otherwise on timeout the request failed
+                reply->m_buffered = true;
+                // Restart the timer and wait for ack
+                reply->m_timer->start();
+                return;
+            }
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeNwkStatusError);
         } else if (zigbeeApsStatus >= 0xE0 && zigbeeApsStatus <= 0xF4) {
             reply->m_zigbeeMacStatus = static_cast<Zigbee::ZigbeeMacLayerStatus>(static_cast<quint8>(zigbeeApsStatus));

@@ -32,7 +32,7 @@
 QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataConfirm &confirm)
 {
     debug.nospace() << "APSDE-DATA.confirm(";
-    debug.nospace() << "Request ID: " << confirm.requestId << ", ";
+    debug.nospace() << "SQN: " << confirm.requestId << ", ";
 
     if (confirm.destinationAddressMode == Zigbee::DestinationAddressModeGroup)
         debug.nospace() << "Group address:" << ZigbeeUtils::convertUint16ToHexString(confirm.destinationShortAddress) << ", ";
@@ -82,5 +82,27 @@ QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataIndication &indication)
     debug.nospace() << "ASDU: " << ZigbeeUtils::convertByteArrayToHexString(indication.asdu) << ", ";
     debug.nospace() << "LQI: " << indication.lqi << ", ";
     debug.nospace() << "RSSI: " << indication.rssi << "dBm)";
+    return debug.space();
+}
+
+QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataAck &acknowledgement)
+{
+    debug.nospace() << "APSDE-DATA.acknowledgement(";
+    debug.nospace() << "SQN: " << acknowledgement.requestId << ", ";
+    if (acknowledgement.destinationAddressMode == Zigbee::DestinationAddressModeGroup) {
+        debug.nospace() << "Group address:" << ZigbeeUtils::convertUint16ToHexString(acknowledgement.destinationAddress) << ", ";
+    } else {
+        debug.nospace() << "Network address:" << ZigbeeUtils::convertUint16ToHexString(acknowledgement.destinationAddress) << ", ";
+    }
+    debug.nospace() << "Destination EP:" << ZigbeeUtils::convertByteToHexString(acknowledgement.destinationEndpoint) << ", ";
+    debug.nospace() << "Source EP:" << ZigbeeUtils::convertByteToHexString(acknowledgement.sourceEndpoint) << ", ";
+    debug.nospace() << static_cast<Zigbee::ZigbeeProfile>(acknowledgement.profileId) << ", ";
+    if (acknowledgement.profileId == static_cast<quint16>(Zigbee::ZigbeeProfileDevice)) {
+        debug.nospace() << static_cast<ZigbeeDeviceProfile::ZdoCommand>(acknowledgement.clusterId) << ", ";
+    } else {
+        debug.nospace() << static_cast<ZigbeeClusterLibrary::ClusterId>(acknowledgement.clusterId) << ", ";
+    }
+    debug.nospace() << static_cast<ZigbeeClusterLibrary::Status>(acknowledgement.zigbeeStatusCode);
+    debug.nospace() << ")";
     return debug.space();
 }

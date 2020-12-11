@@ -43,6 +43,7 @@
 #include "zcl/general/zigbeeclusterlevelcontrol.h"
 #include "zcl/general/zigbeeclusterpowerconfiguration.h"
 #include "zcl/general/zigbeeclustergroups.h"
+#include "zcl/general/zigbeeclusterscenes.h"
 #include "zcl/general/zigbeeclusteranaloginput.h"
 #include "zcl/general/zigbeeclusteranalogoutput.h"
 #include "zcl/general/zigbeeclusteranalogvalue.h"

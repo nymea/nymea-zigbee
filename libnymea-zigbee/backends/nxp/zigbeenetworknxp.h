@@ -71,6 +71,7 @@ private slots:
 
     void onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
     void onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
+    void onApsDataAckReceived(const Zigbee::ApsdeDataAck &acknowledgement);
 
     void onNodeLeftIndication(const ZigbeeAddress &ieeeAddress, bool rejoining);
 

@@ -511,9 +511,23 @@ void ZigbeeBridgeControllerNxp::onInterfacePackageReceived(const QByteArray &pac
             stream >> confirm.sourceEndpoint >> confirm.destinationEndpoint >> confirm.zigbeeStatusCode;
 
             qCDebug(dcZigbeeController()) << confirm;
-            qCDebug(dcZigbeeAps()) << "APSDE-DATA.confirm" << confirm;
+            qCDebug(dcZigbeeAps()) << confirm;
 
             emit apsDataConfirmReceived(confirm);
+            break;
+        }
+        case Nxp::NotificationApsDataAck: {
+            QDataStream stream(&payload, QIODevice::ReadOnly);
+            stream.setByteOrder(QDataStream::LittleEndian);
+            Zigbee::ApsdeDataAck acknowledgement;
+            stream >> acknowledgement.requestId >> acknowledgement.zigbeeStatusCode >> acknowledgement.sourceEndpoint;
+            stream >> acknowledgement.destinationAddressMode >> acknowledgement.destinationAddress >> acknowledgement.destinationEndpoint;
+            stream >> acknowledgement.profileId >> acknowledgement.clusterId;
+
+            qCDebug(dcZigbeeController()) << acknowledgement;
+            qCDebug(dcZigbeeAps()) << acknowledgement;
+
+            emit apsDataAckReceived(acknowledgement);
             break;
         }
         case Nxp::NotificationApsDataIndication: {

@@ -71,7 +71,7 @@ public:
 
     enum MoveMode {
         MoveModeUp = 0x00,
-        ModeModeDown = 0x01
+        MoveModeDown = 0x01
     };
     Q_ENUM(MoveMode)
 

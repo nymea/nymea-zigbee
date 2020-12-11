@@ -535,7 +535,7 @@ void ZigbeeNetworkNxp::onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &
 {
     ZigbeeNetworkReply *reply = m_pendingReplies.value(confirm.requestId);
     if (!reply) {
-        qCDebug(dcZigbeeNetwork()) << "Received confirmation but could not find any reply. Ignoring the confirmation";
+        qCDebug(dcZigbeeNetwork()) << "Received confirmation but could not find any reply. Ignoring the confirmation" << confirm;
         return;
     }
 
@@ -552,6 +552,15 @@ void ZigbeeNetworkNxp::onApsDataIndicationReceived(const Zigbee::ApsdeDataIndica
 
     // Let the node handle this indication
     handleZigbeeClusterLibraryIndication(indication);
+}
+
+void ZigbeeNetworkNxp::onApsDataAckReceived(const Zigbee::ApsdeDataAck &acknowledgement)
+{
+    ZigbeeNetworkReply *reply = m_pendingReplies.value(acknowledgement.requestId);
+    if (reply && reply->buffered()) {
+        qCDebug(dcZigbeeNetwork()) << "Buffered frame from network request has been acknowledged" << acknowledgement;
+        setReplyResponseError(reply, static_cast<Zigbee::ZigbeeApsStatus>(acknowledgement.zigbeeStatusCode));
+    }
 }
 
 void ZigbeeNetworkNxp::onNodeLeftIndication(const ZigbeeAddress &ieeeAddress, bool rejoining)
