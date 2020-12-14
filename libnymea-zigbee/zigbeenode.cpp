@@ -162,7 +162,12 @@ void ZigbeeNode::setReachable(bool reachable)
     if (m_reachable == reachable)
         return;
 
-    qCDebug(dcZigbeeNode()) << "Reachable changed"  << this << reachable;
+    if (!reachable) {
+        qCWarning(dcZigbeeNode()) << "Reachable changed"  << this << reachable;
+    } else {
+        qCDebug(dcZigbeeNode()) << "Reachable changed"  << this << reachable;
+    }
+
     m_reachable = reachable;
     emit reachableChanged(m_reachable);
 }
@@ -806,6 +811,12 @@ QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {
     debug.nospace().noquote() << "ZigbeeNode(" << ZigbeeUtils::convertUint16ToHexString(node->shortAddress());
     debug.nospace().noquote() << ", " << node->extendedAddress().toString();
+    if (!node->manufacturerName().isEmpty())
+        debug.nospace().noquote() << ", " << node->manufacturerName();
+
+    if (!node->modelName().isEmpty())
+        debug.nospace().noquote() << ", " << node->modelName();
+
     switch (node->nodeDescriptor().nodeType) {
     case ZigbeeDeviceProfile::NodeTypeCoordinator:
         debug.nospace().noquote() << ", Coordinator";

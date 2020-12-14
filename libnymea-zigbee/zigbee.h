@@ -145,14 +145,26 @@ public:
         HomeAutomationDeviceExtendedColourLight         = 0x010D,
         HomeAutomationDeviceLightLevelSensor            = 0x010E,
 
+        // Closures
+        HomeAutomationDeviceShade                       = 0x02000,
+        HomeAutomationDeviceShadeController             = 0x02001,
+        HomeAutomationWindowCoveringDevice              = 0x02002,
+        HomeAutomationWindowCoveringController          = 0x02003,
+
         // Heating, Ventilation and Air-Conditioning (HVAC) devices
+        HomeAutomationDeviceHeatingCoolingUnit          = 0x0300,
         HomeAutomationDeviceThermostat                  = 0x0301,
+        HomeAutomationDeviceTemperatureSensor           = 0x0302,
+        HomeAutomationDevicePump                        = 0x0303,
+        HomeAutomationDevicePumpController              = 0x0304,
+        HomeAutomationDevicePressureSensor              = 0x0305,
+        HomeAutomationDeviceFlowSensor                  = 0x0306,
 
         // Intruder Alarm System (IAS) devices
         HomeAutomationDeviceIsaControlEquipment             = 0x0400, // CIE
         HomeAutomationDeviceIsaAncillaryControlEquipment    = 0x0401, // ACE
-        HomeAutomationDeviceIsaZone                         = 0x0401,
-        HomeAutomationDeviceIsaWarningDevice                = 0x0401  // WD
+        HomeAutomationDeviceIsaZone                         = 0x0402,
+        HomeAutomationDeviceIsaWarningDevice                = 0x0403  // WD
     };
     Q_ENUM(HomeAutomationDevice)
 

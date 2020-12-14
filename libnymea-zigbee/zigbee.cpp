@@ -45,7 +45,7 @@ QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataConfirm &confirm)
 
     debug.nospace() << "Destination EP:" << ZigbeeUtils::convertByteToHexString(confirm.destinationEndpoint) << ", ";
     debug.nospace() << "Source EP:" << ZigbeeUtils::convertByteToHexString(confirm.sourceEndpoint) << ", ";
-    debug.nospace() << static_cast<ZigbeeClusterLibrary::Status>(confirm.zigbeeStatusCode);
+    debug.nospace() << "Status:" << ZigbeeUtils::zigbeeStatusToString(confirm.zigbeeStatusCode);
     debug.nospace() << ")";
 
     return debug.space();
@@ -102,7 +102,7 @@ QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataAck &acknowledgement)
     } else {
         debug.nospace() << static_cast<ZigbeeClusterLibrary::ClusterId>(acknowledgement.clusterId) << ", ";
     }
-    debug.nospace() << static_cast<ZigbeeClusterLibrary::Status>(acknowledgement.zigbeeStatusCode);
+    debug.nospace() << "Status:" << ZigbeeUtils::zigbeeStatusToString(acknowledgement.zigbeeStatusCode);
     debug.nospace() << ")";
     return debug.space();
 }

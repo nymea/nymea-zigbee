@@ -60,13 +60,10 @@ public:
     Zigbee::ZigbeeNwkLayerStatus zigbeeNwkStatus() const;
     Zigbee::ZigbeeApsStatus zigbeeApsStatus() const;
 
-    bool buffered() const;
-
 private:
     explicit ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObject *parent = nullptr);
     ZigbeeNetworkRequest m_request;
     QTimer *m_timer = nullptr;
-    bool m_buffered = false;
 
     Error m_error = ErrorNoError;
     Zigbee::ZigbeeMacLayerStatus m_zigbeeMacStatus = Zigbee::ZigbeeMacLayerStatusSuccess;

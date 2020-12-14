@@ -194,6 +194,7 @@ protected:
     void removeUninitializedNode(ZigbeeNode *node);
 
     void setNodeReachable(ZigbeeNode *node, bool reachable);
+    void updateReplyRequest(ZigbeeNetworkReply *reply, const ZigbeeNetworkRequest &request);
 
     // Set the coordinator infromation since they cannot be fetched
     void setNodeInformation(ZigbeeNode *node, const QString &manufacturerName, const QString &modelName, const QString &version);
@@ -218,7 +219,7 @@ protected:
 
     // Network reply methods
     ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());
-    void setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeApsStatus zigbeeApsStatus = Zigbee::ZigbeeApsStatusSuccess);
+    void setReplyResponseError(ZigbeeNetworkReply *reply, quint8 zigbeeStatus = Zigbee::ZigbeeApsStatusSuccess);
     void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError);
     void startWaitingReply(ZigbeeNetworkReply *reply);
 

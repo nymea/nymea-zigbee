@@ -47,11 +47,6 @@ Zigbee::ZigbeeApsStatus ZigbeeNetworkReply::zigbeeApsStatus() const
     return m_zigbeeApsStatus;
 }
 
-bool ZigbeeNetworkReply::buffered() const
-{
-    return m_buffered;
-}
-
 Zigbee::ZigbeeNwkLayerStatus ZigbeeNetworkReply::zigbeeNwkStatus() const
 {
     return m_zigbeeNwkStatus;
@@ -65,13 +60,7 @@ ZigbeeNetworkReply::ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObj
     m_timer->setSingleShot(true);
     m_timer->setInterval(10000);
     connect(m_timer, &QTimer::timeout, this, [this](){
-        if (m_buffered) {
-            // We did not receive any reply from the buffered message, assuming the route could not be discovered to the device
-            m_zigbeeNwkStatus = Zigbee::ZigbeeNwkLayerStatusRouteDiscoveryFailed;
-            m_error = ErrorZigbeeNwkStatusError;
-        } else {
-            m_error = ErrorTimeout;
-        }
+        m_error = ErrorTimeout;
         emit finished();
     });
 }

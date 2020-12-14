@@ -243,6 +243,34 @@ QString ZigbeeUtils::convertUint64ToHexString(const quint64 &value)
     return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
 }
 
+QString ZigbeeUtils::zigbeeStatusToString(quint8 status)
+{
+    QString statusString;
+
+    if (status == 0) {
+        statusString = "Success";
+    } else if (status >= 0xc1 && status <= 0xd4) {
+        // NWK layer status
+        QMetaEnum metaEnum = QMetaEnum::fromType<Zigbee::ZigbeeNwkLayerStatus>();
+        QString enumString = QString(metaEnum.valueToKey(status));
+        statusString = QString("%1(%2)").arg(enumString).arg(ZigbeeUtils::convertByteToHexString(status));
+    } else if (status >= 0xE0 && status <= 0xF4) {
+        //MAC layer
+        QMetaEnum metaEnum = QMetaEnum::fromType<Zigbee::ZigbeeMacLayerStatus>();
+        QString enumString = QString(metaEnum.valueToKey(status));
+        statusString = QString("%1(%2)").arg(enumString).arg(ZigbeeUtils::convertByteToHexString(status));
+    } else if (status >= 0xa0 && status <= 0xb0) {
+        // APS layer
+        QMetaEnum metaEnum = QMetaEnum::fromType<Zigbee::ZigbeeApsStatus>();
+        QString enumString = QString(metaEnum.valueToKey(status));
+        statusString = QString("%1(%2)").arg(enumString).arg(ZigbeeUtils::convertByteToHexString(status));
+    } else {
+        statusString = QString("Unknown status (%1)").arg(status);
+    }
+
+    return statusString;
+}
+
 QString ZigbeeUtils::clusterIdToString(const ZigbeeClusterLibrary::ClusterId &clusterId)
 {
     QMetaEnum metaEnum = QMetaEnum::fromType<ZigbeeClusterLibrary::ClusterId>();

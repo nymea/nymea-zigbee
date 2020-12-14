@@ -77,12 +77,17 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
     ZigbeeNetworkReply *reply = createNetworkReply(request);
     // Send the request, and keep the reply until transposrt, zigbee trasmission and response arrived
     connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply](){
-        if (!m_pendingReplies.values().contains(reply)) {
-            //qCWarning(dcZigbeeNetwork()) << "#### Reply finished but not in the pending replies list" << reply;
+        if (m_pendingReplies.values().contains(reply)) {
+            quint8 requestId = m_pendingReplies.key(reply);
+            m_pendingReplies.remove(requestId);
             return;
         }
-        quint8 requestId = m_pendingReplies.key(reply);
-        m_pendingReplies.remove(requestId);
+
+        if (m_bufferedReplies.values().contains(reply)) {
+            quint8 requestId = m_pendingReplies.key(reply);
+            m_pendingReplies.remove(requestId);
+            return;
+        }
         //qCWarning(dcZigbeeNetwork()) << "#### Removed network reply" << reply << "ID:" << requestId << "Current reply count" << m_pendingReplies.count();
     });
 
@@ -193,21 +198,30 @@ void ZigbeeNetworkNxp::sendNextReply()
         }
 
         // Note: this is a special case for nxp coordinator requests, they don't send a confirm because the request will not be sent trough the network
-        if (reply->request().destinationShortAddress() == 0x0000 && reply->request().profileId() == Zigbee::ZigbeeProfileDevice) {
+        if ((reply->request().destinationAddressMode() == Zigbee::DestinationAddressModeShortAddress &&
+                reply->request().destinationShortAddress() == 0x0000 &&
+                reply->request().profileId() == Zigbee::ZigbeeProfileDevice) ||
+                (reply->request().destinationAddressMode() == Zigbee::DestinationAddressModeIeeeAddress &&
+                 m_coordinatorNode &&
+                 reply->request().destinationIeeeAddress() == m_coordinatorNode->extendedAddress() &&
+                 reply->request().profileId() == Zigbee::ZigbeeProfileDevice)) {
+
             qCDebug(dcZigbeeNetwork()) << "Finish reply since there will be no CONFIRM for local node requests.";
             finishReplyInternally(reply);
             return;
         }
 
         quint8 networkRequestId = interfaceReply->responseData().at(0);
-        //qCDebug(dcZigbeeNetwork()) << "Request has network SQN" << networkRequestId;
-        reply->request().setRequestId(networkRequestId);
+        ZigbeeNetworkRequest request = reply->request();
+        request.setRequestId(networkRequestId);
+        updateReplyRequest(reply, request);
+
+        qCDebug(dcZigbeeAps()) << "Request SQN updated:" << reply->request();
         //qCWarning(dcZigbeeNetwork()) << "#### Insert network reply" << reply << "ID:" << networkRequestId << "Current reply count" << m_pendingReplies.count();
         m_pendingReplies.insert(networkRequestId, reply);
         // The request has been sent successfully to the device, start the timeout timer now
         startWaitingReply(reply);
     });
-
 }
 
 void ZigbeeNetworkNxp::finishReplyInternally(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error)
@@ -539,7 +553,17 @@ void ZigbeeNetworkNxp::onApsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &
         return;
     }
 
-    setReplyResponseError(reply, static_cast<Zigbee::ZigbeeApsStatus>(confirm.zigbeeStatusCode));
+    if (confirm.zigbeeStatusCode == Zigbee::ZigbeeNwkLayerStatusFrameBuffered) {
+        // Move the reply to the buffered hash
+        m_pendingReplies.remove(confirm.requestId);
+        m_bufferedReplies.insert(confirm.requestId, reply);
+        // The frame has been buffered and will be sent once the route has been discovered.
+        // If the ACK will arrive, the frame was sent successfully, otherwise on timeout the request failed
+        qCWarning(dcZigbeeNetwork()) << "Request frame buffered" << reply->request();
+        return;
+    }
+
+    setReplyResponseError(reply, confirm.zigbeeStatusCode);
 }
 
 void ZigbeeNetworkNxp::onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication)
@@ -556,10 +580,25 @@ void ZigbeeNetworkNxp::onApsDataIndicationReceived(const Zigbee::ApsdeDataIndica
 
 void ZigbeeNetworkNxp::onApsDataAckReceived(const Zigbee::ApsdeDataAck &acknowledgement)
 {
-    ZigbeeNetworkReply *reply = m_pendingReplies.value(acknowledgement.requestId);
-    if (reply && reply->buffered()) {
-        qCDebug(dcZigbeeNetwork()) << "Buffered frame from network request has been acknowledged" << acknowledgement;
-        setReplyResponseError(reply, static_cast<Zigbee::ZigbeeApsStatus>(acknowledgement.zigbeeStatusCode));
+    // Check first if we received an ACK from a buffered node...if so, the network reply can be finished with the given ACK status
+    ZigbeeNetworkReply *reply = m_bufferedReplies.value(acknowledgement.requestId);
+    if (reply) {
+        if (acknowledgement.zigbeeStatusCode != Zigbee::ZigbeeApsStatusSuccess) {
+            qCWarning(dcZigbeeNetwork()) << "Buffered frame from network request has been acknowledged with error" << acknowledgement;
+        } else {
+            qCDebug(dcZigbeeNetwork()) << "Buffered frame from network request has been acknowledged successfully" << acknowledgement;
+        }
+        setReplyResponseError(reply, acknowledgement.zigbeeStatusCode);
+    } else {
+        if (acknowledgement.zigbeeStatusCode != Zigbee::ZigbeeApsStatusSuccess) {
+            qCWarning(dcZigbeeNetwork()) << acknowledgement;
+        } else {
+            ZigbeeNode *node = getZigbeeNode(acknowledgement.destinationAddress);
+            if (node) {
+                // We received a successfull ACk from this node...it is reachable in any case
+                setNodeReachable(node, true);
+            }
+        }
     }
 }
 

@@ -593,7 +593,7 @@ void ZigbeeNetworkDeconz::onApsDataConfirmReceived(const Zigbee::ApsdeDataConfir
         return;
     }
 
-    setReplyResponseError(reply, static_cast<Zigbee::ZigbeeApsStatus>(confirm.zigbeeStatusCode));
+    setReplyResponseError(reply, confirm.zigbeeStatusCode);
 }
 
 void ZigbeeNetworkDeconz::onApsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication)

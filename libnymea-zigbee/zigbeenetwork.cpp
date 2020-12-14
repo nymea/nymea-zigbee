@@ -55,7 +55,7 @@ ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
 
 
     m_reachableRefreshTimer = new QTimer(this);
-    m_reachableRefreshTimer->setInterval(300000);
+    m_reachableRefreshTimer->setInterval(120000);
     m_reachableRefreshTimer->setSingleShot(false);
     connect(m_reachableRefreshTimer, &QTimer::timeout, this, &ZigbeeNetwork::evaluateNodeReachableStates);
 
@@ -472,8 +472,7 @@ void ZigbeeNetwork::evaluateNextNodeReachableState()
     if (m_reachableRefreshAddresses.isEmpty())
         return;
 
-    ZigbeeAddress address = m_reachableRefreshAddresses.takeFirst();
-    ZigbeeNode *node = getZigbeeNode(address);
+    ZigbeeNode *node = getZigbeeNode(m_reachableRefreshAddresses.takeFirst());
     if (!node) {
         // Not does not exit any more...continue
         evaluateNextNodeReachableState();
@@ -481,14 +480,17 @@ void ZigbeeNetwork::evaluateNextNodeReachableState()
     }
 
     // Make a lqi request in order to check if the node is reachable
-    ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestMgmtLqi();
+    ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestNetworkAddress();
     connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [=](){
         if (zdoReply->error()) {
             qCWarning(dcZigbeeNetwork()) << node << "seems not to be reachable" << zdoReply->error();
             setNodeReachable(node, false);
+        } else {
+            setNodeReachable(node, true);
         }
 
-        evaluateNextNodeReachableState();
+        // Give some time for other requests to be processed
+        QTimer::singleShot(5000, this, &ZigbeeNetwork::evaluateNextNodeReachableState);
     });
 }
 
@@ -608,6 +610,11 @@ void ZigbeeNetwork::removeUninitializedNode(ZigbeeNode *node)
 void ZigbeeNetwork::setNodeReachable(ZigbeeNode *node, bool reachable)
 {
     node->setReachable(reachable);
+}
+
+void ZigbeeNetwork::updateReplyRequest(ZigbeeNetworkReply *reply, const ZigbeeNetworkRequest &request)
+{
+    reply->m_request = request;
 }
 
 void ZigbeeNetwork::setNodeInformation(ZigbeeNode *node, const QString &manufacturerName, const QString &modelName, const QString &version)
@@ -836,29 +843,21 @@ ZigbeeNetworkReply *ZigbeeNetwork::createNetworkReply(const ZigbeeNetworkRequest
     return reply;
 }
 
-void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, Zigbee::ZigbeeApsStatus zigbeeApsStatus)
+void ZigbeeNetwork::setReplyResponseError(ZigbeeNetworkReply *reply, quint8 zigbeeStatus)
 {
-    if (zigbeeApsStatus == Zigbee::ZigbeeApsStatusSuccess) {
+    if (zigbeeStatus == Zigbee::ZigbeeApsStatusSuccess) {
         // The request has been sent successfully to the device
         finishNetworkReply(reply);
     } else {
         // There has been an error while transporting the request to the device
-        if (zigbeeApsStatus >= 0xc1 && zigbeeApsStatus <= 0xd4) {
-            reply->m_zigbeeNwkStatus = static_cast<Zigbee::ZigbeeNwkLayerStatus>(static_cast<quint8>(zigbeeApsStatus));
-            if (reply->zigbeeNwkStatus() == Zigbee::ZigbeeNwkLayerStatusFrameBuffered) {
-                // The frame has been buffered and will be sent once the route has been discovered.
-                // If the ACK will arrive, the frame was sent successfully, otherwise on timeout the request failed
-                reply->m_buffered = true;
-                // Restart the timer and wait for ack
-                reply->m_timer->start();
-                return;
-            }
+        if (zigbeeStatus >= 0xc1 && zigbeeStatus <= 0xd4) {
+            reply->m_zigbeeNwkStatus = static_cast<Zigbee::ZigbeeNwkLayerStatus>(static_cast<quint8>(zigbeeStatus));
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeNwkStatusError);
-        } else if (zigbeeApsStatus >= 0xE0 && zigbeeApsStatus <= 0xF4) {
-            reply->m_zigbeeMacStatus = static_cast<Zigbee::ZigbeeMacLayerStatus>(static_cast<quint8>(zigbeeApsStatus));
+        } else if (zigbeeStatus >= 0xE0 && zigbeeStatus <= 0xF4) {
+            reply->m_zigbeeMacStatus = static_cast<Zigbee::ZigbeeMacLayerStatus>(static_cast<quint8>(zigbeeStatus));
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeMacStatusError);
         } else {
-            reply->m_zigbeeApsStatus = zigbeeApsStatus;
+            reply->m_zigbeeApsStatus = static_cast<Zigbee::ZigbeeApsStatus>(zigbeeStatus);
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorZigbeeApsStatusError);
         }
     }
@@ -920,8 +919,27 @@ void ZigbeeNetwork::evaluateNodeReachableStates()
     m_reachableRefreshAddresses.clear();
 
     foreach (ZigbeeNode *node, m_nodes) {
+        // Skip the coordinator
+        if (node->shortAddress() == 0x0000)
+            continue;
+
         if (node->macCapabilities().receiverOnWhenIdle && node->shortAddress() != 0x0000) {
-            m_reachableRefreshAddresses.append(node->extendedAddress());
+
+            // Lets send a request to all things which are not reachable
+            if (!node->reachable()) {
+                qCDebug(dcZigbeeNetwork()) << node << "enqueue evaluating reachable state";
+                m_reachableRefreshAddresses.append(node->extendedAddress());
+                continue;
+            }
+
+            // Lets send a request to nodes which have not been seen more than 10 min
+            int msSinceLastSeen = node->lastSeen().msecsTo(QDateTime::currentDateTimeUtc());
+            qCDebug(dcZigbeeNetwork()) << node << "has been seen the last time" << QTime::fromMSecsSinceStartOfDay(msSinceLastSeen).toString() << "ago.";
+            // 10 min = 10 * 60 * 1000 = 600000 ms
+            if (msSinceLastSeen > 600000) {
+                qCDebug(dcZigbeeNetwork()) << node << "enqueue evaluating reachable state";
+                m_reachableRefreshAddresses.append(node->extendedAddress());
+            }
         } else {
             // Note: sleeping devices should send some message within 6 hours,
             // otherwise the device might not be reachable any more

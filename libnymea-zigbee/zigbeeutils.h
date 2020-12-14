@@ -61,6 +61,8 @@ public:
     static QString convertUint32ToHexString(const quint32 &value);
     static QString convertUint64ToHexString(const quint64 &value);
 
+    static QString zigbeeStatusToString(quint8 status);
+
     // Enum prittify print methods
     //static QString messageTypeToString(const Zigbee::InterfaceMessageType &type);
     static QString clusterIdToString(const ZigbeeClusterLibrary::ClusterId &clusterId);
@@ -68,6 +70,7 @@ public:
 
     // Generate random data
     static quint64 generateRandomPanId();
+
 
     // Color converter
     static QPointF convertColorToXY(const QColor &color);

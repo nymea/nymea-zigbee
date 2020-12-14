@@ -53,6 +53,8 @@ private:
     bool m_networkRunning = false;
 
     QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
+    QHash<quint8, ZigbeeNetworkReply *> m_bufferedReplies;
+
     QQueue<ZigbeeNetworkReply *> m_replyQueue;
     ZigbeeNetworkReply *m_currentReply = nullptr;
 
