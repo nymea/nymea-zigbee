@@ -42,6 +42,7 @@ ZigbeeNetworkNxp::ZigbeeNetworkNxp(const QUuid &networkUuid, QObject *parent) :
     connect(m_controller, &ZigbeeBridgeControllerNxp::controllerStateChanged, this, &ZigbeeNetworkNxp::onControllerStateChanged);
     connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataConfirmReceived, this, &ZigbeeNetworkNxp::onApsDataConfirmReceived);
     connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataIndicationReceived, this, &ZigbeeNetworkNxp::onApsDataIndicationReceived);
+    connect(m_controller, &ZigbeeBridgeControllerNxp::apsDataAckReceived, this, &ZigbeeNetworkNxp::onApsDataAckReceived);
     connect(m_controller, &ZigbeeBridgeControllerNxp::nodeLeft, this, &ZigbeeNetworkNxp::onNodeLeftIndication);
     connect(m_controller, &ZigbeeBridgeControllerNxp::canUpdateChanged, this, [](bool canUpdate){
         if (canUpdate) {
