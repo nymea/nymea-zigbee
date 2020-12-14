@@ -294,8 +294,19 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
                                     qCDebug(dcZigbeeController()) << "Configured network key successfully. SQN:" << reply->sequenceNumber();
                                 }
 
-                                // Configuration finished, lets start the network
-                                setCreateNetworkState(CreateNetworkStateStartNetwork);
+                                // Re-read the configurations
+                                // Read all network parameters
+                                ZigbeeInterfaceDeconzReply *reply = m_controller->readNetworkParameters();
+                                connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+                                    if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+                                        qCWarning(dcZigbeeController()) << "Could not read network parameters during network start up. SQN:" << reply->sequenceNumber() << reply->statusCode();
+                                    }
+
+                                    qCDebug(dcZigbeeController()) << m_controller->networkConfiguration();
+
+                                    // Configuration finished, lets start the network
+                                    setCreateNetworkState(CreateNetworkStateStartNetwork);
+                                });
                             });
                         });
                     });
@@ -351,8 +362,9 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
             }
 
             qCDebug(dcZigbeeNetwork()) << "We already have the coordinator node. Network starting done.";
-            m_database->saveNode(m_coordinatorNode);
             m_initializing = false;
+            setNodeInformation(m_coordinatorNode, "deCONZ", "", bridgeController()->firmwareVersion());
+
             setState(StateRunning);
             setPermitJoining(0);
             return;
@@ -378,18 +390,8 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
     }
 }
 
-void ZigbeeNetworkDeconz::startNetworkInternally()
+void ZigbeeNetworkDeconz::runNetworkInitProcess()
 {
-    qCDebug(dcZigbeeNetwork()) << "Start zigbee network internally";
-
-    m_createNewNetwork = false;
-    // Check if we have to create a pan ID and select the channel
-    if (panId() == 0 || !m_coordinatorNode) {
-        qCDebug(dcZigbeeNetwork()) << "Generate new extended PAN ID...";
-        setExtendedPanId(ZigbeeUtils::generateRandomPanId());
-        m_createNewNetwork = true;
-    }
-
     // - Read the firmware version
     // - Read the network configuration parameters
     // - Read the network state
@@ -403,9 +405,18 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
     connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
             qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
-            // FIXME: set an appropriate error
+            m_initRetry++;
+            if (m_initRetry < 3) {
+                qCDebug(dcZigbeeNetwork()) << "Retry to initialize network" << m_initRetry << "/ 3";
+                runNetworkInitProcess();
+            } else {
+                qCWarning(dcZigbeeNetwork()) << "Failed to read firmware version after 3 attempts. Giving up";
+                m_controller->disable();
+            }
             return;
         }
+
+        m_initRetry = 0;
         qCDebug(dcZigbeeNetwork()) << "Version request finished successfully" << ZigbeeUtils::convertByteArrayToHexString(reply->responseData());
         // Note: version is an uint32 value, little endian, but we can read the individual bytes in reversed order
         quint8 majorVersion = static_cast<quint8>(reply->responseData().at(3));
@@ -496,6 +507,22 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
             });
         });
     });
+}
+
+void ZigbeeNetworkDeconz::startNetworkInternally()
+{
+    qCDebug(dcZigbeeNetwork()) << "Start zigbee network internally";
+
+    m_createNewNetwork = false;
+    // Check if we have to create a pan ID and select the channel
+    if (panId() == 0 || !m_coordinatorNode) {
+        qCDebug(dcZigbeeNetwork()) << "Generate new extended PAN ID...";
+        setExtendedPanId(ZigbeeUtils::generateRandomPanId());
+        m_createNewNetwork = true;
+    }
+
+    m_initRetry = 0;
+    runNetworkInitProcess();
 }
 
 void ZigbeeNetworkDeconz::onControllerAvailableChanged(bool available)

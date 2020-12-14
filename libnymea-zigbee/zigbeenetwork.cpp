@@ -455,6 +455,15 @@ void ZigbeeNetwork::removeNodeInternally(ZigbeeNode *node)
     node->deleteLater();
 }
 
+void ZigbeeNetwork::initializeDatabase()
+{
+    if (!m_database) {
+        QString networkDatabaseFileName = settingsDirectory().absolutePath() + QDir::separator() + QString("zigbee-network-%1.db").arg(networkUuid().toString().remove('{').remove('}'));
+        qCDebug(dcZigbeeNetwork()) << "Using ZigBee network database" << QFileInfo(networkDatabaseFileName).fileName();
+        m_database = new ZigbeeNetworkDatabase(this, networkDatabaseFileName, this);
+    }
+}
+
 ZigbeeNode *ZigbeeNetwork::createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent)
 {
     return new ZigbeeNode(this, shortAddress, extendedAddress, parent);
@@ -627,6 +636,8 @@ void ZigbeeNetwork::setNodeInformation(ZigbeeNode *node, const QString &manufact
 
     node->m_version = version;
     emit node->versionChanged(node->version());
+
+    m_database->saveNode(m_coordinatorNode);
 }
 
 void ZigbeeNetwork::setState(ZigbeeNetwork::State state)

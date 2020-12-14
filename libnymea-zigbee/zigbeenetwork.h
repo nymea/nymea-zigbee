@@ -138,6 +138,9 @@ private:
     qint32 m_serialBaudrate = 115200;
     ZigbeeAddress m_macAddress;
 
+    ZigbeeNetworkDatabase *m_database = nullptr;
+    bool m_networkLoaded = false;
+
     // Continuous ASP sequence number for network requests
     quint8 m_sequenceNumber = 0;
 
@@ -164,8 +167,8 @@ protected:
     Error m_error = ErrorNoError;
     ZigbeeNode *m_coordinatorNode = nullptr;
     ZigbeeSecurityConfiguration m_securityConfiguration;
-    ZigbeeNetworkDatabase *m_database = nullptr;
-    bool m_networkLoaded = false;
+
+    void initializeDatabase();
 
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent);
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, quint8 macCapabilities, QObject *parent);

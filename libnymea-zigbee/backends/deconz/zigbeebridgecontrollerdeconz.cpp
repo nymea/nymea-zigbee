@@ -767,7 +767,6 @@ void ZigbeeBridgeControllerDeconz::readDataIndication()
             return;
         }
 
-
         // APS data indication received, process the content
         qCDebug(dcZigbeeController()) << "Reading data indication finished successfully" << "SQN:" << reply->sequenceNumber();
         processDataIndication(reply->responseData());

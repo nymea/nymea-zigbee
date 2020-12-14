@@ -393,7 +393,6 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
 
                     qCDebug(dcZigbeeNetwork()) << "We already have the coordinator node. Network starting done.";
                     setNodeInformation(m_coordinatorNode, "NXP", "JN516x", bridgeController()->firmwareVersion());
-                    m_database->saveNode(m_coordinatorNode);
                     setPermitJoining(0);
                     setState(StateRunning);
                     return;
@@ -448,11 +447,8 @@ void ZigbeeNetworkNxp::onControllerStateChanged(ZigbeeBridgeControllerNxp::Contr
     case ZigbeeBridgeControllerNxp::ControllerStateRunningUninitialized: {
         // Create the database if there is no database available
         setState(StateStarting);
-        if (!m_database) {
-            QString networkDatabaseFileName = settingsDirectory().absolutePath() + QDir::separator() + QString("zigbee-network-%1.db").arg(networkUuid().toString().remove('{').remove('}'));
-            qCDebug(dcZigbeeNetwork()) << "Using ZigBee network database" << QFileInfo(networkDatabaseFileName).fileName();
-            m_database = new ZigbeeNetworkDatabase(this, networkDatabaseFileName, this);
-        }
+
+        initializeDatabase();
 
         qCDebug(dcZigbeeNetwork()) << "Request controller version";
         ZigbeeInterfaceNxpReply *reply = m_controller->requestVersion();

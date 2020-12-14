@@ -71,6 +71,10 @@ private:
     QTimer *m_pollNetworkStateTimer = nullptr;
     void setCreateNetworkState(CreateNetworkState state);
 
+    // Init procedure
+    int m_initRetry = 0;
+    void runNetworkInitProcess();
+
     ZigbeeNetworkReply *requestSetPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
 
 protected:
