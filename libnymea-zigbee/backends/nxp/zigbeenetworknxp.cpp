@@ -85,8 +85,8 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
         }
 
         if (m_bufferedReplies.values().contains(reply)) {
-            quint8 requestId = m_pendingReplies.key(reply);
-            m_pendingReplies.remove(requestId);
+            quint8 requestId = m_bufferedReplies.key(reply);
+            m_bufferedReplies.remove(requestId);
             return;
         }
         //qCWarning(dcZigbeeNetwork()) << "#### Removed network reply" << reply << "ID:" << requestId << "Current reply count" << m_pendingReplies.count();
