@@ -49,7 +49,7 @@ ZigbeeClusterIasZone::ZoneType ZigbeeClusterIasZone::zoneType() const
     return m_zoneType;
 }
 
-ZigbeeClusterIasZone::ZoneStatus ZigbeeClusterIasZone::zoneStatus() const
+ZigbeeClusterIasZone::ZoneStatusFlags ZigbeeClusterIasZone::zoneStatus() const
 {
     return m_zoneStatus;
 }
@@ -62,12 +62,15 @@ void ZigbeeClusterIasZone::setAttribute(const ZigbeeClusterAttribute &attribute)
     if (attribute.id() == AttributeZoneState) {
         quint8 zoneStateInt = attribute.dataType().toUInt8();
         m_zoneState = static_cast<ZoneState>(zoneStateInt);
+        qCDebug(dcZigbeeCluster()) << m_node << m_endpoint << m_zoneState;
     } else if (attribute.id() == AttributeZoneType) {
         quint16 zoneTypeInt = attribute.dataType().toUInt16();
         m_zoneType = static_cast<ZoneType>(zoneTypeInt);
+        qCDebug(dcZigbeeCluster()) << m_node << m_endpoint << m_zoneType;
     } else if (attribute.id() == AttributeZoneStatus) {
         quint16 zoneStatusInt = attribute.dataType().toUInt16();
-        m_zoneStatus = ZoneStatus(zoneStatusInt);
+        m_zoneStatus = ZoneStatusFlags(zoneStatusInt);
+        qCDebug(dcZigbeeCluster()) << m_node << m_endpoint << m_zoneStatus;
     }
 }
 

@@ -125,12 +125,12 @@ public:
 
     ZoneState zoneState() const;
     ZoneType zoneType() const;
-    ZoneStatus zoneStatus() const;
+    ZoneStatusFlags zoneStatus() const;
 
 private:
     ZoneState m_zoneState = ZoneStateNotEnrolled;
     ZoneType m_zoneType = ZoneTypeInvalidZone;
-    ZoneStatus m_zoneStatus;
+    ZoneStatusFlags m_zoneStatus;
 
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
