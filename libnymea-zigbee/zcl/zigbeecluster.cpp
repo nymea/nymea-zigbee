@@ -282,6 +282,52 @@ ZigbeeClusterReply *ZigbeeCluster::sendClusterServerResponse(quint8 command, qui
     return zclReply;
 }
 
+ZigbeeClusterReply *ZigbeeCluster::sendDefaultResponse(quint8 transactionSequenceNumber, quint8 command, quint8 status)
+{
+    ZigbeeNetworkRequest request = createGeneralRequest();
+
+    // Build ZCL frame control
+    ZigbeeClusterLibrary::FrameControl frameControl;
+    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeClusterSpecific;
+    frameControl.manufacturerSpecific = false;
+    frameControl.direction = ZigbeeClusterLibrary::DirectionServerToClient;
+    frameControl.disableDefaultResponse = true;
+
+    // Build ZCL header
+    ZigbeeClusterLibrary::Header header;
+    header.frameControl = frameControl;
+    header.command = ZigbeeClusterLibrary::CommandDefaultResponse;
+    header.transactionSequenceNumber = transactionSequenceNumber;
+
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << command << status;
+
+    // Build ZCL frame
+    ZigbeeClusterLibrary::Frame frame;
+    frame.header = header;
+    frame.payload = payload;
+
+    request.setTxOptions(Zigbee::ZigbeeTxOptions(Zigbee::ZigbeeTxOptionAckTransmission));
+    request.setAsdu(ZigbeeClusterLibrary::buildFrame(frame));
+
+    ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
+    qCDebug(dcZigbeeCluster()) << "Send default response" << "TSN:" << ZigbeeUtils::convertByteToHexString(transactionSequenceNumber) << ZigbeeUtils::convertByteArrayToHexString(payload);
+    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
+    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
+        if (!verifyNetworkError(zclReply, networkReply)) {
+            finishZclReply(zclReply);
+            return;
+        }
+
+        // Note: since this is a response to a request, we don't expect any additional indications and the reply is finished
+        finishZclReply(zclReply);
+    });
+
+    return zclReply;
+}
+
 ZigbeeNetworkRequest ZigbeeCluster::createGeneralRequest()
 {
     // Build the request

@@ -123,9 +123,15 @@ public:
 
     explicit ZigbeeClusterIasZone(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
-    // TODO: write server commands
+    ZoneState zoneState() const;
+    ZoneType zoneType() const;
+    ZoneStatus zoneStatus() const;
 
 private:
+    ZoneState m_zoneState = ZoneStateNotEnrolled;
+    ZoneType m_zoneType = ZoneTypeInvalidZone;
+    ZoneStatus m_zoneStatus;
+
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 protected:

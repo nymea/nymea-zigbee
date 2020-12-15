@@ -39,10 +39,36 @@ ZigbeeClusterIasZone::ZigbeeClusterIasZone(ZigbeeNetwork *network, ZigbeeNode *n
 
 }
 
+ZigbeeClusterIasZone::ZoneState ZigbeeClusterIasZone::zoneState() const
+{
+    return m_zoneState;
+}
+
+ZigbeeClusterIasZone::ZoneType ZigbeeClusterIasZone::zoneType() const
+{
+    return m_zoneType;
+}
+
+ZigbeeClusterIasZone::ZoneStatus ZigbeeClusterIasZone::zoneStatus() const
+{
+    return m_zoneStatus;
+}
+
 void ZigbeeClusterIasZone::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
     updateOrAddAttribute(attribute);
+
+    if (attribute.id() == AttributeZoneState) {
+        quint8 zoneStateInt = attribute.dataType().toUInt8();
+        m_zoneState = static_cast<ZoneState>(zoneStateInt);
+    } else if (attribute.id() == AttributeZoneType) {
+        quint16 zoneTypeInt = attribute.dataType().toUInt16();
+        m_zoneType = static_cast<ZoneType>(zoneTypeInt);
+    } else if (attribute.id() == AttributeZoneStatus) {
+        quint16 zoneStatusInt = attribute.dataType().toUInt16();
+        m_zoneStatus = ZoneStatus(zoneStatusInt);
+    }
 }
 
 void ZigbeeClusterIasZone::processDataIndication(ZigbeeClusterLibrary::Frame frame)
@@ -75,6 +101,16 @@ void ZigbeeClusterIasZone::processDataIndication(ZigbeeClusterLibrary::Frame fra
                 // Update the ZoneState attribute
                 setAttribute(ZigbeeClusterAttribute(AttributeZoneState, ZigbeeDataType(Zigbee::BitMap16, frame.payload.left(2))));
                 emit zoneStatusChanged(ZoneStatusFlags(zoneStatus), extendedStatus, zoneId, delay);
+
+                // Respond with default response if enabled
+                if (!frame.header.frameControl.disableDefaultResponse) {
+                    // Send the default response with success back to the cluster
+                    ZigbeeClusterReply *reply = sendDefaultResponse(frame.header.transactionSequenceNumber, command, ZigbeeClusterLibrary::StatusSuccess);
+                    connect(reply, &ZigbeeClusterReply::finished, this, [](){
+                        qCDebug(dcZigbeeCluster()) << "Default response sent successfully to the IAS zone status notification.";
+                    });
+                }
+
                 break;
             }
             case ServerCommandZoneEnrollRequest: {
@@ -87,8 +123,16 @@ void ZigbeeClusterIasZone::processDataIndication(ZigbeeClusterLibrary::Frame fra
                                            << zoneType << "Manufacturer code:" << ZigbeeUtils::convertUint16ToHexString(manufacturerCode);
                 // Update the ZoneState attribute
                 setAttribute(ZigbeeClusterAttribute(AttributeZoneType, ZigbeeDataType(Zigbee::Enum16, frame.payload.left(2))));
-
                 emit zoneEnrollRequest(zoneType, manufacturerCode);
+
+                // Respond with default response if enabled
+                if (!frame.header.frameControl.disableDefaultResponse) {
+                    // Send the default response with success back to the cluster
+                    ZigbeeClusterReply *reply = sendDefaultResponse(frame.header.transactionSequenceNumber, command, ZigbeeClusterLibrary::StatusSuccess);
+                    connect(reply, &ZigbeeClusterReply::finished, this, [](){
+                        qCDebug(dcZigbeeCluster()) << "Default response sent successfully to the IAS zone status notification.";
+                    });
+                }
                 break;
             }
             }

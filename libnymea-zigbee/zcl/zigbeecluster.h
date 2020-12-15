@@ -119,6 +119,7 @@ protected:
     ZigbeeClusterReply *executeClusterCommand(quint8 command, const QByteArray &payload = QByteArray());
 
     ZigbeeClusterReply *sendClusterServerResponse(quint8 command, quint8 transactionSequenceNumber, const QByteArray &payload = QByteArray());
+    ZigbeeClusterReply *sendDefaultResponse(quint8 transactionSequenceNumber, quint8 command, quint8 status);
 
     bool verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetworkReply *networkReply);
     void finishZclReply(ZigbeeClusterReply *zclReply);
