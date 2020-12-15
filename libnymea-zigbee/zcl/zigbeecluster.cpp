@@ -288,7 +288,7 @@ ZigbeeClusterReply *ZigbeeCluster::sendDefaultResponse(quint8 transactionSequenc
 
     // Build ZCL frame control
     ZigbeeClusterLibrary::FrameControl frameControl;
-    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeClusterSpecific;
+    frameControl.frameType = ZigbeeClusterLibrary::FrameTypeGlobal;
     frameControl.manufacturerSpecific = false;
     frameControl.direction = ZigbeeClusterLibrary::DirectionServerToClient;
     frameControl.disableDefaultResponse = true;
