@@ -129,6 +129,16 @@ void ZigbeeNetwork::setSerialBaudrate(qint32 baudrate)
     emit serialBaudrateChanged(m_serialBaudrate);
 }
 
+QString ZigbeeNetwork::serialNumber() const
+{
+    return m_serialNumber;
+}
+
+void ZigbeeNetwork::setSerialNumber(const QString &serialNumber)
+{
+    m_serialNumber = serialNumber;
+}
+
 ZigbeeAddress ZigbeeNetwork::macAddress() const
 {
     return m_macAddress;

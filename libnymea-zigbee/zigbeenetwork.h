@@ -84,6 +84,9 @@ public:
     qint32 serialBaudrate() const;
     void setSerialBaudrate(qint32 baudrate);
 
+    QString serialNumber() const;
+    void setSerialNumber(const QString &serialNumber);
+
     ZigbeeAddress macAddress() const;
     void setMacAddress(const ZigbeeAddress &zigbeeAddress);
 
@@ -135,6 +138,7 @@ private:
 
     // Serial port configuration
     QString m_serialPortName = "/dev/ttyUSB0";
+    QString m_serialNumber;
     qint32 m_serialBaudrate = 115200;
     ZigbeeAddress m_macAddress;
 

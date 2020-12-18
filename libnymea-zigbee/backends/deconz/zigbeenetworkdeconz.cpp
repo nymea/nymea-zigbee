@@ -406,11 +406,11 @@ void ZigbeeNetworkDeconz::runNetworkInitProcess()
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
             qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
             m_initRetry++;
-            if (m_initRetry < 3) {
-                qCDebug(dcZigbeeNetwork()) << "Retry to initialize network" << m_initRetry << "/ 3";
+            if (m_initRetry < 10) {
+                qCDebug(dcZigbeeNetwork()) << "Retry to initialize network" << m_initRetry << "/ 10";
                 runNetworkInitProcess();
             } else {
-                qCWarning(dcZigbeeNetwork()) << "Failed to read firmware version after 3 attempts. Giving up";
+                qCWarning(dcZigbeeNetwork()) << "Failed to read firmware version after 10 attempts. Giving up";
                 m_controller->disable();
             }
             return;

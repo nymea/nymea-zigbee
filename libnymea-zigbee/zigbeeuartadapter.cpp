@@ -110,7 +110,7 @@ QDebug operator<<(QDebug debug, const ZigbeeUartAdapter &adapter)
         debug.nospace() << ", " << adapter.serialNumber();
     }
     if (adapter.hardwareRecognized()) {
-        debug.nospace() << "Suggested backend: " << adapter.zigbeeBackend();
+        debug.nospace() << ", Suggested backend: " << adapter.zigbeeBackend();
         debug.nospace() << ", " << adapter.baudRate();
     }
 
