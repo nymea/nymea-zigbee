@@ -1,111 +1,104 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
-#include <QDateTime>
-#include <unistd.h>
-#include <stdio.h>
-#include <initializer_list>
-#include <signal.h>
+#include <QLoggingCategory>
+#include "zigbeenetworkkey.h"
+#include "zigbeenetworkmanager.h"
 
+//static QHash<QString, bool> s_loggingFilters;
 
-#include "core.h"
-#include "loggingcategory.h"
-#include "terminalcommander.h"
+//static bool s_aboutToShutdown = false;
 
-static QHash<QString, bool> s_loggingFilters;
+//static void catchUnixSignals(const std::vector<int>& quitSignals, const std::vector<int>& ignoreSignals = std::vector<int>()) {
+//    auto handler = [](int sig) -> void {
+//        switch (sig) {
+//        case SIGQUIT:
+//            qDebug() << "Cought SIGQUIT quit signal...";
+//            break;
+//        case SIGINT:
+//            qDebug() << "Cought SIGINT quit signal...";
+//            break;
+//        case SIGTERM:
+//            qDebug() << "Cought SIGTERM quit signal...";
+//            break;
+//        case SIGHUP:
+//            qDebug() << "Cought SIGHUP quit signal...";
+//            break;
+//        case SIGSEGV: {
+//            qDebug() << "Cought SIGSEGV signal. Segmentation fault!";
+//            exit(1);
+//        }
+//        default:
+//            break;
+//        }
 
-static bool s_aboutToShutdown = false;
+//        if (s_aboutToShutdown) {
+//            return;
+//        }
 
-static void catchUnixSignals(const std::vector<int>& quitSignals, const std::vector<int>& ignoreSignals = std::vector<int>()) {
-    auto handler = [](int sig) -> void {
-        switch (sig) {
-        case SIGQUIT:
-            qCDebug(dcZigbee()) << "Cought SIGQUIT quit signal...";
-            break;
-        case SIGINT:
-            qCDebug(dcZigbee()) << "Cought SIGINT quit signal...";
-            break;
-        case SIGTERM:
-            qCDebug(dcZigbee()) << "Cought SIGTERM quit signal...";
-            break;
-        case SIGHUP:
-            qCDebug(dcZigbee()) << "Cought SIGHUP quit signal...";
-            break;
-        case SIGSEGV: {
-            qCDebug(dcZigbee()) << "Cought SIGSEGV signal. Segmentation fault!";
-            exit(1);
-        }
-        default:
-            break;
-        }
-
-        if (s_aboutToShutdown) {
-            return;
-        }
-
-        s_aboutToShutdown = true;
-        TerminalCommander::instance()->destroy();
-        TerminalCommander::instance()->quit();
-    };
+//        s_aboutToShutdown = true;
+//        TerminalCommander::instance()->destroy();
+//        TerminalCommander::instance()->quit();
+//    };
 
 
 
-    // all these signals will be ignored.
-    for (int sig : ignoreSignals)
-        signal(sig, SIG_IGN);
+//    // all these signals will be ignored.
+//    for (int sig : ignoreSignals)
+//        signal(sig, SIG_IGN);
 
-    for (int sig : quitSignals)
-        signal(sig, handler);
-}
+//    for (int sig : quitSignals)
+//        signal(sig, handler);
+//}
 
-static void loggingCategoryFilter(QLoggingCategory *category)
-{
-    // If this is a known category
-    if (s_loggingFilters.contains(category->categoryName())) {
-        category->setEnabled(QtDebugMsg, s_loggingFilters.value(category->categoryName()));
-        category->setEnabled(QtWarningMsg, true);
-        category->setEnabled(QtCriticalMsg, true);
-        category->setEnabled(QtFatalMsg, true);
-    } else {
-        //Disable default debug messages, print only >= warnings
-        category->setEnabled(QtDebugMsg, false);
-        category->setEnabled(QtWarningMsg, true);
-        category->setEnabled(QtCriticalMsg, true);
-        category->setEnabled(QtFatalMsg, true);
-    }
-}
+//static void loggingCategoryFilter(QLoggingCategory *category)
+//{
+//    // If this is a known category
+//    if (s_loggingFilters.contains(category->categoryName())) {
+//        category->setEnabled(QtDebugMsg, s_loggingFilters.value(category->categoryName()));
+//        category->setEnabled(QtWarningMsg, true);
+//        category->setEnabled(QtCriticalMsg, true);
+//        category->setEnabled(QtFatalMsg, true);
+//    } else {
+//        //Disable default debug messages, print only >= warnings
+//        category->setEnabled(QtDebugMsg, false);
+//        category->setEnabled(QtWarningMsg, true);
+//        category->setEnabled(QtCriticalMsg, true);
+//        category->setEnabled(QtFatalMsg, true);
+//    }
+//}
 
-static void consoleLogHandler(QtMsgType type, const QMessageLogContext& context, const QString& message)
-{
-    switch (type) {
-    case QtInfoMsg:
-        TerminalCommander::instance()->printToTerminal(QString("%1: %2\n").arg(context.category).arg(message.toUtf8().data()));
-        break;
-    case QtDebugMsg:
-        TerminalCommander::instance()->printToTerminal(QString("%1: %2\n").arg(context.category).arg(message.toUtf8().data()));
-        break;
-    case QtWarningMsg:
-        TerminalCommander::instance()->printToTerminal(QString("%1%2: %3%4\n").arg(terminalColorYellow).arg(context.category).arg(message.toUtf8().data()).arg(terminalColorNormal));
-        break;
-    case QtCriticalMsg:
-        TerminalCommander::instance()->printToTerminal(QString("%1%2: %3%4\n").arg(terminalColorRed).arg(context.category).arg(message.toUtf8().data()).arg(terminalColorNormal));
-        break;
-    case QtFatalMsg:
-        TerminalCommander::instance()->printToTerminal(QString("%1%2: %3%4\n").arg(terminalColorRed).arg(context.category).arg(message.toUtf8().data()).arg(terminalColorNormal));
-        break;
-    }
-}
+//static void consoleLogHandler(QtMsgType type, const QMessageLogContext& context, const QString& message)
+//{
+//    switch (type) {
+//    case QtInfoMsg:
+//        TerminalCommander::instance()->printToTerminal(QString("%1: %2\n").arg(context.category).arg(message.toUtf8().data()));
+//        break;
+//    case QtDebugMsg:
+//        TerminalCommander::instance()->printToTerminal(QString("%1: %2\n").arg(context.category).arg(message.toUtf8().data()));
+//        break;
+//    case QtWarningMsg:
+//        TerminalCommander::instance()->printToTerminal(QString("%1%2: %3%4\n").arg(terminalColorYellow).arg(context.category).arg(message.toUtf8().data()).arg(terminalColorNormal));
+//        break;
+//    case QtCriticalMsg:
+//        TerminalCommander::instance()->printToTerminal(QString("%1%2: %3%4\n").arg(terminalColorRed).arg(context.category).arg(message.toUtf8().data()).arg(terminalColorNormal));
+//        break;
+//    case QtFatalMsg:
+//        TerminalCommander::instance()->printToTerminal(QString("%1%2: %3%4\n").arg(terminalColorRed).arg(context.category).arg(message.toUtf8().data()).arg(terminalColorNormal));
+//        break;
+//    }
+//}
 
 int main(int argc, char *argv[])
 {
-    qInstallMessageHandler(consoleLogHandler);
+    //qInstallMessageHandler(consoleLogHandler);
 
     QCoreApplication application(argc, argv);
 
-    catchUnixSignals({SIGQUIT, SIGINT, SIGTERM, SIGHUP, SIGSEGV});
+    //catchUnixSignals({SIGQUIT, SIGINT, SIGTERM, SIGHUP, SIGSEGV});
 
-    application.setOrganizationName("guh");
-    application.setApplicationName("qt-zigbee");
+    application.setOrganizationName("nymea");
+    application.setApplicationName("zigbee-cli");
 
     // Command line parser
     QCommandLineParser parser;
@@ -146,13 +139,20 @@ int main(int argc, char *argv[])
         debugLevel = 1;
     }
 
-    s_loggingFilters.insert("Application", true);
-    s_loggingFilters.insert("Zigbee", true);
-    s_loggingFilters.insert("ZigbeeController", (debugLevel > 1));
-    s_loggingFilters.insert("ZigbeeInterface", (debugLevel > 2));
-    s_loggingFilters.insert("ZigbeeInterfaceTraffic", (debugLevel > 3));
+    //    s_loggingFilters.insert("Application", true);
+    //    s_loggingFilters.insert("Zigbee", true);
+    //    s_loggingFilters.insert("ZigbeeController", (debugLevel > 1));
+    //    s_loggingFilters.insert("ZigbeeInterface", (debugLevel > 2));
+    //    s_loggingFilters.insert("ZigbeeInterfaceTraffic", (debugLevel > 3));
 
-    QLoggingCategory::installFilter(loggingCategoryFilter);
+    //QLoggingCategory::installFilter(loggingCategoryFilter);
+
+    QLoggingCategory::setFilterRules("*.debug=false\n"
+                                     "Zigbee.debug=true\n"
+                                     "ZigbeeController.debug=true\n"
+                                     "ZigbeeInterface.debug=false\n"
+                                     "ZigbeeInterfaceTraffic.debug=false\n"
+                                     );
 
     // Check channel
     bool channelValueOk = false;
@@ -172,7 +172,20 @@ int main(int argc, char *argv[])
         baudrate = 115200;
     }
 
-    Core core(parser.value(serialOption), baudrate, channel);
+    ZigbeeNetwork *network = ZigbeeNetworkManager::createZigbeeNetwork(ZigbeeNetworkManager::BackendTypeNxp);
+    network->setSerialPortName(parser.value(serialOption));
+    network->setSerialBaudrate(baudrate);
+    network->setSettingsFileName("/tmp/zigbee.conf");
+    network->setExtendedPanId(5);
+    ZigbeeChannelMask mask;
+    mask.setChannel(Zigbee::ZigbeeChannel13);
+    network->setChannelMask(mask);
+
+    ZigbeeSecurityConfiguration securityConfiguration;
+    securityConfiguration.setNetworkKey(ZigbeeNetworkKey(QString("2a:59:f4:11:75:bb:64:48:55:c5:23:62:b0:33:ea:33")));
+    network->setSecurityConfiguration(securityConfiguration);
+
+    network->startNetwork();
 
     return application.exec();
 }

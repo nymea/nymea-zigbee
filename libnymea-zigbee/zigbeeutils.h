@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -28,12 +28,17 @@
 #ifndef ZIGBEEUTILS_H
 #define ZIGBEEUTILS_H
 
+#include <QColor>
+#include <QPoint>
 #include <QObject>
 #include <QString>
+#include <QPointF>
 #include <QByteArray>
 #include <QBitArray>
 
 #include "zigbee.h"
+#include "zigbeedatatype.h"
+#include "zcl/zigbeecluster.h"
 
 class ZigbeeUtils
 {
@@ -43,6 +48,7 @@ public:
     // Data utils
     QBitArray convertByteArrayToBitArray(const QByteArray &byteArray);
     QByteArray convertBitArrayToByteArray(const QBitArray &bitArray);
+    static bool checkBitUint8(const quint8 &value, const int &bitNumber);
     static bool checkBitUint16(const quint16 &value, const int &bitNumber);
 
     static quint16 convertByteArrayToUint16(const QByteArray &data);
@@ -52,14 +58,28 @@ public:
     static QString convertByteToHexString(const quint8 &byte);
     static QString convertByteArrayToHexString(const QByteArray &byteArray);
     static QString convertUint16ToHexString(const quint16 &value);
+    static QString convertUint32ToHexString(const quint32 &value);
     static QString convertUint64ToHexString(const quint64 &value);
 
+    static QString zigbeeStatusToString(quint8 status);
+
     // Enum prittify print methods
-    static QString messageTypeToString(const Zigbee::InterfaceMessageType &type);
-    static QString clusterIdToString(const Zigbee::ClusterId &clusterId);
+    //static QString messageTypeToString(const Zigbee::InterfaceMessageType &type);
+    static QString clusterIdToString(const ZigbeeClusterLibrary::ClusterId &clusterId);
     static QString profileIdToString(const Zigbee::ZigbeeProfile &profileId);
 
+    // Generate random data
     static quint64 generateRandomPanId();
+
+
+    // Color converter
+    static QPointF convertColorToXY(const QColor &color);
+    static QPoint convertColorToXYInt(const QColor &color);
+    static QColor convertXYToColor(const QPointF &xyColor);
+    static QColor convertXYToColor(quint16 x, quint16 y);
+
+    // Color temperature interpolation
+    static QColor interpolateColorFromColorTemperature(int colorTemperature, int minValue, int maxValue);
 
 };
 

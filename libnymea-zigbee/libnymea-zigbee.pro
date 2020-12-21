@@ -3,41 +3,146 @@ include(../config.pri)
 TARGET = nymea-zigbee1
 TEMPLATE = lib
 
+CONFIG += link_pkgconfig
+packagesExist(libudev) {
+    message(Build with libudev support)
+    PKGCONFIG += libudev
+} else {
+    message(Build without libudev support)
+    DEFINES += DISABLE_UDEV
+}
+
 SOURCES += \
-    interface/zigbeeinterface.cpp \
-    interface/zigbeeinterfacemessage.cpp \
-    interface/zigbeeinterfacerequest.cpp \
-    interface/zigbeeinterfacereply.cpp \
-    nxp/nxpzigbeenetworkmanager.cpp \
-    zigbeecluster.cpp \
-    zigbeeclusterattribute.cpp \
+    backends/deconz/interface/zigbeeinterfacedeconz.cpp \
+    backends/deconz/interface/zigbeeinterfacedeconzreply.cpp \
+    backends/deconz/zigbeebridgecontrollerdeconz.cpp \
+    backends/deconz/zigbeenetworkdeconz.cpp \
+    backends/nxp/firmwareupdatehandlernxp.cpp \
+    backends/nxp/interface/zigbeeinterfacenxp.cpp \
+    backends/nxp/interface/zigbeeinterfacenxpreply.cpp \
+    backends/nxp/zigbeebridgecontrollernxp.cpp \
+    backends/nxp/zigbeenetworknxp.cpp \
+    zcl/closures/zigbeeclusterdoorlock.cpp \
+    zcl/general/zigbeeclusteranaloginput.cpp \
+    zcl/general/zigbeeclusteranalogoutput.cpp \
+    zcl/general/zigbeeclusteranalogvalue.cpp \
+    zcl/general/zigbeeclusterbinaryinput.cpp \
+    zcl/general/zigbeeclusterbinaryoutput.cpp \
+    zcl/general/zigbeeclusterbinaryvalue.cpp \
+    zcl/general/zigbeeclustergroups.cpp \
+    zcl/general/zigbeeclusteridentify.cpp \
+    zcl/general/zigbeeclusterlevelcontrol.cpp \
+    zcl/general/zigbeeclustermultistateinput.cpp \
+    zcl/general/zigbeeclustermultistateoutput.cpp \
+    zcl/general/zigbeeclustermultistatevalue.cpp \
+    zcl/general/zigbeeclusteronoff.cpp \
+    zcl/general/zigbeeclusterpowerconfiguration.cpp \
+    zcl/general/zigbeeclusterscenes.cpp \
+    zcl/hvac/zigbeeclusterthermostat.cpp \
+    zcl/lighting/zigbeeclustercolorcontrol.cpp \
+    zcl/measurement/zigbeeclusterilluminancemeasurment.cpp \
+    zcl/measurement/zigbeeclusteroccupancysensing.cpp \
+    zcl/measurement/zigbeeclusterpressuremeasurement.cpp \
+    zcl/measurement/zigbeeclusterrelativehumiditymeasurement.cpp \
+    zcl/measurement/zigbeeclustertemperaturemeasurement.cpp \
+    zcl/ota/zigbeeclusterota.cpp \
+    zcl/security/zigbeeclusteriaszone.cpp \
+    zcl/zigbeecluster.cpp \
+    zcl/zigbeeclusterattribute.cpp \
+    zcl/zigbeeclusterlibrary.cpp \
+    zcl/zigbeeclusterreply.cpp \
+    zcl/general/zigbeeclusterbasic.cpp \
+    zdo/zigbeedeviceobject.cpp \
+    zdo/zigbeedeviceobjectreply.cpp \
+    zdo/zigbeedeviceprofile.cpp \
+    zigbeeadpu.cpp \
+    zigbeebridgecontroller.cpp \
+    zigbeechannelmask.cpp \
+    zigbeedatatype.cpp \
+    zigbeemanufacturer.cpp \
     zigbeenetwork.cpp \
+    zigbeenetworkdatabase.cpp \
+    zigbeenetworkkey.cpp \
     zigbeenetworkmanager.cpp \
     zigbee.cpp \
     loggingcategory.cpp \
-    zigbeebridgecontroller.cpp \
+    zigbeenetworkreply.cpp \
+    zigbeenetworkrequest.cpp \
+    zigbeenodeendpoint.cpp \
+    zigbeereply.cpp \
     zigbeesecurityconfiguration.cpp \
+    zigbeeuartadapter.cpp \
+    zigbeeuartadaptermonitor.cpp \
     zigbeeutils.cpp \
     zigbeenode.cpp \
-    zigbeeaddress.cpp \
+    zigbeeaddress.cpp
 
 HEADERS += \
-    interface/zigbeeinterface.h \
-    interface/zigbeeinterfacemessage.h \
-    interface/zigbeeinterfacerequest.h \
-    interface/zigbeeinterfacereply.h \
-    nxp/nxpzigbeenetworkmanager.h \
-    zigbeecluster.h \
-    zigbeeclusterattribute.h \
+    backends/deconz/interface/deconz.h \
+    backends/deconz/interface/zigbeeinterfacedeconz.h \
+    backends/deconz/interface/zigbeeinterfacedeconzreply.h \
+    backends/deconz/zigbeebridgecontrollerdeconz.h \
+    backends/deconz/zigbeenetworkdeconz.h \
+    backends/nxp/firmwareupdatehandlernxp.h \
+    backends/nxp/interface/nxp.h \
+    backends/nxp/interface/zigbeeinterfacenxp.h \
+    backends/nxp/interface/zigbeeinterfacenxpreply.h \
+    backends/nxp/zigbeebridgecontrollernxp.h \
+    backends/nxp/zigbeenetworknxp.h \
+    zcl/closures/zigbeeclusterdoorlock.h \
+    zcl/general/zigbeeclusteranaloginput.h \
+    zcl/general/zigbeeclusteranalogoutput.h \
+    zcl/general/zigbeeclusteranalogvalue.h \
+    zcl/general/zigbeeclusterbinaryinput.h \
+    zcl/general/zigbeeclusterbinaryoutput.h \
+    zcl/general/zigbeeclusterbinaryvalue.h \
+    zcl/general/zigbeeclustergroups.h \
+    zcl/general/zigbeeclusteridentify.h \
+    zcl/general/zigbeeclusterlevelcontrol.h \
+    zcl/general/zigbeeclustermultistateinput.h \
+    zcl/general/zigbeeclustermultistateoutput.h \
+    zcl/general/zigbeeclustermultistatevalue.h \
+    zcl/general/zigbeeclusteronoff.h \
+    zcl/general/zigbeeclusterpowerconfiguration.h \
+    zcl/general/zigbeeclusterscenes.h \
+    zcl/hvac/zigbeeclusterthermostat.h \
+    zcl/lighting/zigbeeclustercolorcontrol.h \
+    zcl/measurement/zigbeeclusterilluminancemeasurment.h \
+    zcl/measurement/zigbeeclusteroccupancysensing.h \
+    zcl/measurement/zigbeeclusterpressuremeasurement.h \
+    zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h \
+    zcl/measurement/zigbeeclustertemperaturemeasurement.h \
+    zcl/ota/zigbeeclusterota.h \
+    zcl/security/zigbeeclusteriaszone.h \
+    zcl/zigbeecluster.h \
+    zcl/zigbeeclusterattribute.h \
+    zcl/zigbeeclusterlibrary.h \
+    zcl/zigbeeclusterreply.h \
+    zcl/general/zigbeeclusterbasic.h \
+    zdo/zigbeedeviceobject.h \
+    zdo/zigbeedeviceobjectreply.h \
+    zdo/zigbeedeviceprofile.h \
+    zigbeeadpu.h \
+    zigbeebridgecontroller.h \
+    zigbeechannelmask.h \
+    zigbeedatatype.h \
+    zigbeemanufacturer.h \
     zigbeenetwork.h \
+    zigbeenetworkdatabase.h \
+    zigbeenetworkkey.h \
     zigbeenetworkmanager.h \
     zigbee.h \
     loggingcategory.h \
-    zigbeebridgecontroller.h \
+    zigbeenetworkreply.h \
+    zigbeenetworkrequest.h \
+    zigbeenodeendpoint.h \
+    zigbeereply.h \
     zigbeesecurityconfiguration.h \
+    zigbeeuartadapter.h \
+    zigbeeuartadaptermonitor.h \
     zigbeeutils.h \
     zigbeenode.h \
-    zigbeeaddress.h \
+    zigbeeaddress.h
 
 # install header file with relative subdirectory
 for (header, HEADERS) {

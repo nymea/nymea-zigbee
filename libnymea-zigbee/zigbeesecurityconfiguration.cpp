@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -34,9 +34,9 @@ ZigbeeSecurityConfiguration::ZigbeeSecurityConfiguration()
 
 ZigbeeSecurityConfiguration::ZigbeeSecurityConfiguration(const ZigbeeSecurityConfiguration &other)
 {
-    m_networkKey = other.networkKey();
     m_zigbeeSecurityMode = other.zigbeeSecurityMode();
-    m_globalTrustCenterLinkKey = other.networkKey();
+    m_networkKey = other.networkKey();
+    m_globalTrustCenterLinkKey = other.globalTrustCenterLinkKey();
 }
 
 ZigbeeSecurityConfiguration::ZigbeeSecurityMode ZigbeeSecurityConfiguration::zigbeeSecurityMode() const
@@ -49,22 +49,22 @@ void ZigbeeSecurityConfiguration::setZigbeeSecurityMode(ZigbeeSecurityConfigurat
     m_zigbeeSecurityMode = zigbeeSecurityMode;
 }
 
-QString ZigbeeSecurityConfiguration::networkKey() const
+ZigbeeNetworkKey ZigbeeSecurityConfiguration::networkKey() const
 {
     return m_networkKey;
 }
 
-void ZigbeeSecurityConfiguration::setNetworkKey(const QString &networkKey)
+void ZigbeeSecurityConfiguration::setNetworkKey(const ZigbeeNetworkKey &networkKey)
 {
     m_networkKey = networkKey;
 }
 
-QString ZigbeeSecurityConfiguration::globalTrustCenterLinkKey() const
+ZigbeeNetworkKey ZigbeeSecurityConfiguration::globalTrustCenterLinkKey() const
 {
     return m_globalTrustCenterLinkKey;
 }
 
-void ZigbeeSecurityConfiguration::setGlobalTrustCenterlinkKey(const QString &globalTrustCenterLinkKey)
+void ZigbeeSecurityConfiguration::setGlobalTrustCenterlinkKey(const ZigbeeNetworkKey &globalTrustCenterLinkKey)
 {
     m_globalTrustCenterLinkKey = globalTrustCenterLinkKey;
 }
@@ -72,8 +72,8 @@ void ZigbeeSecurityConfiguration::setGlobalTrustCenterlinkKey(const QString &glo
 void ZigbeeSecurityConfiguration::clear()
 {
     m_zigbeeSecurityMode = ZigbeeSecurityModeNone;
-    m_networkKey.clear();
-    m_globalTrustCenterLinkKey = "5A6967426565416C6C69616E63653039";
+    m_networkKey = ZigbeeNetworkKey();
+    m_globalTrustCenterLinkKey = ZigbeeNetworkKey(QString("5A6967426565416C6C69616E63653039"));
 }
 
 ZigbeeSecurityConfiguration &ZigbeeSecurityConfiguration::operator=(const ZigbeeSecurityConfiguration &other)

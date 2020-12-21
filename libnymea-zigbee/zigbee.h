@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -33,364 +33,152 @@
 #include <QVariant>
 #include <QByteArray>
 
+// Note: a good source of data https://github.com/wireshark/wireshark/blob/master/epan/dissectors/packet-zbee.h
+
 class Zigbee
 {
     Q_GADGET
 
 public:
+    enum ZigbeeBackendType {
+        ZigbeeBackendTypeDeconz,
+        ZigbeeBackendTypeNxp
+    };
+    Q_ENUM(ZigbeeBackendType)
+
     enum ZigbeeProfile {
+        ZigbeeProfileDevice = 0x0000,
+        ZigbeeProfileIndustrialPlantMonitoring = 0x0101,
         ZigbeeProfileHomeAutomation = 0x0104,
-        ZigbeeProfileLightLink      = 0xC05E
+        ZigbeeProfileCommercialBuildingAutomation = 0x0105,
+        ZigbeeProfileTelecomAutomation = 0x0107,
+        ZigbeeProfilePersonalHomeHospitalCare = 0x0108,
+        ZigbeeProfileAdvancedMetering = 0x0109,
+        ZigbeeProfileLightLink = 0xC05E,
+        ZigbeeProfileGreenPower = 0xA1E0
     };
     Q_ENUM(ZigbeeProfile)
 
-    enum InterfaceMessageType {
-        // Common Commands
-        MessageTypeNone                                = 0x0000,
-        MessageTypeStatus                              = 0x8000,
-        MessageTypeLogging                             = 0x8001,
-
-        MessageTypeDataIndication                      = 0x8002,
-
-        MessageTypeNodeClusterList                     = 0x8003,
-        MessageTypeNodeAttributeList                   = 0x8004,
-        MessageTypeNodeCommandIdList                   = 0x8005,
-        MessageTypeRestartProvisioned                  = 0x8006,
-        MessageTypeFactoryNewRestart                   = 0x8007,
-        MessageTypeGetVersion                          = 0x0010,
-        MessageTypeVersionList                         = 0x8010,
-
-        MessageTypeSetExtendetPanId                    = 0x0020,
-        MessageTypeSetChannelMask                      = 0x0021,
-        MessageTypeSetSecurity                         = 0x0022,
-        MessageTypeSetDeviceType                       = 0x0023,
-        MessageTypeStartNetwork                        = 0x0024,
-        MessageTypeStartScan                           = 0x0025,
-        MessageTypeNetworkJoinedFormed                 = 0x8024,
-        MessageTypeNetworkRemoveDevice                 = 0x0026,
-        MessageTypeNetworkWhitelistEnable              = 0x0027,
-        MessageTypeAuthenticateDeviceRequest           = 0x0028,
-        MessageTypeAuthenticateDeviceResponse          = 0x8028,
-        MessageTypeOutOfBandCommisioningDataRequest    = 0x0029,
-        MessageTypeOutOfBandCommisioningDataResponse   = 0x8029,
-        MessageTypeUserDescriptorSet                   = 0x002B,
-        MessageTypeUserDescriptorNotify                = 0x802B,
-        MessageTypeUserDescriptorRequest               = 0x002C,
-        MessageTypeUserDescriptorResponse              = 0x802C,
-
-        MessageTypeReset                               = 0x0011,
-        MessageTypeErasePersistentData                 = 0x0012,
-        MessageTypeZllFactoryNew                       = 0x0013,
-        MessageTypeGetPermitJoining                    = 0x0014,
-        MessageTypeGetPermitJoiningResponse            = 0x8014,
-        MessageTypeBind                                = 0x0030,
-        MessageTypeBindResponse                        = 0x8030,
-        MessageTypeUnbind                              = 0x0031,
-        MessageTypeUnbindResponse                      = 0x8031,
-        MessageTypeComplexDescriptorRequest            = 0x0034,
-        MessageTypeComplexDescriptorResponse           = 0x8034,
-
-        MessageTypeNetworkAdressRequest                = 0x0040,
-        MessageTypeNetworkAdressResponse               = 0x8040,
-        MessageTypeIeeeAddressResponse                 = 0x0041,
-        MessageTypeIeeeAddressRequest                  = 0x8041,
-        MessageTypeNodeDescriptorRequest               = 0x0042,
-        MessageTypeNodeDescriptorRsponse               = 0x8042,
-        MessageTypeSimpleDescriptorRequest             = 0x0043,
-        MessageTypeSimpleDescriptorResponse            = 0x8043,
-        MessageTypePowerDescriptorRequest              = 0x0044,
-        MessageTypePowerDescriptorResponse             = 0x8044,
-        MessageTypeActiveEndpointRequest               = 0x0045,
-        MessageTypeActiveEndpointResponse              = 0x8045,
-        MessageTypeMatchDescriptorRequest              = 0x0046,
-        MessageTypeMatchDescriptorResponse             = 0x8046,
-        MessageTypeManagementLeaveRequest              = 0x0047,
-        MessageTypeManagementLeaveResponse             = 0x8047,
-        MessageTypeLeaveIndication                     = 0x8048,
-        MessageTypePermitJoiningRequest                = 0x0049,
-        MessageTypeManagementNetworkUpdateRequest      = 0x004A,
-        MessageTypeManagementNetworkUpdateResponse     = 0x804A,
-        MessageTypeSystemServerDiscoveryRequest        = 0x004B,
-        MessageTypeSystemServerDiscoveryResponse       = 0x804B,
-        MessageTypeDeviceAnnounce                      = 0x004D,
-        MessageTypeManagementLqiRequest                = 0x004E,
-        MessageTypeManagementLqiResponse               = 0x804E,
-
-        // Group Cluster
-        MessageTypeAddGroupRequest                     = 0x0060,
-        MessageTypeAddGroupResponse                    = 0x8060,
-        MessageTypeViewGroupRequest                    = 0x0061,
-        MessageTypeViewGroupResponse                   = 0x8061,
-        MessageTypeGetGroupMembershipRequest           = 0x0062,
-        MessageTypeGetGroupMembershipResponse          = 0x8062,
-        MessageTypeRemoveGroupRequest                  = 0x0063,
-        MessageTypeRemoveGroupResponse                 = 0x8063,
-        MessageTypeRemoveAllGroups                     = 0x0064,
-        MessageTypeGroupIfIdentify                     = 0x0065,
-
-        // Identify Cluster
-        MessageTypeIdentifySend                        = 0x0070,
-        MessageTypeIdentifyQuery                       = 0x0071,
-
-        // Level Cluster
-        MessageTypeMoveToLevel                         = 0x0080,
-        MessageTypeMoveToLevelOnOff                    = 0x0081,
-        MessageTypeMoveStep                            = 0x0082,
-        MessageTypeMoveStopMove                        = 0x0083,
-        MessageTypeMoveStopMoveOnOff                   = 0x0084,
-
-        // Scenes Cluster
-        MessageTypeViewScene                           = 0x00A0,
-        MessageTypeViewSceneResponse                   = 0x80A0,
-        MessageTypeAddScene                            = 0x00A1,
-        MessageTypeAddSceneResponse                    = 0x80A1,
-        MessageTypeRemoveScene                         = 0x00A2,
-        MessageTypeRemoveSceneResponse                 = 0x80A2,
-        MessageTypeRemoveAllScenes                     = 0x00A3,
-        MessageTypeRemoveAllScenesResponse             = 0x80A3,
-        MessageTypeStoreScene                          = 0x00A4,
-        MessageTypeStoreSceneResponse                  = 0x80A4,
-        MessageTypeRecallScene                         = 0x00A5,
-        MessageTypeSceneMembershipRequest              = 0x00A6,
-        MessageTypeSceneMembershipResponse             = 0x80A6,
-
-        //Colour Cluster
-        MessageTypeMoveToHue                           = 0x00B0,
-        MessageTypeMoveHue                             = 0x00B1,
-        MessageTypeStepHue                             = 0x00B2,
-        MessageTypeMoveToSaturation                    = 0x00B3,
-        MessageTypeMoveSaturation                      = 0x00B4,
-        MessageTypeStepStaturation                     = 0x00B5,
-        MessageTypeMoveToHueSaturation                 = 0x00B6,
-        MessageTypeMoveToColor                         = 0x00B7,
-        MessageTypeMoveColor                           = 0x00B8,
-        MessageTypeStepColor                           = 0x00B9,
-
-        // ZLL Commands
-        // Touchlink
-        MessageTypeInitiateTouchlink                   = 0x00D0,
-        MessageTypeTouchlinkStatus                     = 0x00D1,
-        MessageTypeTouchlinkFactoryReset               = 0x00D2,
-
-        // Identify Cluster
-        MessageTypeIdentifyTriggerEffect               = 0x00E0,
-
-        // On/Off Cluster
-        MessageTypeCluserOnOff                         = 0x0092,
-        MessageTypeCluserOnOffTimed                    = 0x0093,
-        MessageTypeCluserOnOffEffects                  = 0x0094,
-        MessageTypeCluserOnOffUpdate                   = 0x8095,
-
-        // Scenes Cluster
-        MessageTypeAddEnhancedScene                    = 0x00A7,
-        MessageTypeViewEnhancedScene                   = 0x00A8,
-        MessageTypeCopyScene                           = 0x00A9,
-
-        // Colour Cluster
-        MessageTypeEnhancedMoveToHue                   = 0x00BA,
-        MessageTypeEnhancedMoveHue                     = 0x00BB,
-        MessageTypeEnhancedStepHue                     = 0x00BC,
-        MessageTypeEnhancedMoveToHueSaturation         = 0x00BD,
-        MessageTypeColourLoopSet                       = 0x00BE,
-        MessageTypeStopMoveStep                        = 0x00BF,
-        MessageTypeMoveToColorTemperature              = 0x00C0,
-        MessageTypeMoveColorTemperature                = 0x00C1,
-        MessageTypeStepColorTemperature                = 0x00C2,
-
-        // ZHA Commands
-        // Door Lock Cluster
-        MessageTypeLockUnlockDoor                      = 0x00F0,
-
-        // Attributes
-        MessageTypeReadAttributeRequest                = 0x0100,
-        MessageTypeReadAttributeResponse               = 0x8100,
-        MessageTypeDefaultResponse                     = 0x8101,
-        MessageTypeAttributeReport                     = 0x8102,
-        MessageTypeWriteAttributeRequest               = 0x0110,
-        MessageTypeWriteAttributeResponse              = 0x8110,
-        MessageTypeConfigReportingRequest              = 0x0120,
-        MessageTypeConfigReportingResponse             = 0x8120,
-        MessageTypeReportAttributes                    = 0x8121,
-        MessageTypeAttributeDiscoveryRequest           = 0x0140,
-        MessageTypeAttributeDiscoveryResponse          = 0x8140,
-
-        // Persistant data manager messages
-        MessageTypeDataManagerAvailableRequest         = 0x0300,
-        MessageTypeDataManagerAvailableResponse        = 0x8300,
-        MessageTypeDataManagerSaveRecordRequest        = 0x0200,
-        MessageTypeDataManagerSaveRecordResponse       = 0x8200,
-        MessageTypeDataManagerLoadRecordRequest        = 0x0201,
-        MessageTypeDataManagerLoadRecordResponse       = 0x8201,
-        MessageTypeDataManagerDeleteAllRecordsRequest  = 0x0202,
-        MessageTypeDataManagerDeleteAllRecordsResponse = 0x8202,
-
-        // Appliance Statistics Cluster 0x0B03
-        // http://www.nxp.com/documents/user_manual/JN-UG-3076.pdf
-        MessageTypeStatisticsClusterLogMessage          = 0x0301,   // Was 0x0500, was 0x0301
-        MessageTypeStatisticsClusterLogMessageResponse  = 0x8301,
-
-        // IAS Cluster
-        MessageTypeSendIasZoneEnroolResponse            = 0x0400,
-        MessageTypeIasZoneStatusChangeNotify            = 0x8401,
-
-        // Extended utils
-        MessageTypeRawApsDataRequest                    = 0x0530,
-        MessageTypeRouterDiscoveryConfirm               = 0x8701,
-        MessageTypeApsDataConfirmFail                   = 0x8702
+    enum ZigbeeChannel {
+        ZigbeeChannel11 = 0x00000800,
+        ZigbeeChannel12 = 0x00001000,
+        ZigbeeChannel13 = 0x00002000,
+        ZigbeeChannel14 = 0x00004000,
+        ZigbeeChannel15 = 0x00008000,
+        ZigbeeChannel16 = 0x00010000,
+        ZigbeeChannel17 = 0x00020000,
+        ZigbeeChannel18 = 0x00040000,
+        ZigbeeChannel19 = 0x00080000,
+        ZigbeeChannel20 = 0x00100000,
+        ZigbeeChannel21 = 0x00200000,
+        ZigbeeChannel22 = 0x00400000,
+        ZigbeeChannel23 = 0x00800000,
+        ZigbeeChannel24 = 0x01000000,
+        ZigbeeChannel25 = 0x02000000,
+        ZigbeeChannel26 = 0x04000000
     };
-    Q_ENUM(InterfaceMessageType)
-
-
-    enum ClusterId {
-        // Basics
-        ClusterIdUnknown                = 0xffff,
-        ClusterIdBasic                  = 0x0000,
-        ClusterIdPower                  = 0x0001,
-        ClusterIdDeviceTemperature      = 0x0002,
-        ClusterIdIdentify               = 0x0003,
-        ClusterIdGroups                 = 0x0004,
-        ClusterIdScenes                 = 0x0005,
-        ClusterIdOnOff                  = 0x0006,
-        ClusterIdOnOffCOnfiguration     = 0x0007,
-        ClusterIdLevelControl           = 0x0008,
-        ClusterIdAlarms                 = 0x0009,
-        ClusterIdTime                   = 0x000A,
-        ClusterIdRssiLocation           = 0x000B,
-        ClusterIdAnalogInputBasic       = 0x000C,
-        ClusterIdAnalogOutputBasic      = 0x000D,
-        ClusterIdValueBasic             = 0x000E,
-        ClusterIdBinaryInputBasic       = 0x000F,
-        ClusterIdBinaryOutputBasic      = 0x0010,
-        ClusterIdBinaryValueBasic       = 0x0011,
-        ClusterIdMultiStateInputBasic   = 0x0012,
-        ClusterIdMultiStateOutputBasic  = 0x0013,
-        ClusterIdMultiStateValueBasic   = 0x0014,
-        ClusterIdCommissoning           = 0x0015,
-
-        // Over the air uppgrade (OTA)
-        ClusterIdOtaUpgrade             = 0x0019,
-
-        // Closures
-        ClusterIdShadeConfiguration     = 0x0100,
-
-        // Door Lock
-        ClusterIdDoorLock               = 0x0101,
-
-        // Heating, Ventilation and Air-Conditioning (HVAC)
-        ClusterIdPumpConfigurationControl = 0x0200,
-        ClusterIdThermostat               = 0x0201,
-        ClusterIdFanControll              = 0x0202,
-        ClusterIdDehumiditationControll   = 0x0203,
-        ClusterIdThermostatUserControll   = 0x0204,
-
-        // Lighting
-        ClusterIdColorControl           = 0x0300,
-        ClusterIdBallastConfiguration   = 0x0301,
-
-        // Sensing
-        ClusterIdMeasurementIlluminance         = 0x0400,
-        ClusterIdIlluminanceLevelSensing        = 0x0401,
-        ClusterIdTemperatureMeasurement         = 0x0402,
-        ClusterIdPressureMeasurement            = 0x0403,
-        ClusterIdFlowMeasurement                = 0x0404,
-        ClusterIdRelativeHumidityMeasurement    = 0x0405,
-        ClusterIdOccapancySensing               = 0x0406,
-
-        // Security and Safty
-        ClusterIdIasZone = 0x0500,
-        ClusterIdIasAce  = 0x0501,
-        ClusterIdIasWd   = 0x0502,
-
-        // Smart energy
-        ClusterIdPrice          = 0x0700,
-        ClusterIdLoadControl    = 0x0701,
-        ClusterIdSimpleMetering = 0x0702,
-
-        // Electrical Measurement
-        ClusterIdElectricalMeasurement = 0x0B04,
-
-        // ZLL
-        ClusterIdTouchlinkCommissioning = 0x1000,
-
-        // NXP Appliances
-        ClusterIdApplianceControl           = 0x001B,
-        ClusterIdApplianceIdentification    = 0x0B00,
-        ClusterIdApplianceEventsAlerts      = 0x0B02,
-        ClusterIdApplianceStatistics        = 0x0B03
-    };
-    Q_ENUM(ClusterId)
-
-    enum ClusterAttributeBasic {
-        ClusterAttributeBasicZclVersion = 0x0000,
-        ClusterAttributeBasicApplicationVersion = 0x0001,
-        ClusterAttributeBasicStackVersion = 0x0002,
-        ClusterAttributeBasicHardwareVersion = 0x0003,
-        ClusterAttributeBasicManufacturerName = 0x0004,
-        ClusterAttributeBasicModelIdentifier = 0x0005,
-        ClusterAttributeBasicDataCode = 0x0006,
-        ClusterAttributeBasicPowerSource = 0x0007,
-        ClusterAttributeBasicLocationDescription = 0x0010,
-        ClusterAttributeBasicPhysicalEnvironment = 0x0011,
-        ClusterAttributeBasicDeviceEnabled = 0x0012,
-        ClusterAttributeBasicAlarmMask = 0x0013,
-        ClusterAttributeBasicDisableLocalConfig = 0x0014,
-        ClusterAttributeBasicSoftwareBuildId = 0x4000
-    };
-    Q_ENUM(ClusterAttributeBasic)
-
+    Q_ENUM(ZigbeeChannel)
+    Q_DECLARE_FLAGS(ZigbeeChannels, ZigbeeChannel)
 
     enum LightLinkDevice {
         // Lightning devices
-        LightLinkDeviceOnOffLight               = 0x0000,
-        LightLinkDeviceOnOffPlug                = 0x0010,
-        LightLinkDeviceDimmableLight            = 0x0100,
-        LightLinkDeviceDimmablePlug             = 0x0110,
-        LightLinkDeviceColourLight              = 0x0200,
-        LightLinkDeviceExtendedColourLight      = 0x0210,
-        LightLinkDeviceColourTemperatureLight   = 0x0220,
+        LightLinkDeviceOnOffLight                       = 0x0000,
+        LightLinkDeviceOnOffPlugin                      = 0x0010,
+        LightLinkDeviceDimmableLight                    = 0x0100,
+        LightLinkDeviceDimmablePlugin                   = 0x0110,
+        LightLinkDeviceColourLight                      = 0x0200,
+        LightLinkDeviceExtendedColourLight              = 0x0210,
+        LightLinkDeviceColourTemperatureLight           = 0x0220,
 
         // Controller devices
-        LightLinkDeviceColourController         = 0x0800,
-        LightLinkDeviceColourSceneController    = 0x0810,
-        LightLinkDeviceNonColourController      = 0x0820,
-        LightLinkDeviceNonColourSceneController = 0x8030,
-        LightLinkDeviceControlBridge            = 0x8040,
-        LightLinkDeviceOnOffSensor              = 0x8050
+        LightLinkDeviceColourController                 = 0x0800,
+        LightLinkDeviceColourSceneController            = 0x0810,
+        LightLinkDeviceNonColourController              = 0x0820,
+        LightLinkDeviceNonColourSceneController         = 0x0830,
+        LightLinkDeviceControlBridge                    = 0x0840,
+        LightLinkDeviceOnOffSensor                      = 0x0850
     };
     Q_ENUM(LightLinkDevice)
 
 
     enum HomeAutomationDevice {
         // Generic devices
-        HomeAutomationDeviceOnOffSwitch         = 0x0000,
-        HomeAutomationDeviceOnOffOutput         = 0x0002,
-        HomeAutomationDeviceRemoteControl       = 0x0006,
-        HomeAutomationDeviceDoorLock            = 0x000A,
-        HomeAutomationDeviceDoorLockController  = 0x000B,
-        HomeAutomationDeviceSimpleSensor        = 0x000C,
-        HomeAutomationDeviceSmartPlug           = 0x0051,
-        HomeAutomationDeviceControlBridge       = 0x0840,
+        HomeAutomationDeviceOnOffSwitch                 = 0x0000,
+        HomeAutomationDeviceLevelControlSwitch          = 0x0001,
+        HomeAutomationDeviceOnOffOutput                 = 0x0002,
+        HomeAutomationDeviceLevelControlableOutput      = 0x0003,
+        HomeAutomationDeviceSceneSelector               = 0x0004,
+        HomeAutomationDeviceConfigurationTool           = 0x0005,
+        HomeAutomationDeviceRemoteControl               = 0x0006,
+        HomeAutomationDeviceCombinedInterface           = 0x0007,
+        HomeAutomationDeviceRangeExtender               = 0x0008,
+        HomeAutomationDeviceMainPowerOutlet             = 0x0009,
+        HomeAutomationDeviceDoorLock                    = 0x000A,
+        HomeAutomationDeviceDoorLockController          = 0x000B,
+        HomeAutomationDeviceSimpleSensor                = 0x000C,
+        HomeAutomationDeviceConsumtionAwarenessDevice   = 0x000D,
+        HomeAutomationDeviceHomeGateway                 = 0x0050,
+        HomeAutomationDeviceSmartPlug                   = 0x0051,
+        HomeAutomationDeviceWhiteGoods                  = 0x0052,
+        HomeAutomationDeviceMeterInterface              = 0x0053,
+        HomeAutomationDeviceColourController            = 0x0800,
+        HomeAutomationDeviceColourSceneController       = 0x0810,
+        HomeAutomationDeviceNonColourController         = 0x0820,
+        HomeAutomationDeviceNonColourSceneController    = 0x0830,
+        HomeAutomationDeviceControlBridge               = 0x0840,
+        HomeAutomationDeviceOnOffSensor                 = 0x0850,
 
         // Lightning devices
-        HomeAutomationDeviceOnOffLight           = 0x0100,
-        HomeAutomationDeviceDimmableLight        = 0x0101,
-        HomeAutomationDeviceDimmableColorLight   = 0x0102,
-        HomeAutomationDeviceOnOffLightSwitch     = 0x0103,
-        HomeAutomationDeviceDimmableSwitch       = 0x0104,
-        HomeAutomationDeviceColourDimmerSwitch   = 0x0105,
-        HomeAutomationDeviceLightSensor          = 0x0106,
-        HomeAutomationDeviceOccupacySensor       = 0x0106,
+        HomeAutomationDeviceOnOffLight                  = 0x0100,
+        HomeAutomationDeviceDimmableLight               = 0x0101,
+        HomeAutomationDeviceDimmableColorLight          = 0x0102,
+        HomeAutomationDeviceOnOffLightSwitch            = 0x0103,
+        HomeAutomationDeviceDimmableSwitch              = 0x0104,
+        HomeAutomationDeviceColourDimmerSwitch          = 0x0105,
+        HomeAutomationDeviceLightSensor                 = 0x0106,
+        HomeAutomationDeviceOccupacySensor              = 0x0107,
+        HomeAutomationDeviceOnOffBallast                = 0x0108,
+        HomeAutomationDeviceDimmableBallast             = 0x0109,
+        HomeAutomationDeviceOnOffPlugin                 = 0x010A,
+        HomeAutomationDeviceDimmablePlugin              = 0x010B,
+        HomeAutomationDeviceColourTemperatureLight      = 0x010C,
+        HomeAutomationDeviceExtendedColourLight         = 0x010D,
+        HomeAutomationDeviceLightLevelSensor            = 0x010E,
+
+        // Closures
+        HomeAutomationDeviceShade                       = 0x02000,
+        HomeAutomationDeviceShadeController             = 0x02001,
+        HomeAutomationWindowCoveringDevice              = 0x02002,
+        HomeAutomationWindowCoveringController          = 0x02003,
 
         // Heating, Ventilation and Air-Conditioning (HVAC) devices
-        HomeAutomationDeviceThermostat           = 0x0301,
+        HomeAutomationDeviceHeatingCoolingUnit          = 0x0300,
+        HomeAutomationDeviceThermostat                  = 0x0301,
+        HomeAutomationDeviceTemperatureSensor           = 0x0302,
+        HomeAutomationDevicePump                        = 0x0303,
+        HomeAutomationDevicePumpController              = 0x0304,
+        HomeAutomationDevicePressureSensor              = 0x0305,
+        HomeAutomationDeviceFlowSensor                  = 0x0306,
 
         // Intruder Alarm System (IAS) devices
         HomeAutomationDeviceIsaControlEquipment             = 0x0400, // CIE
         HomeAutomationDeviceIsaAncillaryControlEquipment    = 0x0401, // ACE
-        HomeAutomationDeviceIsaZone                         = 0x0401,
-        HomeAutomationDeviceIsaWarningDevice                = 0x0401  // WD
+        HomeAutomationDeviceIsaZone                         = 0x0402,
+        HomeAutomationDeviceIsaWarningDevice                = 0x0403  // WD
     };
     Q_ENUM(HomeAutomationDevice)
+
+
+    enum GreenPowerDevice {
+        GreenPowerDeviceProxy = 0x0060,
+        GreenPowerDeviceProxyMinimum = 0x0061,
+        GreenPowerDeviceProxyTargetPlus = 0x0062,
+        GreenPowerDeviceProxyTarget = 0x0063,
+        GreenPowerDeviceProxyCommissioningTool = 0x0064,
+        GreenPowerDeviceProxyCombo = 0x0065,
+        GreenPowerDeviceProxyComboMinimum = 0x0066
+    };
+    Q_ENUM(GreenPowerDevice)
 
     enum DataType {
         NoData          = 0x00,
@@ -452,6 +240,37 @@ public:
     };
     Q_ENUM(DataType)
 
+    enum BroadcastAddress {
+        BroadcastAddressAllNodes = 0xffff,
+        BroadcastAddressAllNonSleepingNodes = 0xfffd,
+        BroadcastAddressAllRouters = 0xfffc
+    };
+    Q_ENUM(BroadcastAddress)
+
+    enum DestinationAddressMode {
+        DestinationAddressModeGroup = 0x01,
+        DestinationAddressModeShortAddress = 0x02,
+        DestinationAddressModeIeeeAddress = 0x03
+    };
+    Q_ENUM(DestinationAddressMode)
+
+    enum SourceAddressMode {
+        SourceAddressModeShortAddress = 0x02,
+        SourceAddressModeIeeeAddress = 0x03,
+        SourceAddressModeShortAndIeeeAddress = 0x04
+    };
+    Q_ENUM(SourceAddressMode)
+
+    enum ZigbeeTxOption {
+        ZigbeeTxOptionSecurityEnabled = 0x01,
+        ZigbeeTxOptionUseNetworkKey = 0x02,
+        ZigbeeTxOptionAckTransmission = 0x04,
+        ZigbeeTxOptionFragmentationPermitted = 0x08,
+        ZigbeeTxOptionIncludeExtendedNonceInSecurityFrame = 0x10
+    };
+    Q_ENUM(ZigbeeTxOption)
+    Q_DECLARE_FLAGS(ZigbeeTxOptions, ZigbeeTxOption)
+
     enum Manufacturer {
         // RF4CE
         PanasonicRF4CE          = 0x0001,
@@ -463,13 +282,124 @@ public:
         TiRF4CE                 = 0x0007,
 
         //  Manufacturer Codes for non RF4CE devices
-        Cirronet = 0x1000,
-        Chipcon = 0x1001,
-        Ember = 0x1003,
-
+        Cirronet                = 0x1000,
+        Chipcon                 = 0x1001,
+        Ember                   = 0x1003,
+        Philips                 = 0x100b,
+        Ikea                    = 0x117C,
+        FeiBit                  = 0x117E
     };
     Q_ENUM(Manufacturer)
 
+    enum ZigbeeMacLayerStatus {
+        ZigbeeMacLayerStatusSuccess = 0x00,
+        ZigbeeMacLayerStatusBeaconLoss = 0xE0,
+        ZigbeeMacLayerStatusChannelAccessFailure = 0xE1,
+        ZigbeeMacLayerStatusDenied = 0xE2,
+        ZigbeeMacLayerStatusDisableTrxFailure = 0xE3,
+        ZigbeeMacLayerStatusFailedSecurityCheck = 0xE4,
+        ZigbeeMacLayerStatusFrameToLong = 0xE5,
+        ZigbeeMacLayerStatusInvalidGts = 0xE6,
+        ZigbeeMacLayerStatusInvalidHandle = 0xE7,
+        ZigbeeMacLayerStatusInvalidParameter = 0xE8,
+        ZigbeeMacLayerStatusNoAck = 0xE9,
+        ZigbeeMacLayerStatusNoBeacon = 0xEA,
+        ZigbeeMacLayerStatusNoData = 0xEB,
+        ZigbeeMacLayerStatusNoShortAddress = 0xEC,
+        ZigbeeMacLayerStatusOutOfCap = 0xED,
+        ZigbeeMacLayerStatusPanIdConflict = 0xEE,
+        ZigbeeMacLayerStatusRealignment = 0xEF,
+        ZigbeeMacLayerStatusTransactionExpired = 0xF0,
+        ZigbeeMacLayerStatusTransactionOverflow = 0xF1,
+        ZigbeeMacLayerStatusTxActive = 0xF2,
+        ZigbeeMacLayerStatusUnavailableKey = 0xF3,
+        ZigbeeMacLayerStatusUnsupportedAttribute = 0xF4
+    };
+    Q_ENUM(ZigbeeMacLayerStatus)
+
+    enum ZigbeeNwkLayerStatus {
+        ZigbeeNwkLayerStatusSuccess = 0x00,
+        ZigbeeNwkLayerStatusInvalidParameter = 0xc1,
+        ZigbeeNwkLayerStatusInvalidRequest = 0xc2,
+        ZigbeeNwkLayerStatusNotPermitted = 0xc3,
+        ZigbeeNwkLayerStatusStartupFailure = 0xc4,
+        ZigbeeNwkLayerStatusAlreadyPresent = 0xc5,
+        ZigbeeNwkLayerStatusSynchFailure = 0xc6,
+        ZigbeeNwkLayerStatusTableFull = 0xc7,
+        ZigbeeNwkLayerStatusUnknownDevice = 0xc8,
+        ZigbeeNwkLayerStatusUnsupportedAttribute = 0xc9,
+        ZigbeeNwkLayerStatusNoNetworks = 0xca,
+        ZigbeeNwkLayerStatusMaxFrmCntr = 0xcc,
+        ZigbeeNwkLayerStatusNoKey = 0xcd,
+        ZigbeeNwkLayerStatusBadCcmOutput = 0xce,
+        ZigbeeNwkLayerStatusNoRoutingCapacity = 0xef, // Resource problem on the hardware
+        ZigbeeNwkLayerStatusRouteDiscoveryFailed = 0xd0,
+        ZigbeeNwkLayerStatusRouteError = 0xd1,
+        ZigbeeNwkLayerStatusBtTableFull = 0xd2,
+        ZigbeeNwkLayerStatusFrameNotBuffered = 0xd3,
+        ZigbeeNwkLayerStatusFrameBuffered = 0xd4 // Buffered until route discovery has been done
+    };
+    Q_ENUM(ZigbeeNwkLayerStatus)
+
+    enum ZigbeeApsStatus {
+        ZigbeeApsStatusSuccess = 0x00,
+        ZigbeeApsStatusAsduTooLong = 0xa0,
+        ZigbeeApsStatusDefragDeferred = 0xa1,
+        ZigbeeApsStatusDefragUnsupported = 0xa2,
+        ZigbeeApsStatusIllegalRequest = 0xa3,
+        ZigbeeApsStatusInvalidBinding = 0xa4,
+        ZigbeeApsStatusInvalidGroup = 0xa5,
+        ZigbeeApsStatusInvalidParameter = 0xa6,
+        ZigbeeApsStatusNoAck = 0xa7,
+        ZigbeeApsStatusNoBoundDevice = 0xa8,
+        ZigbeeApsStatusNoShortAddress = 0xa9,
+        ZigbeeApsStatusNotSupported = 0xaa,
+        ZigbeeApsStatusSecuredLinkKey = 0xab,
+        ZigbeeApsStatusSecuredNwkKey = 0xac,
+        ZigbeeApsStatusSecurityFail = 0xad,
+        ZigbeeApsStatusTableFull = 0xae,
+        ZigbeeApsStatusUnsecured = 0xaf,
+        ZigbeeApsStatusUnsupportedAttribute = 0xb0
+    };
+    Q_ENUM(ZigbeeApsStatus)
+
+    // Basic struct for interface data.
+    typedef  struct ApsdeDataConfirm {
+        quint8 requestId = 0;
+        quint8 destinationAddressMode = Zigbee::DestinationAddressModeShortAddress;
+        quint16 destinationShortAddress = 0;
+        quint64 destinationIeeeAddress = 0;
+        quint8 destinationEndpoint = 0;
+        quint8 sourceEndpoint = 0;
+        quint8 zigbeeStatusCode = 0;
+    } ApsdeDataConfirm;
+
+    typedef  struct ApsdeDataIndication {
+        quint8 destinationAddressMode = 0;
+        quint16 destinationShortAddress = 0;
+        quint64 destinationIeeeAddress = 0;
+        quint8 destinationEndpoint = 0;
+        quint8 sourceAddressMode = 0;
+        quint16 sourceShortAddress = 0;
+        quint64 sourceIeeeAddress = 0;
+        quint8 sourceEndpoint = 0;
+        quint16 profileId = 0;
+        quint16 clusterId = 0;
+        QByteArray asdu;
+        quint8 lqi = 0;
+        qint8 rssi = 0;
+    } ApsdeDataIndication;
+
+    typedef  struct ApsdeDataAck {
+        quint8 requestId = 0;
+        quint8 destinationAddressMode = Zigbee::DestinationAddressModeShortAddress;
+        quint16 destinationAddress = 0;
+        quint8 destinationEndpoint = 0;
+        quint8 sourceEndpoint = 0;
+        quint16 profileId = 0;
+        quint16 clusterId = 0;
+        quint8 zigbeeStatusCode = 0;
+    } ApsdeDataAck;
 
     ///* Manufacturer Codes */
     ///* Codes less than 0x1000 were issued for RF4CE */
@@ -1162,7 +1092,13 @@ public:
     //#define ZBEE_MFG_SWANN                      "Swann Communications"
     //#define ZBEE_MFG_TI                         "Texas Instruments"
 
-
 };
+
+QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataConfirm &confirm);
+QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataIndication &indication);
+QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataAck &acknowledgement);
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Zigbee::ZigbeeChannels)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Zigbee::ZigbeeTxOptions)
 
 #endif // ZIGBEE_H

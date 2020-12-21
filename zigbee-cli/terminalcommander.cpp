@@ -18,7 +18,7 @@ TerminalCommander *TerminalCommander::instance()
 
 void TerminalCommander::destroy()
 {
-    qCDebug(dcZigbee()) << "Shut down terminal commander. Have a nice day!";
+    qDebug() << "Shut down terminal commander. Have a nice day!";
     stopProcess();
 }
 
@@ -62,9 +62,9 @@ void TerminalCommander::run()
 {
     m_abort = false;
 
-    qCDebug(dcZigbee()) << "Command list:";
+    qDebug() << "Command list:";
     foreach (const TerminalCommand &command, m_commands) {
-        qCDebug(dcZigbee()) << "  -->" << command;
+        qDebug() << "  -->" << command;
     }
 
     rl_attempted_completion_function = commandCompletion;
@@ -91,7 +91,7 @@ void TerminalCommander::run()
                     rl_on_new_line();
                     rl_replace_line("", 0);
                     rl_redisplay();
-                    qCDebug(dcZigbee()) << "Terminal thread stopped";
+                    qDebug() << "Terminal thread stopped";
                     free(buffer);
                     stopProcess();
                     return;
@@ -114,7 +114,7 @@ void TerminalCommander::run()
             //rl_on_new_line();
             //rl_replace_line("", 0);
             //rl_redisplay();
-            //qCDebug(dcZigbee()) << "Terminal thread stopped";
+            //qDebug() << "Terminal thread stopped";
             return;
         }
     }
@@ -155,7 +155,7 @@ void TerminalCommander::rl_printf(const char *fmt, ...)
 void TerminalCommander::signalHandler(int status)
 {
     Q_UNUSED(status)
-    qCDebug(dcZigbee()) << "Terminal thread stopped";
+    qDebug() << "Terminal thread stopped";
     TerminalCommander::instance()->stopProcess();
 }
 
@@ -182,7 +182,7 @@ char **commandCompletion(const char *text, int start, int end)
 
 char *commandCompletionGenerator(const char *text, int state)
 {
-    //qCDebug(dcZigbee()) << text << state;
+    //qDebug() << text << state;
 
     static int list_index, len;
     const char *name;
@@ -193,7 +193,7 @@ char *commandCompletionGenerator(const char *text, int state)
     }
 
     while (list_index < TerminalCommander::instance()->commands().count() && (name = TerminalCommander::instance()->commands().at(list_index).command().toStdString().data())) {
-        //qCDebug(dcZigbee()) << "          " << TerminalCommander::instance()->commands().at(list_index).command().toStdString().data();
+        //qDebug() << "          " << TerminalCommander::instance()->commands().at(list_index).command().toStdString().data();
         list_index++;
         if (strncmp (name, text, len) == 0) return strdup (name);
     }

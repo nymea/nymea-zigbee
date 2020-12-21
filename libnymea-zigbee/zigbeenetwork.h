@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -28,26 +28,28 @@
 #ifndef ZIGBEENETWORK_H
 #define ZIGBEENETWORK_H
 
+#include <QDir>
+#include <QUuid>
 #include <QObject>
 #include <QSettings>
 
 #include "zigbeenode.h"
+#include "zigbeechannelmask.h"
 #include "zigbeesecurityconfiguration.h"
 
-class ZigbeeNetwork : public ZigbeeNode
+class ZigbeeNetworkDatabase;
+class ZigbeeBridgeController;
+
+class ZigbeeNetwork : public QObject
 {
     Q_OBJECT
 
 public:
-    enum ControllerType {
-        ControlerTypeNxp
-    };
-    Q_ENUM(ControllerType)
-
     enum State {
         StateUninitialized,
-        StateDisconnected,
+        StateOffline,
         StateStarting,
+        StateUpdating,
         StateRunning,
         StateStopping
     };
@@ -56,19 +58,24 @@ public:
     enum Error {
         ErrorNoError,
         ErrorHardwareUnavailable,
+        ErrorHardwareModuleChanged,
         ErrorZigbeeError
     };
     Q_ENUM(Error)
 
-    explicit ZigbeeNetwork(ControllerType controllerType, QObject *parent = nullptr);
+    explicit ZigbeeNetwork(const QUuid &networkUuid, QObject *parent = nullptr);
+
+    QUuid networkUuid() const;
 
     State state() const;
-    ControllerType controlerType() const;
 
     Error error() const;
 
-    QString settingsFilenName() const;
-    void setSettingsFileName(const QString &settingsFileName);
+    QDir settingsDirectory() const;
+    void setSettingsDirectory(const QDir &settingsDirectory);
+
+    virtual ZigbeeBridgeController *bridgeController() const = 0;
+    virtual Zigbee::ZigbeeBackendType backendType() const = 0;
 
     // Serial port configuration
     QString serialPortName() const;
@@ -77,16 +84,38 @@ public:
     qint32 serialBaudrate() const;
     void setSerialBaudrate(qint32 baudrate);
 
+    QString serialNumber() const;
+    void setSerialNumber(const QString &serialNumber);
+
+    ZigbeeAddress macAddress() const;
+    void setMacAddress(const ZigbeeAddress &zigbeeAddress);
+
     // Network configurations
+    QString firmwareVersion() const;
+
+    quint16 panId();
+    void setPanId(quint16 panId);
+
     quint64 extendedPanId() const;
     void setExtendedPanId(quint64 extendedPanId);
 
-    uint channel() const;
-    void setChannel(uint channel);
+    quint32 channel() const;
+    void setChannel(quint32 channel);
+
+    ZigbeeChannelMask channelMask() const;
+    void setChannelMask(const ZigbeeChannelMask &channelMask);
 
     ZigbeeSecurityConfiguration securityConfiguration() const;
     void setSecurityConfiguration(const ZigbeeSecurityConfiguration &securityConfiguration);
 
+    bool permitJoiningEnabled() const;
+    quint8 permitJoiningDuration() const;
+    quint8 permitJoiningRemaining() const;
+    virtual void setPermitJoining(quint8 duration, quint16 address = Zigbee::BroadcastAddressAllRouters) = 0;
+
+    quint8 generateSequenceNumber();
+
+    // Network nodes
     QList<ZigbeeNode *> nodes() const;
 
     ZigbeeNode *coordinatorNode() const;
@@ -97,71 +126,152 @@ public:
     bool hasNode(quint16 shortAddress) const;
     bool hasNode(const ZigbeeAddress &address) const;
 
+    virtual ZigbeeNetworkReply *sendRequest(const ZigbeeNetworkRequest &request) = 0;
+
+    void loadNetwork();
+
+    void removeZigbeeNode(const ZigbeeAddress &address);
 
 private:
-    ControllerType m_controllerType = ControlerTypeNxp;
+    QUuid m_networkUuid;
     State m_state = StateUninitialized;
-    Error m_error = ErrorNoError;
 
     // Serial port configuration
     QString m_serialPortName = "/dev/ttyUSB0";
+    QString m_serialNumber;
     qint32 m_serialBaudrate = 115200;
+    ZigbeeAddress m_macAddress;
+
+    ZigbeeNetworkDatabase *m_database = nullptr;
+    bool m_networkLoaded = false;
+
+    // Continuous ASP sequence number for network requests
+    quint8 m_sequenceNumber = 0;
 
     // Network configurations
+    quint16 m_panId = 0;
     quint64 m_extendedPanId = 0;
-    uint m_channel = 0;
-    ZigbeeSecurityConfiguration m_securityConfiguration;
-    ZigbeeNode::NodeType m_nodeType = ZigbeeNode::NodeTypeCoordinator;
+    quint32 m_channel = 0;
+    ZigbeeChannelMask m_channelMask = ZigbeeChannelMask(ZigbeeChannelMask::ChannelConfigurationAllChannels);
+    ZigbeeDeviceProfile::NodeType m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 
-    QString m_settingsFileName = "/etc/nymea/nymea-zigbee.conf";
+    // Network storage
+    QDir m_settingsDirectory = QDir("/etc/nymea/");
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
+    QList<ZigbeeNode *> m_temporaryNodes;
 
+    void printNetwork();
+
+private:
     void addNodeInternally(ZigbeeNode *node);
     void removeNodeInternally(ZigbeeNode *node);
 
 protected:
-    void saveNetwork();
-    void loadNetwork();
+    Error m_error = ErrorNoError;
+    ZigbeeNode *m_coordinatorNode = nullptr;
+    ZigbeeSecurityConfiguration m_securityConfiguration;
+
+    void initializeDatabase();
+
+    ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent);
+    ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, quint8 macCapabilities, QObject *parent);
+
+    // Permit join
+    QTimer *m_permitJoinTimer = nullptr;
+    bool m_permitJoiningEnabled = false;
+    quint8 m_permitJoiningDuration = 120;
+    quint8 m_permitJoiningRemaining = 0;
+
+    QTimer *m_reachableRefreshTimer = nullptr;
+    QList<ZigbeeAddress> m_reachableRefreshAddresses;
+    void evaluateNextNodeReachableState();
+
+    void setPermitJoiningEnabled(bool permitJoiningEnabled);
+    void setPermitJoiningDuration(quint8 duration);
+    void setPermitJoiningRemaining(quint8 remaining);
+
     void clearSettings();
 
-    void saveNode(ZigbeeNode *node);
-    void removeNodeFromSettings(ZigbeeNode *node);
+    bool hasUninitializedNode(const ZigbeeAddress &address) const;
 
     void addNode(ZigbeeNode *node);
     void addUnitializedNode(ZigbeeNode *node);
     void removeNode(ZigbeeNode *node);
+    void removeUninitializedNode(ZigbeeNode *node);
 
-    ZigbeeNode *createNode();
+    void setNodeReachable(ZigbeeNode *node, bool reachable);
+    void updateReplyRequest(ZigbeeNetworkReply *reply, const ZigbeeNetworkRequest &request);
+
+    // Set the coordinator infromation since they cannot be fetched
+    void setNodeInformation(ZigbeeNode *node, const QString &manufacturerName, const QString &modelName, const QString &version);
 
     void setState(State state);
     void setError(Error error);
 
+    bool networkConfigurationAvailable() const;
+
+    void handleNodeIndication(ZigbeeNode *node, const Zigbee::ApsdeDataIndication indication);
+
+    // ZDO
+    void handleZigbeeDeviceProfileIndication(const Zigbee::ApsdeDataIndication &indication);
+
+    // ZCL
+    void handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataIndication &indication);
+
+    void onDeviceAnnounced(quint16 shortAddress, ZigbeeAddress ieeeAddress, quint8 macCapabilities);
+
+    void verifyUnrecognizedNode(quint16 shortAddress);
+    void updateNodeNetworkAddress(ZigbeeNode *node, quint16 shortAddress);
+
+    // Network reply methods
+    ZigbeeNetworkReply *createNetworkReply(const ZigbeeNetworkRequest &request = ZigbeeNetworkRequest());
+    void setReplyResponseError(ZigbeeNetworkReply *reply, quint8 zigbeeStatus = Zigbee::ZigbeeApsStatusSuccess);
+    void finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkReply::Error error = ZigbeeNetworkReply::ErrorNoError);
+    void startWaitingReply(ZigbeeNetworkReply *reply);
+
 signals:
-    void settingsFileNameChanged(const QString &settingsFileName);
+    void settingsDirectoryChanged(const QDir &settingsDirectory);
     void serialPortNameChanged(const QString &serialPortName);
     void serialBaudrateChanged(qint32 serialBaudrate);
+    void macAddressChanged(const ZigbeeAddress &macAddress);
+    void firmwareVersionChanged(const QString &firmwareVersion);
 
+    void panIdChanged(quint16 panId);
     void extendedPanIdChanged(quint64 extendedPanId);
     void channelChanged(uint channel);
+    void channelMaskChanged(const ZigbeeChannelMask &channelMask);
     void securityConfigurationChanged(const ZigbeeSecurityConfiguration &securityConfiguration);
 
+    // Will be emitted if node has joined and the initialization has been finished
     void nodeAdded(ZigbeeNode *node);
     void nodeRemoved(ZigbeeNode *node);
 
-    void permitJoiningChanged(bool permitJoining);
-    void stateChanged(State state);
+    // Will be emited when a node joined and starts initializing
+    void nodeJoined(ZigbeeNode *node);
+
+    void permitJoiningEnabledChanged(bool permitJoiningEnabled);
+    void permitJoinDurationChanged(quint8 duration);
+    void permitJoinRemainingChanged(quint8 remaining);
+
     void errorOccured(Error error);
+    void stateChanged(State state);
 
 private slots:
     void onNodeStateChanged(ZigbeeNode::State state);
     void onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
+    void evaluateNodeReachableStates();
 
 public slots:
     virtual void startNetwork() = 0;
     virtual void stopNetwork() = 0;
+    virtual void reset() = 0;
     virtual void factoryResetNetwork() = 0;
+    virtual void destroyNetwork() = 0;
 
 };
+
+QDebug operator<<(QDebug debug, ZigbeeNetwork *network);
+
 
 #endif // ZIGBEENETWORK_H

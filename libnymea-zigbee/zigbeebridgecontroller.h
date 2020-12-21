@@ -3,7 +3,7 @@
 * Copyright 2013 - 2020, nymea GmbH
 * Contact: contact@nymea.io
 *
-* This file is part of nymea.
+* This file is part of nymea-zigbee.
 * This project including source code and documentation is protected by copyright law, and
 * remains the property of nymea GmbH. All rights, including reproduction, publication,
 * editing and translation, are reserved. The use of this project is subject to the terms of a
@@ -28,70 +28,62 @@
 #ifndef ZIGBEEBRIDGECONTROLLER_H
 #define ZIGBEEBRIDGECONTROLLER_H
 
+#include <QDir>
 #include <QObject>
-#include <QQueue>
+#include <QSerialPort>
 
 #include "zigbee.h"
-#include "zigbeenode.h"
-#include "interface/zigbeeinterface.h"
-#include "interface/zigbeeinterfacereply.h"
-#include "interface/zigbeeinterfacerequest.h"
-#include "interface/zigbeeinterfacemessage.h"
+
+Q_DECLARE_METATYPE(QSerialPort::SerialPortError);
 
 class ZigbeeBridgeController : public QObject
 {
     Q_OBJECT
+    friend class ZigbeeNetwork;
+
 public:
     explicit ZigbeeBridgeController(QObject *parent = nullptr);
-    ~ZigbeeBridgeController();
+    ~ZigbeeBridgeController() = default;
 
+    QString firmwareVersion() const;
     bool available() const;
 
-    // Direct commands
-    ZigbeeInterfaceReply *commandResetController();
-    ZigbeeInterfaceReply *commandSoftResetController();
-    ZigbeeInterfaceReply *commandErasePersistantData();
-    ZigbeeInterfaceReply *commandGetVersion();
-    ZigbeeInterfaceReply *commandSetExtendedPanId(quint64 extendedPanId);
-    ZigbeeInterfaceReply *commandSetChannelMask(quint32 channelMask = 0x07fff800);
-    ZigbeeInterfaceReply *commandSetNodeType(ZigbeeNode::NodeType nodeType);
-    ZigbeeInterfaceReply *commandStartNetwork();
-    ZigbeeInterfaceReply *commandStartScan();
-    ZigbeeInterfaceReply *commandPermitJoin(quint16 targetAddress = 0xfffc, const quint8 advertisingIntervall = 180, bool tcSignificance = false);
-    ZigbeeInterfaceReply *commandGetPermitJoinStatus();
-    ZigbeeInterfaceReply *commandRequestLinkQuality(quint16 shortAddress);
-    ZigbeeInterfaceReply *commandEnableWhiteList();
-    ZigbeeInterfaceReply *commandInitiateTouchLink();
-    ZigbeeInterfaceReply *commandTouchLinkFactoryReset();
-    ZigbeeInterfaceReply *commandNetworkAddressRequest(quint16 targetAddress, quint64 extendedAddress);
-    ZigbeeInterfaceReply *commandSetSecurityStateAndKey(quint8 keyState, quint8 keySequence, quint8 keyType, const QString &key);
-    ZigbeeInterfaceReply *commandAuthenticateDevice(const ZigbeeAddress &ieeeAddress, const QString &key);
-    ZigbeeInterfaceReply *commandNodeDescriptorRequest(quint16 shortAddress);
-    ZigbeeInterfaceReply *commandSimpleDescriptorRequest(quint16 shortAddress, quint8 endpoint);
-    ZigbeeInterfaceReply *commandPowerDescriptorRequest(quint16 shortAddress);
-    ZigbeeInterfaceReply *commandUserDescriptorRequest(quint16 shortAddress, quint16 address);
+    bool canUpdate() const;
+    bool initiallyFlashed() const;
+    bool updateRunning() const;
+
+    // Optional update/initialize procedure for the zigbee controller
+    virtual bool updateAvailable(const QString &currentVersion);
+    virtual QString updateFirmwareVersion() const;
+    virtual void startFirmwareUpdate();
+    virtual void startFactoryResetUpdate();
+
+protected:
+    QString m_firmwareVersion;
+    bool m_available = false;
+    bool m_canUpdate = false;
+    bool m_initiallyFlashed = false;
+    bool m_updateRunning = false;
+    QDir m_settingsDirectory = QDir("/etc/nymea/");
+
+    void setAvailable(bool available);
+    void setFirmwareVersion(const QString &firmwareVersion);
+
+    virtual void initializeUpdateProvider();
 
 private:
-    ZigbeeInterface *m_interface = nullptr;
-    ZigbeeInterfaceReply *m_currentReply = nullptr;
-
-    QQueue<ZigbeeInterfaceReply *> m_replyQueue;
-
-    void sendMessage(ZigbeeInterfaceReply *reply);
+    void setSettingsDirectory(const QDir &settingsDirectory);
 
 signals:
     void availableChanged(bool available);
-    void messageReceived(const ZigbeeInterfaceMessage &message);
+    void firmwareVersionChanged(const QString &firmwareVersion);
+    void canUpdateChanged(bool canUpdate);
+    void updateRunningChanged(bool updateRunning);
 
-private slots:
-    void onMessageReceived(const ZigbeeInterfaceMessage &message);
-    void onReplyTimeout();
-
-public slots:
-    bool enable(const QString &serialPort, qint32 baudrate);
-    void disable();
-
-    ZigbeeInterfaceReply *sendRequest(const ZigbeeInterfaceRequest &request);
+    // APS notifications
+    void apsDataConfirmReceived(const Zigbee::ApsdeDataConfirm &confirm);
+    void apsDataIndicationReceived(const Zigbee::ApsdeDataIndication &indication);
+    void apsDataAckReceived(const Zigbee::ApsdeDataAck &acknowledgement);
 
 };
 
