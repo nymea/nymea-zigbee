@@ -1,7 +1,9 @@
-nymea-zigbee (0.1.0) UNRELEASED; urgency=medium
+nymea-zigbee (0.1.0) xenial; urgency=medium
 
+  [ Simon Stürz ]
+  * Prepare stack for being integrated into nymea core
 
- -- Simon Stürz <simon.stuerz@nymea.io>  Wed, 16 Dec 2020 13:15:42 +0100
+ -- Jenkins <jenkins@nymea.io>  Mon, 21 Dec 2020 18:00:12 +0100
 
 nymea-zigbee (0.0.5) xenial; urgency=medium
 
