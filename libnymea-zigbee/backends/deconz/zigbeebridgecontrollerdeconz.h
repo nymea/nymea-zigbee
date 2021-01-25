@@ -135,6 +135,7 @@ private:
     // Device state helper
     DeconzDeviceState parseDeviceStateFlag(quint8 deviceStateFlag);
 
+    void reconnectConrtroller();
     void readDataIndication();
     void readDataConfirm();
 

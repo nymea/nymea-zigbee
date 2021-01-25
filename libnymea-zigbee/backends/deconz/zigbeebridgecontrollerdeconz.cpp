@@ -76,7 +76,9 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestVersion()
     stream << static_cast<quint8>(Deconz::CommandVersion);
     stream << static_cast<quint8>(0); // SQN will be generated right before sending
     stream << static_cast<quint8>(0); // Reserverd
-    stream << static_cast<quint16>(5); // Frame length
+    stream << static_cast<quint16>(9); // Frame length
+    stream << static_cast<quint16>(0);
+    stream << static_cast<quint16>(0);
 
     return createReply(Deconz::CommandVersion, "Request controller version", message, this);
 }
@@ -745,6 +747,11 @@ DeconzDeviceState ZigbeeBridgeControllerDeconz::parseDeviceStateFlag(quint8 devi
     state.configurationChanged = (deviceStateFlag & 0x10);
     state.apsDataRequestFreeSlots = (deviceStateFlag & 0x20);
     return state;
+}
+
+void ZigbeeBridgeControllerDeconz::reconnectConrtroller()
+{
+    m_interface->reconnectController();
 }
 
 void ZigbeeBridgeControllerDeconz::readDataIndication()

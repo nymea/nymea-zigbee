@@ -392,118 +392,147 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
 
 void ZigbeeNetworkDeconz::runNetworkInitProcess()
 {
+    // - Read the network state (until success)
     // - Read the firmware version
     // - Read the network configuration parameters
-    // - Read the network state
 
     // - If network running and we don't have configurations, write them
     // - If network running and configurations match, we are done
 
     // Read the firmware version
-    qCDebug(dcZigbeeNetwork()) << "Reading current firmware version...";
-    ZigbeeInterfaceDeconzReply *reply = m_controller->requestVersion();
+    qCDebug(dcZigbeeNetwork()) << "Request current device state...";
+    ZigbeeInterfaceDeconzReply *reply = m_controller->requestDeviceState();
     connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
             qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
             m_initRetry++;
+            if (!m_controller->available()) {
+                m_initRetry = 0;
+                return;
+            }
+
             if (m_initRetry < 10) {
                 qCDebug(dcZigbeeNetwork()) << "Retry to initialize network" << m_initRetry << "/ 10";
                 runNetworkInitProcess();
             } else {
-                qCWarning(dcZigbeeNetwork()) << "Failed to read firmware version after 10 attempts. Giving up";
-                m_controller->disable();
+                qCWarning(dcZigbeeNetwork()) << "Failed to read device state after 10 attempts. Giving up";
+                m_controller->reconnectConrtroller();
             }
             return;
         }
 
         m_initRetry = 0;
-        qCDebug(dcZigbeeNetwork()) << "Version request finished successfully" << ZigbeeUtils::convertByteArrayToHexString(reply->responseData());
-        // Note: version is an uint32 value, little endian, but we can read the individual bytes in reversed order
-        quint8 majorVersion = static_cast<quint8>(reply->responseData().at(3));
-        quint8 minorVersion = static_cast<quint8>(reply->responseData().at(2));
-        Deconz::Platform platform = static_cast<Deconz::Platform>(reply->responseData().at(1));
-        QString firmwareVersion = QString("%1.%2").arg(majorVersion).arg(minorVersion);
-        qCDebug(dcZigbeeNetwork()) << "Firmware version" << firmwareVersion << platform;
 
         // Read all network parameters
         qCDebug(dcZigbeeNetwork()) << "Start reading controller network parameters...";
         ZigbeeInterfaceDeconzReply *reply = m_controller->readNetworkParameters();
-        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply, firmwareVersion](){
+        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
             if (reply->statusCode() != Deconz::StatusCodeSuccess) {
                 qCWarning(dcZigbeeController()) << "Could not read network parameters during network start up." << reply->statusCode();
-                // FIXME: set an appropriate error
+                m_initRetry++;
+                if (m_initRetry < 3) {
+                    qCDebug(dcZigbeeNetwork()) << "Retry to read network parameters" << m_initRetry << "/ 3";
+                    runNetworkInitProcess();
+                } else {
+                    qCWarning(dcZigbeeNetwork()) << "Failed to read network parameters after 3 attempts. Giving up";
+                    m_controller->reconnectConrtroller();
+                }
                 return;
             }
 
             qCDebug(dcZigbeeNetwork()) << "Reading network parameters finished successfully.";
-            QString protocolVersion = QString("%1.%2").arg(m_controller->networkConfiguration().protocolVersion >> 8 & 0xFF)
-                    .arg(m_controller->networkConfiguration().protocolVersion & 0xFF);
-            qCDebug(dcZigbeeNetwork()) << "Controller API protocol version" << ZigbeeUtils::convertUint16ToHexString(m_controller->networkConfiguration().protocolVersion) << protocolVersion;
-
-            m_controller->setFirmwareVersionString(QString("%1 - %2").arg(firmwareVersion).arg(protocolVersion));
-
             qCDebug(dcZigbeeNetwork()) << m_controller->networkConfiguration();
-            qCDebug(dcZigbeeNetwork()) << "Reading current network state";
-            ZigbeeInterfaceDeconzReply *reply = m_controller->requestDeviceState();
+
+            m_protocolVersion = QString("%1.%2").arg(m_controller->networkConfiguration().protocolVersion >> 8 & 0xFF)
+                    .arg(m_controller->networkConfiguration().protocolVersion & 0xFF);
+            qCDebug(dcZigbeeNetwork()) << "Controller API protocol version" << ZigbeeUtils::convertUint16ToHexString(m_controller->networkConfiguration().protocolVersion) << m_protocolVersion;
+
+            // Try read firmware version (changed with firmware 0x26680700)
+            qCDebug(dcZigbeeNetwork()) << "Request current firmware version...";
+            ZigbeeInterfaceDeconzReply *reply = m_controller->requestVersion();
             connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+                QString firmwareVersion;
                 if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                    qCWarning(dcZigbeeController()) << "Could not read device state during network start up. SQN:" << reply->sequenceNumber() << reply->statusCode();
-                    // FIXME: set an appropriate error
-                    return;
-                }
-
-                qCDebug(dcZigbeeNetwork()) << "Reading current network state finished successfully." << "SQN:" << reply->sequenceNumber();
-
-                QDataStream stream(reply->responseData());
-                stream.setByteOrder(QDataStream::LittleEndian);
-                quint8 deviceStateFlag = 0;
-                stream >> deviceStateFlag;
-                DeconzDeviceState deviceState = m_controller->parseDeviceStateFlag(deviceStateFlag);
-                qCDebug(dcZigbeeNetwork()) << deviceState;
-
-                // Update the device state in the controller
-                m_controller->processDeviceState(deviceState);
-
-                if (m_createNewNetwork) {
-                    // Set offline
-                    // Write configurations
-                    // Set online
-                    // Read configurations
-                    // Create and initialize coordinator node
-                    // Done. Save network
-                    setCreateNetworkState(CreateNetworkStateStopNetwork);
+                    qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
                 } else {
-                    // Get the network state and start the network if required
-                    if (m_controller->networkState() == Deconz::NetworkStateConnected) {
-                        qCDebug(dcZigbeeNetwork()) << "The network is already running.";
-                        m_initializing = false;
-                        setPermitJoiningEnabled(false);
-                        // Set the permit joining timeout network configuration parameter
-                        QByteArray parameterData;
-                        QDataStream stream(&parameterData, QIODevice::WriteOnly);
-                        stream.setByteOrder(QDataStream::LittleEndian);
-                        stream << static_cast<quint8>(0);
+                    qCDebug(dcZigbeeNetwork()) << "Version request finished successfully" << ZigbeeUtils::convertByteArrayToHexString(reply->responseData());
+                    // Note: version is an uint32 value, little endian, but we can read the individual bytes in reversed order
+                    quint8 majorVersion = static_cast<quint8>(reply->responseData().at(3));
+                    quint8 minorVersion = static_cast<quint8>(reply->responseData().at(2));
+                    Deconz::Platform platform = static_cast<Deconz::Platform>(reply->responseData().at(1));
+                    m_firmwareVersion = QString("%1.%2").arg(majorVersion).arg(minorVersion);
+                    qCDebug(dcZigbeeNetwork()) << "Firmware version" << firmwareVersion << platform;
 
-                        ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterPermitJoin, parameterData);
-                        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
-                            if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                                qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
-                                // FIXME: set an appropriate error
-                                return;
-                            }
-
-                            qCDebug(dcZigbeeNetwork()) << "Set permit join configuration request finished" << reply->statusCode();
-                            setState(StateRunning);
-                        });
-
-                    } else if (m_controller->networkState() == Deconz::NetworkStateOffline) {
-                        m_initializing = true;
-                        qCDebug(dcZigbeeNetwork()) << "The network is offline. Lets start it";
-                        setCreateNetworkState(CreateNetworkStateStartNetwork);
-                    } else {
-                        // The network is not running yet, lets wait for the state changed
-                    }
                 }
+
+                if (!m_firmwareVersion.isEmpty()) {
+                    m_controller->setFirmwareVersionString(QString("%1 - %2").arg(m_firmwareVersion).arg(m_protocolVersion));
+                } else {
+                    m_controller->setFirmwareVersionString(m_protocolVersion);
+                }
+
+                qCDebug(dcZigbeeNetwork()) << "Reading current network state";
+                ZigbeeInterfaceDeconzReply *reply = m_controller->requestDeviceState();
+                connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+                    if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+                        qCWarning(dcZigbeeController()) << "Could not read device state during network start up. SQN:" << reply->sequenceNumber() << reply->statusCode();
+                        // FIXME: set an appropriate error
+                        return;
+                    }
+
+                    qCDebug(dcZigbeeNetwork()) << "Reading current network state finished successfully." << "SQN:" << reply->sequenceNumber();
+
+                    QDataStream stream(reply->responseData());
+                    stream.setByteOrder(QDataStream::LittleEndian);
+                    quint8 deviceStateFlag = 0;
+                    stream >> deviceStateFlag;
+                    DeconzDeviceState deviceState = m_controller->parseDeviceStateFlag(deviceStateFlag);
+                    qCDebug(dcZigbeeNetwork()) << deviceState;
+
+                    // Update the device state in the controller
+                    m_controller->processDeviceState(deviceState);
+
+                    if (m_createNewNetwork) {
+                        // Set offline
+                        // Write configurations
+                        // Set online
+                        // Read configurations
+                        // Create and initialize coordinator node
+                        // Done. Save network
+                        setCreateNetworkState(CreateNetworkStateStopNetwork);
+                    } else {
+                        // Get the network state and start the network if required
+                        if (m_controller->networkState() == Deconz::NetworkStateConnected) {
+                            qCDebug(dcZigbeeNetwork()) << "The network is already running.";
+                            m_initializing = false;
+                            setPermitJoiningEnabled(false);
+                            // Set the permit joining timeout network configuration parameter
+                            QByteArray parameterData;
+                            QDataStream stream(&parameterData, QIODevice::WriteOnly);
+                            stream.setByteOrder(QDataStream::LittleEndian);
+                            stream << static_cast<quint8>(0);
+
+                            ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterPermitJoin, parameterData);
+                            connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+                                if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+                                    qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
+                                    // FIXME: set an appropriate error
+                                    return;
+                                }
+
+                                qCDebug(dcZigbeeNetwork()) << "Set permit join configuration request finished" << reply->statusCode();
+                                setState(StateRunning);
+                            });
+
+                        } else if (m_controller->networkState() == Deconz::NetworkStateOffline) {
+                            m_initializing = true;
+                            qCDebug(dcZigbeeNetwork()) << "The network is offline. Lets start it";
+                            setCreateNetworkState(CreateNetworkStateStartNetwork);
+                        } else {
+                            // The network is not running yet, lets wait for the state changed
+                        }
+                    }
+                });
             });
         });
     });
