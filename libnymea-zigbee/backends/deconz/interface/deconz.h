@@ -67,13 +67,14 @@ public:
         CommandApsDataIndication = 0x17,
         CommandGreenPower = 0x19,
         CommandMacPoll = 0x1C,
-        CommandSimplifiedBeacon = 0x1F
+        CommandMacBeacon = 0x1F,
+        CommandUpdateBootloader = 0x21
     };
     Q_ENUM(Command)
 
     enum Parameter {
         ParameterMacAddress = 0x01, // R
-        ParameterPanId = 0x05, // R
+        ParameterPanId = 0x05, // RW
         ParameterNetworkAddress = 0x07, // R
         ParameterNetworkExtendedPanId = 0x08, // R
         ParameterNodeType = 0x09, //RW
@@ -81,12 +82,15 @@ public:
         ParameterApsExtendedPanId = 0x0B, //RW
         ParameterTrustCenterAddress = 0x0E, // RW
         ParameterSecurityMode = 0x10, // RW
-        ParameterNetworkKey = 0x18, //W
+        ParameterPredefinedNwkPanId = 0x15, // RW
+        ParameterNetworkKey = 0x18, // RW
+        ParameterLinkKey = 0x19, // RW
         ParameterCurrentChannel = 0x1c, // R
         ParameterPermitJoin = 0x21, // RW
         ParameterProtocolVersion = 0x22, // R
         ParameterNetworkUpdateId = 0x24, // RW
-        ParameterWatchdogTtl = 0x26 // RW since protocol version 0x0108
+        ParameterWatchdogTtl = 0x26, // RW since protocol version 0x0108
+        ParameterNetworkFrameCounter = 0x27 // RW
     };
     Q_ENUM(Parameter)
 

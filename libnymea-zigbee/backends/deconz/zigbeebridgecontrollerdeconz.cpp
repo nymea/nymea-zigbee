@@ -67,6 +67,29 @@ Deconz::NetworkState ZigbeeBridgeControllerDeconz::networkState() const
     return m_networkState;
 }
 
+void ZigbeeBridgeControllerDeconz::rebootController()
+{
+    // According to the docs, the watchdog can be used to reboot the device by
+    // setting the watchdog timeout to a small value and let it timeout
+
+    // Reset the timer to prevent interrupting the reboot
+    m_watchdogTimer->start();
+
+    // Write the watchdog to 2 seconds
+    QByteArray parameterData;
+    QDataStream stream(&parameterData, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint32>(2);
+    ZigbeeInterfaceDeconzReply *reply = requestWriteParameter(Deconz::ParameterWatchdogTtl, parameterData);
+    connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [reply](){
+        if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+            qCWarning(dcZigbeeController()) << "Could initiate reboot controller by writing watchdog parameter." << reply->statusCode();
+            return;
+        }
+        qCDebug(dcZigbeeController()) << "Reboot device requested successfully. The controler is about to reboot...";
+    });
+}
+
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestVersion()
 {
 
@@ -216,9 +239,9 @@ void ZigbeeBridgeControllerDeconz::sendNextRequest()
     if (m_currentReply)
         return;
 
-//    // FIXME: If the controler request queue is full, wait until it's free again
-//    if (!m_apsFreeSlotsAvailable)
-//        return;
+    //    // FIXME: If the controler request queue is full, wait until it's free again
+    //    if (!m_apsFreeSlotsAvailable)
+    //        return;
 
     // Get the next reply, set the sequence number, send the request data over the interface and start waiting
     m_currentReply = m_replyQueue.dequeue();
@@ -284,12 +307,12 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Co
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataGroup(quint8 requestId, quint16 groupAddress, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius)
 {
-//    quint8 sequenceNumber = generateSequenceNumber();
-//    qCDebug(dcZigbeeController()) << "Request enqueue send data to group" << ZigbeeUtils::convertUint16ToHexString(groupAddress)
-//                                  << "SQN:" << sequenceNumber
-//                                  << static_cast<Zigbee::ZigbeeProfile>(profileId)
-//                                  << ZigbeeUtils::convertUint16ToHexString(clusterId)
-//                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+    //    quint8 sequenceNumber = generateSequenceNumber();
+    //    qCDebug(dcZigbeeController()) << "Request enqueue send data to group" << ZigbeeUtils::convertUint16ToHexString(groupAddress)
+    //                                  << "SQN:" << sequenceNumber
+    //                                  << static_cast<Zigbee::ZigbeeProfile>(profileId)
+    //                                  << ZigbeeUtils::convertUint16ToHexString(clusterId)
+    //                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
 
     Q_ASSERT_X(asdu.length() <= 127, "ASDU", "ASDU package length has to <= 127 bytes");
 
@@ -323,13 +346,13 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataShortAddress(quint8 requestId, quint16 shortAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius)
 {
-//    quint8 sequenceNumber = generateSequenceNumber();
-//    qCDebug(dcZigbeeController()) << "Request enqueue send data to short address" << ZigbeeUtils::convertUint16ToHexString(shortAddress)
-//                                  << "SQN:" << sequenceNumber
-//                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
-//                                  << static_cast<Zigbee::ZigbeeProfile>(profileId)
-//                                  << ZigbeeUtils::convertUint16ToHexString(clusterId)
-//                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+    //    quint8 sequenceNumber = generateSequenceNumber();
+    //    qCDebug(dcZigbeeController()) << "Request enqueue send data to short address" << ZigbeeUtils::convertUint16ToHexString(shortAddress)
+    //                                  << "SQN:" << sequenceNumber
+    //                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
+    //                                  << static_cast<Zigbee::ZigbeeProfile>(profileId)
+    //                                  << ZigbeeUtils::convertUint16ToHexString(clusterId)
+    //                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
 
     Q_ASSERT_X(asdu.length() <= 127, "ASDU", "ASDU package length has to <= 127 bytes");
 
@@ -363,12 +386,12 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendData
 
 ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::requestEnqueueSendDataIeeeAddress(quint8 requestId, ZigbeeAddress ieeeAddress, quint8 destinationEndpoint, quint16 profileId, quint16 clusterId, quint8 sourceEndpoint, const QByteArray &asdu, Zigbee::ZigbeeTxOptions txOptions, quint8 radius)
 {
-//    quint8 sequenceNumber = generateSequenceNumber();
-//    qCDebug(dcZigbeeController()) << "Request enqueue send data to IEEE address" << ieeeAddress.toString()
-//                                  << "SQN:" << sequenceNumber
-//                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
-//                                  << profileId << clusterId
-//                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
+    //    quint8 sequenceNumber = generateSequenceNumber();
+    //    qCDebug(dcZigbeeController()) << "Request enqueue send data to IEEE address" << ieeeAddress.toString()
+    //                                  << "SQN:" << sequenceNumber
+    //                                  << ZigbeeUtils::convertByteToHexString(destinationEndpoint)
+    //                                  << profileId << clusterId
+    //                                  << ZigbeeUtils::convertByteToHexString(sourceEndpoint);
 
     Q_ASSERT_X(asdu.length() <= 127, "ZigbeeController", "ASDU package length has to be <= 127 bytes");
 
@@ -420,7 +443,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                             << Deconz::ParameterMacAddress << "finished with error" << replyMacAddress->statusCode();
 
             readNetworkParametersReply->m_statusCode = replyMacAddress->statusCode();
-            readNetworkParametersReply->finished();
+            emit readNetworkParametersReply->finished();
             return;
         }
         QDataStream stream(replyMacAddress->responseData());
@@ -440,7 +463,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                 qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyPanId->sequenceNumber() << replyPanId->command()
                                                 << Deconz::ParameterPanId << "finished with error" << replyPanId->statusCode();
                 readNetworkParametersReply->m_statusCode = replyPanId->statusCode();
-                readNetworkParametersReply->finished();
+                emit readNetworkParametersReply->finished();
                 return;
             }
             QDataStream stream(replyPanId->responseData());
@@ -460,7 +483,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                     qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyShortAddress->sequenceNumber() << replyShortAddress->command() << Deconz::ParameterNetworkAddress
                                                     << "finished with error" << replyShortAddress->statusCode();
                     readNetworkParametersReply->m_statusCode = replyShortAddress->statusCode();
-                    readNetworkParametersReply->finished();
+                    emit readNetworkParametersReply->finished();
                     return;
                 }
 
@@ -480,7 +503,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                         qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyExtendedPanId->sequenceNumber() << replyExtendedPanId->command()
                                                         << Deconz::ParameterNetworkExtendedPanId << "finished with error" << replyExtendedPanId->statusCode();
                         readNetworkParametersReply->m_statusCode = replyExtendedPanId->statusCode();
-                        readNetworkParametersReply->finished();
+                        emit readNetworkParametersReply->finished();
                         return;
                     }
 
@@ -500,7 +523,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                             qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyNodeType->sequenceNumber() << replyNodeType->command()
                                                             << Deconz::ParameterNodeType << "finished with error" << replyNodeType->statusCode();
                             readNetworkParametersReply->m_statusCode = replyNodeType->statusCode();
-                            readNetworkParametersReply->finished();
+                            emit readNetworkParametersReply->finished();
                             return;
                         }
 
@@ -521,7 +544,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                 qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyChannelMask->sequenceNumber() << replyChannelMask->command() << Deconz::ParameterChannelMask
                                                                 << "finished with error" << replyChannelMask->statusCode();
                                 readNetworkParametersReply->m_statusCode = replyChannelMask->statusCode();
-                                readNetworkParametersReply->finished();
+                                emit readNetworkParametersReply->finished();
                                 return;
                             }
 
@@ -542,7 +565,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                     qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyApsExtendedPanId->sequenceNumber() << replyApsExtendedPanId->command()
                                                                     << Deconz::ParameterApsExtendedPanId << "finished with error" << replyApsExtendedPanId->statusCode();
                                     readNetworkParametersReply->m_statusCode = replyApsExtendedPanId->statusCode();
-                                    readNetworkParametersReply->finished();
+                                    emit readNetworkParametersReply->finished();
                                     return;
                                 }
 
@@ -563,7 +586,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                         qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyTrustCenterAddress->sequenceNumber() << replyTrustCenterAddress->command()
                                                                         << Deconz::ParameterTrustCenterAddress << "finished with error" << replyTrustCenterAddress->statusCode();
                                         readNetworkParametersReply->m_statusCode = replyTrustCenterAddress->statusCode();
-                                        readNetworkParametersReply->finished();
+                                        emit readNetworkParametersReply->finished();
                                         return;
                                     }
 
@@ -584,7 +607,7 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                             qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replySecurityMode->sequenceNumber() << replySecurityMode->command()
                                                                             << Deconz::ParameterSecurityMode << "finished with error" << replySecurityMode->statusCode();
                                             readNetworkParametersReply->m_statusCode = replySecurityMode->statusCode();
-                                            readNetworkParametersReply->finished();
+                                            emit readNetworkParametersReply->finished();
                                             return;
                                         }
 
@@ -598,128 +621,158 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::readNetworkParameters(
                                                                       << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
                                         qCDebug(dcZigbeeController()) << m_networkConfiguration.securityMode;
 
-                                        // Note: reading the network key returns "InavlidParameter". Might be for security reasons which is good!
 
-                                        // Read channel
-                                        ZigbeeInterfaceDeconzReply *replyChannel = requestReadParameter(Deconz::ParameterCurrentChannel);
-                                        connect(replyChannel, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyChannel](){
-                                            if (replyChannel->statusCode() != Deconz::StatusCodeSuccess) {
-                                                qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyChannel->sequenceNumber() << replyChannel->command() << Deconz::ParameterCurrentChannel
-                                                                                << "finished with error" << replyChannel->statusCode();
-                                                readNetworkParametersReply->m_statusCode = replyChannel->statusCode();
-                                                readNetworkParametersReply->finished();
+                                        // Read predefined new pan id
+                                        ZigbeeInterfaceDeconzReply *replyPredefinedNwkPanId = requestReadParameter(Deconz::ParameterPredefinedNwkPanId);
+                                        connect(replyPredefinedNwkPanId, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyPredefinedNwkPanId](){
+                                            if (replyPredefinedNwkPanId->statusCode() != Deconz::StatusCodeSuccess) {
+                                                qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyPredefinedNwkPanId->sequenceNumber() << replyPredefinedNwkPanId->command()
+                                                                                << Deconz::ParameterSecurityMode << "finished with error" << replyPredefinedNwkPanId->statusCode();
+                                                readNetworkParametersReply->m_statusCode = replyPredefinedNwkPanId->statusCode();
+                                                emit readNetworkParametersReply->finished();
                                                 return;
                                             }
 
-                                            QDataStream stream(replyChannel->responseData());
+                                            QDataStream stream(replyPredefinedNwkPanId->responseData());
                                             stream.setByteOrder(QDataStream::LittleEndian);
-                                            quint16 payloadLenght = 0; quint8 parameter = 0; quint8 channel = 0;
-                                            stream >> payloadLenght >> parameter >> channel;
-                                            m_networkConfiguration.currentChannel = channel;
-                                            qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyChannel->sequenceNumber() << replyChannel->command() << static_cast<Deconz::Parameter>(parameter)
-                                                                          << "finished successfully";
-                                            qCDebug(dcZigbeeController()) << "Current channel:" << m_networkConfiguration.currentChannel;
+                                            quint16 payloadLenght = 0; quint8 parameter = 0; quint8 predefinedNwkPanId = 0;
+                                            stream >> payloadLenght >> parameter >> predefinedNwkPanId;
+
+                                            m_networkConfiguration.predefinedNetworkPanId = static_cast<bool>(predefinedNwkPanId);
+                                            qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyPredefinedNwkPanId->sequenceNumber() << replyPredefinedNwkPanId->command()
+                                                                          << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
+                                            qCDebug(dcZigbeeController()) << m_networkConfiguration.predefinedNetworkPanId;
 
 
-                                            // Read permit join status
-                                            ZigbeeInterfaceDeconzReply *replyPermitJoin = requestReadParameter(Deconz::ParameterPermitJoin);
-                                            connect(replyPermitJoin, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyPermitJoin](){
-                                                if (replyPermitJoin->statusCode() != Deconz::StatusCodeSuccess) {
-                                                    qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyPermitJoin->sequenceNumber() << replyPermitJoin->command()
-                                                                                    << Deconz::ParameterPermitJoin << "finished with error" << replyPermitJoin->statusCode();
-                                                    readNetworkParametersReply->m_statusCode = replyPermitJoin->statusCode();
-                                                    readNetworkParametersReply->finished();
+                                            // We don't make use of link key for now
+
+                                            // Note: reading the network key returns "InavlidParameter". Might be for security reasons which is good!
+
+                                            // Read channel
+                                            ZigbeeInterfaceDeconzReply *replyChannel = requestReadParameter(Deconz::ParameterCurrentChannel);
+                                            connect(replyChannel, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyChannel](){
+                                                if (replyChannel->statusCode() != Deconz::StatusCodeSuccess) {
+                                                    qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyChannel->sequenceNumber() << replyChannel->command() << Deconz::ParameterCurrentChannel
+                                                                                    << "finished with error" << replyChannel->statusCode();
+                                                    readNetworkParametersReply->m_statusCode = replyChannel->statusCode();
+                                                    emit readNetworkParametersReply->finished();
                                                     return;
                                                 }
 
-                                                QDataStream stream(replyPermitJoin->responseData());
+                                                QDataStream stream(replyChannel->responseData());
                                                 stream.setByteOrder(QDataStream::LittleEndian);
-                                                quint16 payloadLenght = 0; quint8 parameter = 0;
-                                                stream >> payloadLenght >> parameter;
-                                                //m_networkConfiguration.currentChannel = channel;
-                                                qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyPermitJoin->sequenceNumber() << replyPermitJoin->command() << static_cast<Deconz::Parameter>(parameter)
-                                                                              << "finished successfully" << ZigbeeUtils::convertByteArrayToHexString(replyPermitJoin->responseData());
+                                                quint16 payloadLenght = 0; quint8 parameter = 0; quint8 channel = 0;
+                                                stream >> payloadLenght >> parameter >> channel;
+                                                m_networkConfiguration.currentChannel = channel;
+                                                qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyChannel->sequenceNumber() << replyChannel->command() << static_cast<Deconz::Parameter>(parameter)
+                                                                              << "finished successfully";
+                                                qCDebug(dcZigbeeController()) << "Current channel:" << m_networkConfiguration.currentChannel;
 
 
-                                                // Read protocol version
-                                                ZigbeeInterfaceDeconzReply *replyProtocolVersion = requestReadParameter(Deconz::ParameterProtocolVersion);
-                                                connect(replyProtocolVersion, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyProtocolVersion](){
-                                                    if (replyProtocolVersion->statusCode() != Deconz::StatusCodeSuccess) {
-                                                        qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyProtocolVersion->sequenceNumber() << replyProtocolVersion->command()
-                                                                                        << Deconz::ParameterProtocolVersion << "finished with error" << replyProtocolVersion->statusCode();
-                                                        readNetworkParametersReply->m_statusCode = replyProtocolVersion->statusCode();
-                                                        readNetworkParametersReply->finished();
+                                                // Read permit join status
+                                                ZigbeeInterfaceDeconzReply *replyPermitJoin = requestReadParameter(Deconz::ParameterPermitJoin);
+                                                connect(replyPermitJoin, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyPermitJoin](){
+                                                    if (replyPermitJoin->statusCode() != Deconz::StatusCodeSuccess) {
+                                                        qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyPermitJoin->sequenceNumber() << replyPermitJoin->command()
+                                                                                        << Deconz::ParameterPermitJoin << "finished with error" << replyPermitJoin->statusCode();
+                                                        readNetworkParametersReply->m_statusCode = replyPermitJoin->statusCode();
+                                                        emit readNetworkParametersReply->finished();
                                                         return;
                                                     }
 
-                                                    QDataStream stream(replyProtocolVersion->responseData());
+                                                    QDataStream stream(replyPermitJoin->responseData());
                                                     stream.setByteOrder(QDataStream::LittleEndian);
-                                                    quint16 payloadLenght = 0; quint8 parameter = 0; quint16 protocolVersion = 0;
-                                                    stream >> payloadLenght >> parameter >> protocolVersion;
-                                                    m_networkConfiguration.protocolVersion = protocolVersion;
-                                                    qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyProtocolVersion->sequenceNumber() << replyProtocolVersion->command()
-                                                                                  << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
-                                                    qCDebug(dcZigbeeController()) << "Protocol version:" << ZigbeeUtils::convertUint16ToHexString(m_networkConfiguration.protocolVersion);
+                                                    quint16 payloadLenght = 0; quint8 parameter = 0;
+                                                    stream >> payloadLenght >> parameter;
+                                                    //m_networkConfiguration.currentChannel = channel;
+                                                    qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyPermitJoin->sequenceNumber() << replyPermitJoin->command() << static_cast<Deconz::Parameter>(parameter)
+                                                                                  << "finished successfully" << ZigbeeUtils::convertByteArrayToHexString(replyPermitJoin->responseData());
 
-                                                    // Read network updat id
-                                                    ZigbeeInterfaceDeconzReply *replyNetworkUpdateId = requestReadParameter(Deconz::ParameterNetworkUpdateId);
-                                                    connect(replyNetworkUpdateId, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyNetworkUpdateId](){
-                                                        if (replyNetworkUpdateId->statusCode() != Deconz::StatusCodeSuccess) {
-                                                            qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyNetworkUpdateId->sequenceNumber() << replyNetworkUpdateId->command()
-                                                                                            << Deconz::ParameterNetworkUpdateId << "finished with error" << replyNetworkUpdateId->statusCode();
-                                                            readNetworkParametersReply->m_statusCode = replyNetworkUpdateId->statusCode();
-                                                            readNetworkParametersReply->finished();
+
+                                                    // Read protocol version
+                                                    ZigbeeInterfaceDeconzReply *replyProtocolVersion = requestReadParameter(Deconz::ParameterProtocolVersion);
+                                                    connect(replyProtocolVersion, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyProtocolVersion](){
+                                                        if (replyProtocolVersion->statusCode() != Deconz::StatusCodeSuccess) {
+                                                            qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyProtocolVersion->sequenceNumber() << replyProtocolVersion->command()
+                                                                                            << Deconz::ParameterProtocolVersion << "finished with error" << replyProtocolVersion->statusCode();
+                                                            readNetworkParametersReply->m_statusCode = replyProtocolVersion->statusCode();
+                                                            emit readNetworkParametersReply->finished();
                                                             return;
                                                         }
 
-                                                        QDataStream stream(replyNetworkUpdateId->responseData());
+                                                        QDataStream stream(replyProtocolVersion->responseData());
                                                         stream.setByteOrder(QDataStream::LittleEndian);
-                                                        quint16 payloadLenght = 0; quint8 parameter = 0; quint8 networkUpdateId = 0;
-                                                        stream >> payloadLenght >> parameter >> networkUpdateId;
-                                                        m_networkConfiguration.networkUpdateId = networkUpdateId;
-                                                        qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyNetworkUpdateId->sequenceNumber() << replyNetworkUpdateId->command()
+                                                        quint16 payloadLenght = 0; quint8 parameter = 0; quint16 protocolVersion = 0;
+                                                        stream >> payloadLenght >> parameter >> protocolVersion;
+                                                        m_networkConfiguration.protocolVersion = protocolVersion;
+                                                        qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyProtocolVersion->sequenceNumber() << replyProtocolVersion->command()
                                                                                       << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
-                                                        qCDebug(dcZigbeeController()) << "Network update ID:" << m_networkConfiguration.networkUpdateId;
+                                                        qCDebug(dcZigbeeController()) << "Protocol version:" << ZigbeeUtils::convertUint16ToHexString(m_networkConfiguration.protocolVersion);
 
-                                                        // Make sure the watchdog is available for this version
-                                                        if (m_networkConfiguration.protocolVersion < 0x0108) {
-                                                            qCDebug(dcZigbeeController()) << "The watchdog api is available since protocol version 0x0108. The watchdog is not required for this version";
-                                                            m_watchdogTimer->stop();
-
-                                                            // Finished reading all parameters. Finish the independent reply in order to indicate the process has finished
-                                                            emit networkConfigurationParameterChanged(m_networkConfiguration);
-                                                            readNetworkParametersReply->m_statusCode = Deconz::StatusCodeSuccess;
-                                                            readNetworkParametersReply->finished();
-                                                            return;
-                                                        }
-
-                                                        // Reset the watchdog in any case
-                                                        resetControllerWatchdog();
-
-                                                        // Read watchdog timeout
-                                                        ZigbeeInterfaceDeconzReply *replyWatchdogTimeout = requestReadParameter(Deconz::ParameterWatchdogTtl);
-                                                        connect(replyWatchdogTimeout, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyWatchdogTimeout](){
-                                                            if (replyWatchdogTimeout->statusCode() != Deconz::StatusCodeSuccess) {
-                                                                qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyWatchdogTimeout->sequenceNumber() << replyWatchdogTimeout->command()
-                                                                                                << Deconz::ParameterWatchdogTtl << "finished with error" << replyWatchdogTimeout->statusCode();
-                                                                readNetworkParametersReply->m_statusCode = replyWatchdogTimeout->statusCode();
-                                                                readNetworkParametersReply->finished();
+                                                        // Read network updat id
+                                                        ZigbeeInterfaceDeconzReply *replyNetworkUpdateId = requestReadParameter(Deconz::ParameterNetworkUpdateId);
+                                                        connect(replyNetworkUpdateId, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyNetworkUpdateId](){
+                                                            if (replyNetworkUpdateId->statusCode() != Deconz::StatusCodeSuccess) {
+                                                                qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyNetworkUpdateId->sequenceNumber() << replyNetworkUpdateId->command()
+                                                                                                << Deconz::ParameterNetworkUpdateId << "finished with error" << replyNetworkUpdateId->statusCode();
+                                                                readNetworkParametersReply->m_statusCode = replyNetworkUpdateId->statusCode();
+                                                                emit readNetworkParametersReply->finished();
                                                                 return;
                                                             }
 
-                                                            QDataStream stream(replyWatchdogTimeout->responseData());
+                                                            QDataStream stream(replyNetworkUpdateId->responseData());
                                                             stream.setByteOrder(QDataStream::LittleEndian);
-                                                            quint16 payloadLenght = 0; quint8 parameter = 0; quint32 watchdogTimeout = 0;
-                                                            stream >> payloadLenght >> parameter >> watchdogTimeout;
-                                                            m_networkConfiguration.watchdogTimeout = watchdogTimeout;
-                                                            qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyWatchdogTimeout->sequenceNumber() << replyWatchdogTimeout->command()
+                                                            quint16 payloadLenght = 0; quint8 parameter = 0; quint8 networkUpdateId = 0;
+                                                            stream >> payloadLenght >> parameter >> networkUpdateId;
+                                                            m_networkConfiguration.networkUpdateId = networkUpdateId;
+                                                            qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyNetworkUpdateId->sequenceNumber() << replyNetworkUpdateId->command()
                                                                                           << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
-                                                            qCDebug(dcZigbeeController()) << "Watchdog timeout:" << m_networkConfiguration.watchdogTimeout;
+                                                            qCDebug(dcZigbeeController()) << "Network update ID:" << m_networkConfiguration.networkUpdateId;
 
-                                                            // Finished reading all parameters. Finish the independent reply in order to indicate the process has finished
-                                                            emit networkConfigurationParameterChanged(m_networkConfiguration);
-                                                            readNetworkParametersReply->m_statusCode = Deconz::StatusCodeSuccess;
-                                                            readNetworkParametersReply->finished();
+                                                            // Make sure the watchdog is available for this version
+                                                            if (m_networkConfiguration.protocolVersion < 0x0108) {
+                                                                qCDebug(dcZigbeeController()) << "The watchdog api is available since protocol version 0x0108. The watchdog is not required for this version";
+                                                                m_watchdogTimer->stop();
+
+                                                                // Finished reading all parameters. Finish the independent reply in order to indicate the process has finished
+                                                                emit networkConfigurationParameterChanged(m_networkConfiguration);
+                                                                readNetworkParametersReply->m_statusCode = Deconz::StatusCodeSuccess;
+                                                                emit readNetworkParametersReply->finished();
+                                                                return;
+                                                            }
+
+                                                            // Reset the watchdog in any case
+                                                            resetControllerWatchdog();
+
+                                                            // Read watchdog timeout
+                                                            ZigbeeInterfaceDeconzReply *replyWatchdogTimeout = requestReadParameter(Deconz::ParameterWatchdogTtl);
+                                                            connect(replyWatchdogTimeout, &ZigbeeInterfaceDeconzReply::finished, this, [this, readNetworkParametersReply, replyWatchdogTimeout](){
+                                                                if (replyWatchdogTimeout->statusCode() != Deconz::StatusCodeSuccess) {
+                                                                    qCWarning(dcZigbeeController()) << "Request" << "SQN:" << replyWatchdogTimeout->sequenceNumber() << replyWatchdogTimeout->command()
+                                                                                                    << Deconz::ParameterWatchdogTtl << "finished with error" << replyWatchdogTimeout->statusCode();
+                                                                    readNetworkParametersReply->m_statusCode = replyWatchdogTimeout->statusCode();
+                                                                    emit readNetworkParametersReply->finished();
+                                                                    return;
+                                                                }
+
+                                                                QDataStream stream(replyWatchdogTimeout->responseData());
+                                                                stream.setByteOrder(QDataStream::LittleEndian);
+                                                                quint16 payloadLenght = 0; quint8 parameter = 0; quint32 watchdogTimeout = 0;
+                                                                stream >> payloadLenght >> parameter >> watchdogTimeout;
+                                                                m_networkConfiguration.watchdogTimeout = watchdogTimeout;
+                                                                qCDebug(dcZigbeeController()) << "Request" << "SQN:" << replyWatchdogTimeout->sequenceNumber() << replyWatchdogTimeout->command()
+                                                                                              << static_cast<Deconz::Parameter>(parameter) << "finished successfully";
+                                                                qCDebug(dcZigbeeController()) << "Watchdog timeout:" << m_networkConfiguration.watchdogTimeout;
+
+                                                                // Finished reading all parameters. Finish the independent reply in order to indicate the process has finished
+                                                                emit networkConfigurationParameterChanged(m_networkConfiguration);
+                                                                readNetworkParametersReply->m_statusCode = Deconz::StatusCodeSuccess;
+                                                                emit readNetworkParametersReply->finished();
+
+
+                                                                // We ignore the frame counter for now, since we let the firmware take control
+
+                                                            });
                                                         });
                                                     });
                                                 });
@@ -819,7 +872,10 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
     if (m_apsFreeSlotsAvailable != deviceState.apsDataRequestFreeSlots) {
         m_apsFreeSlotsAvailable = deviceState.apsDataRequestFreeSlots;
         if (!m_apsFreeSlotsAvailable) {
-            qCWarning(dcZigbeeController()) << "The APS request table is full on the device. Cannot send requests until the queue gets processed on the controller.";
+            // Warn only if the network is up
+            if (m_networkState == Deconz::NetworkStateConnected) {
+                qCWarning(dcZigbeeController()) << "The APS request table is full on the device. Cannot send requests until the queue gets processed on the controller.";
+            }
             return;
         } else {
             qCDebug(dcZigbeeController()) << "The APS request table is free again. Sending the next request";
@@ -925,6 +981,18 @@ void ZigbeeBridgeControllerDeconz::processDataConfirm(const QByteArray &data)
     }
 }
 
+void ZigbeeBridgeControllerDeconz::processMacPoll(const QByteArray &data)
+{
+    qCDebug(dcZigbeeController()) << "MAC Poll command received" << ZigbeeUtils::convertByteArrayToHexString(data);
+
+}
+
+void ZigbeeBridgeControllerDeconz::processMacBeacon(const QByteArray &data)
+{
+    qCDebug(dcZigbeeController()) << "Simplified beacon command received" << ZigbeeUtils::convertByteArrayToHexString(data);
+
+}
+
 void ZigbeeBridgeControllerDeconz::onInterfaceAvailableChanged(bool available)
 {
     qCDebug(dcZigbeeController()) << "Interface available changed" << available;
@@ -961,7 +1029,7 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
     if (m_currentReply && m_currentReply->sequenceNumber() == sequenceNumber && m_currentReply->command() == command) {
         m_currentReply->m_responseData = data;
         m_currentReply->m_statusCode = status;
-        m_currentReply->finished();
+        emit m_currentReply->finished();
         // Note: the current reply will be cleaned up in the finished slot
         return;
     }
@@ -979,13 +1047,11 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
         break;
     }
     case Deconz::CommandMacPoll: {
-        // FIXME: parse the data and print info
-        qCDebug(dcZigbeeController()) << "MAC Poll command received" << ZigbeeUtils::convertByteArrayToHexString(data);
+        processMacPoll(data);
         break;
     }
-    case Deconz::CommandSimplifiedBeacon: {
-        // FIXME: parse the data and print info
-        qCDebug(dcZigbeeController()) << "Simplified beacon command received" << ZigbeeUtils::convertByteArrayToHexString(data);
+    case Deconz::CommandMacBeacon: {
+        processMacBeacon(data);
         break;
     }
     default:
@@ -1053,7 +1119,8 @@ QDebug operator<<(QDebug debug, const DeconzNetworkConfiguration &configuration)
     debug.nospace() << " - Node type:" << configuration.nodeType << "\n";
     debug.nospace() << " - IEEE address: " << configuration.ieeeAddress.toString() << "\n";
     debug.nospace() << " - NWK address: " << ZigbeeUtils::convertUint16ToHexString(configuration.shortAddress) << "\n";
-    debug.nospace() << " - PAN ID: " << ZigbeeUtils::convertUint16ToHexString(configuration.panId) << "\n";
+    debug.nospace() << " - PAN ID: " << ZigbeeUtils::convertUint16ToHexString(configuration.panId) << " (" << configuration.panId << ")\n";
+    debug.nospace() << " - Use predefined network PAN ID: " << configuration.predefinedNetworkPanId << "\n";
     debug.nospace() << " - Extended PAN ID: " << ZigbeeUtils::convertUint64ToHexString(configuration.extendedPanId) << "\n";
     debug.nospace() << " - APS Extended PAN ID: " << ZigbeeUtils::convertUint64ToHexString(configuration.apsExtendedPanId) << "\n";
     debug.nospace() << " - Trust center IEEE address: " << configuration.trustCenterAddress.toString() << "\n";

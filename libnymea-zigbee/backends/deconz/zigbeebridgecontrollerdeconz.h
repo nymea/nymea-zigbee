@@ -54,6 +54,7 @@ typedef struct DeconzNetworkConfiguration {
     quint64 apsExtendedPanId = 0; // RW
     ZigbeeAddress trustCenterAddress; // RW
     Deconz::SecurityMode securityMode = Deconz::SecurityModeNoMasterButTrustCenterKey; // RW
+    bool predefinedNetworkPanId; // RW
     ZigbeeNetworkKey networkKey; // RW
     quint8 currentChannel = 0; // R
     quint16 protocolVersion = 0; // R
@@ -85,6 +86,8 @@ public:
     void setFirmwareVersionString(const QString &firmwareVersion);
 
     Deconz::NetworkState networkState() const;
+    void rebootController();
+
 
     // Controllere requests
     ZigbeeInterfaceDeconzReply *requestVersion();
@@ -142,6 +145,8 @@ private:
     void processDeviceState(DeconzDeviceState deviceState);
     void processDataIndication(const QByteArray &data);
     void processDataConfirm(const QByteArray &data);
+    void processMacPoll(const QByteArray &data);
+    void processMacBeacon(const QByteArray &data);
 
 signals:
     void networkStateChanged(Deconz::NetworkState networkState);

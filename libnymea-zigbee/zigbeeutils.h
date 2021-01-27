@@ -69,7 +69,7 @@ public:
     static QString profileIdToString(const Zigbee::ZigbeeProfile &profileId);
 
     // Generate random data
-    static quint64 generateRandomPanId();
+    static quint16 generateRandomPanId();
 
 
     // Color converter
