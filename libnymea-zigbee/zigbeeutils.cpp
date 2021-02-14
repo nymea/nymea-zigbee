@@ -290,10 +290,10 @@ QString ZigbeeUtils::profileIdToString(const Zigbee::ZigbeeProfile &profileId)
     return profileName;
 }
 
-quint64 ZigbeeUtils::generateRandomPanId()
+quint16 ZigbeeUtils::generateRandomPanId()
 {
     // Note: the PAN ID has to be between 0x0000 and 0x3fff
-    return static_cast<quint64>(rand() % (0x3fff - 1) + 1);
+    return static_cast<quint16>(rand() % (0x3fff - 1) + 1);
 }
 
 QPointF ZigbeeUtils::convertColorToXY(const QColor &color)

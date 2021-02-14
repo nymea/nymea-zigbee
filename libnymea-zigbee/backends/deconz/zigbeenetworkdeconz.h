@@ -65,6 +65,8 @@ private:
     CreateNetworkState m_createState = CreateNetworkStateIdle;
     bool m_createNewNetwork = false;
     bool m_initializing = false;
+    QString m_protocolVersion;
+    QString m_firmwareVersion;
 
     QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
 

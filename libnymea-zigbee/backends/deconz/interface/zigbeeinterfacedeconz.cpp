@@ -146,6 +146,7 @@ void ZigbeeInterfaceDeconz::onReconnectTimeout()
     if (m_serialPort && !m_serialPort->isOpen()) {
         if (!m_serialPort->open(QSerialPort::ReadWrite)) {
             setAvailable(false);
+            qCDebug(dcZigbeeInterface()) << "Interface reconnected failed" << m_serialPort->portName() << m_serialPort->baudRate();
             m_reconnectTimer->start();
         } else {
             qCDebug(dcZigbeeInterface()) << "Interface reconnected successfully on" << m_serialPort->portName() << m_serialPort->baudRate();

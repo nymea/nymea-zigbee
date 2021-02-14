@@ -201,7 +201,8 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
     case CreateNetworkStateWriteConfiguration: {
         //  - Set coordinator
         //  - Set channel mask
-        //  - Set APS extended PANID (zero to reset)
+        //  - Set predefined network PANID (0: let the firmware pick, 1: use the defined pan id)
+        //  - Set NWK PANID
         //  - Set trust center address (coordinator address)
         //  - Set security mode
         //  - Set network key
@@ -236,76 +237,95 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
 
                 qCDebug(dcZigbeeNetwork()) << "Configured channel mask successfully. SQN:" << reply->sequenceNumber();
 
+
+                qCDebug(dcZigbeeNetwork()) << "Configure firmware to use predefined network PANID";
                 QByteArray paramData;
                 QDataStream stream(&paramData, QIODevice::WriteOnly);
-                stream << static_cast<quint64>(extendedPanId());
                 stream.setByteOrder(QDataStream::LittleEndian);
-                qCDebug(dcZigbeeNetwork()) << "Configure APS extended PANID" << extendedPanId();
-                ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterApsExtendedPanId, paramData);
+                stream << static_cast<quint8>(0x01);
+                ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterPredefinedNwkPanId, paramData);
                 connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
                     if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                        qCWarning(dcZigbeeController()) << "Could not write parameter. SQN:" << reply->sequenceNumber() << Deconz::ParameterApsExtendedPanId << reply->statusCode();
+                        qCWarning(dcZigbeeController()) << "Could not write parameter. SQN:" << reply->sequenceNumber() << Deconz::ParameterPredefinedNwkPanId << reply->statusCode();
                         // FIXME: set an appropriate error
                         return;
                     }
 
-                    qCDebug(dcZigbeeController()) << "Configured APS extended PANID successfully. SQN:" << reply->sequenceNumber();
+                    qCDebug(dcZigbeeController()) << "Configured firmware to use predefined network PNAID successfully. SQN:" << reply->sequenceNumber();
 
+
+
+                    qCDebug(dcZigbeeNetwork()) << "Configure network PANID" << panId() << ZigbeeUtils::convertUint16ToHexString(panId());
                     QByteArray paramData;
                     QDataStream stream(&paramData, QIODevice::WriteOnly);
                     stream.setByteOrder(QDataStream::LittleEndian);
-                    stream << m_controller->networkConfiguration().ieeeAddress.toUInt64();
-                    qCDebug(dcZigbeeNetwork()) << "Configure trust center address" << m_controller->networkConfiguration().ieeeAddress.toString();
-                    ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterTrustCenterAddress, paramData);
+                    stream << panId();
+                    ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterPanId, paramData);
                     connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
                         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                            qCWarning(dcZigbeeController()) << "Could not write parameter. SQN:" << reply->sequenceNumber() << Deconz::ParameterTrustCenterAddress << reply->statusCode();
+                            qCWarning(dcZigbeeController()) << "Could not write parameter. SQN:" << reply->sequenceNumber() << Deconz::ParameterPanId << reply->statusCode();
                             // FIXME: set an appropriate error
                             return;
                         }
 
-                        qCDebug(dcZigbeeController()) << "Configured trust center address successfully. SQN:" << reply->sequenceNumber();
+                        qCDebug(dcZigbeeController()) << "Configured network PANID successfully. SQN:" << reply->sequenceNumber();
 
                         QByteArray paramData;
                         QDataStream stream(&paramData, QIODevice::WriteOnly);
                         stream.setByteOrder(QDataStream::LittleEndian);
-                        stream << static_cast<quint8>(Deconz::SecurityModeNoMasterButTrustCenterKey);
-                        qCDebug(dcZigbeeNetwork()) << "Configure security mode" << Deconz::SecurityModeNoMasterButTrustCenterKey;
-                        ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterSecurityMode, paramData);
+                        stream << m_controller->networkConfiguration().ieeeAddress.toUInt64();
+                        qCDebug(dcZigbeeNetwork()) << "Configure trust center address" << m_controller->networkConfiguration().ieeeAddress.toString();
+                        ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterTrustCenterAddress, paramData);
                         connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
                             if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                                qCWarning(dcZigbeeController()) << "Could not write parameter. SQN:" << reply->sequenceNumber() << Deconz::ParameterSecurityMode << reply->statusCode();
+                                qCWarning(dcZigbeeController()) << "Could not write parameter. SQN:" << reply->sequenceNumber() << Deconz::ParameterTrustCenterAddress << reply->statusCode();
                                 // FIXME: set an appropriate error
                                 return;
                             }
 
-                            qCDebug(dcZigbeeController()) << "Configured security mode successfully. SQN:" << reply->sequenceNumber();
+                            qCDebug(dcZigbeeController()) << "Configured trust center address successfully. SQN:" << reply->sequenceNumber();
 
-
-                            qCDebug(dcZigbeeNetwork()) << "Configure network key" << securityConfiguration().networkKey().toString();
-                            ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterNetworkKey, securityConfiguration().networkKey().toByteArray());
+                            QByteArray paramData;
+                            QDataStream stream(&paramData, QIODevice::WriteOnly);
+                            stream.setByteOrder(QDataStream::LittleEndian);
+                            stream << static_cast<quint8>(Deconz::SecurityModeNoMasterButTrustCenterKey);
+                            qCDebug(dcZigbeeNetwork()) << "Configure security mode" << Deconz::SecurityModeNoMasterButTrustCenterKey;
+                            ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterSecurityMode, paramData);
                             connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
                                 if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                                    qCWarning(dcZigbeeController()) << "Could not write parameter. SQN:" << reply->sequenceNumber() << Deconz::ParameterNetworkKey << reply->statusCode();
+                                    qCWarning(dcZigbeeController()) << "Could not write parameter. SQN:" << reply->sequenceNumber() << Deconz::ParameterSecurityMode << reply->statusCode();
                                     // FIXME: set an appropriate error
-                                    // Note: writing the network key fails all the time...
-                                    //return;
-                                } else {
-                                    qCDebug(dcZigbeeController()) << "Configured network key successfully. SQN:" << reply->sequenceNumber();
+                                    return;
                                 }
 
-                                // Re-read the configurations
-                                // Read all network parameters
-                                ZigbeeInterfaceDeconzReply *reply = m_controller->readNetworkParameters();
+                                qCDebug(dcZigbeeController()) << "Configured security mode successfully. SQN:" << reply->sequenceNumber();
+
+
+                                qCDebug(dcZigbeeNetwork()) << "Configure network key" << securityConfiguration().networkKey().toString();
+                                ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterNetworkKey, securityConfiguration().networkKey().toByteArray());
                                 connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
                                     if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                                        qCWarning(dcZigbeeController()) << "Could not read network parameters during network start up. SQN:" << reply->sequenceNumber() << reply->statusCode();
+                                        qCWarning(dcZigbeeController()) << "Could not write parameter. SQN:" << reply->sequenceNumber() << Deconz::ParameterNetworkKey << reply->statusCode();
+                                        // FIXME: set an appropriate error
+                                        // Note: writing the network key fails all the time...
+                                        //return;
+                                    } else {
+                                        qCDebug(dcZigbeeController()) << "Configured network key successfully. SQN:" << reply->sequenceNumber();
                                     }
 
-                                    qCDebug(dcZigbeeController()) << m_controller->networkConfiguration();
+                                    // Re-read the configurations
+                                    // Read all network parameters
+                                    ZigbeeInterfaceDeconzReply *reply = m_controller->readNetworkParameters();
+                                    connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+                                        if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+                                            qCWarning(dcZigbeeController()) << "Could not read network parameters during network start up. SQN:" << reply->sequenceNumber() << reply->statusCode();
+                                        }
 
-                                    // Configuration finished, lets start the network
-                                    setCreateNetworkState(CreateNetworkStateStartNetwork);
+                                        qCDebug(dcZigbeeController()) << m_controller->networkConfiguration();
+
+                                        // Configuration finished, lets start the network
+                                        setCreateNetworkState(CreateNetworkStateStartNetwork);
+                                    });
                                 });
                             });
                         });
@@ -342,9 +362,14 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
 
             qCDebug(dcZigbeeNetwork()) << "Reading network parameters finished successfully. SQN:" << reply->sequenceNumber();
 
+            qCDebug(dcZigbeeNetwork()) << "Network running with following configuration:";
+            qCDebug(dcZigbeeNetwork()) << m_controller->networkConfiguration();
+
             setPanId(m_controller->networkConfiguration().panId);
             setExtendedPanId(m_controller->networkConfiguration().extendedPanId);
             setChannel(m_controller->networkConfiguration().currentChannel);
+
+
 
             setCreateNetworkState(CreateNetworkStateInitializeCoordinatorNode);
         });
@@ -392,118 +417,147 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
 
 void ZigbeeNetworkDeconz::runNetworkInitProcess()
 {
+    // - Read the network state (until success)
     // - Read the firmware version
     // - Read the network configuration parameters
-    // - Read the network state
 
     // - If network running and we don't have configurations, write them
     // - If network running and configurations match, we are done
 
     // Read the firmware version
-    qCDebug(dcZigbeeNetwork()) << "Reading current firmware version...";
-    ZigbeeInterfaceDeconzReply *reply = m_controller->requestVersion();
+    qCDebug(dcZigbeeNetwork()) << "Request current device state...";
+    ZigbeeInterfaceDeconzReply *reply = m_controller->requestDeviceState();
     connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
         if (reply->statusCode() != Deconz::StatusCodeSuccess) {
             qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
             m_initRetry++;
+            if (!m_controller->available()) {
+                m_initRetry = 0;
+                return;
+            }
+
             if (m_initRetry < 10) {
                 qCDebug(dcZigbeeNetwork()) << "Retry to initialize network" << m_initRetry << "/ 10";
                 runNetworkInitProcess();
             } else {
-                qCWarning(dcZigbeeNetwork()) << "Failed to read firmware version after 10 attempts. Giving up";
-                m_controller->disable();
+                qCWarning(dcZigbeeNetwork()) << "Failed to read device state after 10 attempts. Giving up";
+                m_controller->reconnectConrtroller();
             }
             return;
         }
 
         m_initRetry = 0;
-        qCDebug(dcZigbeeNetwork()) << "Version request finished successfully" << ZigbeeUtils::convertByteArrayToHexString(reply->responseData());
-        // Note: version is an uint32 value, little endian, but we can read the individual bytes in reversed order
-        quint8 majorVersion = static_cast<quint8>(reply->responseData().at(3));
-        quint8 minorVersion = static_cast<quint8>(reply->responseData().at(2));
-        Deconz::Platform platform = static_cast<Deconz::Platform>(reply->responseData().at(1));
-        QString firmwareVersion = QString("%1.%2").arg(majorVersion).arg(minorVersion);
-        qCDebug(dcZigbeeNetwork()) << "Firmware version" << firmwareVersion << platform;
 
         // Read all network parameters
         qCDebug(dcZigbeeNetwork()) << "Start reading controller network parameters...";
         ZigbeeInterfaceDeconzReply *reply = m_controller->readNetworkParameters();
-        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply, firmwareVersion](){
+        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
             if (reply->statusCode() != Deconz::StatusCodeSuccess) {
                 qCWarning(dcZigbeeController()) << "Could not read network parameters during network start up." << reply->statusCode();
-                // FIXME: set an appropriate error
+                m_initRetry++;
+                if (m_initRetry < 3) {
+                    qCDebug(dcZigbeeNetwork()) << "Retry to read network parameters" << m_initRetry << "/ 3";
+                    runNetworkInitProcess();
+                } else {
+                    qCWarning(dcZigbeeNetwork()) << "Failed to read network parameters after 3 attempts. Giving up";
+                    m_controller->reconnectConrtroller();
+                }
                 return;
             }
 
             qCDebug(dcZigbeeNetwork()) << "Reading network parameters finished successfully.";
-            QString protocolVersion = QString("%1.%2").arg(m_controller->networkConfiguration().protocolVersion >> 8 & 0xFF)
-                    .arg(m_controller->networkConfiguration().protocolVersion & 0xFF);
-            qCDebug(dcZigbeeNetwork()) << "Controller API protocol version" << ZigbeeUtils::convertUint16ToHexString(m_controller->networkConfiguration().protocolVersion) << protocolVersion;
-
-            m_controller->setFirmwareVersionString(QString("%1 - %2").arg(firmwareVersion).arg(protocolVersion));
-
             qCDebug(dcZigbeeNetwork()) << m_controller->networkConfiguration();
-            qCDebug(dcZigbeeNetwork()) << "Reading current network state";
-            ZigbeeInterfaceDeconzReply *reply = m_controller->requestDeviceState();
+
+            m_protocolVersion = QString("%1.%2").arg(m_controller->networkConfiguration().protocolVersion >> 8 & 0xFF)
+                    .arg(m_controller->networkConfiguration().protocolVersion & 0xFF);
+            qCDebug(dcZigbeeNetwork()) << "Controller API protocol version" << ZigbeeUtils::convertUint16ToHexString(m_controller->networkConfiguration().protocolVersion) << m_protocolVersion;
+
+            // Try read firmware version (changed with firmware 0x26680700)
+            qCDebug(dcZigbeeNetwork()) << "Request current firmware version...";
+            ZigbeeInterfaceDeconzReply *reply = m_controller->requestVersion();
             connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+                QString firmwareVersion;
                 if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                    qCWarning(dcZigbeeController()) << "Could not read device state during network start up. SQN:" << reply->sequenceNumber() << reply->statusCode();
-                    // FIXME: set an appropriate error
-                    return;
-                }
-
-                qCDebug(dcZigbeeNetwork()) << "Reading current network state finished successfully." << "SQN:" << reply->sequenceNumber();
-
-                QDataStream stream(reply->responseData());
-                stream.setByteOrder(QDataStream::LittleEndian);
-                quint8 deviceStateFlag = 0;
-                stream >> deviceStateFlag;
-                DeconzDeviceState deviceState = m_controller->parseDeviceStateFlag(deviceStateFlag);
-                qCDebug(dcZigbeeNetwork()) << deviceState;
-
-                // Update the device state in the controller
-                m_controller->processDeviceState(deviceState);
-
-                if (m_createNewNetwork) {
-                    // Set offline
-                    // Write configurations
-                    // Set online
-                    // Read configurations
-                    // Create and initialize coordinator node
-                    // Done. Save network
-                    setCreateNetworkState(CreateNetworkStateStopNetwork);
+                    qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
                 } else {
-                    // Get the network state and start the network if required
-                    if (m_controller->networkState() == Deconz::NetworkStateConnected) {
-                        qCDebug(dcZigbeeNetwork()) << "The network is already running.";
-                        m_initializing = false;
-                        setPermitJoiningEnabled(false);
-                        // Set the permit joining timeout network configuration parameter
-                        QByteArray parameterData;
-                        QDataStream stream(&parameterData, QIODevice::WriteOnly);
-                        stream.setByteOrder(QDataStream::LittleEndian);
-                        stream << static_cast<quint8>(0);
+                    qCDebug(dcZigbeeNetwork()) << "Version request finished successfully" << ZigbeeUtils::convertByteArrayToHexString(reply->responseData());
+                    // Note: version is an uint32 value, little endian, but we can read the individual bytes in reversed order
+                    quint8 majorVersion = static_cast<quint8>(reply->responseData().at(3));
+                    quint8 minorVersion = static_cast<quint8>(reply->responseData().at(2));
+                    Deconz::Platform platform = static_cast<Deconz::Platform>(reply->responseData().at(1));
+                    m_firmwareVersion = QString("%1.%2").arg(majorVersion).arg(minorVersion);
+                    qCDebug(dcZigbeeNetwork()) << "Firmware version" << firmwareVersion << platform;
 
-                        ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterPermitJoin, parameterData);
-                        connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
-                            if (reply->statusCode() != Deconz::StatusCodeSuccess) {
-                                qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
-                                // FIXME: set an appropriate error
-                                return;
-                            }
-
-                            qCDebug(dcZigbeeNetwork()) << "Set permit join configuration request finished" << reply->statusCode();
-                            setState(StateRunning);
-                        });
-
-                    } else if (m_controller->networkState() == Deconz::NetworkStateOffline) {
-                        m_initializing = true;
-                        qCDebug(dcZigbeeNetwork()) << "The network is offline. Lets start it";
-                        setCreateNetworkState(CreateNetworkStateStartNetwork);
-                    } else {
-                        // The network is not running yet, lets wait for the state changed
-                    }
                 }
+
+                if (!m_firmwareVersion.isEmpty()) {
+                    m_controller->setFirmwareVersionString(QString("%1 - %2").arg(m_firmwareVersion).arg(m_protocolVersion));
+                } else {
+                    m_controller->setFirmwareVersionString(m_protocolVersion);
+                }
+
+                qCDebug(dcZigbeeNetwork()) << "Reading current network state";
+                ZigbeeInterfaceDeconzReply *reply = m_controller->requestDeviceState();
+                connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+                    if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+                        qCWarning(dcZigbeeController()) << "Could not read device state during network start up. SQN:" << reply->sequenceNumber() << reply->statusCode();
+                        // FIXME: set an appropriate error
+                        return;
+                    }
+
+                    qCDebug(dcZigbeeNetwork()) << "Reading current network state finished successfully." << "SQN:" << reply->sequenceNumber();
+
+                    QDataStream stream(reply->responseData());
+                    stream.setByteOrder(QDataStream::LittleEndian);
+                    quint8 deviceStateFlag = 0;
+                    stream >> deviceStateFlag;
+                    DeconzDeviceState deviceState = m_controller->parseDeviceStateFlag(deviceStateFlag);
+                    qCDebug(dcZigbeeNetwork()) << deviceState;
+
+                    // Update the device state in the controller
+                    m_controller->processDeviceState(deviceState);
+
+                    if (m_createNewNetwork) {
+                        // Set offline
+                        // Write configurations
+                        // Set online
+                        // Read configurations
+                        // Create and initialize coordinator node
+                        // Done. Save network
+                        setCreateNetworkState(CreateNetworkStateStopNetwork);
+                    } else {
+                        // Get the network state and start the network if required
+                        if (m_controller->networkState() == Deconz::NetworkStateConnected) {
+                            qCDebug(dcZigbeeNetwork()) << "The network is already running.";
+                            m_initializing = false;
+                            setPermitJoiningEnabled(false);
+                            // Set the permit joining timeout network configuration parameter
+                            QByteArray parameterData;
+                            QDataStream stream(&parameterData, QIODevice::WriteOnly);
+                            stream.setByteOrder(QDataStream::LittleEndian);
+                            stream << static_cast<quint8>(0);
+
+                            ZigbeeInterfaceDeconzReply *reply = m_controller->requestWriteParameter(Deconz::ParameterPermitJoin, parameterData);
+                            connect(reply, &ZigbeeInterfaceDeconzReply::finished, this, [this, reply](){
+                                if (reply->statusCode() != Deconz::StatusCodeSuccess) {
+                                    qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
+                                    // FIXME: set an appropriate error
+                                    return;
+                                }
+
+                                qCDebug(dcZigbeeNetwork()) << "Set permit join configuration request finished" << reply->statusCode();
+                                setState(StateRunning);
+                            });
+
+                        } else if (m_controller->networkState() == Deconz::NetworkStateOffline) {
+                            m_initializing = true;
+                            qCDebug(dcZigbeeNetwork()) << "The network is offline. Lets start it";
+                            setCreateNetworkState(CreateNetworkStateStartNetwork);
+                        } else {
+                            // The network is not running yet, lets wait for the state changed
+                        }
+                    }
+                });
             });
         });
     });
@@ -516,8 +570,8 @@ void ZigbeeNetworkDeconz::startNetworkInternally()
     m_createNewNetwork = false;
     // Check if we have to create a pan ID and select the channel
     if (panId() == 0 || !m_coordinatorNode) {
-        qCDebug(dcZigbeeNetwork()) << "Generate new extended PAN ID...";
-        setExtendedPanId(ZigbeeUtils::generateRandomPanId());
+        setPanId(ZigbeeUtils::generateRandomPanId());
+        qCDebug(dcZigbeeNetwork()) << "Generated new extended PAN ID" << panId() << ZigbeeUtils::convertUint16ToHexString(panId());
         m_createNewNetwork = true;
     }
 
@@ -566,8 +620,10 @@ void ZigbeeNetworkDeconz::onPollNetworkStateTimeout()
             m_controller->processDeviceState(m_controller->parseDeviceStateFlag(deviceStateFlag));
             if (m_controller->networkState() == Deconz::NetworkStateOffline) {
                 qCDebug(dcZigbeeNetwork()) << "Network stopped successfully for creation";
-                // The network is now offline, continue with the state machine
-                setCreateNetworkState(CreateNetworkStateWriteConfiguration);
+                // The network is now offline, continue with the state machine in one second (some grace period after network shutdown)
+                QTimer::singleShot(1000, this, [=](){
+                    setCreateNetworkState(CreateNetworkStateWriteConfiguration);
+                });
             } else {
                 // Not offline yet, continue poll
                 m_pollNetworkStateTimer->start();
@@ -672,7 +728,8 @@ void ZigbeeNetworkDeconz::stopNetwork()
 
 void ZigbeeNetworkDeconz::reset()
 {
-    // TODO
+    qCDebug(dcZigbeeNetwork()) << "Reboot the controller. The stack will perform a restart.";
+    m_controller->rebootController();
 }
 
 void ZigbeeNetworkDeconz::factoryResetNetwork()
