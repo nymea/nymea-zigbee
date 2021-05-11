@@ -353,16 +353,17 @@ void ZigbeeNetwork::removeZigbeeNode(const ZigbeeAddress &address)
     }
 
     qCDebug(dcZigbeeNetwork()) << "Removing" << node << "from the newtork";
+    removeNodeInternally(node);
+
     ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestMgmtLeaveNetwork();
-    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [this, zdoReply, node](){
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [zdoReply, node](){
         if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Failed to send management leave request to" << node << zdoReply->error();
             qCWarning(dcZigbeeNode()) << "This node is gonna be removed internally. TODO: try to remove using ZDO once it shows up the next time.";
         }
 
-        removeNode(node);
+        node->deleteLater();
     });
-
 }
 
 void ZigbeeNetwork::printNetwork()
@@ -462,7 +463,8 @@ void ZigbeeNetwork::removeNodeInternally(ZigbeeNode *node)
 
     m_nodes.removeAll(node);
     emit nodeRemoved(node);
-    node->deleteLater();
+
+    m_database->removeNode(node);
 }
 
 void ZigbeeNetwork::initializeDatabase()
@@ -616,7 +618,7 @@ void ZigbeeNetwork::removeNode(ZigbeeNode *node)
 {
     qCDebug(dcZigbeeNetwork()) << "Remove node" << node;
     removeNodeInternally(node);
-    m_database->removeNode(node);
+    node->deleteLater();
 }
 
 void ZigbeeNetwork::removeUninitializedNode(ZigbeeNode *node)
