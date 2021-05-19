@@ -1,3 +1,10 @@
+nymea-zigbee (0.1.2) xenial; urgency=medium
+
+  [ Michael Zanetti ]
+  * Drop qt5-default dependency
+
+ -- Jenkins <jenkins@nymea.io>  Wed, 19 May 2021 18:24:49 +0200
+
 nymea-zigbee (0.1.1) xenial; urgency=medium
 
   [ Simon Stürz ]
