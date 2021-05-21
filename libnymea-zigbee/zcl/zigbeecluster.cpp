@@ -401,7 +401,7 @@ void ZigbeeCluster::finishZclReply(ZigbeeClusterReply *zclReply)
     m_pendingReplies.remove(zclReply->transactionSequenceNumber());
     qCDebug(dcZigbeeCluster()) << "ZigbeeClusterReply finished" << zclReply->request() << zclReply->requestFrame() << zclReply->responseFrame();
     // FIXME: Set the status
-    zclReply->finished();
+    emit zclReply->finished();
 }
 
 void ZigbeeCluster::processDataIndication(ZigbeeClusterLibrary::Frame frame)
