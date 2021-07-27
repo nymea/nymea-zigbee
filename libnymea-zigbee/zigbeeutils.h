@@ -28,7 +28,9 @@
 #ifndef ZIGBEEUTILS_H
 #define ZIGBEEUTILS_H
 
+#ifdef WITH_GUI
 #include <QColor>
+#endif // WITH_GUI
 #include <QPoint>
 #include <QObject>
 #include <QString>
@@ -71,7 +73,7 @@ public:
     // Generate random data
     static quint16 generateRandomPanId();
 
-
+#ifdef WITH_GUI
     // Color converter
     static QPointF convertColorToXY(const QColor &color);
     static QPoint convertColorToXYInt(const QColor &color);
@@ -80,6 +82,7 @@ public:
 
     // Color temperature interpolation
     static QColor interpolateColorFromColorTemperature(int colorTemperature, int minValue, int maxValue);
+#endif // WITH_GUI
 
 };
 

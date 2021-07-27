@@ -1,7 +1,15 @@
-QT += gui serialport sql
+QT += serialport sql
 
 QMAKE_CXXFLAGS += -Werror -std=c++11 -z defs
 QMAKE_LFLAGS += -std=c++11
+
+qtHaveModule(gui):!disablegui {
+    QT += gui
+    DEFINES += WITH_GUI
+} else {
+    message("Building without gui support")
+    QT -= gui
+}
 
 gcc {
     COMPILER_VERSION = $$system($$QMAKE_CXX " -dumpversion")

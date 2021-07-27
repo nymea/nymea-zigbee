@@ -34,6 +34,7 @@
 
 #include <math.h>
 
+#ifdef WITH_GUI
 static QList<QColor> colorTemperatureScale = {
     QColor(255, 165, 79),
     QColor(255, 169, 87),
@@ -131,6 +132,8 @@ static QList<QColor> colorTemperatureScale = {
     QColor(195, 210, 255),
     QColor(195, 209, 255) // 12000 K
 };
+#endif // WITH_GUI
+
 
 QBitArray ZigbeeUtils::convertByteArrayToBitArray(const QByteArray &byteArray)
 {
@@ -296,6 +299,7 @@ quint16 ZigbeeUtils::generateRandomPanId()
     return static_cast<quint16>(rand() % (0x3fff - 1) + 1);
 }
 
+#ifdef WITH_GUI
 QPointF ZigbeeUtils::convertColorToXY(const QColor &color)
 {
     // https://developers.meethue.com/develop/application-design-guidance/color-conversion-formulas-rgb-to-xy-and-back/
@@ -432,3 +436,5 @@ QColor ZigbeeUtils::interpolateColorFromColorTemperature(int colorTemperature, i
     // FIXME: interpolate between the selected index and the next color for more accuracy if required
     return colorTemperatureScale.at(closestColorIndex);
 }
+#endif // WITH_GUI
+
