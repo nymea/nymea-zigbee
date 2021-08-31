@@ -188,7 +188,10 @@ public:
         ClusterIdDiagnostics                = 0x0B05,
 
         // Zigbee green power
-        ClusterIdGreenPower                 = 0x0021
+        ClusterIdGreenPower                 = 0x0021,
+
+        // Manufacturer specific
+        ClusterIdManufacturerSpecificPhilips = 0xfc00,
 
     };
     Q_ENUM(ClusterId)

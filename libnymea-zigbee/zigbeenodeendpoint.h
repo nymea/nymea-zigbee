@@ -70,6 +70,8 @@
 
 #include "zcl/hvac/zigbeeclusterthermostat.h"
 
+#include "zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.h"
+
 class ZigbeeNode;
 class ZigbeeNetwork;
 
