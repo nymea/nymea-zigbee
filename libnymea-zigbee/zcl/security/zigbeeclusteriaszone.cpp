@@ -54,6 +54,41 @@ ZigbeeClusterIasZone::ZoneStatusFlags ZigbeeClusterIasZone::zoneStatus() const
     return m_zoneStatus;
 }
 
+ZigbeeClusterReply *ZigbeeClusterIasZone::sendZoneEnrollRequest(ZigbeeClusterIasZone::ZoneType zoneType, quint16 manufacturerCode)
+{
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint16>(zoneType);
+    stream << manufacturerCode;
+    ZigbeeClusterReply *reply = executeClusterCommand(ServerCommandZoneEnrollRequest, payload);
+    return reply;
+}
+
+ZigbeeClusterReply* ZigbeeClusterIasZone::sendZoneEnrollResponse(quint8 zoneId, EnrollResponseCode code)
+{
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint8>(code);
+    stream << zoneId;
+    ZigbeeClusterReply *reply = executeClusterCommand(ClientCommandEnrollResponse, payload);
+    return reply;
+}
+
+ZigbeeClusterReply *ZigbeeClusterIasZone::sendZoneStatusChangeNotification(ZigbeeClusterIasZone::ZoneStatus status, quint8 zoneId, quint16 delay)
+{
+    QByteArray payload;
+    QDataStream stream(&payload, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << static_cast<quint16>(status);
+    stream << static_cast<quint8>(0); // extended status, reserved for future use
+    stream << zoneId;
+    stream << delay;
+    ZigbeeClusterReply *reply = executeClusterCommand(ClientCommandEnrollResponse, payload);
+    return reply;
+}
+
 void ZigbeeClusterIasZone::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
