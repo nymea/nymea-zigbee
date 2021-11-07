@@ -75,23 +75,23 @@ public:
     };
     Q_ENUM(MoveMode)
 
-    enum FadeMode {
-        FadeModeUp = 0x00,
-        FadeModeDown = 0x01
+    enum StepMode {
+        StepModeUp = 0x00,
+        StepModeDown = 0x01
     };
-    Q_ENUM(FadeMode)
+    Q_ENUM(StepMode)
 
     explicit ZigbeeClusterLevelControl(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
     ZigbeeClusterReply *commandMoveToLevel(quint8 level, quint16 transitionTime = 0xffff);
     ZigbeeClusterReply *commandMove(MoveMode moveMode, quint8 rate = 0xff);
-    ZigbeeClusterReply *commandStep(FadeMode fadeMode, quint8 stepSize = 0x01, quint16 transitionTime = 0xffff);
+    ZigbeeClusterReply *commandStep(StepMode stepMode, quint8 stepSize = 0x01, quint16 transitionTime = 0xffff);
     ZigbeeClusterReply *commandStop();
 
     // With on/off
     ZigbeeClusterReply *commandMoveToLevelWithOnOff(quint8 level, quint16 transitionTime = 0xffff);
     ZigbeeClusterReply *commandMoveWithOnOff(MoveMode moveMode, quint8 rate = 0xff);
-    ZigbeeClusterReply *commandStepWithOnOff(FadeMode fadeMode, quint8 stepSize = 0x01, quint16 transitionTime = 0xffff);
+    ZigbeeClusterReply *commandStepWithOnOff(StepMode stepMode, quint8 stepSize = 0x01, quint16 transitionTime = 0xffff);
     ZigbeeClusterReply *commandStopWithOnOff();
 
     quint8 currentLevel() const;
@@ -107,8 +107,10 @@ protected:
 signals:
     void currentLevelChanged(quint8 level);
     void commandSent(ZigbeeClusterLevelControl::Command command, const QByteArray &parameter = QByteArray());
-    void commandMoveSent(MoveMode moveMode, quint8 rate = 0xff);
-    void commandStepSent(FadeMode fadeMode, quint8 stepSize, quint16 transitionTime);
+    void commandMoveToLevelSent(bool withOnOff, quint8 level, quint16 transitionTime);
+    void commandMoveSent(bool withOnOff, MoveMode moveMode, quint8 rate = 0xff);
+    void commandStepSent(bool withOnOff, StepMode stepMode, quint8 stepSize, quint16 transitionTime);
+    void commandStopSent();
 
 };
 

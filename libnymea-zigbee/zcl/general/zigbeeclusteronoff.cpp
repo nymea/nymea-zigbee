@@ -114,23 +114,15 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
         if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {
             // Read the payload which is
             Command command = static_cast<Command>(frame.header.command);
-            qCDebug(dcZigbeeCluster()) << "Received" << command << "from" << m_node << m_endpoint << this;
+            emit commandSent(command, frame.payload);
             switch (command) {
-            case CommandOn:
-                emit commandSent(CommandOn);
-                break;
-            case CommandOff:
-                emit commandSent(CommandOff);
-                break;
-            case CommandToggle:
-                emit commandSent(CommandToggle);
-                break;
             case CommandOffWithEffect: {
                 QByteArray payload = frame.payload;
                 QDataStream payloadStream(&payload, QIODevice::ReadOnly);
                 payloadStream.setByteOrder(QDataStream::LittleEndian);
                 quint8 effectValue = 0; quint16 effectVariant;
                 payloadStream >> effectValue >> effectVariant;
+                qCDebug(dcZigbeeCluster()) << "Command received from" << m_node << m_endpoint << this << command << "effect:" << effectValue << "effectVariant:" << effectVariant;
                 emit commandOffWithEffectSent(static_cast<Effect>(effectValue), effectVariant);
                 break;
             }
@@ -140,11 +132,12 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
                 payloadStream.setByteOrder(QDataStream::LittleEndian);
                 quint8 acceptOnlyWhenOnInt = 0; quint16 onTime; quint16 offTime;
                 payloadStream >> acceptOnlyWhenOnInt >> onTime >> offTime;
+                qCDebug(dcZigbeeCluster()) << "Command received from" << m_node << m_endpoint << this << command << "accentOnlyWhenOnInt:" << acceptOnlyWhenOnInt << "onTime:" << onTime << "offTime:" << offTime;
                 emit commandOnWithTimedOffSent(static_cast<bool>(acceptOnlyWhenOnInt), onTime, offTime);
                 break;
             }
             default:
-                qCWarning(dcZigbeeCluster()) << "Unhandled command sent from" << m_node << m_endpoint << this << command << ZigbeeUtils::convertByteArrayToHexString(frame.payload);
+                qCDebug(dcZigbeeCluster()) << "Command received from" << m_node << m_endpoint << this << command << ZigbeeUtils::convertByteArrayToHexString(frame.payload);
                 break;
             }
         }

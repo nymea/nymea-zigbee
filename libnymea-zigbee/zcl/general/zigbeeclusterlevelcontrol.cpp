@@ -29,6 +29,7 @@
 #include "zigbeenetworkreply.h"
 #include "loggingcategory.h"
 #include "zigbeenetwork.h"
+#include "zigbeeutils.h"
 
 #include <QDataStream>
 
@@ -56,12 +57,12 @@ ZigbeeClusterReply *ZigbeeClusterLevelControl::commandMove(ZigbeeClusterLevelCon
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandMove, payload);
 }
 
-ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStep(ZigbeeClusterLevelControl::FadeMode fadeMode, quint8 stepSize, quint16 transitionTime)
+ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStep(StepMode stepMode, quint8 stepSize, quint16 transitionTime)
 {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream << static_cast<quint8>(fadeMode) << stepSize << transitionTime;
+    stream << static_cast<quint8>(stepMode) << stepSize << transitionTime;
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandStep, payload);
 }
 
@@ -88,12 +89,12 @@ ZigbeeClusterReply *ZigbeeClusterLevelControl::commandMoveWithOnOff(ZigbeeCluste
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandMoveWithOnOff, payload);
 }
 
-ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStepWithOnOff(ZigbeeClusterLevelControl::FadeMode fadeMode, quint8 stepSize, quint16 transitionTime)
+ZigbeeClusterReply *ZigbeeClusterLevelControl::commandStepWithOnOff(StepMode stepMode, quint8 stepSize, quint16 transitionTime)
 {
     QByteArray payload;
     QDataStream stream(&payload, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
-    stream << static_cast<quint8>(fadeMode) << stepSize << transitionTime;
+    stream << static_cast<quint8>(stepMode) << stepSize << transitionTime;
     return executeClusterCommand(ZigbeeClusterLevelControl::CommandStepWithOnOff, payload);
 }
 
@@ -128,8 +129,6 @@ void ZigbeeClusterLevelControl::setAttribute(const ZigbeeClusterAttribute &attri
 
 void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
-    qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
-
     // Increase the tsn for continuous id increasing on both sides
     m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
 
@@ -139,30 +138,48 @@ void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Fram
         if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {
             // Read the payload which is
             Command command = static_cast<Command>(frame.header.command);
-            qCDebug(dcZigbeeCluster()) << "Command sent from" << m_node << m_endpoint << this << command;
             emit commandSent(command, frame.payload);
 
+            bool withOnOff = false;
             switch (command) {
+            case CommandMoveToLevelWithOnOff:
+            case CommandMoveToLevel: {
+                QByteArray payload = frame.payload;
+                QDataStream payloadStream(&payload, QIODevice::ReadOnly);
+                payloadStream.setByteOrder(QDataStream::LittleEndian);
+                quint8 level; quint16 transitionTime;
+                payloadStream >> level >> transitionTime;
+                withOnOff = command == CommandMoveToLevelWithOnOff;
+                qCDebug(dcZigbeeCluster()).noquote().nospace() << "Command received from " << m_node << " " << m_endpoint << " " << this << " " << command << " withOnOff: " << withOnOff << " level: 0x" << QString::number(level, 16) << " transitionTime: 0x" << QString::number(transitionTime, 16);
+                emit commandMoveToLevelSent(withOnOff, level, transitionTime);
+                break;
+            }
+            case CommandStepWithOnOff:
             case CommandStep: {
                 QByteArray payload = frame.payload;
                 QDataStream payloadStream(&payload, QIODevice::ReadOnly);
                 payloadStream.setByteOrder(QDataStream::LittleEndian);
-                quint8 fadeModeValue = 0; quint8 stepSize; quint16 transitionTime;
-                payloadStream >> fadeModeValue >> stepSize >> transitionTime;
-                emit commandStepSent(static_cast<FadeMode>(fadeModeValue), stepSize, transitionTime);
+                quint8 stepModeValue = 0; quint8 stepSize; quint16 transitionTime;
+                payloadStream >> stepModeValue >> stepSize >> transitionTime;
+                withOnOff = command == CommandMoveToLevelWithOnOff;
+                qCDebug(dcZigbeeCluster()).noquote().nospace() << "Command received from " << m_node << " " << m_endpoint << " " << this << " " << command << " withOnOff: " << withOnOff << " stepModeValue: 0x" << QString::number(stepModeValue, 16) << " stepSize: 0x" << QString::number(stepSize, 16) << " transitionTime: 0x" << QString::number(transitionTime, 16);
+                emit commandStepSent(withOnOff, static_cast<StepMode>(stepModeValue), stepSize, transitionTime);
                 break;
             }
+            case CommandMoveWithOnOff:
             case CommandMove: {
                 QByteArray payload = frame.payload;
                 QDataStream payloadStream(&payload, QIODevice::ReadOnly);
                 payloadStream.setByteOrder(QDataStream::LittleEndian);
                 quint8 moveModeValue = 0; quint8 rate;;
                 payloadStream >> moveModeValue >> rate;
-                emit commandMoveSent(static_cast<MoveMode>(moveModeValue), rate);
+                withOnOff = command == CommandMoveToLevelWithOnOff;
+                qCDebug(dcZigbeeCluster()).noquote().nospace() << "Command received from " << m_node << " " << m_endpoint << " " << this << " " << command << " withOnOff:" << withOnOff <<  " moveModeValue: 0x" << QString::number(moveModeValue, 16) << " rate: 0x" << QString::number(rate, 16);
+                emit commandMoveSent(withOnOff, static_cast<MoveMode>(moveModeValue), rate);
                 break;
             }
             default:
-                qCDebug(dcZigbeeCluster()) << "Command received without special implementation";
+                qCDebug(dcZigbeeCluster()).noquote().nospace() << "Command received from " << m_node << " " << m_endpoint << " " << this << " " << command << " payload: 0x" << ZigbeeUtils::convertByteArrayToHexString(frame.payload);
                 break;
             }
 

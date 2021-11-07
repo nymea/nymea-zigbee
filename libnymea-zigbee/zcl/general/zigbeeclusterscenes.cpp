@@ -45,8 +45,6 @@ void ZigbeeClusterScenes::setAttribute(const ZigbeeClusterAttribute &attribute)
 
 void ZigbeeClusterScenes::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
-    qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
-
     // Increase the tsn for continuous id increasing on both sides
     m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
 
@@ -54,8 +52,13 @@ void ZigbeeClusterScenes::processDataIndication(ZigbeeClusterLibrary::Frame fram
     case Client: {
         // Read the payload which is
         Command command = static_cast<Command>(frame.header.command);
-        qCDebug(dcZigbeeCluster()) << "Received" << command << "from" << m_node << m_endpoint << this << ZigbeeUtils::convertByteArrayToHexString(frame.payload);
-        emit commandSent(frame.header.command, frame.payload);
+        QByteArray payload = frame.payload;
+        QDataStream payloadStream(&payload, QIODevice::ReadOnly);
+        payloadStream.setByteOrder(QDataStream::LittleEndian);
+        quint16 groupId = 0; quint8 sceneId;
+        payloadStream >> groupId >> sceneId;
+        qCDebug(dcZigbeeCluster()).noquote() << "Received" << command << "for group" << "0x" + QString::number(groupId, 16) << "and scene" << sceneId << "from" << m_node << m_endpoint << this;
+        emit commandSent(command, groupId, sceneId);
         break;
     }
     case Server:
