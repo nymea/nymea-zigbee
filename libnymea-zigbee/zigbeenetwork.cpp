@@ -59,7 +59,7 @@ ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
     connect(this, &ZigbeeNetwork::stateChanged, this, [this](ZigbeeNetwork::State state){
         if (state == ZigbeeNetwork::StateRunning) {
             evaluateNodeReachableStates();
-            m_reachableRefreshTimer->start();
+//            m_reachableRefreshTimer->start();
         } else {
             foreach (ZigbeeNode *node, m_nodes) {
                 node->setReachable(false);
