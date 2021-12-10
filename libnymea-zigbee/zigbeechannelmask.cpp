@@ -153,3 +153,8 @@ QDebug operator<<(QDebug debug, const ZigbeeChannelMask &channelMaks)
     debug.nospace() << ") ";
     return debug;
 }
+
+void ZigbeeChannelMask::clear()
+{
+    m_channelMask = 0;
+}

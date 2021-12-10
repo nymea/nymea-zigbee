@@ -59,6 +59,7 @@ public:
     bool isSet(Zigbee::ZigbeeChannel channel) const;
     void setChannel(Zigbee::ZigbeeChannel channel);
     void unsetChannel(Zigbee::ZigbeeChannel channel);
+    void clear();
 
     ZigbeeChannelMask &operator=(const ZigbeeChannelMask &other);
     bool operator==(const ZigbeeChannelMask &other) const;
