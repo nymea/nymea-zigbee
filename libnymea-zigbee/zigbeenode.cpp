@@ -812,7 +812,9 @@ QDebug operator<<(QDebug debug, ZigbeeNode *node)
     debug.nospace().noquote() << "ZigbeeNode(" << ZigbeeUtils::convertUint16ToHexString(node->shortAddress());
     debug.nospace().noquote() << ", " << node->extendedAddress().toString();
     if (!node->manufacturerName().isEmpty())
-        debug.nospace().noquote() << ", " << node->manufacturerName();
+        debug.nospace().noquote() << ", " << node->manufacturerName() << " (" << ZigbeeUtils::convertUint16ToHexString(node->nodeDescriptor().manufacturerCode) << ")";
+    else
+        debug.nospace().noquote() << ", " << ZigbeeUtils::convertUint16ToHexString(node->nodeDescriptor().manufacturerCode);
 
     if (!node->modelName().isEmpty())
         debug.nospace().noquote() << ", " << node->modelName();
