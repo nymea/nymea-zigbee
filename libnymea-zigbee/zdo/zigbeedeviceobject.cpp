@@ -311,7 +311,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestSimpleDescriptor(quint8 endp
 
 ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestBindGroupAddress(quint8 sourceEndpointId, quint16 clusterId, quint16 destinationAddress)
 {
-    qCDebug(dcZigbeeDeviceObject()) << "Request bind group address from" << m_node << "endpoint" << ZigbeeUtils::convertByteToHexString(sourceEndpointId)
+    qCDebug(dcZigbeeDeviceObject()) << "Requesting bind group address from" << m_node << "endpoint" << ZigbeeUtils::convertByteToHexString(sourceEndpointId)
                                     << static_cast<ZigbeeClusterLibrary::ClusterId>(clusterId) << "to group" << ZigbeeUtils::convertUint16ToHexString(destinationAddress);
 
     // Build APS request

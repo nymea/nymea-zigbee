@@ -92,7 +92,7 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::sendRequest(const ZigbeeNetworkRequest &re
         //qCWarning(dcZigbeeNetwork()) << "#### Removed network reply" << reply << "ID:" << requestId << "Current reply count" << m_pendingReplies.count();
     });
 
-    // Finish the reply right the way if the network is offline
+    // Finish the reply right away if the network is offline
     if (!m_controller->available() || state() == ZigbeeNetwork::StateOffline) {
         finishReplyInternally(reply, ZigbeeNetworkReply::ErrorNetworkOffline);
         return reply;
