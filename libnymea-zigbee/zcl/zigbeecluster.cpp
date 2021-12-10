@@ -489,7 +489,7 @@ QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
                               << cluster->clusterName() << ", ";
     switch (cluster->direction()) {
     case ZigbeeCluster::Server:
-        debug.nospace().noquote() << "Servers)";
+        debug.nospace().noquote() << "Server)";
         break;
     case ZigbeeCluster::Client:
         debug.nospace().noquote() << "Client)";

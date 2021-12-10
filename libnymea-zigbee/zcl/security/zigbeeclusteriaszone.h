@@ -127,6 +127,12 @@ public:
     ZoneType zoneType() const;
     ZoneStatusFlags zoneStatus() const;
 
+    // Request a Zone enrollment from the client (Server to client)
+    ZigbeeClusterReply *sendZoneEnrollRequest(ZigbeeClusterIasZone::ZoneType zoneType, quint16 manufacturerCode);
+    // Enroll a Zone on the server (Client to server)
+    ZigbeeClusterReply *sendZoneEnrollResponse(quint8 zoneId, ZigbeeClusterIasZone::EnrollResponseCode code = EnrollResponseCodeSuccess);
+    // Inform the client of Zone status changes (Server to client)
+    ZigbeeClusterReply *sendZoneStatusChangeNotification(ZoneStatus status, quint8 zoneId, quint16 delay = 0);
 private:
     ZoneState m_zoneState = ZoneStateNotEnrolled;
     ZoneType m_zoneType = ZoneTypeInvalidZone;

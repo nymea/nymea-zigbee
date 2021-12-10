@@ -162,10 +162,10 @@ public:
         HomeAutomationDeviceFlowSensor                  = 0x0306,
 
         // Intruder Alarm System (IAS) devices
-        HomeAutomationDeviceIsaControlEquipment             = 0x0400, // CIE
-        HomeAutomationDeviceIsaAncillaryControlEquipment    = 0x0401, // ACE
-        HomeAutomationDeviceIsaZone                         = 0x0402,
-        HomeAutomationDeviceIsaWarningDevice                = 0x0403  // WD
+        HomeAutomationDeviceIasControlEquipment             = 0x0400, // CIE
+        HomeAutomationDeviceIasAncillaryControlEquipment    = 0x0401, // ACE
+        HomeAutomationDeviceIasZone                         = 0x0402,
+        HomeAutomationDeviceIasWarningDevice                = 0x0403  // WD
     };
     Q_ENUM(HomeAutomationDevice)
 
