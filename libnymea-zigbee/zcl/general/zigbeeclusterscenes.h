@@ -63,7 +63,7 @@ public:
     explicit ZigbeeClusterScenes(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
 signals:
-    void commandSent(quint8 command, const QByteArray &payload);
+    void commandSent(Command command, quint16 groupId, quint8 sceneId);
 
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
