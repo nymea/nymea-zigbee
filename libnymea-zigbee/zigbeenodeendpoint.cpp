@@ -230,6 +230,12 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
     case ZigbeeClusterLibrary::ClusterIdThermostat:
         return new ZigbeeClusterThermostat(m_network, m_node, this, direction, this);
 
+        // Manufacturer specific
+    case ZigbeeClusterLibrary::ClusterIdManufacturerSpecificPhilips:
+        if (m_node->nodeDescriptor().manufacturerCode == Zigbee::Manufacturer::Philips) {
+            return new ZigbeeClusterManufacturerSpecificPhilips(m_network, m_node, this, direction, this);
+        }
+        // Intentional fallthrough!
     default:
         // Return a default cluster since we have no special implementation for this cluster, allowing to use generic clusters operations
         return new ZigbeeCluster(m_network, m_node, this, clusterId, direction, this);

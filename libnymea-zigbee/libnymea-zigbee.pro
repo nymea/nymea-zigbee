@@ -40,6 +40,7 @@ SOURCES += \
     zcl/general/zigbeeclusterscenes.cpp \
     zcl/hvac/zigbeeclusterthermostat.cpp \
     zcl/lighting/zigbeeclustercolorcontrol.cpp \
+    zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.cpp \
     zcl/measurement/zigbeeclusterilluminancemeasurment.cpp \
     zcl/measurement/zigbeeclusteroccupancysensing.cpp \
     zcl/measurement/zigbeeclusterpressuremeasurement.cpp \
@@ -107,6 +108,7 @@ HEADERS += \
     zcl/general/zigbeeclusterscenes.h \
     zcl/hvac/zigbeeclusterthermostat.h \
     zcl/lighting/zigbeeclustercolorcontrol.h \
+    zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.h \
     zcl/measurement/zigbeeclusterilluminancemeasurment.h \
     zcl/measurement/zigbeeclusteroccupancysensing.h \
     zcl/measurement/zigbeeclusterpressuremeasurement.h \
