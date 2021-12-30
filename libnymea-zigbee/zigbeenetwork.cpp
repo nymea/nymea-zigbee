@@ -52,7 +52,7 @@ ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
     });
 
     m_reachableRefreshTimer = new QTimer(this);
-    m_reachableRefreshTimer->setInterval(120000);
+    m_reachableRefreshTimer->setInterval(300000);
     m_reachableRefreshTimer->setSingleShot(false);
     connect(m_reachableRefreshTimer, &QTimer::timeout, this, &ZigbeeNetwork::evaluateNodeReachableStates);
 
@@ -477,7 +477,7 @@ void ZigbeeNetwork::evaluateNextNodeReachableState()
         }
 
         // Give some time for other requests to be processed
-        QTimer::singleShot(5000, this, &ZigbeeNetwork::evaluateNextNodeReachableState);
+        QTimer::singleShot(20000, this, &ZigbeeNetwork::evaluateNextNodeReachableState);
     });
 }
 
@@ -901,7 +901,7 @@ void ZigbeeNetwork::finishNetworkReply(ZigbeeNetworkReply *reply, ZigbeeNetworkR
     reply->m_timer->stop();
 
     // Finish the reply
-    reply->finished();
+    emit reply->finished();
 }
 
 void ZigbeeNetwork::startWaitingReply(ZigbeeNetworkReply *reply)
@@ -938,7 +938,7 @@ void ZigbeeNetwork::evaluateNodeReachableStates()
         if (node->macCapabilities().receiverOnWhenIdle && node->shortAddress() != 0x0000) {
 
             // Lets send a request to all things which are not reachable
-            if (!node->reachable()) {
+            if (!node->reachable() && !m_reachableRefreshAddresses.contains(node->extendedAddress())) {
                 qCDebug(dcZigbeeNetwork()) << node << "enqueue evaluating reachable state";
                 m_reachableRefreshAddresses.append(node->extendedAddress());
                 continue;
@@ -948,7 +948,7 @@ void ZigbeeNetwork::evaluateNodeReachableStates()
             int msSinceLastSeen = node->lastSeen().msecsTo(QDateTime::currentDateTimeUtc());
             qCDebug(dcZigbeeNetwork()) << node << "has been seen the last time" << QTime::fromMSecsSinceStartOfDay(msSinceLastSeen).toString() << "ago.";
             // 10 min = 10 * 60 * 1000 = 600000 ms
-            if (msSinceLastSeen > 600000) {
+            if (msSinceLastSeen > 600000 && !m_reachableRefreshAddresses.contains(node->extendedAddress())) {
                 qCDebug(dcZigbeeNetwork()) << node << "enqueue evaluating reachable state";
                 m_reachableRefreshAddresses.append(node->extendedAddress());
             }

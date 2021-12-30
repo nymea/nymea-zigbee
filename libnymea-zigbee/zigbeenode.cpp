@@ -147,6 +147,11 @@ QList<ZigbeeDeviceProfile::BindingTableListRecord> ZigbeeNode::bindingTableRecor
     return m_bindingTableRecords;
 }
 
+QList<ZigbeeDeviceProfile::NeighborTableListRecord> ZigbeeNode::neighborTableRecords() const
+{
+    return m_neighborTableRecords;
+}
+
 void ZigbeeNode::setState(ZigbeeNode::State state)
 {
     if (m_state == state)
@@ -261,6 +266,17 @@ ZigbeeReply *ZigbeeNode::readBindingTableEntries()
         emit bindingTableRecordsChanged();
         reply->finishReply();
     });
+    return reply;
+}
+
+ZigbeeReply *ZigbeeNode::updateNeighborTableEntries()
+{
+    // Start clean
+    m_temporaryNeighborTableRecords.clear();
+
+    qCDebug(dcZigbeeNode()) << "Start updating neighbor table records from" << this;
+    ZigbeeReply *reply = new ZigbeeReply(this);
+    readNextNeigborTableRecords(reply);
     return reply;
 }
 
@@ -507,6 +523,52 @@ void ZigbeeNode::removeNextBinding(ZigbeeReply *reply)
         emit bindingTableRecordsChanged();
 
         removeNextBinding(reply);
+    });
+}
+
+void ZigbeeNode::readNextNeigborTableRecords(ZigbeeReply *reply, quint8 startIndex)
+{
+    ZigbeeDeviceObjectReply *zdoReply = m_deviceObject->requestMgmtLqi(startIndex);
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [this, zdoReply, reply](){
+        if (zdoReply->error()) {
+            qCWarning(dcZigbeeDeviceObject()) << "Failed to request neighbor table entries" << zdoReply->error();
+            reply->finishReply(ZigbeeReply::ErrorZigbeeError);
+            return;
+        }
+
+        qCDebug(dcZigbeeNode()) << ZigbeeUtils::convertByteArrayToHexString(zdoReply->responseData());
+        // I | ZigbeeNode: "0x01 0xac 0x0a 0x05 0xff 0xff 0x2e 0x21 0x00 0xac 0x0a 0x05 0xff 0xff 0x2e 0x21 0x00 0x00 0x00 0x04 0x02 0x00 0xfc"
+
+        // Parse the neighbor response
+        ZigbeeDeviceProfile::NeighborTableList listRecords = ZigbeeDeviceProfile::parseNeighborTableListRecord(zdoReply->responseData());
+        // Append the neighbor table entries and continue reading if required
+        m_temporaryNeighborTableRecords.append(listRecords.neighborTableListRecords);
+        if (m_temporaryNeighborTableRecords.count() == listRecords.tableSize) {
+            // We are done, replace the current neighbor table records
+            m_neighborTableRecords.clear();
+            m_neighborTableRecords = m_temporaryNeighborTableRecords;
+            m_temporaryNeighborTableRecords.clear();
+
+            // Finished successfully
+            reply->finishReply();
+            emit neighborTableRecordsChanged();
+
+            qCDebug(dcZigbeeNode()) << "Neighbor table records changed:";
+            foreach (const ZigbeeDeviceProfile::NeighborTableListRecord &record, m_neighborTableRecords) {
+                // Get the associated neighbor
+                ZigbeeNode *neighbor = m_network->getZigbeeNode(record.ieeeAddress);
+                if (neighbor) {
+                    qCDebug(dcZigbeeNode()) << "-->" << neighbor;
+                    qCDebug(dcZigbeeNode()) << "    " << record;
+                } else {
+                    qCWarning(dcZigbeeNode()) << "--> Unknown node" << record;
+                }
+            }
+            return;
+        }
+
+        // Continue reading at index until we fetched all neighbors
+        readNextNeigborTableRecords(reply, m_temporaryNeighborTableRecords.size() - 1);
     });
 }
 

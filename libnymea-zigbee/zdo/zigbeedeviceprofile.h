@@ -287,12 +287,31 @@ public:
         quint8 destinationEndpoint; // Only for destination address 0x03
     } BindingTableListRecord;
 
+    typedef struct NeighborTableListRecord {
+        quint64 extendedPanId;
+        ZigbeeAddress ieeeAddress;
+        quint16 shortAddress;
+        NodeType nodeType;
+        bool receiverOnWhenIdle;
+        Relationship relationship;
+        bool permitJoining;
+        quint8 depth;
+        quint8 lqi;
+    } NeighborTableListRecord;
+
+    typedef struct NeighborTableList {
+        quint8 status;
+        quint8 tableSize;
+        quint8 startIndex;
+        QList<NeighborTableListRecord> neighborTableListRecords;
+    } NeighborTableList;
 
     static NodeDescriptor parseNodeDescriptor(const QByteArray &payload);
     static MacCapabilities parseMacCapabilities(quint8 macCapabilitiesFlag);
     static ServerMask parseServerMask(quint16 serverMaskFlag);
     static DescriptorCapabilities parseDescriptorCapabilities(quint8 descriptorCapabilitiesFlag);
     static PowerDescriptor parsePowerDescriptor(quint16 powerDescriptorFlag);
+    static NeighborTableList parseNeighborTableListRecord(const QByteArray &payload);
 };
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &deviceAdpu);
@@ -302,5 +321,6 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::ServerMask &serverMas
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::DescriptorCapabilities &descriptorCapabilities);
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::PowerDescriptor &powerDescriptor);
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::BindingTableListRecord &bindingTableListRecord);
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NeighborTableListRecord &neighborTableListRecord);
 
 #endif // ZIGBEEDEVICEPROFILE_H

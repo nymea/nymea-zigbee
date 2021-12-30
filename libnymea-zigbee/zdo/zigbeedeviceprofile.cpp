@@ -182,6 +182,45 @@ ZigbeeDeviceProfile::PowerDescriptor ZigbeeDeviceProfile::parsePowerDescriptor(q
     return powerDescriptor;
 }
 
+ZigbeeDeviceProfile::NeighborTableList ZigbeeDeviceProfile::parseNeighborTableListRecord(const QByteArray &payload)
+{
+    ZigbeeDeviceProfile::NeighborTableList list;
+    QDataStream stream(payload);
+    stream.setByteOrder(QDataStream::LittleEndian);
+
+    quint8 messageId; quint8 listRecordCount;
+    stream >> messageId >> list.status >> list.tableSize >> list.startIndex >> listRecordCount;
+    for (int i = 0; i < listRecordCount; i++) {
+        ZigbeeDeviceProfile::NeighborTableListRecord record;
+        stream >> record.extendedPanId;
+        quint64 ieeeAddress;
+        stream >> ieeeAddress;
+        record.ieeeAddress = ZigbeeAddress(ieeeAddress);
+        stream >> record.shortAddress;
+
+        quint8 nodeFlags;
+        stream >> nodeFlags;
+        // 2 Bit nodeType
+        // 2 Bit rx on
+        // 3 Bit releation ship
+        // 1 Bit reserved
+        record.nodeType = static_cast<NodeType>((nodeFlags & 0b11000000) >> 6);
+        record.receiverOnWhenIdle = static_cast<bool>(nodeFlags & 0b00110000 >> 4);
+        record.relationship = static_cast<Relationship>(nodeFlags & 0b00001110 >> 1);
+
+        stream >> nodeFlags;
+        // 2 Bit permit join
+        // 6 Bit reserved
+        record.permitJoining = static_cast<bool>((nodeFlags & 0b11000000) >> 6);
+        stream >> record.depth;
+        stream >> record.lqi;
+
+        list.neighborTableListRecords.append(record);
+    }
+
+    return list;
+}
+
 ZigbeeDeviceProfile::Adpu ZigbeeDeviceProfile::parseAdpu(const QByteArray &adpu)
 {
     QDataStream stream(adpu);
@@ -279,5 +318,19 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::BindingTableListRecor
     default:
         break;
     }
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NeighborTableListRecord &neighborTableListRecord)
+{
+    debug.nospace() << "NeighborTableListRecord(" << neighborTableListRecord.ieeeAddress.toString() << ", ";
+    debug.nospace() << "NWK address: " << ZigbeeUtils::convertUint16ToHexString(neighborTableListRecord.shortAddress) << ", ";
+    debug.nospace() << "Extended PAN ID: " << neighborTableListRecord.extendedPanId << ", ";
+    debug.nospace() << "Node type: " << neighborTableListRecord.nodeType << ", ";
+    debug.nospace() << "RxOn: " << neighborTableListRecord.receiverOnWhenIdle << ", ";
+    debug.nospace() << "Relationship: " << neighborTableListRecord.relationship << ", ";
+    debug.nospace() << "Permit join: " << neighborTableListRecord.permitJoining << ", ";
+    debug.nospace() << "Depth: " << neighborTableListRecord.depth << ", ";
+    debug.nospace() << "LQI: " << neighborTableListRecord.lqi << ") ";
     return debug;
 }

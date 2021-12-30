@@ -61,8 +61,8 @@ public:
     ZigbeeDeviceObjectReply *requestMgmtLeaveNetwork(bool rejoin = false, bool removeChildren = false);
     ZigbeeDeviceObjectReply *requestMgmtLqi(quint8 startIndex = 0x00);
     ZigbeeDeviceObjectReply *requestMgmtBind(quint8 startIndex = 0x00);
+    ZigbeeDeviceObjectReply *requestMgmtPermitJoining(quint8 duration);
 
-    // TODO: write all requests
 
 private:
     ZigbeeNetwork *m_network = nullptr;
