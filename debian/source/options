@@ -1,0 +1,2 @@
+tar-ignore = docs
+tar-ignore = firmware
