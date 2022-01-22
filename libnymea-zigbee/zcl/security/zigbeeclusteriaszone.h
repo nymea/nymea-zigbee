@@ -145,7 +145,7 @@ protected:
 
 signals:
     void zoneStatusChanged(ZoneStatusFlags zoneStatus, quint8 extendedStatus, quint8 zoneId, quint16 delay);
-    void zoneEnrollRequest(ZoneType zoneType, quint16 manufacturerCode);
+    void zoneEnrollRequest(ZoneType zoneType, quint16 manufacturerCode, quint8 transactionSequenceNumber);
 
 };
 

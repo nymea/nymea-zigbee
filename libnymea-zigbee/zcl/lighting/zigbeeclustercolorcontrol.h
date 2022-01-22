@@ -244,9 +244,6 @@ private:
 
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
-protected:
-    void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
-
 };
 
 #endif // ZIGBEECLUSTERCOLORCONTROL_H

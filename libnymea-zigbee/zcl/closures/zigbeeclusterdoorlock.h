@@ -227,8 +227,8 @@ protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
 signals:
-    void lockStateChanged(LockState lockState);
-    void doorStateChanged(DoorState doorState);
+    void lockStateChanged(ZigbeeClusterDoorLock::LockState lockState);
+    void doorStateChanged(ZigbeeClusterDoorLock::DoorState doorState);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ZigbeeClusterDoorLock::SupportedOperationModes)

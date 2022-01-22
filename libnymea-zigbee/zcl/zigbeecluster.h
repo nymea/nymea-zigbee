@@ -105,12 +105,10 @@ protected:
 
     // Helper methods for sending cluster specific commands
     ZigbeeNetworkRequest createGeneralRequest();
-    quint8 m_transactionSequenceNumber = 0;
     QHash<quint8, ZigbeeClusterReply *> m_pendingReplies;
 
     // Global commands
-    ZigbeeClusterReply *executeGlobalCommand(quint8 command, const QByteArray &payload = QByteArray(), quint16 manufacturerCode = 0x0000);
-    ZigbeeClusterReply *executeManufacturerSpecificGlobalCommand(quint8 command, quint16 manufacturerCode, const QByteArray &payload = QByteArray());
+    ZigbeeClusterReply *executeGlobalCommand(quint8 command, const QByteArray &payload = QByteArray(), quint16 manufacturerCode = 0x0000, quint8 transactionSequenceNumber = newTransactionSequenceNumber());
 
     // Cluster specific
     ZigbeeClusterReply *createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame);
@@ -125,6 +123,8 @@ protected:
     virtual void processDataIndication(ZigbeeClusterLibrary::Frame frame);
 
     void updateOrAddAttribute(const ZigbeeClusterAttribute &attribute);
+
+    static quint8 newTransactionSequenceNumber();
 
 private:
     virtual void setAttribute(const ZigbeeClusterAttribute &attribute);

@@ -63,7 +63,7 @@ public:
 
 signals:
     // Server cluster signals
-    void buttonPressed(quint8 button, Operation operation);
+    void buttonPressed(quint8 button, ZigbeeClusterManufacturerSpecificPhilips::Operation operation, quint8 transactionSequenceNumber);
 
 protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;

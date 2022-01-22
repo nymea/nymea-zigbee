@@ -105,16 +105,13 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
 {
     qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
 
-    // Increase the tsn for continuous id increasing on both sides
-    m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
     switch (m_direction) {
     case Client:
         // If the client cluster sends data to a server cluster (independent which), the command was executed on the device like button pressed
         if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {
             // Read the payload which is
             Command command = static_cast<Command>(frame.header.command);
-            emit commandSent(command, frame.payload);
+            emit commandSent(command, frame.payload, frame.header.transactionSequenceNumber);
             switch (command) {
             case CommandOffWithEffect: {
                 QByteArray payload = frame.payload;
@@ -123,7 +120,7 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
                 quint8 effectValue = 0; quint16 effectVariant;
                 payloadStream >> effectValue >> effectVariant;
                 qCDebug(dcZigbeeCluster()) << "Command received from" << m_node << m_endpoint << this << command << "effect:" << effectValue << "effectVariant:" << effectVariant;
-                emit commandOffWithEffectSent(static_cast<Effect>(effectValue), effectVariant);
+                emit commandOffWithEffectSent(static_cast<Effect>(effectValue), effectVariant, frame.header.transactionSequenceNumber);
                 break;
             }
             case CommandOnWithTimedOff: {
@@ -133,7 +130,7 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
                 quint8 acceptOnlyWhenOnInt = 0; quint16 onTime; quint16 offTime;
                 payloadStream >> acceptOnlyWhenOnInt >> onTime >> offTime;
                 qCDebug(dcZigbeeCluster()) << "Command received from" << m_node << m_endpoint << this << command << "accentOnlyWhenOnInt:" << acceptOnlyWhenOnInt << "onTime:" << onTime << "offTime:" << offTime;
-                emit commandOnWithTimedOffSent(static_cast<bool>(acceptOnlyWhenOnInt), onTime, offTime);
+                emit commandOnWithTimedOffSent(static_cast<bool>(acceptOnlyWhenOnInt), onTime, offTime, frame.header.transactionSequenceNumber);
                 break;
             }
             default:
