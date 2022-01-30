@@ -670,7 +670,7 @@ void ZigbeeNetwork::setError(ZigbeeNetwork::Error error)
     if (m_error == error)
         return;
 
-    if (m_error != ErrorNoError) qCDebug(dcZigbeeNetwork()) << "Error occured" << error;
+    if (error != ErrorNoError) qCDebug(dcZigbeeNetwork()) << "Error occurred:" << error;
     m_error = error;
     emit errorOccured(m_error);
 }
