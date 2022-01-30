@@ -56,12 +56,6 @@ DeconzNetworkConfiguration ZigbeeBridgeControllerDeconz::networkConfiguration() 
     return m_networkConfiguration;
 }
 
-void ZigbeeBridgeControllerDeconz::setFirmwareVersionString(const QString &firmwareVersion)
-{
-    m_firmwareVersion = firmwareVersion;
-    emit firmwareVersionChanged(m_firmwareVersion);
-}
-
 Deconz::NetworkState ZigbeeBridgeControllerDeconz::networkState() const
 {
     return m_networkState;
