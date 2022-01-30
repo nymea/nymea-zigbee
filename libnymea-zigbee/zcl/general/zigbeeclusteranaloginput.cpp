@@ -34,8 +34,30 @@ ZigbeeClusterAnalogInput::ZigbeeClusterAnalogInput(ZigbeeNetwork *network, Zigbe
 
 }
 
+bool ZigbeeClusterAnalogInput::outOfService() const
+{
+    return m_outOfService;
+}
+
+float ZigbeeClusterAnalogInput::presentValue() const
+{
+    return m_presentValue;
+}
+
 void ZigbeeClusterAnalogInput::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
     updateOrAddAttribute(attribute);
+
+    switch (attribute.id()) {
+    case AttributeOutOfService:
+        m_outOfService = attribute.dataType().toBool();
+        emit outOfServiceChanged(m_outOfService);
+        break;
+    case AttributePresentValue:
+        m_presentValue = attribute.dataType().toFloat();
+        qCDebug(dcZigbeeCluster()) << "Present value changed:" << m_presentValue;
+        emit presentValueChanged(m_presentValue);
+        break;
+    }
 }
