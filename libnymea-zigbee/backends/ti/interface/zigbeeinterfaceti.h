@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 *
-* Copyright 2013 - 2021, nymea GmbH
+* Copyright 2013 - 2022, nymea GmbH
 * Contact: contact@nymea.io
 *
 * This file is part of nymea-zigbee.
@@ -25,33 +25,56 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeenetworkmanager.h"
-#include "loggingcategory.h"
+#ifndef ZIGBEEINTERFACETI_H
+#define ZIGBEEINTERFACETI_H
 
-#include "backends/nxp/zigbeenetworknxp.h"
-#include "backends/deconz/zigbeenetworkdeconz.h"
-#include "backends/ti/zigbeenetworkti.h"
+#include <QObject>
+#include <QTimer>
+#include <QSerialPort>
+#include "zigbeeinterfacetireply.h"
 
-#include <QDateTime>
+#define SOF 0xFE
 
-QStringList ZigbeeNetworkManager::availableZigbeeBackendTypes()
+class ZigbeeInterfaceTi : public QObject
 {
-    return {"deCONZ", "NXP"};
-}
+    Q_OBJECT
+public:
+    explicit ZigbeeInterfaceTi(QObject *parent = nullptr);
+    ~ZigbeeInterfaceTi();
 
-ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(const QUuid &networkUuid, Zigbee::ZigbeeBackendType backend, QObject *parent)
-{
-    // Note: required for generating random PAN ID
-    srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
+    bool available() const;
+    QString serialPort() const;
 
-    switch (backend) {
-    case Zigbee::ZigbeeBackendTypeNxp:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(networkUuid, parent));
-    case Zigbee::ZigbeeBackendTypeDeconz:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(networkUuid, parent));
-    case Zigbee::ZigbeeBackendTypeTi:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkTi(networkUuid, parent));
-    }
+    void sendMagicByte();
+    void setDTR(bool dtr);
+    void setRTS(bool rts);
 
-    return nullptr;
-}
+    void sendPacket(Ti::CommandType type, Ti::SubSystem subSystem, quint8 command, const QByteArray &payload);
+
+public slots:
+    bool enable(const QString &serialPort = "/dev/ttyS0", qint32 baudrate = 38400);
+    void reconnectController();
+    void disable();
+
+signals:
+    void availableChanged(bool available);
+    void packetReceived(Ti::SubSystem subSystem, Ti::CommandType type, quint8 command, const QByteArray &payload);
+
+private slots:
+    void onReconnectTimeout();
+    void onReadyRead();
+    void onError(const QSerialPort::SerialPortError &error);
+    void processBuffer();
+
+private:
+    QTimer *m_reconnectTimer = nullptr;
+    QSerialPort *m_serialPort = nullptr;
+    bool m_available = false;
+    QByteArray m_dataBuffer;
+
+    quint8 calculateChecksum(const QByteArray &data);
+
+    void setAvailable(bool available);
+};
+
+#endif // ZIGBEEINTERFACETI_H

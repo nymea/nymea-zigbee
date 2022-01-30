@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 *
-* Copyright 2013 - 2020, nymea GmbH
+* Copyright 2013 - 2021, nymea GmbH
 * Contact: contact@nymea.io
 *
 * This file is part of nymea-zigbee.
@@ -235,6 +235,12 @@ void ZigbeeUartAdapterMonitor::addAdapterInternally(const QString &serialPort)
         } else if (serialPortInfo.manufacturer().toLower().contains("nxp")) {
             adapter.setHardwareRecognized(true);
             adapter.setBackendType(Zigbee::ZigbeeBackendTypeNxp);
+            adapter.setBaudRate(115200);
+        }
+        QStringList zStackModels = {"cc2530", "cc2531", "cc2538", "cc1352p", "cc2652p", "cc2652r", "cc2652rb", "sonoff zigbee 3.0 usb"};
+        if (QRegExp(".*(" + zStackModels.join("|") + ").*").exactMatch(serialPortInfo.description().toLower())) {
+            adapter.setHardwareRecognized(true);
+            adapter.setBackendType(Zigbee::ZigbeeBackendTypeTi);
             adapter.setBaudRate(115200);
         }
 
