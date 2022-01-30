@@ -451,8 +451,8 @@ void ZigbeeNetwork::addNodeInternally(ZigbeeNode *node)
 
 void ZigbeeNetwork::removeNodeInternally(ZigbeeNode *node)
 {
-    if (!m_nodes.contains(node)) {
-        qCWarning(dcZigbeeNetwork()) << "Try to remove node" << node << "but not in the node list.";
+    if (!m_nodes.contains(node) && !m_uninitializedNodes.contains(node)) {
+        qCWarning(dcZigbeeNetwork()) << "Cannot remove unknown node:" << node;
         return;
     }
 
@@ -461,6 +461,7 @@ void ZigbeeNetwork::removeNodeInternally(ZigbeeNode *node)
     }
 
     m_nodes.removeAll(node);
+    m_uninitializedNodes.removeAll(node);
     emit nodeRemoved(node);
 
     m_database->removeNode(node);
