@@ -206,9 +206,6 @@ public:
 
     ZigbeeClusterReply *resetToFactoryDefaults();
 
-private:
-    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
-
 };
 
 #endif // ZIGBEECLUSTERBASIC_H

@@ -112,8 +112,7 @@ ZigbeeClusterDoorLock::DoorState ZigbeeClusterDoorLock::doorState() const
 
 void ZigbeeClusterDoorLock::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
+    ZigbeeCluster::setAttribute(attribute);
 
     switch (attribute.id()) {
     case AttributeLockState:

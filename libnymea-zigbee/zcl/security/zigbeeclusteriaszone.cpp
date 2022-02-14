@@ -91,8 +91,7 @@ ZigbeeClusterReply *ZigbeeClusterIasZone::sendZoneStatusChangeNotification(Zigbe
 
 void ZigbeeClusterIasZone::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
+    ZigbeeCluster::setAttribute(attribute);
 
     if (attribute.id() == AttributeZoneState) {
         quint8 zoneStateInt = attribute.dataType().toUInt8();

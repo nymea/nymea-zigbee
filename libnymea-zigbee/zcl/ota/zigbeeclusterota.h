@@ -101,8 +101,6 @@ protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
 private:
-    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
-
     FileVersion parseFileVersion(quint32 fileVersionValue);
 };
 

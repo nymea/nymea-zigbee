@@ -65,9 +65,6 @@ public:
 signals:
     void commandSent(ZigbeeClusterScenes::Command command, quint16 groupId, quint8 sceneId, quint8 transactionSequenceNumber);
 
-private:
-    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
-
 protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 

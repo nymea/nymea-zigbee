@@ -110,8 +110,7 @@ quint8 ZigbeeClusterLevelControl::currentLevel() const
 
 void ZigbeeClusterLevelControl::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
+    ZigbeeCluster::setAttribute(attribute);
 
     // Parse the information for convenience
     if (attribute.id() == AttributeCurrentLevel) {

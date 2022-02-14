@@ -75,9 +75,6 @@ public:
     ZigbeeClusterReply *identifyQuery();
     ZigbeeClusterReply *triggerEffect(Effect effect, quint8 effectVariant = 0x00);
 
-private:
-    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
-
 protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 

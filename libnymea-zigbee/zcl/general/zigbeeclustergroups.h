@@ -63,9 +63,6 @@ public:
 
 signals:
 
-private:
-    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
-
 
 };
 
