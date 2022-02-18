@@ -176,7 +176,7 @@ void ZigbeeNode::startInitialization()
 {
     setState(StateInitializing);
 
-    /* Node initialisation steps (sequentially)
+    /* Node initialisation steps
       * - Node descriptor
       * - Power descriptor
       * - Active endpoints
@@ -187,6 +187,8 @@ void ZigbeeNode::startInitialization()
       */
 
     initNodeDescriptor();
+    initPowerDescriptor();
+    initEndpoints();
 }
 
 ZigbeeReply *ZigbeeNode::removeAllBindings()
@@ -266,20 +268,19 @@ ZigbeeReply *ZigbeeNode::readBindingTableEntries()
 
 void ZigbeeNode::initNodeDescriptor()
 {
-    qCDebug(dcZigbeeNode()) << "Request node descriptor from" << this;
+    qCDebug(dcZigbeeNode()) << "Requesting node descriptor from" << this;
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestNodeDescriptor();
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read node descriptor" << reply->error();
             m_requestRetry++;
             if (m_requestRetry < m_requestRetriesMax) {
-                qCDebug(dcZigbeeNode()) << "Retry to request node descriptor" << m_requestRetry << "/" << m_requestRetriesMax;
+                qCDebug(dcZigbeeNode()) << "Retrying to request node descriptor" << m_requestRetry << "/" << m_requestRetriesMax;
                 QTimer::singleShot(500, this, [=](){ initNodeDescriptor(); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read node descriptor from" << this << "after" << m_requestRetriesMax << "attempts.";
                 m_requestRetry = 0;
                 qCWarning(dcZigbeeNode()) << this << "is out of spec. A device must implement the node descriptor. Continue anyways with the power decriptor...";
-                initPowerDescriptor();
             }
             return;
         }
@@ -289,27 +290,23 @@ void ZigbeeNode::initNodeDescriptor()
         qCDebug(dcZigbeeNode()) << m_nodeDescriptor;
         m_nodeDescriptorAvailable = true;
         m_requestRetry = 0;
-
-        // Continue with the power descriptor
-        initPowerDescriptor();
     });
 }
 
 void ZigbeeNode::initPowerDescriptor()
 {
-    qCDebug(dcZigbeeNode()) << "Request power descriptor from" << this;
+    qCDebug(dcZigbeeNode()) << "Requesting power descriptor from" << this;
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestPowerDescriptor();
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read power descriptor" << reply->error();
             if (m_requestRetry < m_requestRetriesMax) {
                 m_requestRetry++;
-                qCDebug(dcZigbeeNode()) << "Retry to request power descriptor from" << this << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
+                qCDebug(dcZigbeeNode()) << "Retrying to request power descriptor from" << this << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
                 QTimer::singleShot(500, this, [=](){ initPowerDescriptor(); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read power descriptor from" << this << "after" << m_requestRetriesMax << "attempts. Giving up reading power descriptor.";
                 qCWarning(dcZigbeeNode()) << this << "is out of spec. A device must implement the power descriptor. Continue anyways with the endpoint initialization...";
-                initEndpoints();
             }
             return;
         }
@@ -323,22 +320,19 @@ void ZigbeeNode::initPowerDescriptor()
         qCDebug(dcZigbeeNode()) << m_powerDescriptor;
         m_powerDescriptorAvailable = true;
         m_requestRetry = 0;
-
-        // Continue with endpoint fetching
-        initEndpoints();
     });
 }
 
 void ZigbeeNode::initEndpoints()
 {
-    qCDebug(dcZigbeeNode()) << "Request active endpoints from" << this;
+    qCDebug(dcZigbeeNode()) << "Requesting active endpoints from" << this;
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestActiveEndpoints();
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read active endpoints" << reply->error();
             if (m_requestRetry < m_requestRetriesMax) {
                 m_requestRetry++;
-                qCDebug(dcZigbeeNode()) << "Retry to request active endpoints from" << this << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
+                qCDebug(dcZigbeeNode()) << "Retrying to request active endpoints from" << this << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
                 QTimer::singleShot(500, this, [=](){ initEndpoints(); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read active endpoints from" << this << "after" << m_requestRetriesMax << "attempts. Giving up reading endpoints.";
@@ -381,14 +375,14 @@ void ZigbeeNode::initEndpoints()
 
 void ZigbeeNode::initEndpoint(quint8 endpointId)
 {
-    qCDebug(dcZigbeeNode()) << "Read simple descriptor of endpoint" << ZigbeeUtils::convertByteToHexString(endpointId);
+    qCDebug(dcZigbeeNode()) << "Reading simple descriptor of endpoint" << ZigbeeUtils::convertByteToHexString(endpointId);
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestSimpleDescriptor(endpointId);
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply, endpointId](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read simple descriptor for endpoint" << endpointId << reply->error();
             if (m_requestRetry < m_requestRetriesMax) {
                 m_requestRetry++;
-                qCDebug(dcZigbeeNode()) << "Retry to request simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
+                qCDebug(dcZigbeeNode()) << "Retrying to request simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << m_requestRetry << "/" << m_requestRetriesMax << "attempts.";
                 QTimer::singleShot(500, this, [=](){ initEndpoint(endpointId); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read simple descriptor from" << this << ZigbeeUtils::convertByteToHexString(endpointId) << "after" << m_requestRetriesMax << "attempts. Giving up initializing endpoint" << endpointId;
