@@ -76,7 +76,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestNetworkAddress()
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -121,7 +121,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestIeeeAddress()
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -164,7 +164,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestNodeDescriptor()
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -207,7 +207,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestPowerDescriptor()
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -249,7 +249,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestActiveEndpoints()
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -291,7 +291,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestSimpleDescriptor(quint8 endp
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -339,7 +339,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestBindGroupAddress(quint8 sour
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -389,7 +389,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestBindIeeeAddress(quint8 sourc
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -441,7 +441,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestUnbind(const ZigbeeDevicePro
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -484,7 +484,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestBindRegister(const ZigbeeAdd
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -535,7 +535,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLeaveNetwork(bool rejoin
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -576,7 +576,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLqi(quint8 startIndex)
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -618,7 +618,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtBind(quint8 startIndex)
 
     // Send the request, on finished read the confirm information
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zdoReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
         if (!verifyNetworkError(zdoReply, networkReply)) {
             finishZdoReply(zdoReply);
             return;
@@ -668,6 +668,9 @@ bool ZigbeeDeviceObject::verifyNetworkError(ZigbeeDeviceObjectReply *zdoReply, Z
         // The request has been transported successfully to he destination, now
         // wait for the expected indication or check if we already recieved it
         zdoReply->m_apsConfirmReceived = true;
+        if (!zdoReply->m_zdpIndicationReceived) {
+            zdoReply->m_timeoutTimer.start();
+        }
         success = true;
         break;
     case ZigbeeNetworkReply::ErrorInterfaceError:
@@ -719,6 +722,7 @@ void ZigbeeDeviceObject::finishZdoReply(ZigbeeDeviceObjectReply *zdoReply)
     }
 
     m_pendingReplies.remove(zdoReply->transactionSequenceNumber());
+    zdoReply->m_timeoutTimer.stop();
     zdoReply->finished();
 }
 

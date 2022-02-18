@@ -27,11 +27,17 @@
 
 #include "zigbeedeviceobjectreply.h"
 
+#include <QTimer>
+
 ZigbeeDeviceObjectReply::ZigbeeDeviceObjectReply(const ZigbeeNetworkRequest &request, QObject *parent) :
     QObject(parent),
     m_request(request)
 {
-
+    m_timeoutTimer.setInterval(5000);
+    connect(&m_timeoutTimer, &QTimer::timeout, this, [this](){
+        m_error = ErrorTimeout;
+        emit finished();
+    });
 }
 
 void ZigbeeDeviceObjectReply::setZigbeeApsStatus(Zigbee::ZigbeeApsStatus status)
