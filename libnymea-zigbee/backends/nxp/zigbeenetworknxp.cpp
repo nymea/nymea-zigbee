@@ -114,11 +114,6 @@ void ZigbeeNetworkNxp::setPermitJoining(quint8 duration, quint16 address)
         qCDebug(dcZigbeeNetwork()) << "Disable permit join on"<< ZigbeeUtils::convertUint16ToHexString(address);
     }
 
-    // Note: will be reseted if permit join will not work
-    setPermitJoiningEnabled(duration > 0);
-    setPermitJoiningDuration(duration);
-    setPermitJoiningRemaining(duration);
-
     if (address == 0x0000) {
         // Only the coordinator is allowed to join the network
         qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator node only to" << duration << "[s]";
@@ -127,15 +122,9 @@ void ZigbeeNetworkNxp::setPermitJoining(quint8 duration, quint16 address)
             qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator finished" << reply->status();
             if (reply->status() != Nxp::StatusSuccess) {
                 qCWarning(dcZigbeeNetwork()) << "Failed to set permit join status in coordinator";
-                setPermitJoiningEnabled(false);
-                setPermitJoiningDuration(duration);
+                setPermitJoiningState(false);
             } else {
-                setPermitJoiningEnabled(duration > 0);
-                setPermitJoiningDuration(duration);
-                setPermitJoiningRemaining(duration);
-                if (duration > 0) {
-                    m_permitJoinTimer->start();
-                }
+                setPermitJoiningState(duration > 0, duration);
             }
         });
 
@@ -149,21 +138,12 @@ void ZigbeeNetworkNxp::setPermitJoining(quint8 duration, quint16 address)
     connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply, duration, address](){
         if (reply->zigbeeApsStatus() != Zigbee::ZigbeeApsStatusSuccess) {
             qCWarning(dcZigbeeNetwork()) << "Could not set permit join to" << duration << ZigbeeUtils::convertUint16ToHexString(address) << reply->zigbeeApsStatus();
-            setPermitJoiningEnabled(false);
-            setPermitJoiningDuration(duration);
-            m_permitJoinTimer->stop();
+            setPermitJoiningState(false);
             return;
         }
 
         qCDebug(dcZigbeeNetwork()) << "Permit join request finished successfully";
-        setPermitJoiningEnabled(duration > 0);
-        setPermitJoiningDuration(duration);
-        setPermitJoiningRemaining(duration);
-        if (duration > 0) {
-            m_permitJoinTimer->start();
-        } else {
-            m_permitJoinTimer->stop();
-        }
+        setPermitJoiningState(duration > 0, duration);
 
         if (address == Zigbee::BroadcastAddressAllRouters || address == 0x0000) {
             qCDebug(dcZigbeeNetwork()) << "Set permit join in the coordinator node to" << duration << "[s]";
@@ -616,7 +596,7 @@ void ZigbeeNetworkNxp::startNetwork()
 {
     loadNetwork();
 
-    setPermitJoiningEnabled(false);
+    setPermitJoiningState(false);
 
     if (!m_controller->enable(serialPortName(), serialBaudrate())) {
         setState(StateOffline);

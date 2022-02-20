@@ -163,6 +163,12 @@ private:
 
     void printNetwork();
 
+    // Permit join
+    QTimer *m_permitJoinTimer = nullptr;
+    bool m_permitJoiningEnabled = false;
+    quint8 m_permitJoiningDuration = 120;
+    quint8 m_permitJoiningRemaining = 0;
+
 private:
     void addNodeInternally(ZigbeeNode *node);
     void removeNodeInternally(ZigbeeNode *node);
@@ -177,19 +183,11 @@ protected:
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent);
     ZigbeeNode *createNode(quint16 shortAddress, const ZigbeeAddress &extendedAddress, quint8 macCapabilities, QObject *parent);
 
-    // Permit join
-    QTimer *m_permitJoinTimer = nullptr;
-    bool m_permitJoiningEnabled = false;
-    quint8 m_permitJoiningDuration = 120;
-    quint8 m_permitJoiningRemaining = 0;
-
     QTimer *m_reachableRefreshTimer = nullptr;
     QList<ZigbeeAddress> m_reachableRefreshAddresses;
     void evaluateNextNodeReachableState();
 
-    void setPermitJoiningEnabled(bool permitJoiningEnabled);
-    void setPermitJoiningDuration(quint8 duration);
-    void setPermitJoiningRemaining(quint8 remaining);
+    void setPermitJoiningState(bool permitJoiningEnabled, quint8 duration = 0);
 
     void clearSettings();
 
