@@ -170,9 +170,12 @@ public:
         ClusterIdIasWd   = 0x0502,
 
         // Smart energy
-        ClusterIdPrice          = 0x0700,
-        ClusterIdLoadControl    = 0x0701,
-        ClusterIdSimpleMetering = 0x0702,
+        ClusterIdPrice                        = 0x0700,
+        ClusterIdDemandResponseAndLoadControl = 0x0701,
+        ClusterIdMetering                     = 0x0702,
+        ClusterIdMessaging                    = 0x0703,
+        ClusterIdTunneling                    = 0x0704,
+        ClusterIdKeyEstablishment             = 0x0800,
 
         // ZLL
         ClusterIdTouchlinkCommissioning = 0x1000,

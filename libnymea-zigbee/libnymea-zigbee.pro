@@ -41,6 +41,7 @@ SOURCES += \
     zcl/hvac/zigbeeclusterthermostat.cpp \
     zcl/lighting/zigbeeclustercolorcontrol.cpp \
     zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.cpp \
+    zcl/measurement/zigbeeclusterelectricalmeasurement.cpp \
     zcl/measurement/zigbeeclusterilluminancemeasurment.cpp \
     zcl/measurement/zigbeeclusteroccupancysensing.cpp \
     zcl/measurement/zigbeeclusterpressuremeasurement.cpp \
@@ -48,6 +49,7 @@ SOURCES += \
     zcl/measurement/zigbeeclustertemperaturemeasurement.cpp \
     zcl/ota/zigbeeclusterota.cpp \
     zcl/security/zigbeeclusteriaszone.cpp \
+    zcl/smartenergy/zigbeeclustermetering.cpp \
     zcl/zigbeecluster.cpp \
     zcl/zigbeeclusterattribute.cpp \
     zcl/zigbeeclusterlibrary.cpp \
@@ -109,6 +111,7 @@ HEADERS += \
     zcl/hvac/zigbeeclusterthermostat.h \
     zcl/lighting/zigbeeclustercolorcontrol.h \
     zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.h \
+    zcl/measurement/zigbeeclusterelectricalmeasurement.h \
     zcl/measurement/zigbeeclusterilluminancemeasurment.h \
     zcl/measurement/zigbeeclusteroccupancysensing.h \
     zcl/measurement/zigbeeclusterpressuremeasurement.h \
@@ -116,6 +119,7 @@ HEADERS += \
     zcl/measurement/zigbeeclustertemperaturemeasurement.h \
     zcl/ota/zigbeeclusterota.h \
     zcl/security/zigbeeclusteriaszone.h \
+    zcl/smartenergy/zigbeeclustermetering.h \
     zcl/zigbeecluster.h \
     zcl/zigbeeclusterattribute.h \
     zcl/zigbeeclusterlibrary.h \
