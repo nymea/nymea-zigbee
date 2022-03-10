@@ -135,7 +135,7 @@ ZigbeeClusterReply *ZigbeeCluster::configureReporting(QList<ZigbeeClusterLibrary
 }
 
 
-ZigbeeClusterReply *ZigbeeCluster::executeGlobalCommand(quint8 command, const QByteArray &payload, quint16 manufacturerCode)
+ZigbeeClusterReply *ZigbeeCluster::executeGlobalCommand(quint8 command, const QByteArray &payload, quint16 manufacturerCode, quint8 transactionSequenceNumber)
 {
     // Build the request
     ZigbeeNetworkRequest request = createGeneralRequest();
@@ -165,7 +165,7 @@ ZigbeeClusterReply *ZigbeeCluster::executeGlobalCommand(quint8 command, const QB
     if (manufacturerCode != 0) {
         header.manufacturerCode = manufacturerCode;
     }
-    header.transactionSequenceNumber = m_transactionSequenceNumber++;
+    header.transactionSequenceNumber = transactionSequenceNumber;
 
     // Put them together
     ZigbeeClusterLibrary::Frame frame;
@@ -218,7 +218,7 @@ ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const Q
     ZigbeeClusterLibrary::Header header;
     header.frameControl = frameControl;
     header.command = command;
-    header.transactionSequenceNumber = m_transactionSequenceNumber++;
+    header.transactionSequenceNumber = newTransactionSequenceNumber();
 
     // Build ZCL frame
     ZigbeeClusterLibrary::Frame frame;
@@ -406,9 +406,6 @@ void ZigbeeCluster::finishZclReply(ZigbeeClusterReply *zclReply)
 
 void ZigbeeCluster::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
-    // Increase the tsn for continuous id increasing on both sides
-    m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
     // Warn about the unhandled cluster indication, you can override this method in cluster implementations
     qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
 }
@@ -422,6 +419,12 @@ void ZigbeeCluster::updateOrAddAttribute(const ZigbeeClusterAttribute &attribute
         m_attributes.insert(attribute.id(), attribute);
         emit attributeChanged(attribute);
     }
+}
+
+quint8 ZigbeeCluster::newTransactionSequenceNumber()
+{
+    static quint8 tsn = 1;
+    return tsn++;
 }
 
 void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const ZigbeeClusterLibrary::Frame &frame)
@@ -452,8 +455,6 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
             }
         }
 
-        // Increase the tsn for continuous id increasing on both sides
-        m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
         return;
     }
 
@@ -472,8 +473,6 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
                 setAttribute(ZigbeeClusterAttribute(attributeId, dataType));
             }
 
-            // Increase the tsn for continuous id increasing on both sides
-            m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
             return;
         }
     }

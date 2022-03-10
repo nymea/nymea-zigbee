@@ -131,9 +131,6 @@ void ZigbeeClusterDoorLock::processDataIndication(ZigbeeClusterLibrary::Frame fr
 {
     qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
 
-    // Increase the tsn for continuous id increasing on both sides
-    m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
     switch (m_direction) {
     case Client:
         // If the client cluster sends data to a server cluster (independent which), the command was executed on the device like button pressed

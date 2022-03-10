@@ -113,9 +113,6 @@ void ZigbeeClusterIasZone::processDataIndication(ZigbeeClusterLibrary::Frame fra
 {
     qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
 
-    // Increase the tsn for continuous id increasing on both sides
-    m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
     switch (m_direction) {
     case Client:
         // TODO: handle client frames
@@ -161,7 +158,7 @@ void ZigbeeClusterIasZone::processDataIndication(ZigbeeClusterLibrary::Frame fra
                                            << zoneType << "Manufacturer code:" << ZigbeeUtils::convertUint16ToHexString(manufacturerCode);
                 // Update the ZoneState attribute
                 setAttribute(ZigbeeClusterAttribute(AttributeZoneType, ZigbeeDataType(Zigbee::Enum16, frame.payload.left(2))));
-                emit zoneEnrollRequest(zoneType, manufacturerCode);
+                emit zoneEnrollRequest(zoneType, manufacturerCode, frame.header.transactionSequenceNumber);
 
                 // Respond with default response if enabled
                 if (!frame.header.frameControl.disableDefaultResponse) {

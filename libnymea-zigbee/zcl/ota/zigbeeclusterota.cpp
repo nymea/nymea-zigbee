@@ -59,9 +59,6 @@ void ZigbeeClusterOta::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
     qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame;
 
-    // Increase the tsn for continuous id increasing on both sides
-    m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
     switch (m_direction) {
     case Client:
         if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {

@@ -129,16 +129,13 @@ void ZigbeeClusterLevelControl::setAttribute(const ZigbeeClusterAttribute &attri
 
 void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
-    // Increase the tsn for continuous id increasing on both sides
-    m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
     switch (m_direction) {
     case Client:
         // If the client cluster sends data to a server cluster (independent which), the command was executed on the device like button pressed
         if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {
             // Read the payload which is
             Command command = static_cast<Command>(frame.header.command);
-            emit commandSent(command, frame.payload);
+            emit commandSent(command, frame.payload, frame.header.transactionSequenceNumber);
 
             bool withOnOff = false;
             switch (command) {
@@ -151,7 +148,7 @@ void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Fram
                 payloadStream >> level >> transitionTime;
                 withOnOff = command == CommandMoveToLevelWithOnOff;
                 qCDebug(dcZigbeeCluster()).noquote().nospace() << "Command received from " << m_node << " " << m_endpoint << " " << this << " " << command << " withOnOff: " << withOnOff << " level: 0x" << QString::number(level, 16) << " transitionTime: 0x" << QString::number(transitionTime, 16);
-                emit commandMoveToLevelSent(withOnOff, level, transitionTime);
+                emit commandMoveToLevelSent(withOnOff, level, transitionTime, frame.header.transactionSequenceNumber);
                 break;
             }
             case CommandStepWithOnOff:
@@ -163,7 +160,7 @@ void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Fram
                 payloadStream >> stepModeValue >> stepSize >> transitionTime;
                 withOnOff = command == CommandMoveToLevelWithOnOff;
                 qCDebug(dcZigbeeCluster()).noquote().nospace() << "Command received from " << m_node << " " << m_endpoint << " " << this << " " << command << " withOnOff: " << withOnOff << " stepModeValue: 0x" << QString::number(stepModeValue, 16) << " stepSize: 0x" << QString::number(stepSize, 16) << " transitionTime: 0x" << QString::number(transitionTime, 16);
-                emit commandStepSent(withOnOff, static_cast<StepMode>(stepModeValue), stepSize, transitionTime);
+                emit commandStepSent(withOnOff, static_cast<StepMode>(stepModeValue), stepSize, transitionTime, frame.header.transactionSequenceNumber);
                 break;
             }
             case CommandMoveWithOnOff:
@@ -175,9 +172,14 @@ void ZigbeeClusterLevelControl::processDataIndication(ZigbeeClusterLibrary::Fram
                 payloadStream >> moveModeValue >> rate;
                 withOnOff = command == CommandMoveToLevelWithOnOff;
                 qCDebug(dcZigbeeCluster()).noquote().nospace() << "Command received from " << m_node << " " << m_endpoint << " " << this << " " << command << " withOnOff:" << withOnOff <<  " moveModeValue: 0x" << QString::number(moveModeValue, 16) << " rate: 0x" << QString::number(rate, 16);
-                emit commandMoveSent(withOnOff, static_cast<MoveMode>(moveModeValue), rate);
+                emit commandMoveSent(withOnOff, static_cast<MoveMode>(moveModeValue), rate, frame.header.transactionSequenceNumber);
                 break;
             }
+            case CommandStopWithOnOff:
+            case CommandStop:
+                withOnOff = command == CommandMoveToLevelWithOnOff;
+                emit commandStopSent(withOnOff, frame.header.transactionSequenceNumber);
+                break;
             default:
                 qCDebug(dcZigbeeCluster()).noquote().nospace() << "Command received from " << m_node << " " << m_endpoint << " " << this << " " << command << " payload: 0x" << ZigbeeUtils::convertByteArrayToHexString(frame.payload);
                 break;

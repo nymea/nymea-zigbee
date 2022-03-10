@@ -72,9 +72,6 @@ void ZigbeeClusterIdentify::processDataIndication(ZigbeeClusterLibrary::Frame fr
     Command command = static_cast<Command>(frame.header.command);
     qCDebug(dcZigbeeCluster()) << "Processing cluster frame" << m_node << m_endpoint << this << frame << command;
 
-    // Increase the tsn for continuouse id increasing on both sides
-    m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
     switch (command) {
     case CommandIdentifyQuery:
         // We are not identifying, we can ignore the command according to the specs

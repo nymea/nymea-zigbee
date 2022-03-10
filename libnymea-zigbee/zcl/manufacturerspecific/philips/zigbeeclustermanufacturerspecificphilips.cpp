@@ -43,9 +43,6 @@ void ZigbeeClusterManufacturerSpecificPhilips::processDataIndication(ZigbeeClust
 {
     qCDebug(dcZigbeeCluster()) << "Processing manufacturer specific (Philips) cluster frame" << m_node << m_endpoint << this << frame;
 
-    // Increase the tsn for continuous id increasing on both sides
-    m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
-
     switch (m_direction) {
     case Client:
         qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
@@ -60,7 +57,7 @@ void ZigbeeClusterManufacturerSpecificPhilips::processDataIndication(ZigbeeClust
                 quint8 button; quint16 unknown1; quint8 unknown2; quint8 operation;
                 payloadStream >> button >> unknown1 >> unknown2 >> operation;
                 qCDebug(dcZigbeeCluster()) << "Received manufacturer specific (Philips) button press. Button:" << button << "Operation:" << operation;
-                emit buttonPressed(button, Operation(operation));
+                emit buttonPressed(button, Operation(operation), frame.header.transactionSequenceNumber);
                 break;
             }
             default:

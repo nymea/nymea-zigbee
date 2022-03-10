@@ -94,12 +94,12 @@ signals:
     void powerChanged(bool power);
 
     // Client cluster signals
-    void commandSent(Command command, const QByteArray &parameters = QByteArray());
+    void commandSent(ZigbeeClusterOnOff::Command command, const QByteArray &parameters, quint8 transactionSequenceNumber);
     // On and off time is in 1/10 seconds
-    void commandOnWithTimedOffSent(bool acceptOnlyWhenOn, quint16 onTime, quint16 offTime);
+    void commandOnWithTimedOffSent(bool acceptOnlyWhenOn, quint16 onTime, quint16 offTime, quint8 transactionSequenceNumber);
 
     // On and off time is in 1/10 seconds
-    void commandOffWithEffectSent(Effect effect, quint8 effectVariant);
+    void commandOffWithEffectSent(ZigbeeClusterOnOff::Effect effect, quint8 effectVariant, quint8 transactionSequenceNumber);
 };
 
 #endif // ZIGBEECLUSTERONOFF_H
