@@ -491,9 +491,9 @@ void ZigbeeNetworkDeconz::runNetworkInitProcess()
                 }
 
                 if (!m_firmwareVersion.isEmpty()) {
-                    m_controller->setFirmwareVersionString(QString("%1 - %2").arg(m_firmwareVersion).arg(m_protocolVersion));
+                    m_controller->setFirmwareVersion(QString("%1 - %2").arg(m_firmwareVersion).arg(m_protocolVersion));
                 } else {
-                    m_controller->setFirmwareVersionString(m_protocolVersion);
+                    m_controller->setFirmwareVersion(m_protocolVersion);
                 }
 
                 qCDebug(dcZigbeeNetwork()) << "Reading current network state";

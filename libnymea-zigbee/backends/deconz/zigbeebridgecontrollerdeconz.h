@@ -83,7 +83,6 @@ public:
     ~ZigbeeBridgeControllerDeconz() override;
 
     DeconzNetworkConfiguration networkConfiguration() const;
-    void setFirmwareVersionString(const QString &firmwareVersion);
 
     Deconz::NetworkState networkState() const;
     void rebootController();
