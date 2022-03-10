@@ -1,3 +1,25 @@
+nymea-zigbee (1.0.0) xenial; urgency=medium
+
+  [ Michael Zanetti ]
+  * Exclude docs and firmware binaries from dpkg source package
+  * Remove 1 from lib name
+  * Cleaner .gitignore
+  * Refactor handling of TSNs in ZCL to allow the application using it.
+  * Add support for TI z-Stack based adapters
+  * Allow removing uninitialized nodes
+  * Fix debug print for ZigbeeNetwork errors
+  * deConz: Remove unused/redundant firmware version string members
+  * Add support for floating point attribute parsing
+  * Add helpers for mandatory attributes in AnalogInput cluster
+  * Simplify cluster inheritance
+  * More work on the thermostat cluster
+  * Timeout ZDO replies
+  * Consolidate permit joining timer
+
+  [ Jenkins ]
+
+ -- Jenkins <jenkins@nymea.io>  Thu, 10 Mar 2022 12:33:51 +0100
+
 nymea-zigbee (0.1.4) xenial; urgency=medium
 
   [ Michael Zanetti ]
