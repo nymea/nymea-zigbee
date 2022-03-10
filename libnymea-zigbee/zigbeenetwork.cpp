@@ -49,7 +49,7 @@ ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
             m_permitJoinTimer->stop();
             setPermitJoining(0);
         } else {
-            setPermitJoiningRemaining(m_permitJoiningRemaining);
+            setPermitJoiningState(m_permitJoiningRemaining, m_permitJoiningRemaining);
         }
     });
 
@@ -244,38 +244,6 @@ quint8 ZigbeeNetwork::permitJoiningDuration() const
 quint8 ZigbeeNetwork::permitJoiningRemaining() const
 {
     return m_permitJoiningRemaining;
-}
-
-void ZigbeeNetwork::setPermitJoiningEnabled(bool permitJoiningEnabled)
-{
-    if (m_permitJoiningEnabled == permitJoiningEnabled)
-        return;
-
-    m_permitJoiningEnabled = permitJoiningEnabled;
-    emit permitJoiningEnabledChanged(m_permitJoiningEnabled);
-
-    if (!m_permitJoiningEnabled) {
-        m_permitJoinTimer->stop();
-        setPermitJoiningRemaining(0);
-    }
-}
-
-void ZigbeeNetwork::setPermitJoiningDuration(quint8 duration)
-{
-    if (m_permitJoiningDuration == duration)
-        return;
-
-    m_permitJoiningDuration = duration;
-    emit permitJoinDurationChanged(m_permitJoiningDuration);
-}
-
-void ZigbeeNetwork::setPermitJoiningRemaining(quint8 remaining)
-{
-    if (m_permitJoiningRemaining == remaining)
-        return;
-
-    m_permitJoiningRemaining = remaining;
-    emit permitJoinRemainingChanged(m_permitJoiningRemaining);
 }
 
 quint8 ZigbeeNetwork::generateSequenceNumber()
@@ -515,6 +483,28 @@ void ZigbeeNetwork::evaluateNextNodeReachableState()
     });
 }
 
+void ZigbeeNetwork::setPermitJoiningState(bool permitJoiningEnabled, quint8 duration)
+{
+    if (permitJoiningEnabled) {
+        if (m_permitJoiningDuration != duration) {
+            m_permitJoiningDuration = duration;
+            emit permitJoinDurationChanged(duration);
+        }
+        m_permitJoiningRemaining = duration;
+        m_permitJoinTimer->start();
+    } else {
+        m_permitJoiningDuration = 0;
+        emit permitJoinDurationChanged(0);
+        m_permitJoiningRemaining = 0;
+        m_permitJoinTimer->stop();
+    }
+
+    if (m_permitJoiningEnabled != permitJoiningEnabled) {
+        m_permitJoiningEnabled = permitJoiningEnabled;
+        emit permitJoiningEnabledChanged(permitJoiningEnabled);
+    }
+}
+
 void ZigbeeNetwork::loadNetwork()
 {
     if (m_networkLoaded) {
@@ -569,7 +559,7 @@ void ZigbeeNetwork::clearSettings()
     setChannel(0);
     setSecurityConfiguration(ZigbeeSecurityConfiguration());
     setState(StateUninitialized);
-    setPermitJoiningEnabled(false);
+    setPermitJoiningState(false);
     m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 }
 

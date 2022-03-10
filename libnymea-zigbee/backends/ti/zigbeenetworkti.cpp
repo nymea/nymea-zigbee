@@ -98,15 +98,15 @@ void ZigbeeNetworkTi::setPermitJoining(quint8 duration, quint16 address)
         qCDebug(dcZigbeeNetwork()) << "Disable permit join on"<< ZigbeeUtils::convertUint16ToHexString(address);
     }
 
-    setPermitJoiningDuration(duration);
-
     ZigbeeInterfaceTiReply *requestPermitJoinReply = m_controller->requestPermitJoin(duration, address);
     connect(requestPermitJoinReply, &ZigbeeInterfaceTiReply::finished, this, [=](){
         if (requestPermitJoinReply->statusCode() != Ti::StatusCodeSuccess) {
             qCWarning(dcZigbeeNetwork()) << "Could not set permit join to" << duration << ZigbeeUtils::convertUint16ToHexString(address) << requestPermitJoinReply->statusCode();
             return;
         }
-        qCDebug(dcZigbeeNetwork()) << "Permit join request finished successfully";
+        qCDebug(dcZigbeeNetwork()) << "Permit join request finished successfully:" << duration;
+
+        setPermitJoiningState(true, duration);
 
         // Opening the green power network too
         // Todo: This should probably be somewhere else, but not yet sure how other backeds deal with this
@@ -325,11 +325,11 @@ void ZigbeeNetworkTi::onControllerAvailableChanged(bool available)
     if (!available) {
         qCWarning(dcZigbeeNetwork()) << "Hardware controller is not available any more.";
         setError(ErrorHardwareUnavailable);
-        setPermitJoiningEnabled(false);
+        setPermitJoiningState(false);
         setState(StateOffline);
         setError(ErrorHardwareUnavailable);
     } else {
-        setPermitJoiningEnabled(false);
+        setPermitJoiningState(false);
         setState(StateOffline);
         setError(ErrorNoError);
         qCDebug(dcZigbeeNetwork()) << "Hardware controller is now available.";
@@ -442,8 +442,7 @@ void ZigbeeNetworkTi::onControllerStateChanged(ZigbeeBridgeControllerTi::Control
 
 void ZigbeeNetworkTi::onPermitJoinStateChanged(quint8 duration)
 {
-    setPermitJoiningRemaining(duration);
-    setPermitJoiningEnabled(duration > 0);
+    setPermitJoiningState(duration > 0, duration);
     m_controller->setLed(duration > 0);
 }
 
@@ -493,13 +492,13 @@ void ZigbeeNetworkTi::startNetwork()
     loadNetwork();
 
     if (!m_controller->enable(serialPortName(), serialBaudrate())) {
-        setPermitJoiningEnabled(false);
+        setPermitJoiningState(false);
         setState(StateOffline);
         setError(ErrorHardwareUnavailable);
         return;
     }
 
-    setPermitJoiningEnabled(false);
+    setPermitJoiningState(false);
 }
 
 void ZigbeeNetworkTi::stopNetwork()
