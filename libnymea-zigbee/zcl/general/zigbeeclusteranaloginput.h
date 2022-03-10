@@ -56,9 +56,18 @@ public:
 
     explicit ZigbeeClusterAnalogInput(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    bool outOfService() const;
+    float presentValue() const;
+
+signals:
+    void outOfServiceChanged(bool outOfService);
+    void presentValueChanged(float presentValue);
+
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
+    bool m_outOfService = false;
+    float m_presentValue = 0;
 };
 
 #endif // ZIGBEECLUSTERANALOGINPUT_H
