@@ -600,6 +600,51 @@ QString ZigbeeDataType::toString(bool *ok) const
     return value;
 }
 
+float ZigbeeDataType::toFloat(bool *ok) const
+{
+    if (ok) *ok = true;
+    float value = 0;
+    if (m_dataType == Zigbee::FloatSemi && m_data.length() == 2) {
+        value = (m_data.at(0) & 0xFF)
+                | ((m_data.at(1) & 0xFF00) << 8);
+    } else if (m_dataType == Zigbee::FloatSingle && m_data.length() == 4) {
+        value = (m_data.at(0) & 0xFF)
+                | ((m_data.at(1) & 0xFF00) << 8)
+                | ((m_data.at(2) & 0xFF0000) << 16)
+                | ((m_data.at(3) & 0xFF000000) << 24);
+    } else {
+        if (ok) *ok = false;
+    }
+    return value;
+}
+
+double ZigbeeDataType::toDouble(bool *ok) const
+{
+    if (ok) *ok = true;
+    double value = 0;
+    if (m_dataType == Zigbee::FloatSemi && m_data.length() == 2) {
+        value = (m_data.at(0) & 0xFF)
+                | ((m_data.at(1) & 0xFF00) << 8);
+    } else if (m_dataType == Zigbee::FloatSingle && m_data.length() == 4) {
+        value = (m_data.at(0) & 0xFF)
+                | ((m_data.at(1) & 0xFF00) << 8)
+                | ((m_data.at(2) & 0xFF0000) << 16)
+                | ((m_data.at(3) & 0xFF000000) << 24);
+    } else if (m_dataType == Zigbee::FloatDouble && m_data.length() == 8) {
+        value = (m_data.at(0) & 0xFF)
+                | ((m_data.at(1) & 0xFF00) << 8)
+                | ((m_data.at(2) & 0xFF0000) << 16)
+                | ((m_data.at(3) & 0xFF000000) << 24)
+                | ((m_data.at(4) & 0xFF00000000) << 32)
+                | ((m_data.at(5) & 0xFF0000000000) << 40)
+                | ((m_data.at(6) & 0xFF000000000000) << 48)
+                | ((m_data.at(7) & 0xFF00000000000000) << 56);
+    } else {
+        if (ok) *ok = false;
+    }
+    return value;
+}
+
 Zigbee::DataType ZigbeeDataType::dataType() const
 {
     return m_dataType;

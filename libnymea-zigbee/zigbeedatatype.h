@@ -69,6 +69,9 @@ public:
     bool toBool(bool *ok = nullptr) const;
     QString toString(bool *ok = nullptr) const;
 
+    float toFloat(bool *ok = nullptr) const;
+    double toDouble(bool *ok = nullptr) const;
+
     Zigbee::DataType dataType() const;
     QString name() const;
     QString className() const;
