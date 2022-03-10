@@ -51,7 +51,7 @@ public:
         AttributePIHeatingDemand = 0x0008,
         AttributeHVACSystemTypeConfiguration = 0x0009,
 
-        AttributeLocalTemperatureCalibratioon = 0x0010,
+        AttributeLocalTemperatureCalibration = 0x0010,
         AttributeOccupiedCoolingSetpoint = 0x0011,
         AttributeOccupiedHeatingSetpoint = 0x0012,
         AttributeUnoccupiedCoolingSetpoint = 0x0013,
@@ -66,15 +66,39 @@ public:
         AttributeSystemMode = 0x001c,
         AttributeAlarmMask = 0x001d,
         AttributeThermostatRunningMode = 0x001e
-
     };
     Q_ENUM(Attribute)
 
+    enum SystemMode {
+        SystemModeOff = 0x00,
+        SystemModeAuto = 0x01,
+        SystemModeCool = 0x03,
+        SystemModeHeat = 0x04,
+        SystemModeEmergencyHeating = 0x05,
+        SystemModePrecooling = 0x06,
+        SystemModeFanOnly = 0x07,
+        SystemModeDry = 0x08,
+        SystemModeSleep = 0x09
+    };
+    Q_ENUM(SystemMode)
+
     explicit ZigbeeClusterThermostat(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
-protected:
-    void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
+    qint16 localTemperature() const;
+    qint16 occupiedCoolingSetpoint() const;
+    qint16 occupiedHeatingSetpoint() const;
 
+    // targetTemp is °C*100. e.g. 20.5°C -> 2050
+    ZigbeeClusterReply *setOccupiedHeatingSetpoint(qint16 occupiedHeatingSetpoint);
+    ZigbeeClusterReply *setOccupiedCoolingSetpoint(qint16 occupiedCoolingSetpoint);
+
+signals:
+    void localTemperatureChanged(qint16 localTemp);
+    void occupiedCoolingSetpointChanged(qint16 occupiedCoolingSetpoint);
+    void occupiedHeatingSetpointChanged(qint16 occupiedHeatingSetpoint);
+
+private:
+    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 };
 
 #endif // ZIGBEECLUSTERTHERMOSTAT_H
