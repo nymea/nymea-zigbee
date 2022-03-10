@@ -226,7 +226,7 @@ ZigbeeClusterColorControl::ColorCapabilities ZigbeeClusterColorControl::colorCap
 void ZigbeeClusterColorControl::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Attribute changed" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
+    ZigbeeCluster::setAttribute(attribute);
 
     switch (attribute.id()) {
     case AttributeColorTemperatureMireds: {

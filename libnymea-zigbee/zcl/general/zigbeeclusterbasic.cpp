@@ -40,9 +40,3 @@ ZigbeeClusterReply *ZigbeeClusterBasic::resetToFactoryDefaults()
 {
     return executeClusterCommand(ZigbeeClusterBasic::CommandResetToFactoryDefaults);
 }
-
-void ZigbeeClusterBasic::setAttribute(const ZigbeeClusterAttribute &attribute)
-{
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
-}

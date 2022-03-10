@@ -58,9 +58,6 @@ public:
 
     explicit ZigbeeClusterBinaryValue(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
-private:
-    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
-
 };
 
 #endif // ZIGBEECLUSTERBINARYVALUE_H

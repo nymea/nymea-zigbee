@@ -61,12 +61,6 @@ ZigbeeClusterReply *ZigbeeClusterIdentify::triggerEffect(ZigbeeClusterIdentify::
     return executeClusterCommand(ZigbeeClusterIdentify::CommandTriggerEffect, payload);
 }
 
-void ZigbeeClusterIdentify::setAttribute(const ZigbeeClusterAttribute &attribute)
-{
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
-}
-
 void ZigbeeClusterIdentify::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
     Command command = static_cast<Command>(frame.header.command);

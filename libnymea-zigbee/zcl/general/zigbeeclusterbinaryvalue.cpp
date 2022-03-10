@@ -33,9 +33,3 @@ ZigbeeClusterBinaryValue::ZigbeeClusterBinaryValue(ZigbeeNetwork *network, Zigbe
 {
 
 }
-
-void ZigbeeClusterBinaryValue::setAttribute(const ZigbeeClusterAttribute &attribute)
-{
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
-}

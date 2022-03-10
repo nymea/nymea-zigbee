@@ -37,12 +37,6 @@ ZigbeeClusterScenes::ZigbeeClusterScenes(ZigbeeNetwork *network, ZigbeeNode *nod
 
 }
 
-void ZigbeeClusterScenes::setAttribute(const ZigbeeClusterAttribute &attribute)
-{
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
-}
-
 void ZigbeeClusterScenes::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
     switch (m_direction) {

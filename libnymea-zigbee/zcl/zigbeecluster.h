@@ -122,12 +122,9 @@ protected:
 
     virtual void processDataIndication(ZigbeeClusterLibrary::Frame frame);
 
-    void updateOrAddAttribute(const ZigbeeClusterAttribute &attribute);
+    virtual void setAttribute(const ZigbeeClusterAttribute &attribute);
 
     static quint8 newTransactionSequenceNumber();
-
-private:
-    virtual void setAttribute(const ZigbeeClusterAttribute &attribute);
 
 signals:
     void attributeChanged(const ZigbeeClusterAttribute &attribute);

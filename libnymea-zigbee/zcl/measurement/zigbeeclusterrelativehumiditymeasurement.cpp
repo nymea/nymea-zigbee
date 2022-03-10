@@ -44,7 +44,7 @@ double ZigbeeClusterRelativeHumidityMeasurement::humidity() const
 void ZigbeeClusterRelativeHumidityMeasurement::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
+    ZigbeeCluster::setAttribute(attribute);
 
     // Parse the information for convenience
     if (attribute.id() == AttributeMeasuredValue) {

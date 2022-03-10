@@ -39,12 +39,6 @@ ZigbeeClusterOta::ZigbeeClusterOta(ZigbeeNetwork *network, ZigbeeNode *node, Zig
 
 }
 
-void ZigbeeClusterOta::setAttribute(const ZigbeeClusterAttribute &attribute)
-{
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
-    updateOrAddAttribute(attribute);
-}
-
 ZigbeeClusterOta::FileVersion ZigbeeClusterOta::parseFileVersion(quint32 fileVersionValue)
 {
     FileVersion fileVersion;
