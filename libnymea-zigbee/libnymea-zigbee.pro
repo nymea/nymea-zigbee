@@ -1,6 +1,6 @@
 include(../config.pri)
 
-TARGET = nymea-zigbee1
+TARGET = nymea-zigbee
 TEMPLATE = lib
 
 CONFIG += link_pkgconfig
