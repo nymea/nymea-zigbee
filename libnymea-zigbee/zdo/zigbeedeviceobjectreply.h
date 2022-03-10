@@ -29,6 +29,7 @@
 #define ZIGBEEDEVICEOBJECTREPLY_H
 
 #include <QObject>
+#include <QTimer>
 
 #include "zigbeedeviceprofile.h"
 #include "zigbeenetworkrequest.h"
@@ -71,6 +72,8 @@ private:
     explicit ZigbeeDeviceObjectReply(const ZigbeeNetworkRequest &request, QObject *parent = nullptr);
 
     Error m_error = ErrorNoError;
+
+    QTimer m_timeoutTimer;
 
     // Request information
     ZigbeeNetworkRequest m_request;
