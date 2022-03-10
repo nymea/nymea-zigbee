@@ -12,6 +12,8 @@ packagesExist(libudev) {
     DEFINES += DISABLE_UDEV
 }
 
+PKGCONFIG += qca2-qt5
+
 SOURCES += \
     backends/deconz/interface/zigbeeinterfacedeconz.cpp \
     backends/deconz/interface/zigbeeinterfacedeconzreply.cpp \
@@ -22,6 +24,10 @@ SOURCES += \
     backends/nxp/interface/zigbeeinterfacenxpreply.cpp \
     backends/nxp/zigbeebridgecontrollernxp.cpp \
     backends/nxp/zigbeenetworknxp.cpp \
+    backends/ti/interface/zigbeeinterfaceti.cpp \
+    backends/ti/interface/zigbeeinterfacetireply.cpp \
+    backends/ti/zigbeebridgecontrollerti.cpp \
+    backends/ti/zigbeenetworkti.cpp \
     zcl/closures/zigbeeclusterdoorlock.cpp \
     zcl/general/zigbeeclusteranaloginput.cpp \
     zcl/general/zigbeeclusteranalogoutput.cpp \
@@ -90,6 +96,11 @@ HEADERS += \
     backends/nxp/interface/zigbeeinterfacenxpreply.h \
     backends/nxp/zigbeebridgecontrollernxp.h \
     backends/nxp/zigbeenetworknxp.h \
+    backends/ti/interface/ti.h \
+    backends/ti/interface/zigbeeinterfaceti.h \
+    backends/ti/interface/zigbeeinterfacetireply.h \
+    backends/ti/zigbeebridgecontrollerti.h \
+    backends/ti/zigbeenetworkti.h \
     zcl/closures/zigbeeclusterdoorlock.h \
     zcl/general/zigbeeclusteranaloginput.h \
     zcl/general/zigbeeclusteranalogoutput.h \

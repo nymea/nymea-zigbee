@@ -42,7 +42,8 @@ class Zigbee
 public:
     enum ZigbeeBackendType {
         ZigbeeBackendTypeDeconz,
-        ZigbeeBackendTypeNxp
+        ZigbeeBackendTypeNxp,
+        ZigbeeBackendTypeTi
     };
     Q_ENUM(ZigbeeBackendType)
 

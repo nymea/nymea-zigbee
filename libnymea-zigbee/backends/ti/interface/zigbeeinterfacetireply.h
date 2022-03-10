@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 *
-* Copyright 2013 - 2021, nymea GmbH
+* Copyright 2013 - 2022, nymea GmbH
 * Contact: contact@nymea.io
 *
 * This file is part of nymea-zigbee.
@@ -25,33 +25,64 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "zigbeenetworkmanager.h"
-#include "loggingcategory.h"
+#ifndef ZIGBEEINTERFACETIREPLY_H
+#define ZIGBEEINTERFACETIREPLY_H
 
-#include "backends/nxp/zigbeenetworknxp.h"
-#include "backends/deconz/zigbeenetworkdeconz.h"
-#include "backends/ti/zigbeenetworkti.h"
+#include <QObject>
+#include <QTimer>
 
-#include <QDateTime>
+#include "ti.h"
+#include "zigbeenetworkrequest.h"
 
-QStringList ZigbeeNetworkManager::availableZigbeeBackendTypes()
+class ZigbeeInterfaceTiReply: public QObject
 {
-    return {"deCONZ", "NXP"};
-}
+    Q_OBJECT
 
-ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(const QUuid &networkUuid, Zigbee::ZigbeeBackendType backend, QObject *parent)
-{
-    // Note: required for generating random PAN ID
-    srand(static_cast<uint>(QDateTime::currentMSecsSinceEpoch() / 1000));
+    friend class ZigbeeBridgeControllerTi;
 
-    switch (backend) {
-    case Zigbee::ZigbeeBackendTypeNxp:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(networkUuid, parent));
-    case Zigbee::ZigbeeBackendTypeDeconz:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(networkUuid, parent));
-    case Zigbee::ZigbeeBackendTypeTi:
-        return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkTi(networkUuid, parent));
-    }
+public:
+    explicit ZigbeeInterfaceTiReply(QObject *parent = nullptr, int timeout = 5000);
+    explicit ZigbeeInterfaceTiReply(Ti::SubSystem subSystem, quint8 command, QObject *parent = nullptr, const QByteArray &requestPayload = QByteArray(), int timeout = 5000);
 
-    return nullptr;
-}
+    // Request content
+    Ti::SubSystem subSystem() const;
+    quint8 command() const;
+    QByteArray requestPayload() const;
+
+    QByteArray responsePayload() const;
+
+    // Response content
+    Ti::StatusCode statusCode() const;
+
+    bool timendOut() const;
+    bool aborted() const;
+    void abort();
+
+signals:
+    void timeout();
+    void finished();
+
+private slots:
+    void onTimeout();
+    void finish(Ti::StatusCode statusCode = Ti::StatusCodeSuccess);
+
+private:
+    QTimer *m_timer = nullptr;
+    bool m_timeout = false;
+    bool m_aborted = false;
+
+    void setSequenceNumber(quint8 sequenceNumber);
+
+    // Request content
+    Ti::SubSystem m_subSystem = Ti::SubSystemSys;
+    quint8 m_command = 0;
+    QByteArray m_requestPayload;
+
+    // Response content
+    Ti::StatusCode m_statusCode = Ti::StatusCodeError;
+    QByteArray m_responsePayload;
+
+
+};
+
+#endif // ZIGBEEINTERFACETIREPLY_H
