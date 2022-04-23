@@ -48,8 +48,6 @@ ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
         if (m_permitJoiningRemaining <= 0) {
             m_permitJoinTimer->stop();
             setPermitJoining(0);
-        } else {
-            setPermitJoiningState(m_permitJoiningRemaining, m_permitJoiningRemaining);
         }
     });
 
@@ -491,11 +489,13 @@ void ZigbeeNetwork::setPermitJoiningState(bool permitJoiningEnabled, quint8 dura
             emit permitJoinDurationChanged(duration);
         }
         m_permitJoiningRemaining = duration;
+        emit permitJoinRemainingChanged(m_permitJoiningRemaining);
         m_permitJoinTimer->start();
     } else {
         m_permitJoiningDuration = 0;
         emit permitJoinDurationChanged(0);
         m_permitJoiningRemaining = 0;
+        emit permitJoinRemainingChanged(0);
         m_permitJoinTimer->stop();
     }
 
