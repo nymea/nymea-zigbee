@@ -653,9 +653,15 @@ ZigbeeNetworkRequest ZigbeeDeviceObject::buildZdoRequest(quint16 zdoRequest)
 ZigbeeDeviceObjectReply *ZigbeeDeviceObject::createZigbeeDeviceObjectReply(const ZigbeeNetworkRequest &request, quint8 transactionSequenceNumber)
 {
     ZigbeeDeviceObjectReply *zdoReply = new ZigbeeDeviceObjectReply(request, this);
-    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, zdoReply, &ZigbeeDeviceObjectReply::deleteLater, Qt::QueuedConnection);
     zdoReply->m_expectedResponse =  static_cast<ZigbeeDeviceProfile::ZdoCommand>(request.clusterId() | 0x8000);
     zdoReply->m_transactionSequenceNumber = transactionSequenceNumber;
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [=](){
+        zdoReply->deleteLater();
+        m_pendingReplies.remove(transactionSequenceNumber);
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeDeviceObject()) << "ZDO request error for TSN:" << transactionSequenceNumber;
+        }
+    }, Qt::QueuedConnection);
     m_pendingReplies.insert(transactionSequenceNumber, zdoReply);
     return zdoReply;
 }
@@ -721,7 +727,6 @@ void ZigbeeDeviceObject::finishZdoReply(ZigbeeDeviceObjectReply *zdoReply)
         break;
     }
 
-    m_pendingReplies.remove(zdoReply->transactionSequenceNumber());
     zdoReply->m_timeoutTimer.stop();
     zdoReply->finished();
 }
