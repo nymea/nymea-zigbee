@@ -29,6 +29,7 @@
 #define ZIGBEECLUSTERREPLY_H
 
 #include <QObject>
+#include <QTimer>
 
 #include "zigbeenetworkrequest.h"
 #include "zigbeeclusterlibrary.h"
@@ -72,6 +73,8 @@ private:
     explicit ZigbeeClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame requestFrame, QObject *parent = nullptr);
 
     Error m_error = ErrorNoError;
+
+    QTimer m_timeoutTimer;
 
     // Request
     quint8 m_transactionSequenceNumber = 0;

@@ -27,6 +27,18 @@
 
 #include "zigbeeclusterreply.h"
 
+ZigbeeClusterReply::ZigbeeClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame requestFrame, QObject *parent) :
+    QObject(parent),
+    m_request(request),
+    m_requestFrame(requestFrame)
+{
+    m_timeoutTimer.setInterval(10000);
+    connect(&m_timeoutTimer, &QTimer::timeout, this, [this](){
+        m_error = ErrorTimeout;
+        emit finished();
+    });
+}
+
 ZigbeeClusterReply::Error ZigbeeClusterReply::error() const
 {
     return m_error;
@@ -75,12 +87,4 @@ ZigbeeClusterLibrary::Frame ZigbeeClusterReply::responseFrame() const
 bool ZigbeeClusterReply::isComplete() const
 {
     return m_apsConfirmReceived && m_zclIndicationReceived;
-}
-
-ZigbeeClusterReply::ZigbeeClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame requestFrame, QObject *parent) :
-    QObject(parent),
-    m_request(request),
-    m_requestFrame(requestFrame)
-{
-
 }
