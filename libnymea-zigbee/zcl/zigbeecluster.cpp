@@ -183,7 +183,7 @@ ZigbeeClusterReply *ZigbeeCluster::executeGlobalCommand(quint8 command, const QB
 
     ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zclReply, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {
             finishZclReply(zclReply);
             return;
@@ -203,9 +203,12 @@ ZigbeeClusterReply *ZigbeeCluster::executeGlobalCommand(quint8 command, const QB
 ZigbeeClusterReply *ZigbeeCluster::createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame)
 {
     ZigbeeClusterReply *zclReply = new ZigbeeClusterReply(request, frame, this);
-    connect(zclReply, &ZigbeeClusterReply::finished, zclReply, &ZigbeeClusterReply::deleteLater, Qt::QueuedConnection);
     zclReply->m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
     m_pendingReplies.insert(zclReply->transactionSequenceNumber(), zclReply);
+    connect(zclReply, &ZigbeeClusterReply::finished, this, [this, zclReply](){
+        zclReply->deleteLater();
+        m_pendingReplies.remove(zclReply->transactionSequenceNumber());
+    }, Qt::QueuedConnection);
     return zclReply;
 }
 
@@ -237,7 +240,7 @@ ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const Q
     ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
     qCDebug(dcZigbeeCluster()) << "Executing command" << ZigbeeUtils::convertByteToHexString(command) << ZigbeeUtils::convertByteArrayToHexString(payload);
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zclReply, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {
             finishZclReply(zclReply);
             return;
@@ -282,7 +285,7 @@ ZigbeeClusterReply *ZigbeeCluster::sendClusterServerResponse(quint8 command, qui
     ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
     qCDebug(dcZigbeeCluster()) << "Send command response" << ZigbeeUtils::convertByteToHexString(command) << "TSN:" << ZigbeeUtils::convertByteToHexString(transactionSequenceNumber) << ZigbeeUtils::convertByteArrayToHexString(payload);
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zclReply, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {
             finishZclReply(zclReply);
             return;
@@ -328,7 +331,7 @@ ZigbeeClusterReply *ZigbeeCluster::sendDefaultResponse(quint8 transactionSequenc
     ZigbeeClusterReply *zclReply = createClusterReply(request, frame);
     qCDebug(dcZigbeeCluster()) << "Send default response" << "TSN:" << ZigbeeUtils::convertByteToHexString(transactionSequenceNumber) << ZigbeeUtils::convertByteArrayToHexString(payload);
     ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
-    connect(networkReply, &ZigbeeNetworkReply::finished, this, [this, networkReply, zclReply](){
+    connect(networkReply, &ZigbeeNetworkReply::finished, zclReply, [this, networkReply, zclReply](){
         if (!verifyNetworkError(zclReply, networkReply)) {
             finishZclReply(zclReply);
             return;
@@ -365,6 +368,9 @@ bool ZigbeeCluster::verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetwo
         // The request has been transported successfully to he destination, now
         // wait for the expected indication or check if we already recieved it
         zclReply->m_apsConfirmReceived = true;
+        if (!zclReply->m_zclIndicationReceived) {
+            zclReply->m_timeoutTimer.start();
+        }
         success = true;
         break;
     case ZigbeeNetworkReply::ErrorTimeout:
@@ -404,7 +410,6 @@ bool ZigbeeCluster::verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetwo
 
 void ZigbeeCluster::finishZclReply(ZigbeeClusterReply *zclReply)
 {
-    m_pendingReplies.remove(zclReply->transactionSequenceNumber());
     qCDebug(dcZigbeeCluster()) << "ZigbeeClusterReply finished" << zclReply->request() << zclReply->requestFrame() << zclReply->responseFrame();
     // FIXME: Set the status
     emit zclReply->finished();
