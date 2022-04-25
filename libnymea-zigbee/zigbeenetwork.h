@@ -245,11 +245,15 @@ signals:
     void nodeAdded(ZigbeeNode *node);
     void nodeRemoved(ZigbeeNode *node);
 
-    // Will be emited when a node joined and starts initializing
+    // Will be emitted when a node joined and starts initializing
     void nodeJoined(ZigbeeNode *node);
 
     void permitJoiningEnabledChanged(bool permitJoiningEnabled);
     void permitJoinDurationChanged(quint8 duration);
+    // Will be emitted when the remaining duration changes in an unexpected
+    // manner. That means, it will not be emitted repeatedly every second,
+    // despite calling permitJoinRemainining() returning updated values,
+    // but it will be emitted for instance when it restarts or is aborted.
     void permitJoinRemainingChanged(quint8 remaining);
 
     void errorOccured(Error error);
