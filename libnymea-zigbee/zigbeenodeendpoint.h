@@ -61,6 +61,7 @@
 #include "zcl/measurement/zigbeeclustertemperaturemeasurement.h"
 #include "zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h"
 #include "zcl/measurement/zigbeeclusterpressuremeasurement.h"
+#include "zcl/measurement/zigbeeclusterelectricalmeasurement.h"
 
 #include "zcl/lighting/zigbeeclustercolorcontrol.h"
 
@@ -69,6 +70,8 @@
 #include "zcl/ota/zigbeeclusterota.h"
 
 #include "zcl/hvac/zigbeeclusterthermostat.h"
+
+#include "zcl/smartenergy/zigbeeclustermetering.h"
 
 #include "zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.h"
 

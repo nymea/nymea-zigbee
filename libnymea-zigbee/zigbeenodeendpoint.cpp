@@ -209,6 +209,8 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
         return new ZigbeeClusterOccupancySensing(m_network, m_node, this, direction, this);
     case ZigbeeClusterLibrary::ClusterIdPressureMeasurement:
         return new ZigbeeClusterPressureMeasurement(m_network, m_node, this, direction, this);
+    case ZigbeeClusterLibrary::ClusterIdElectricalMeasurement:
+        return new ZigbeeClusterElectricalMeasurement(m_network, m_node, this, direction, this);
 
         // Colsures
     case ZigbeeClusterLibrary::ClusterIdDoorLock:
@@ -229,6 +231,10 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
         // HVAC
     case ZigbeeClusterLibrary::ClusterIdThermostat:
         return new ZigbeeClusterThermostat(m_network, m_node, this, direction, this);
+
+        // Smart energy
+    case ZigbeeClusterLibrary::ClusterIdMetering:
+        return new ZigbeeClusterMetering(m_network, m_node, this, direction, this);
 
         // Manufacturer specific
     case ZigbeeClusterLibrary::ClusterIdManufacturerSpecificPhilips:
