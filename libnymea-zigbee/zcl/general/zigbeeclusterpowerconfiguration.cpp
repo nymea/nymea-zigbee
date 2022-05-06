@@ -41,6 +41,11 @@ double ZigbeeClusterPowerConfiguration::batteryPercentage() const
     return m_batteryPercentage;
 }
 
+ZigbeeClusterPowerConfiguration::BatteryAlarmMask ZigbeeClusterPowerConfiguration::batteryAlarmState() const
+{
+    return m_batteryAlarmState;
+}
+
 void ZigbeeClusterPowerConfiguration::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
@@ -55,6 +60,15 @@ void ZigbeeClusterPowerConfiguration::setAttribute(const ZigbeeClusterAttribute 
             emit batteryPercentageChanged(m_batteryPercentage);
         } else {
             qCWarning(dcZigbeeCluster()) << "Failed to parse attribute data"  << m_node << m_endpoint << this << attribute;
+        }
+    } else if (attribute.id() == AttributeBatteryAlarmState) {
+        bool ok;
+        quint32 alarmState = attribute.dataType().toUInt32(&ok);
+        if (ok) {
+            m_batteryAlarmState = static_cast<BatteryAlarmMask>(alarmState);
+            emit batteryAlarmStateChanged(m_batteryAlarmState);
+        } else {
+            qCWarning(dcZigbeeCluster()) << "Failed to parse attribute data" << m_node << m_endpoint << this << attribute;
         }
     }
 }
