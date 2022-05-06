@@ -37,44 +37,6 @@
 // Import all implemented cluster types
 #include "zcl/zigbeecluster.h"
 
-#include "zcl/general/zigbeeclusterbasic.h"
-#include "zcl/general/zigbeeclusteronoff.h"
-#include "zcl/general/zigbeeclusteridentify.h"
-#include "zcl/general/zigbeeclusterlevelcontrol.h"
-#include "zcl/general/zigbeeclusterpowerconfiguration.h"
-#include "zcl/general/zigbeeclustergroups.h"
-#include "zcl/general/zigbeeclusterscenes.h"
-#include "zcl/general/zigbeeclusteranaloginput.h"
-#include "zcl/general/zigbeeclusteranalogoutput.h"
-#include "zcl/general/zigbeeclusteranalogvalue.h"
-#include "zcl/general/zigbeeclusterbinaryinput.h"
-#include "zcl/general/zigbeeclusterbinaryoutput.h"
-#include "zcl/general/zigbeeclusterbinaryvalue.h"
-#include "zcl/general/zigbeeclustermultistateinput.h"
-#include "zcl/general/zigbeeclustermultistateoutput.h"
-#include "zcl/general/zigbeeclustermultistatevalue.h"
-
-#include "zcl/closures/zigbeeclusterdoorlock.h"
-
-#include "zcl/measurement/zigbeeclusteroccupancysensing.h"
-#include "zcl/measurement/zigbeeclusterilluminancemeasurment.h"
-#include "zcl/measurement/zigbeeclustertemperaturemeasurement.h"
-#include "zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h"
-#include "zcl/measurement/zigbeeclusterpressuremeasurement.h"
-#include "zcl/measurement/zigbeeclusterelectricalmeasurement.h"
-
-#include "zcl/lighting/zigbeeclustercolorcontrol.h"
-
-#include "zcl/security/zigbeeclusteriaszone.h"
-
-#include "zcl/ota/zigbeeclusterota.h"
-
-#include "zcl/hvac/zigbeeclusterthermostat.h"
-
-#include "zcl/smartenergy/zigbeeclustermetering.h"
-
-#include "zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.h"
-
 class ZigbeeNode;
 class ZigbeeNetwork;
 
