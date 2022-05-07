@@ -48,7 +48,7 @@ SOURCES += \
     zcl/lighting/zigbeeclustercolorcontrol.cpp \
     zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.cpp \
     zcl/measurement/zigbeeclusterelectricalmeasurement.cpp \
-    zcl/measurement/zigbeeclusterilluminancemeasurment.cpp \
+    zcl/measurement/zigbeeclusterilluminancemeasurement.cpp \
     zcl/measurement/zigbeeclusteroccupancysensing.cpp \
     zcl/measurement/zigbeeclusterpressuremeasurement.cpp \
     zcl/measurement/zigbeeclusterrelativehumiditymeasurement.cpp \
@@ -124,7 +124,7 @@ HEADERS += \
     zcl/lighting/zigbeeclustercolorcontrol.h \
     zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.h \
     zcl/measurement/zigbeeclusterelectricalmeasurement.h \
-    zcl/measurement/zigbeeclusterilluminancemeasurment.h \
+    zcl/measurement/zigbeeclusterilluminancemeasurement.h \
     zcl/measurement/zigbeeclusteroccupancysensing.h \
     zcl/measurement/zigbeeclusterpressuremeasurement.h \
     zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h \

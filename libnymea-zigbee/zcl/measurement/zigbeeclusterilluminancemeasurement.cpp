@@ -25,55 +25,39 @@
 *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef ZIGBEECLUSTERILLUMINANCEMEASURMENT_H
-#define ZIGBEECLUSTERILLUMINANCEMEASURMENT_H
+#include "zigbeeclusterilluminancemeasurement.h"
+#include "zigbeenetworkreply.h"
+#include "loggingcategory.h"
+#include "zigbeenetwork.h"
 
-#include <QObject>
-#include "zcl/zigbeecluster.h"
-#include "zcl/zigbeeclusterreply.h"
-
-class ZigbeeNode;
-class ZigbeeNetwork;
-class ZigbeeNodeEndpoint;
-class ZigbeeNetworkReply;
-
-class ZigbeeClusterIlluminanceMeasurment : public ZigbeeCluster
+ZigbeeClusterIlluminanceMeasurement::ZigbeeClusterIlluminanceMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent) :
+    ZigbeeCluster(network, node, endpoint, ZigbeeClusterLibrary::ClusterIdIlluminanceMeasurement, direction, parent)
 {
-    Q_OBJECT
 
-    friend class ZigbeeNode;
-    friend class ZigbeeNetwork;
+}
 
-public:
-    enum Attribute {
-        AttributeMeasuredValue = 0x0000,
-        AttributeMinMeasuredValue = 0x0001,
-        AttributeMaxMeasuredValue = 0x0002,
-        AttributeTolerance = 0x0003,
-        AttributeLightSensorType = 0x0004
-    };
-    Q_ENUM(Attribute)
+quint16 ZigbeeClusterIlluminanceMeasurement::illuminance() const
+{
+    return m_illuminance;
+}
 
-    enum LightSensorType {
-        LightSensorTypePhotodiode = 0x00,
-        LightSensorTypeCMOS = 0x01,
-        LightSensorTypeUnknown = 0xff
-    };
-    Q_ENUM(LightSensorType)
+void ZigbeeClusterIlluminanceMeasurement::setAttribute(const ZigbeeClusterAttribute &attribute)
+{
+    ZigbeeCluster::setAttribute(attribute);
 
-    explicit ZigbeeClusterIlluminanceMeasurment(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
+    // Parse the information for convenience
+    if (attribute.id() == AttributeMeasuredValue) {
+        bool valueOk = false;
+        quint16 value = attribute.dataType().toUInt16(&valueOk);
+        if (valueOk) {
+            if (value == 0xffff) {
+                qCDebug(dcZigbeeCluster()) << m_node << m_endpoint << this << "received invalid measurement value. Not updating the attribute.";
+                return;
+            }
 
-    quint16 illuminance() const;
-
-private:
-    quint16 m_illuminance = 0;
-
-    void setAttribute(const ZigbeeClusterAttribute &attribute) override;
-
-signals:
-    void illuminanceChanged(quint16 illuminance);
-
-
-};
-
-#endif // ZIGBEECLUSTERILLUMINANCEMEASURMENT_H
+            m_illuminance = value;
+            qCDebug(dcZigbeeCluster()) << "Illuminance changed on" << m_node << m_endpoint << this << m_illuminance << "lux";
+            emit illuminanceChanged(m_illuminance);
+        }
+    }
+}
