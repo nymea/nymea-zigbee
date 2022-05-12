@@ -208,7 +208,7 @@ ZigbeeClusterReply *ZigbeeCluster::createClusterReply(const ZigbeeNetworkRequest
     connect(zclReply, &ZigbeeClusterReply::finished, this, [this, zclReply](){
         zclReply->deleteLater();
         m_pendingReplies.remove(zclReply->transactionSequenceNumber());
-    }, Qt::QueuedConnection);
+    });
     return zclReply;
 }
 
@@ -412,6 +412,7 @@ void ZigbeeCluster::finishZclReply(ZigbeeClusterReply *zclReply)
 {
     qCDebug(dcZigbeeCluster()) << "ZigbeeClusterReply finished" << zclReply->request() << zclReply->requestFrame() << zclReply->responseFrame();
     // FIXME: Set the status
+    zclReply->m_timeoutTimer.stop();
     emit zclReply->finished();
 }
 

@@ -661,7 +661,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::createZigbeeDeviceObjectReply(const
         if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeDeviceObject()) << "ZDO request error for TSN:" << transactionSequenceNumber;
         }
-    }, Qt::QueuedConnection);
+    });
     m_pendingReplies.insert(transactionSequenceNumber, zdoReply);
     return zdoReply;
 }
