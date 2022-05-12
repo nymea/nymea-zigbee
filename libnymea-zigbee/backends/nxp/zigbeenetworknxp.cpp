@@ -173,7 +173,7 @@ void ZigbeeNetworkNxp::sendNextReply()
     ZigbeeInterfaceNxpReply *interfaceReply = m_controller->requestSendRequest(reply->request());
     connect(interfaceReply, &ZigbeeInterfaceNxpReply::finished, reply, [this, reply, interfaceReply](){
         if (interfaceReply->status() != Nxp::StatusSuccess) {
-            qCWarning(dcZigbeeController()) << "Could send request to controller. SQN:" << interfaceReply->sequenceNumber() << interfaceReply->status();
+            qCWarning(dcZigbeeController()) << "Could not send request to controller. SQN:" << interfaceReply->sequenceNumber() << interfaceReply->status();
             finishReplyInternally(reply, ZigbeeNetworkReply::ErrorInterfaceError);
             return;
         }

@@ -79,7 +79,7 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::sendRequest(const ZigbeeNetworkRequest 
     ZigbeeInterfaceDeconzReply *interfaceReply = m_controller->requestSendRequest(request);
     connect(interfaceReply, &ZigbeeInterfaceDeconzReply::finished, reply, [this, reply, interfaceReply](){
         if (interfaceReply->statusCode() != Deconz::StatusCodeSuccess) {
-            qCWarning(dcZigbeeController()) << "Could send request to controller. SQN:" << interfaceReply->sequenceNumber() << interfaceReply->statusCode();
+            qCWarning(dcZigbeeController()) << "Could not send request to controller. SQN:" << interfaceReply->sequenceNumber() << interfaceReply->statusCode();
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorInterfaceError);
             return;
         }

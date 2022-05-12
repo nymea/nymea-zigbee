@@ -79,7 +79,7 @@ ZigbeeNetworkReply *ZigbeeNetworkTi::sendRequest(const ZigbeeNetworkRequest &req
     ZigbeeInterfaceTiReply *interfaceReply = m_controller->requestSendRequest(request);
     connect(interfaceReply, &ZigbeeInterfaceTiReply::finished, reply, [this, reply, interfaceReply](){
         if (interfaceReply->statusCode() != Ti::StatusCodeSuccess) {
-            qCWarning(dcZigbeeController()) << "Could send request to controller." << interfaceReply->statusCode();
+            qCWarning(dcZigbeeController()) << "Could not send request to controller." << interfaceReply->statusCode();
             finishNetworkReply(reply, ZigbeeNetworkReply::ErrorInterfaceError);
             return;
         }
