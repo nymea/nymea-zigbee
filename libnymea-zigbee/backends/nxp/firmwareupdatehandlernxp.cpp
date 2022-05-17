@@ -155,20 +155,8 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
         return;
     }
 
-    if (!releaseMap.contains("firmware")) {
-        qCWarning(dcZigbeeController()) << "Update provider configuration available but the release file does not contain available firmware file name" << releaseFileInfo.absoluteFilePath();
-        return;
-    }
-
-    m_availableFirmwareFileName = releaseMap.value("firmware").toString();
-    if (m_availableFirmwareFileName.isEmpty()) {
-        qCWarning(dcZigbeeController()) << "Update provider configuration available but the firmware file path in the release file is empty" << releaseFileInfo.absoluteFilePath();
-        return;
-    }
-
-    QFileInfo firmwareFileInfo(releaseFileInfo.canonicalPath() + QDir::separator() + m_availableFirmwareFileName);
-    if (!firmwareFileInfo.exists()) {
-        qCWarning(dcZigbeeController()) << "Update provider configuration available but the update firmware file does not exist" << firmwareFileInfo.absoluteFilePath();
+    if (!releaseMap.value("releases").toList().isEmpty()) {
+        qCWarning(dcZigbeeController()) << "Update provider configuration available but the release file does not contain available releases" << releaseFileInfo.absoluteFilePath();
         return;
     }
 
@@ -177,7 +165,7 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
 
     configuration.endGroup();
 
-    qCDebug(dcZigbeeController()) << "Firmware update provider available:" << firmwareFileInfo.fileName() << "Version:" << m_availableFirmwareVersion << "Initially flashed:" << m_initiallyFlashed;
+    qCDebug(dcZigbeeController()) << "Firmware update provider available with version:" << m_availableFirmwareVersion << "Initially flashed:" << m_initiallyFlashed;
 
     // Set up update process
     m_updateProcess = new QProcess(this);
@@ -185,7 +173,7 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
     m_updateProcess->setProgram(m_updateProgram);
     m_updateProcess->setArguments(m_updateProgramParameters);
 
-    connect(m_updateProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus exitStatus) {
+    connect(m_updateProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, [=](int exitCode, QProcess::ExitStatus exitStatus) {
         qCDebug(dcZigbeeController()) << "Update process finihed" << exitCode << exitStatus;
         if (exitCode != 0) {
             emit updateFinished(false);
@@ -194,7 +182,7 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
         }
     });
 
-    connect(m_updateProcess, &QProcess::readyRead, [=]() {
+    connect(m_updateProcess, &QProcess::readyRead, this, [=]() {
         qCDebug(dcZigbeeController()) << "Update process:" << qUtf8Printable(m_updateProcess->readAll());
     });
 
@@ -205,7 +193,7 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
     m_factoryResetProcess->setProgram(m_factoryResetProgram);
     m_factoryResetProcess->setArguments(m_factoryResetParameters);
 
-    connect(m_factoryResetProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus exitStatus) {
+    connect(m_factoryResetProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, [=](int exitCode, QProcess::ExitStatus exitStatus) {
         qCDebug(dcZigbeeController()) << "Factory reset process finihed" << exitCode << exitStatus;
         if (exitCode != 0) {
             emit updateFinished(false);
@@ -222,7 +210,7 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
         }
     });
 
-    connect(m_factoryResetProcess, &QProcess::readyRead, [=]() {
+    connect(m_factoryResetProcess, &QProcess::readyRead, this, [=]() {
         qCDebug(dcZigbeeController()) << "Factory reset process:" << qUtf8Printable(m_factoryResetProcess->readAll());
     });
 
@@ -244,11 +232,6 @@ bool FirmwareUpdateHandlerNxp::isValid() const
     return m_valid;
 }
 
-QString FirmwareUpdateHandlerNxp::availableFirmwareFileName() const
-{
-    return m_availableFirmwareFileName;
-}
-
 QString FirmwareUpdateHandlerNxp::availableFirmwareVersion() const
 {
     return m_availableFirmwareVersion;
@@ -262,7 +245,6 @@ void FirmwareUpdateHandlerNxp::startUpdate()
     }
 
     qCDebug(dcZigbeeController()) << "Starting firmware update for NXP controller";
-    qCDebug(dcZigbeeController()) << "Firmware file:" << m_availableFirmwareFileName;
     qCDebug(dcZigbeeController()) << "Firmware version:" << m_availableFirmwareVersion;
     m_updateProcess->start();
 }
@@ -275,7 +257,6 @@ void FirmwareUpdateHandlerNxp::startFactoryReset()
     }
 
     qCDebug(dcZigbeeController()) << "Starting factory reset for NXP controller";
-    qCDebug(dcZigbeeController()) << "Firmware file:" << m_availableFirmwareFileName;
     qCDebug(dcZigbeeController()) << "Firmware version:" << m_availableFirmwareVersion;
     m_factoryResetProcess->start();
 }
