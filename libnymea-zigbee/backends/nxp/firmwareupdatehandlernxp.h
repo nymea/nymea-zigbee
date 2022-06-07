@@ -43,7 +43,6 @@ public:
     bool updateRunning() const;
     bool isValid() const;
 
-    QString availableFirmwareFileName() const;
     QString availableFirmwareVersion() const;
 
     void startUpdate();
@@ -70,7 +69,6 @@ private:
     QStringList m_factoryResetParameters;
 
     QString m_updateReleaseFilePath;
-    QString m_availableFirmwareFileName;
     QString m_availableFirmwareVersion;
 
 };
