@@ -37,6 +37,7 @@
 #include "zigbeenodeendpoint.h"
 #include "zdo/zigbeedeviceobject.h"
 #include "zdo/zigbeedeviceprofile.h"
+#include "zcl/general/zigbeeclusterbasic.h"
 
 class ZigbeeNetwork;
 
