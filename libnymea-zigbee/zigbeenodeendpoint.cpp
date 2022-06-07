@@ -50,7 +50,7 @@
 #include "zcl/closures/zigbeeclusterdoorlock.h"
 
 #include "zcl/measurement/zigbeeclusteroccupancysensing.h"
-#include "zcl/measurement/zigbeeclusterilluminancemeasurment.h"
+#include "zcl/measurement/zigbeeclusterilluminancemeasurement.h"
 #include "zcl/measurement/zigbeeclustertemperaturemeasurement.h"
 #include "zcl/measurement/zigbeeclusterrelativehumiditymeasurement.h"
 #include "zcl/measurement/zigbeeclusterpressuremeasurement.h"
@@ -239,7 +239,7 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
 
         // Measurement
     case ZigbeeClusterLibrary::ClusterIdIlluminanceMeasurement:
-        return new ZigbeeClusterIlluminanceMeasurment(m_network, m_node, this, direction, this);
+        return new ZigbeeClusterIlluminanceMeasurement(m_network, m_node, this, direction, this);
     case ZigbeeClusterLibrary::ClusterIdTemperatureMeasurement:
         return new ZigbeeClusterTemperatureMeasurement(m_network, m_node, this, direction, this);
     case ZigbeeClusterLibrary::ClusterIdRelativeHumidityMeasurement:
