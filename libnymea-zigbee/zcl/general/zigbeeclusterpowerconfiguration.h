@@ -79,29 +79,44 @@ public:
     };
     Q_ENUM(Attribute)
 
-    enum MainsAlarmMask {
-        MainsAlarmMaskMainVoltageToLow = 0x01,
-        MainsAlarmMaskMainVoltageToHigh = 0x02,
-        MainsAlarmMaskMainPowerSupplyLost = 0x04
+    enum MainsAlarm {
+        MainsAlarmNone = 0x00,
+        MainsAlarmMainVoltageToLow = 0x01,
+        MainsAlarmMainVoltageToHigh = 0x02,
+        MainsAlarmMainPowerSupplyLost = 0x04
     };
-    Q_ENUM(MainsAlarmMask)
-    Q_DECLARE_FLAGS(MainsAlarmMaskFlag, MainsAlarmMask)
+    Q_ENUM(MainsAlarm)
+    Q_DECLARE_FLAGS(MainsAlarmMask, MainsAlarm)
+
+    enum BatteryAlarm {
+        BatteryAlarmNone = 0x00,
+        BatteryAlarmTooLowToOperate = 0x01,
+        BatteryAlarm1 = 0x02,
+        BatteryAlarm2 = 0x04,
+        BatteryAlarm3 = 0x08
+    };
+    Q_ENUM(BatteryAlarm)
+    Q_DECLARE_FLAGS(BatteryAlarmMask, BatteryAlarm)
 
     explicit ZigbeeClusterPowerConfiguration(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
     double batteryPercentage() const;
+    BatteryAlarmMask batteryAlarmState() const;
 
 private:
     double m_batteryPercentage = 0;
+    BatteryAlarmMask m_batteryAlarmState = BatteryAlarmNone;
 
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:
     void batteryPercentageChanged(double percentage);
+    void batteryAlarmStateChanged(ZigbeeClusterPowerConfiguration::BatteryAlarmMask alarmState);
 
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(ZigbeeClusterPowerConfiguration::MainsAlarmMaskFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(ZigbeeClusterPowerConfiguration::MainsAlarmMask)
+Q_DECLARE_OPERATORS_FOR_FLAGS(ZigbeeClusterPowerConfiguration::BatteryAlarmMask)
 
 
 #endif // ZIGBEECLUSTERPOWERCONFIGURATION_H
