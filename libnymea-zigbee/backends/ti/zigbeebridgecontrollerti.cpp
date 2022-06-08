@@ -77,7 +77,7 @@ ZigbeeInterfaceTiReply* ZigbeeBridgeControllerTi::reset()
 
 ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::init()
 {
-    ZigbeeInterfaceTiReply *initReply = new ZigbeeInterfaceTiReply(this, 10000);
+    ZigbeeInterfaceTiReply *initReply = new ZigbeeInterfaceTiReply(this, 15000);
 
     ZigbeeInterfaceTiReply *resetReply = reset();
     connect(resetReply, &ZigbeeInterfaceTiReply::finished, initReply, [=]() {
@@ -179,10 +179,10 @@ void ZigbeeBridgeControllerTi::initPhase2(ZigbeeInterfaceTiReply *initReply, int
             qCDebug(dcZigbeeController()) << "Reading IEEE address";
 
             ZigbeeInterfaceTiReply *getIeeeAddrReply = readNvItem(Ti::NvItemIdPanId);
-            connect(getIeeeAddrReply, &ZigbeeInterfaceTiReply::finished, this, [=](){
+            connect(getIeeeAddrReply, &ZigbeeInterfaceTiReply::finished, initReply, [=](){
 
                 ZigbeeInterfaceTiReply *getExtAddrReply = sendCommand(Ti::SubSystemSys, Ti::SYSCommandGetExtAddress);
-                connect(getExtAddrReply, &ZigbeeInterfaceTiReply::finished, this, [=](){
+                connect(getExtAddrReply, &ZigbeeInterfaceTiReply::finished, initReply, [=](){
                     if (getExtAddrReply->statusCode() != Ti::StatusCodeSuccess) {
                         qCWarning(dcZigbeeController()) << "Call to getDeviceInfo failed:" << getExtAddrReply->statusCode();
                         initReply->finish(getExtAddrReply->statusCode());
