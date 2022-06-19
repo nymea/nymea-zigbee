@@ -34,6 +34,7 @@
 #include "zcl/general/zigbeeclusteronoff.h"
 #include "zcl/general/zigbeeclusteridentify.h"
 #include "zcl/general/zigbeeclusterlevelcontrol.h"
+#include "zcl/general/zigbeeclustertime.h"
 #include "zcl/general/zigbeeclusterpowerconfiguration.h"
 #include "zcl/general/zigbeeclustergroups.h"
 #include "zcl/general/zigbeeclusterscenes.h"
@@ -214,6 +215,8 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
         return new ZigbeeClusterOnOff(m_network, m_node, this, direction, this);
     case ZigbeeClusterLibrary::ClusterIdLevelControl:
         return new ZigbeeClusterLevelControl(m_network, m_node, this, direction, this);
+    case ZigbeeClusterLibrary::ClusterIdTime:
+        return new ZigbeeClusterTime(m_network, m_node, this, direction, this);
     case ZigbeeClusterLibrary::ClusterIdGroups:
         return new ZigbeeClusterGroups(m_network, m_node, this, direction, this);
     case ZigbeeClusterLibrary::ClusterIdScenes:
