@@ -1,5 +1,6 @@
 #include "zigbeeclustermetering.h"
 
+#include <QDataStream>
 #include <QLoggingCategory>
 Q_DECLARE_LOGGING_CATEGORY(dcZigbeeCluster)
 
@@ -62,5 +63,54 @@ void ZigbeeClusterMetering::setAttribute(const ZigbeeClusterAttribute &attribute
         break;
     default:
         qCWarning(dcZigbeeCluster()) << "Unhandled attribute change:" << attribute;
+    }
+}
+
+void ZigbeeClusterMetering::processDataIndication(ZigbeeClusterLibrary::Frame frame)
+{
+    switch (m_direction) {
+    case Client:
+        qCWarning(dcZigbeeCluster()) << "Metering: Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
+        break;
+    case Server: {
+        ServerCommand command = static_cast<ServerCommand>(frame.header.command);
+        switch (command) {
+        case CommandDisplayMessage: {
+            QDataStream stream(frame.payload);
+            stream.setByteOrder(QDataStream::LittleEndian);
+            quint32 messageId, time;
+            quint16 durationInMinutes;
+            quint8 messageControl;
+            stream >> messageId >> messageControl >> time >> durationInMinutes;
+
+            char messageData[2048]; // At max 2KB, realistically we'll only ever see < 80B in here as larger messages require both ends to negotiate on a larger PDU, however, if the backend supports it, it *may* happen.
+            int messageLength = stream.readRawData(messageData, 2048);
+            QByteArray message(messageData, messageLength);
+            MessageTransmission messageTransmission = static_cast<MessageTransmission>((messageControl & 0xC0) >> 6);
+            MessagePriority priority = static_cast<MessagePriority>((messageControl & 0x30) >> 4);
+            bool confirmationRequired = (messageControl & 0x01) == 1;
+
+            qCWarning(dcZigbeeCluster()) << "Display message received!" << messageId << messageControl << time << durationInMinutes << message;
+            emit showMessage(messageId, message, time, durationInMinutes, messageTransmission, priority, confirmationRequired);
+            break;
+        }
+        case ClientCommandCancelMessage: {
+            QDataStream stream(frame.payload);
+            stream.setByteOrder(QDataStream::LittleEndian);
+            quint32 messageId;
+            quint8 messageControl;
+            stream >> messageId >> messageControl;
+            MessageTransmission messageTransmission = static_cast<MessageTransmission>((messageControl & 0xC0) >> 6);
+            MessagePriority priority = static_cast<MessagePriority>((messageControl & 0x30) >> 4);
+            bool confirmationRequired = (messageControl & 0x01) == 1;
+            qCDebug(dcZigbeeCluster()) << "Metering: Cancel message command received" << messageId << messageControl;
+            emit cancelMessage(messageId, messageTransmission, priority, confirmationRequired);
+            break;
+        }
+        default:
+            qCDebug(dcZigbeeCluster()) << "Ignoring out of spec metering cluster ZCL indication:" << m_node << m_endpoint << this << frame;
+        }
+        break;
+    }
     }
 }
