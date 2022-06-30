@@ -555,6 +555,36 @@ public:
     };
     Q_ENUM(AlarmCode)
 
+    enum ClientCommand {
+        CommandGetProfile = 0x00,
+        CommandRequestMirrorResponse = 0x01,
+        CommandMirrorRemoved = 0x02,
+        CommandRequestFastPollMode = 0x03
+    };
+    Q_ENUM(ClientCommand)
+
+    enum ServerCommand {
+        CommandDisplayMessage = 0x00,
+        ClientCommandCancelMessage = 0x01
+    };
+    Q_ENUM(ServerCommand)
+
+    enum MessageTransmission {
+        MessageTransmissionNormal = 0x0,
+        MessageTransmissionNormalAndAnonymousInterPan = 0x1,
+        MessageTransmissionAnonymousInterPan = 0x2
+    };
+    Q_ENUM(MessageTransmission)
+
+    enum MessagePriority {
+        MessagePriorityLow = 0x0,
+        MessagePriorityMedium = 0x1,
+        MessagePriorityHigh = 0x2,
+        MessagePriorityCritical = 0x3
+    };
+    Q_ENUM(MessagePriority)
+
+
     explicit ZigbeeClusterMetering(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
     // Used to refresh formatting attributes (multiplier/divisor)
@@ -570,8 +600,12 @@ signals:
     void currentSummationDeliveredChanged(quint64 currentSummationDelivered);
     void instantaneousDemandChanged(qint32 instantaneousDemand);
 
+    void showMessage(quint32 messageId, const QString &message, quint32 time, quint16 durationInMinutes, MessageTransmission transmission, MessagePriority priority, bool confirmationRequired);
+    void cancelMessage(quint32 messageId, MessageTransmission transmission, MessagePriority priority, bool confirmationRequired);
+
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
+    void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
     quint32 m_multiplier = 1;
     quint32 m_divisor = 1;
