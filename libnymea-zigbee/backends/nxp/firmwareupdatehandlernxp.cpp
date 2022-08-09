@@ -155,7 +155,7 @@ FirmwareUpdateHandlerNxp::FirmwareUpdateHandlerNxp(const QFileInfo &updateProvid
         return;
     }
 
-    if (!releaseMap.value("releases").toList().isEmpty()) {
+    if (releaseMap.value("releases").toList().isEmpty()) {
         qCWarning(dcZigbeeController()) << "Update provider configuration available but the release file does not contain available releases" << releaseFileInfo.absoluteFilePath();
         return;
     }
