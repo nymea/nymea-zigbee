@@ -225,12 +225,51 @@ public:
     Q_DECLARE_FLAGS(ACAlarmsMask, ACAlarm)
     Q_FLAG(ACAlarmsMask)
 
+    enum ProfileIntervalPeriod {
+        ProfileIntervalPeriodDaily = 0x00,
+        ProfileIntervalPeriod60Minutes = 0x01,
+        ProfileIntervalPeriod30Minutes = 0x02,
+        ProfileIntervalPeriod15Minutes = 0x03,
+        ProfileIntervalPeriod10Minutes = 0x04,
+        ProfileIntervalPeriod7p5Minutes = 0x05,
+        ProfileIntervalPeriod5Minutes = 0x06,
+        ProfileIntervalPeriod2p5Minutes = 0x07
+    };
+    Q_ENUM(ProfileIntervalPeriod)
+
+    enum MeasurementStatus {
+        MeasurementStatusSuccess = 0x00,
+        MeasurementTypeAttributeProfileNotSupported = 0x01,
+        MeasurementStatusInvalidStartTime = 0x02,
+        MeasurementStatusMoreIntervalsRequestedThanCanBeReturned = 0x03,
+        MeasurementTypeNoIntervalsAvailableForRequestedTime = 0x04
+    };
+    Q_ENUM(MeasurementStatus)
+
+    enum ClientCommand {
+        CommandGetProfileInfo = 0x00,
+        CommandGetMeasurementProfileInfo = 0x01
+    };
+    Q_ENUM(ClientCommand)
+
+    enum ServerCommand {
+        CommandGetProfileInfoResponse = 0x00,
+        CommandGetMeasurementProfileResponse = 0x01
+    };
+    Q_ENUM(ServerCommand)
+
     explicit ZigbeeClusterElectricalMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
     quint16 activePowerPhaseA() const;
 
 signals:
     void activePowerPhaseAChanged(qint16 activePowerPhaseA);
+
+    void getProfileInfoResponse(quint8 profileCount, ProfileIntervalPeriod profileIntervalPeriod, quint8 maxNumberOfIntervals, const QList<quint16> &attributes);
+    void getMeasurementProfileInfoResponse(const QDateTime &startTime, MeasurementStatus status, ProfileIntervalPeriod profileIntervalPeriod, quint8 numberOfIntervals, quint8 attributeId, const QList<quint16> &values);
+
+protected:
+    void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
 private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
