@@ -142,7 +142,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestIeeeAddress()
 
 ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestNodeDescriptor()
 {
-    qCDebug(dcZigbeeDeviceObject()) << "Request node descriptor from" << m_node;
+    qCDebug(dcZigbeeDeviceObject()) << "Requesting node descriptor from" << m_node;
 
     // Build APS request
     ZigbeeNetworkRequest request = buildZdoRequest(ZigbeeDeviceProfile::NodeDescriptorRequest);

@@ -266,14 +266,14 @@ ZigbeeReply *ZigbeeNode::readBindingTableEntries()
 
 void ZigbeeNode::initNodeDescriptor()
 {
-    qCDebug(dcZigbeeNode()) << "Request node descriptor from" << this;
+    qCDebug(dcZigbeeNode()) << "Requesting node descriptor from" << this;
     ZigbeeDeviceObjectReply *reply = deviceObject()->requestNodeDescriptor();
     connect(reply, &ZigbeeDeviceObjectReply::finished, this, [this, reply](){
         if (reply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
             qCWarning(dcZigbeeNode()) << "Error occured during initialization of" << this << "Failed to read node descriptor" << reply->error();
             m_requestRetry++;
             if (m_requestRetry < m_requestRetriesMax) {
-                qCDebug(dcZigbeeNode()) << "Retry to request node descriptor" << m_requestRetry << "/" << m_requestRetriesMax;
+                qCDebug(dcZigbeeNode()) << "Retrying to request node descriptor" << m_requestRetry << "/" << m_requestRetriesMax;
                 QTimer::singleShot(500, this, [=](){ initNodeDescriptor(); });
             } else {
                 qCWarning(dcZigbeeNode()) << "Failed to read node descriptor from" << this << "after" << m_requestRetriesMax << "attempts.";

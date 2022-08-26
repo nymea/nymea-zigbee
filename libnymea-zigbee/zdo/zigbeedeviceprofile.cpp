@@ -38,36 +38,28 @@ ZigbeeDeviceProfile::NodeDescriptor ZigbeeDeviceProfile::parseNodeDescriptor(con
     // Parse and set the node descriptor
     QDataStream stream(payload);
     stream.setByteOrder(QDataStream::LittleEndian);
-    quint8 typeDescriptorFlag = 0; quint8 frequencyFlag = 0; quint8 macCapabilitiesFlag = 0;
-    quint16 serverMaskFlag = 0; quint8 descriptorCapabilitiesFlag = 0;
+    quint8 typeAndDescriptorFlags = 0, frequencyAndApsFlags = 0, macCapabilitiesFlags = 0, descriptorCapabilities = 0;
+    quint16 serverMask = 0;
 
-    stream >> typeDescriptorFlag >> frequencyFlag >> macCapabilitiesFlag >> nodeDescriptor.manufacturerCode >> nodeDescriptor.maximumBufferSize;
-    stream >> nodeDescriptor.maximumRxSize >> serverMaskFlag >> nodeDescriptor.maximumTxSize >> descriptorCapabilitiesFlag;
+    stream >> typeAndDescriptorFlags >> frequencyAndApsFlags >> macCapabilitiesFlags >> nodeDescriptor.manufacturerCode >> nodeDescriptor.maximumBufferSize;
+    stream >> nodeDescriptor.maximumRxSize >> serverMask >> nodeDescriptor.maximumTxSize >> descriptorCapabilities;
 
-    // 0-2 Bit = logical type, 0 = coordinator, 1 = router, 2 = end device
-    if (!ZigbeeUtils::checkBitUint8(typeDescriptorFlag, 0) && !ZigbeeUtils::checkBitUint8(typeDescriptorFlag, 1)) {
-        nodeDescriptor.nodeType = NodeTypeCoordinator;
-    } else if (!ZigbeeUtils::checkBitUint8(typeDescriptorFlag, 0) && ZigbeeUtils::checkBitUint8(typeDescriptorFlag, 1)) {
-        nodeDescriptor.nodeType = NodeTypeRouter;
-    } else if (ZigbeeUtils::checkBitUint8(typeDescriptorFlag, 0) && !ZigbeeUtils::checkBitUint8(typeDescriptorFlag, 1)) {
-        nodeDescriptor.nodeType = NodeTypeEndDevice;
-    }
-
-    nodeDescriptor.complexDescriptorAvailable = (typeDescriptorFlag >> 3) & 0x0001;
-    nodeDescriptor.userDescriptorAvailable = (typeDescriptorFlag >> 4) & 0x0001;
+    nodeDescriptor.nodeType = static_cast<NodeType>(typeAndDescriptorFlags & 0x07);
+    nodeDescriptor.complexDescriptorAvailable = typeAndDescriptorFlags & 0x08;
+    nodeDescriptor.userDescriptorAvailable = typeAndDescriptorFlags & 0x10;
 
     // Frequency band, 5 bits
-    if (ZigbeeUtils::checkBitUint8(frequencyFlag, 3)) {
+    if (ZigbeeUtils::checkBitUint8(frequencyAndApsFlags, 3)) {
         nodeDescriptor.frequencyBand = FrequencyBand868Mhz;
-    } else if (ZigbeeUtils::checkBitUint8(frequencyFlag, 5)) {
+    } else if (ZigbeeUtils::checkBitUint8(frequencyAndApsFlags, 5)) {
         nodeDescriptor.frequencyBand = FrequencyBand902Mhz;
-    } else if (ZigbeeUtils::checkBitUint8(frequencyFlag, 6)) {
+    } else if (ZigbeeUtils::checkBitUint8(frequencyAndApsFlags, 6)) {
         nodeDescriptor.frequencyBand = FrequencyBand2400Mhz;
     }
 
-    nodeDescriptor.macCapabilities = parseMacCapabilities(macCapabilitiesFlag);
-    nodeDescriptor.serverMask = parseServerMask(serverMaskFlag);
-    nodeDescriptor.descriptorCapabilities = parseDescriptorCapabilities(descriptorCapabilitiesFlag);
+    nodeDescriptor.macCapabilities = parseMacCapabilities(macCapabilitiesFlags);
+    nodeDescriptor.serverMask = parseServerMask(serverMask);
+    nodeDescriptor.descriptorCapabilities = parseDescriptorCapabilities(descriptorCapabilities);
 
     return nodeDescriptor;
 }
