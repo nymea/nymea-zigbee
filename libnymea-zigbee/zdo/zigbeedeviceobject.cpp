@@ -555,7 +555,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLeaveNetwork(bool rejoin
 
 ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLqi(quint8 startIndex)
 {
-    qCDebug(dcZigbeeDeviceObject()) << "Request lqi table from" << m_node << "start index" << startIndex;
+    qCDebug(dcZigbeeDeviceObject()) << "Requesting lqi table from" << m_node << "start index" << startIndex;
 
     // Build APS request
     ZigbeeNetworkRequest request = buildZdoRequest(ZigbeeDeviceProfile::MgmtLqiRequest);
@@ -597,7 +597,7 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtLqi(quint8 startIndex)
 
 ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtBind(quint8 startIndex)
 {
-    qCDebug(dcZigbeeDeviceObject()) << "Request management bind table from" << m_node << "start index" << startIndex;
+    qCDebug(dcZigbeeDeviceObject()) << "Requesting management bind table from" << m_node << "start index" << startIndex;
 
     // Build APS request
     ZigbeeNetworkRequest request = buildZdoRequest(ZigbeeDeviceProfile::MgmtBindRequest);
@@ -635,6 +635,49 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtBind(quint8 startIndex)
     });
 
     return zdoReply;
+}
+
+ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestMgmtRtg(quint8 startIndex)
+{
+    qCDebug(dcZigbeeDeviceObject()) << "Requesting routing table from" << m_node << "start index" << startIndex;
+
+    // Build APS request
+    ZigbeeNetworkRequest request = buildZdoRequest(ZigbeeDeviceProfile::MgmtRoutingTableRequest);
+
+    // Generate a new transaction sequence number for this device object
+    quint8 transactionSequenceNumber = m_transactionSequenceNumber++;
+
+    QByteArray asdu;
+    QDataStream stream(&asdu, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << transactionSequenceNumber << startIndex;
+
+    // Set the ZDO frame as APS request payload
+    request.setAsdu(asdu);
+
+    // Create the device object reply and wait for the response indication
+    ZigbeeDeviceObjectReply *zdoReply = createZigbeeDeviceObjectReply(request, transactionSequenceNumber);
+
+    // Send the request, on finished read the confirm information
+    ZigbeeNetworkReply *networkReply = m_network->sendRequest(request);
+    connect(networkReply, &ZigbeeNetworkReply::finished, zdoReply, [this, networkReply, zdoReply](){
+        if (!verifyNetworkError(zdoReply, networkReply)) {
+            finishZdoReply(zdoReply);
+            return;
+        }
+
+        // The request was successfully sent to the device
+        // Now check if the expected indication response received already
+        if (zdoReply->isComplete()) {
+            qCDebug(dcZigbeeDeviceObject()) << "Successfully received response for" << static_cast<ZigbeeDeviceProfile::ZdoCommand>(networkReply->request().clusterId());
+            finishZdoReply(zdoReply);
+            return;
+        }
+        // We received the confirmation but not yet the indication
+    });
+
+    return zdoReply;
+
 }
 
 ZigbeeNetworkRequest ZigbeeDeviceObject::buildZdoRequest(quint16 zdoRequest)

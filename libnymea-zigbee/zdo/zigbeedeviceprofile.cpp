@@ -174,6 +174,67 @@ ZigbeeDeviceProfile::PowerDescriptor ZigbeeDeviceProfile::parsePowerDescriptor(q
     return powerDescriptor;
 }
 
+ZigbeeDeviceProfile::NeighborTable ZigbeeDeviceProfile::parseNeighborTable(const QByteArray &payload)
+{
+    ZigbeeDeviceProfile::NeighborTable table;
+    QDataStream stream(payload);
+    stream.setByteOrder(QDataStream::LittleEndian);
+
+    quint8 messageId; quint8 listRecordCount;
+    stream >> messageId >> table.status >> table.tableSize >> table.startIndex >> listRecordCount;
+    for (int i = 0; i < listRecordCount; i++) {
+        ZigbeeDeviceProfile::NeighborTableListRecord record;
+        stream >> record.extendedPanId;
+        quint64 ieeeAddress;
+        stream >> ieeeAddress;
+        record.ieeeAddress = ZigbeeAddress(ieeeAddress);
+        stream >> record.shortAddress;
+
+        quint8 nodeFlags;
+        stream >> nodeFlags;
+        record.nodeType = static_cast<NodeType>(nodeFlags & 0x03);
+        record.receiverOnWhenIdle = static_cast<bool>((nodeFlags & 0x0c) >> 2);
+        record.relationship = static_cast<Relationship>((nodeFlags & 0x70) >> 4);
+
+        stream >> nodeFlags;
+        record.permitJoining = (nodeFlags & 0x03) == 1;
+        stream >> record.depth;
+        stream >> record.lqi;
+
+        table.records.append(record);
+    }
+
+    return table;
+}
+
+ZigbeeDeviceProfile::RoutingTable ZigbeeDeviceProfile::parseRoutingTable(const QByteArray &payload)
+{
+    ZigbeeDeviceProfile::RoutingTable table;
+    QDataStream stream(payload);
+    stream.setByteOrder(QDataStream::LittleEndian);
+
+    quint8 messageId; quint8 listRecordCount;
+    stream >> messageId >> table.status >> table.tableSize >> table.startIndex >> listRecordCount;
+    for (int i = 0; i < listRecordCount; i++) {
+        ZigbeeDeviceProfile::RoutingTableListRecord record;
+        stream >> record.destinationAddress;
+
+        qint8 flags;
+        stream >> flags;
+        record.status = static_cast<RouteStatus>(flags & 0x07);
+        record.memoryConstrained = (flags & 0x08) > 0;
+        record.manyToOne = (flags & 0x10) > 0;
+        record.routeRecordRequired = (flags & 0x20) > 0;
+
+        stream >> record.nextHopAddress;
+
+        table.records.append(record);
+    }
+
+    return table;
+
+}
+
 ZigbeeDeviceProfile::Adpu ZigbeeDeviceProfile::parseAdpu(const QByteArray &adpu)
 {
     QDataStream stream(adpu);
@@ -187,12 +248,12 @@ ZigbeeDeviceProfile::Adpu ZigbeeDeviceProfile::parseAdpu(const QByteArray &adpu)
     return deviceAdpu;
 }
 
-QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &deviceAdpu)
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &adpu)
 {
-    debug.nospace() << "DeviceProfileAdpu(SQN: " << deviceAdpu.transactionSequenceNumber << ", ";
-    debug.nospace() << deviceAdpu.status << ", ";
-    debug.nospace() << ZigbeeUtils::convertUint16ToHexString(deviceAdpu.addressOfInterest) << ", ";
-    debug.nospace() << "Payload: " << ZigbeeUtils::convertByteArrayToHexString(deviceAdpu.payload) << ")";
+    debug.nospace() << "DeviceProfileAdpu(SQN: " << adpu.transactionSequenceNumber << ", ";
+    debug.nospace() << adpu.status << ", ";
+    debug.nospace() << ZigbeeUtils::convertUint16ToHexString(adpu.addressOfInterest) << ", ";
+    debug.nospace() << "Payload: " << ZigbeeUtils::convertByteArrayToHexString(adpu.payload) << ")";
     return debug.space();
 }
 
@@ -271,5 +332,31 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::BindingTableListRecor
     default:
         break;
     }
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NeighborTableListRecord &neighborTableListRecord)
+{
+    debug.nospace() << "NeighborTableListRecord(" << neighborTableListRecord.ieeeAddress.toString() << ", ";
+    debug.nospace() << "NWK address: " << ZigbeeUtils::convertUint16ToHexString(neighborTableListRecord.shortAddress) << ", ";
+    debug.nospace() << "Extended PAN ID: " << neighborTableListRecord.extendedPanId << ", ";
+    debug.nospace() << "Node type: " << neighborTableListRecord.nodeType << ", ";
+    debug.nospace() << "RxOn: " << neighborTableListRecord.receiverOnWhenIdle << ", ";
+    debug.nospace() << "Relationship: " << neighborTableListRecord.relationship << ", ";
+    debug.nospace() << "Permit join: " << neighborTableListRecord.permitJoining << ", ";
+    debug.nospace() << "Depth: " << neighborTableListRecord.depth << ", ";
+    debug.nospace() << "LQI: " << neighborTableListRecord.lqi << ") ";
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::RoutingTableListRecord &routingTableListRecord)
+{
+    debug.nospace() << "RoutingTableListRecord(";
+    debug.nospace() << "Destination address: " << ZigbeeUtils::convertUint16ToHexString(routingTableListRecord.destinationAddress) << ", ";
+    debug.nospace() << "Next hop: " << routingTableListRecord.nextHopAddress << ", ";
+    debug.nospace() << "Status: " << routingTableListRecord.status << ", ";
+    debug.nospace() << "Memory constrained: " << routingTableListRecord.memoryConstrained << ", ";
+    debug.nospace() << "Many-to-one: " << routingTableListRecord.manyToOne << ", ";
+    debug.nospace() << "RRR: " << routingTableListRecord.routeRecordRequired << ")";
     return debug;
 }

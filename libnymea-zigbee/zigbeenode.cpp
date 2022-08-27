@@ -147,6 +147,16 @@ QList<ZigbeeDeviceProfile::BindingTableListRecord> ZigbeeNode::bindingTableRecor
     return m_bindingTableRecords;
 }
 
+QList<ZigbeeDeviceProfile::NeighborTableListRecord> ZigbeeNode::neighborTableRecords() const
+{
+    return m_neighborTableRecords.values();
+}
+
+QList<ZigbeeDeviceProfile::RoutingTableListRecord> ZigbeeNode::routingTableRecords() const
+{
+    return m_routingTableRecords.values();
+}
+
 void ZigbeeNode::setState(ZigbeeNode::State state)
 {
     if (m_state == state)
@@ -261,6 +271,20 @@ ZigbeeReply *ZigbeeNode::readBindingTableEntries()
         emit bindingTableRecordsChanged();
         reply->finishReply();
     });
+    return reply;
+}
+
+ZigbeeReply *ZigbeeNode::readLqiTableEntries()
+{
+    ZigbeeReply *reply = new ZigbeeReply(this);
+    readNeighborTableChunk(reply, 0);
+    return reply;
+}
+
+ZigbeeReply *ZigbeeNode::readRoutingTableEntries()
+{
+    ZigbeeReply *reply = new ZigbeeReply(this);
+    readRoutingTableChunk(reply, 0);
     return reply;
 }
 
@@ -507,6 +531,126 @@ void ZigbeeNode::removeNextBinding(ZigbeeReply *reply)
         emit bindingTableRecordsChanged();
 
         removeNextBinding(reply);
+    });
+}
+
+void ZigbeeNode::readNeighborTableChunk(ZigbeeReply *reply, quint8 startIndex)
+{
+    ZigbeeDeviceObjectReply *zdoReply = deviceObject()->requestMgmtLqi(startIndex);
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, reply, [=](){
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Failed to read neighbor table" << zdoReply->error();
+            if (zdoReply->zigbeeDeviceObjectStatus() == ZigbeeDeviceProfile::StatusNotSupported) {
+                // Not an error, merely a valid response code that this optional request is not supported.
+                reply->finishReply(ZigbeeReply::ErrorNoError);
+            } else {
+                reply->finishReply(ZigbeeReply::ErrorZigbeeError);
+            }
+            return;
+        }
+
+
+//        qCDebug(dcZigbeeNode()) << "LQI response:" << zdoReply->responseData().toHex();
+        ZigbeeDeviceProfile::NeighborTable neighborTable = ZigbeeDeviceProfile::parseNeighborTable(zdoReply->responseData());
+        if (neighborTable.startIndex == 0) {
+            m_neighborTable = neighborTable;
+        } else if (m_neighborTable.records.count() == neighborTable.startIndex) {
+            m_neighborTable.records.append(neighborTable.records);
+        } else {
+            qCWarning(dcZigbeeNode()) << "Error processing neighbor table. Indices not matching. Starting from scratch.";
+            readNeighborTableChunk(reply, 0);
+            return;
+        }
+        if (m_neighborTable.records.count() < m_neighborTable.tableSize) {
+            qCDebug(dcZigbeeNode) << "Neighbor table not complete yet. Fetching next chunk";
+            readNeighborTableChunk(reply, m_neighborTable.records.count());
+            return;
+        }
+
+        QList<quint16> removedRecords = m_neighborTableRecords.keys();
+        foreach(const ZigbeeDeviceProfile::NeighborTableListRecord &record, m_neighborTable.records) {
+            qCDebug(dcZigbeeNode()).nospace() << "LQI neighbor for node: " << ZigbeeUtils::convertUint16ToHexString(m_shortAddress) << ": " << record;
+            removedRecords.removeAll(record.shortAddress);
+            if (m_neighborTableRecords.contains(record.shortAddress)) {
+                ZigbeeDeviceProfile::NeighborTableListRecord existingRecord = m_neighborTableRecords.value(record.shortAddress);
+                if (existingRecord.relationship != record.relationship
+                        || existingRecord.permitJoining != record.permitJoining
+                        || existingRecord.depth != record.depth
+                        || existingRecord.lqi != record.lqi) {
+                    m_neighborTableRecords[record.shortAddress] = record;
+                    emit neighborTableRecordsChanged();
+                }
+            } else {
+                m_neighborTableRecords.insert(record.shortAddress, record);
+                emit neighborTableRecordsChanged();
+            }
+        }
+        foreach (quint16 removedRecord, removedRecords) {
+            m_neighborTableRecords.remove(removedRecord);
+            emit neighborTableRecordsChanged();
+        }
+        reply->finishReply(ZigbeeReply::ErrorNoError);
+    });
+}
+
+void ZigbeeNode::readRoutingTableChunk(ZigbeeReply *reply, quint8 startIndex)
+{
+    ZigbeeDeviceObjectReply *zdoReply = deviceObject()->requestMgmtRtg(startIndex);
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, reply, [=](){
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Failed to read routing table" << zdoReply->error();
+            if (zdoReply->zigbeeDeviceObjectStatus() == ZigbeeDeviceProfile::StatusNotSupported) {
+                // Not an error, merely a valid response code that this optional request is not supported.
+                reply->finishReply(ZigbeeReply::ErrorNoError);
+            } else {
+                reply->finishReply(ZigbeeReply::ErrorZigbeeError);
+            }
+            return;
+        }
+
+//        qCDebug(dcZigbeeNetwork()) << "Routing table reply from" << ZigbeeUtils::convertUint16ToHexString(shortAddress()) << zdoReply->responseData().toHex();
+
+        ZigbeeDeviceProfile::RoutingTable routingTable = ZigbeeDeviceProfile::parseRoutingTable(zdoReply->responseData());
+        if (routingTable.startIndex == 0) {
+            m_routingTable = routingTable;
+        } else if (m_routingTable.records.count() == routingTable.startIndex) {
+            m_routingTable.records.append(routingTable.records);
+        } else {
+            qCWarning(dcZigbeeNode()) << "Error processing routing table. Indices not matching. Starting from scratch.";
+            readRoutingTableChunk(reply, 0);
+            return;
+        }
+        if (m_routingTable.records.count() < m_routingTable.tableSize) {
+            qCDebug(dcZigbeeNode) << "Routing table not complete yet. Fetching next chunk";
+            readRoutingTableChunk(reply, m_routingTable.records.count());
+            return;
+        }
+
+        QList<quint16> removedRecords = m_routingTableRecords.keys();
+        foreach(const ZigbeeDeviceProfile::RoutingTableListRecord &record, m_routingTable.records) {
+            qCDebug(dcZigbeeNode()).nospace() << "Route entry for node: " << ZigbeeUtils::convertUint16ToHexString(m_shortAddress) << ": " << record;
+            removedRecords.removeAll(record.destinationAddress);
+            if (m_routingTableRecords.contains(record.destinationAddress)) {
+                ZigbeeDeviceProfile::RoutingTableListRecord existingRecord = m_routingTableRecords.value(record.destinationAddress);
+                if (existingRecord.status != record.status
+                        || existingRecord.memoryConstrained != record.memoryConstrained
+                        || existingRecord.manyToOne != record.manyToOne
+                        || existingRecord.routeRecordRequired != record.routeRecordRequired
+                        || existingRecord.nextHopAddress != record.nextHopAddress) {
+                    m_routingTableRecords[record.destinationAddress] = record;
+                    emit routingTableRecordsChanged();
+                }
+            } else {
+                m_routingTableRecords.insert(record.destinationAddress, record);
+                emit routingTableRecordsChanged();
+            }
+        }
+        foreach (quint16 removedRecord, removedRecords) {
+            m_routingTableRecords.remove(removedRecord);
+            emit routingTableRecordsChanged();
+        }
+        reply->finishReply(ZigbeeReply::ErrorNoError);
+
     });
 }
 

@@ -132,6 +132,8 @@ public:
 
     void removeZigbeeNode(const ZigbeeAddress &address);
 
+    void refreshNeighborTable();
+
 private:
     QUuid m_networkUuid;
     State m_state = StateUninitialized;
@@ -185,7 +187,8 @@ protected:
 
     QTimer *m_reachableRefreshTimer = nullptr;
     QList<ZigbeeAddress> m_reachableRefreshAddresses;
-    void evaluateNextNodeReachableState();
+    QList<ZigbeeAddress> m_refreshNeighborTableAddresses;
+    void fetchNextNodeLqiTable();
 
     void setPermitJoiningState(bool permitJoiningEnabled, quint8 duration = 0);
 

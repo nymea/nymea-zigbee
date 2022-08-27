@@ -92,12 +92,16 @@ public:
 
     // Only available if fetched
     QList<ZigbeeDeviceProfile::BindingTableListRecord> bindingTableRecords() const;
+    QList<ZigbeeDeviceProfile::NeighborTableListRecord> neighborTableRecords() const;
+    QList<ZigbeeDeviceProfile::RoutingTableListRecord> routingTableRecords() const;
 
     // This method starts the node initialization phase (read descriptors and endpoints)
     void startInitialization();
 
     ZigbeeReply *removeAllBindings();
     ZigbeeReply *readBindingTableEntries();
+    ZigbeeReply *readLqiTableEntries();
+    ZigbeeReply *readRoutingTableEntries();
 
 private:
     ZigbeeNode(ZigbeeNetwork *network, quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent = nullptr);
@@ -126,6 +130,10 @@ private:
     bool m_powerDescriptorAvailable = false;
 
     QList<ZigbeeDeviceProfile::BindingTableListRecord> m_bindingTableRecords;
+    QHash<quint16, ZigbeeDeviceProfile::NeighborTableListRecord> m_neighborTableRecords;
+    QHash<quint16, ZigbeeDeviceProfile::RoutingTableListRecord> m_routingTableRecords;
+    ZigbeeDeviceProfile::NeighborTable m_neighborTable; // Used internally to sync the table from the device in chunks
+    ZigbeeDeviceProfile::RoutingTable m_routingTable; // Used internally to sync the table from the device in chunks
 
     void setState(State state);
     void setReachable(bool reachable);
@@ -140,6 +148,8 @@ private:
     void initEndpoint(quint8 endpointId);
 
     void removeNextBinding(ZigbeeReply *reply);
+    void readNeighborTableChunk(ZigbeeReply *reply, quint8 startIndex);
+    void readRoutingTableChunk(ZigbeeReply *reply, quint8 startIndex);
 
     void setupEndpointInternal(ZigbeeNodeEndpoint *endpoint);
 
@@ -150,6 +160,7 @@ private:
     void readSoftwareBuildId(ZigbeeClusterBasic *basicCluster);
 
     void handleDataIndication(const Zigbee::ApsdeDataIndication &indication);
+
 
 signals:
     void nodeInitializationFailed();
@@ -162,6 +173,8 @@ signals:
     void versionChanged(const QString &version);
     void reachableChanged(bool reachable);
     void bindingTableRecordsChanged();
+    void neighborTableRecordsChanged();
+    void routingTableRecordsChanged();
     void clusterAdded(ZigbeeCluster *cluster);
     void endpointClusterAttributeChanged(ZigbeeNodeEndpoint *endpoint, ZigbeeCluster *cluster, const ZigbeeClusterAttribute &attribute);
 

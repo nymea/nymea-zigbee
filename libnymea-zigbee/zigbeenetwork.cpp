@@ -53,7 +53,6 @@ ZigbeeNetwork::ZigbeeNetwork(const QUuid &networkUuid, QObject *parent) :
 
     m_reachableRefreshTimer = new QTimer(this);
     m_reachableRefreshTimer->setInterval(120000);
-    m_reachableRefreshTimer->setSingleShot(false);
     connect(m_reachableRefreshTimer, &QTimer::timeout, this, &ZigbeeNetwork::evaluateNodeReachableStates);
 
     connect(this, &ZigbeeNetwork::stateChanged, this, [this](ZigbeeNetwork::State state){
@@ -331,6 +330,16 @@ void ZigbeeNetwork::removeZigbeeNode(const ZigbeeAddress &address)
     });
 }
 
+void ZigbeeNetwork::refreshNeighborTable()
+{
+    foreach (ZigbeeNode *node, m_nodes) {
+        if (node->macCapabilities().receiverOnWhenIdle) {
+            m_refreshNeighborTableAddresses.append(node->extendedAddress());
+        }
+    }
+    fetchNextNodeLqiTable();
+}
+
 void ZigbeeNetwork::printNetwork()
 {
     qCDebug(dcZigbeeNetwork()) << this;
@@ -454,30 +463,43 @@ ZigbeeNode *ZigbeeNetwork::createNode(quint16 shortAddress, const ZigbeeAddress 
     return node;
 }
 
-void ZigbeeNetwork::evaluateNextNodeReachableState()
+void ZigbeeNetwork::fetchNextNodeLqiTable()
 {
-    if (m_reachableRefreshAddresses.isEmpty())
-        return;
-
-    ZigbeeNode *node = getZigbeeNode(m_reachableRefreshAddresses.takeFirst());
+    ZigbeeNode *node = nullptr;
+    while (!node && !m_refreshNeighborTableAddresses.isEmpty()) {
+        node = getZigbeeNode(m_refreshNeighborTableAddresses.takeFirst());
+    }
+    while (!node && !m_reachableRefreshAddresses.isEmpty()) {
+        node = getZigbeeNode(m_reachableRefreshAddresses.takeFirst());
+    }
     if (!node) {
-        // Not does not exit any more...continue
-        evaluateNextNodeReachableState();
+        // Nothing to do...
         return;
     }
 
+    qCDebug(dcZigbeeNetwork()) << "Refreshing LQI neighbor table for node" << node->shortAddress() << node->modelName();
+
     // Make a lqi request in order to check if the node is reachable
-    ZigbeeDeviceObjectReply *zdoReply = node->deviceObject()->requestNetworkAddress();
-    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [=](){
-        if (zdoReply->error()) {
-            qCWarning(dcZigbeeNetwork()) << node << "seems not to be reachable" << zdoReply->error();
+    ZigbeeReply *reply = node->readLqiTableEntries();
+    connect(reply, &ZigbeeReply::finished, this, [=](){
+        if (reply->error()) {
+            qCWarning(dcZigbeeNetwork()) << node << "seems not to be reachable" << reply->error();
             setNodeReachable(node, false);
         } else {
             setNodeReachable(node, true);
         }
 
-        // Give some time for other requests to be processed
-        QTimer::singleShot(5000, this, &ZigbeeNetwork::evaluateNextNodeReachableState);
+        ZigbeeReply *reply = node->readRoutingTableEntries();
+        connect(reply, &ZigbeeReply::finished, this, [=]() {
+
+            // While we still need to refresh neighbor tables, send the next request right away...
+            if (!m_refreshNeighborTableAddresses.isEmpty()) {
+                fetchNextNodeLqiTable();
+            } else {
+                // ... else be easier on the resources for the cyclic refresh
+                QTimer::singleShot(5000, this, &ZigbeeNetwork::fetchNextNodeLqiTable);
+            }
+        });
     });
 }
 
@@ -652,6 +674,7 @@ void ZigbeeNetwork::setState(ZigbeeNetwork::State state)
 
     if (state == StateRunning) {
         printNetwork();
+
     }
     emit stateChanged(m_state);
 }
@@ -927,29 +950,35 @@ void ZigbeeNetwork::onNodeClusterAttributeChanged(ZigbeeCluster *cluster, const 
 
 void ZigbeeNetwork::evaluateNodeReachableStates()
 {
-    qCDebug(dcZigbeeNetwork()) << "Evaluate reachable state of nodes";
-    m_reachableRefreshAddresses.clear();
+    qCDebug(dcZigbeeNetwork()) << "Evaluating reachable state of nodes...";
 
     foreach (ZigbeeNode *node, m_nodes) {
-        // Skip the coordinator
-        if (node->shortAddress() == 0x0000)
+        if (node->shortAddress() == 0x0000) {
+            // While we wouldn't need to check ourselves for being reachable, do it nevertheless so we keep the
+            // neighbor table in sync which is useful in logs
+            if (!m_reachableRefreshAddresses.contains(node->extendedAddress())) {
+                m_reachableRefreshAddresses.append(node->extendedAddress());
+            }
             continue;
+        }
 
-        if (node->macCapabilities().receiverOnWhenIdle && node->shortAddress() != 0x0000) {
+        if (node->macCapabilities().receiverOnWhenIdle) {
 
             // Lets send a request to all things which are not reachable
             if (!node->reachable()) {
-                qCDebug(dcZigbeeNetwork()) << node << "enqueue evaluating reachable state";
-                m_reachableRefreshAddresses.append(node->extendedAddress());
+                if (!m_reachableRefreshAddresses.contains(node->extendedAddress())) {
+                    qCDebug(dcZigbeeNetwork()) << node << "is not reachable. Scheduling LQI request.";
+                    m_reachableRefreshAddresses.append(node->extendedAddress());
+                }
                 continue;
             }
 
             // Lets send a request to nodes which have not been seen more than 10 min
-            int msSinceLastSeen = node->lastSeen().msecsTo(QDateTime::currentDateTimeUtc());
+            qulonglong msSinceLastSeen = node->lastSeen().msecsTo(QDateTime::currentDateTimeUtc());
             qCDebug(dcZigbeeNetwork()) << node << "has been seen the last time" << QTime::fromMSecsSinceStartOfDay(msSinceLastSeen).toString() << "ago.";
             // 10 min = 10 * 60 * 1000 = 600000 ms
-            if (msSinceLastSeen > 600000) {
-                qCDebug(dcZigbeeNetwork()) << node << "enqueue evaluating reachable state";
+            if (msSinceLastSeen > 600000 && !m_reachableRefreshAddresses.contains(node->extendedAddress())) {
+                qCDebug(dcZigbeeNetwork()) << node << "has not been seen in" << (msSinceLastSeen / 1000 / 60) << "minutes. Scheduling LQI request.";
                 m_reachableRefreshAddresses.append(node->extendedAddress());
             }
         } else {
@@ -966,7 +995,7 @@ void ZigbeeNetwork::evaluateNodeReachableStates()
         }
     }
 
-    evaluateNextNodeReachableState();
+    fetchNextNodeLqiTable();
 }
 
 QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
