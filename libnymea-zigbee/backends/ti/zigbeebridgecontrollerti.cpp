@@ -672,8 +672,8 @@ ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::addEndpointToGroup(quint8 endp
 ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::requestPermitJoin(quint8 seconds, const quint16 &networkAddress)
 {
     NEW_PAYLOAD;
-    stream << static_cast<quint8>(networkAddress == 0 || networkAddress == 0xFFFC ? 0x0F : 0x02);
-    stream << static_cast<quint16>(networkAddress == 0 ? 0xFFFC : networkAddress);
+    stream << static_cast<quint8>(networkAddress == Zigbee::BroadcastAddressAllRouters ? 0x0F : 0x02);
+    stream << static_cast<quint16>(networkAddress);
     stream << seconds;
     stream << static_cast<quint8>(0x00); // tcsignificance
     ZigbeeInterfaceTiReply *reply = sendCommand(Ti::SubSystemZDO, Ti::ZDOCommandMgmtPermitJoinReq, payload);
