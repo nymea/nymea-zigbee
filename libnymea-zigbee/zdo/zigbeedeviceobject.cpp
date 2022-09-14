@@ -427,9 +427,9 @@ ZigbeeDeviceObjectReply *ZigbeeDeviceObject::requestUnbind(const ZigbeeDevicePro
     stream << bindingRecord.clusterId;
     stream << static_cast<quint8>(bindingRecord.destinationAddressMode);
     if (bindingRecord.destinationAddressMode == Zigbee::DestinationAddressModeGroup) {
-        stream << bindingRecord.destinationAddressShort;
+        stream << bindingRecord.destinationShortAddress;
     } else {
-        stream << bindingRecord.destinationAddress.toUInt64();
+        stream << bindingRecord.destinationIeeeAddress.toUInt64();
         stream << bindingRecord.destinationEndpoint;
     }
 

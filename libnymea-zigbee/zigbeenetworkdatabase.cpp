@@ -180,6 +180,23 @@ QList<ZigbeeNode *> ZigbeeNetworkDatabase::loadNodes()
             node->m_endpoints.append(endpoint);
             node->setupEndpointInternal(endpoint);
         }
+
+        QSqlQuery bindingsQuery(m_db);
+        bindingsQuery.prepare("SELECT * FROM bindings WHERE sourceAddress = ?;");
+        bindingsQuery.addBindValue(node->extendedAddress().toString());
+        bindingsQuery.exec();
+        while (bindingsQuery.next()) {
+            ZigbeeDeviceProfile::BindingTableListRecord record;
+            record.sourceAddress = ZigbeeAddress(bindingsQuery.value("sourceAddress").toString());
+            record.sourceEndpoint = bindingsQuery.value("sourceEndpointId").toUInt();
+            record.clusterId = bindingsQuery.value("clusterId").toUInt();
+            record.destinationAddressMode = static_cast<Zigbee::DestinationAddressMode>(bindingsQuery.value("destinationAddressMode").toUInt());
+            record.destinationShortAddress = bindingsQuery.value("destinationShortAddress").toUInt();
+            record.destinationIeeeAddress = ZigbeeAddress(bindingsQuery.value("destinationIeeeAddress").toString());
+            record.destinationEndpoint = bindingsQuery.value("destinationEndpointId").toUInt();
+            node->m_bindingTableRecords.append(record);
+        }
+
         nodes.append(node);
     }
 
@@ -285,6 +302,18 @@ bool ZigbeeNetworkDatabase::initDatabase()
                     "data BLOB NOT NULL, " // raw data from attribute
                     "CONSTRAINT fk_cluster FOREIGN KEY(clusterId) REFERENCES serverClusters(id) ON DELETE CASCADE)");
         createIndices("attributesIndex", "attributes", "clusterId, attributeId");
+    }
+
+    if (!m_db.tables().contains("bindings")) {
+        createTable("bindings", "(sourceAddress TEXT NOT NULL, "
+                                "sourceEndpointId INTEGER NOT NULL, "
+                                "clusterId INTEGER NOT NULL, "
+                                "destinationAddressMode INTEGER NOT NULL, "
+                                "destinationShortAddress INTEGER, "
+                                "destinationIeeeAddress TEXT, "
+                                "destinationEndpointId INTEGER, "
+                                "CONSTRAINT fk FOREIGN KEY(sourceAddress) REFERENCES nodes(ieeeAddress) ON DELETE CASCADE"
+                                ")");
     }
 
     return true;
@@ -436,6 +465,8 @@ bool ZigbeeNetworkDatabase::saveNode(ZigbeeNode *node)
         }
     }
 
+    updateNodeBindingTable(node);
+
     return true;
 }
 
@@ -477,6 +508,37 @@ bool ZigbeeNetworkDatabase::updateNodeLastSeen(ZigbeeNode *node, const QDateTime
     }
 
     return true;
+}
+
+bool ZigbeeNetworkDatabase::updateNodeBindingTable(ZigbeeNode *node)
+{
+    bool error = false;
+    QSqlQuery query(m_db);
+    query.prepare("DELETE FROM bindings WHERE sourceAddress = ?");
+    query.addBindValue(node->extendedAddress().toString());
+    query.exec();
+    if (query.lastError().type() != QSqlError::NoError) {
+        qCWarning(dcZigbeeNetworkDatabase()) << "Error clearing old binding table:" << query.executedQuery() << query.lastError().databaseText() << query.lastError().driverText();
+        error = true;
+    }
+
+    foreach (const ZigbeeDeviceProfile::BindingTableListRecord &record, node->bindingTableRecords()) {
+        QSqlQuery insertQuery(m_db);
+        insertQuery.prepare("INSERT INTO bindings (sourceAddress, sourceEndpointId, clusterId, destinationAddressMode, destinationShortAddress, destinationIeeeAddress, destinationEndpointId) VALUES(?, ?, ?, ?, ?, ?, ?)");
+        insertQuery.addBindValue(record.sourceAddress.toString());
+        insertQuery.addBindValue(record.sourceEndpoint);
+        insertQuery.addBindValue(record.clusterId);
+        insertQuery.addBindValue(record.destinationAddressMode);
+        insertQuery.addBindValue(record.destinationShortAddress);
+        insertQuery.addBindValue(record.destinationIeeeAddress.toString());
+        insertQuery.addBindValue(record.destinationEndpoint);
+        insertQuery.exec();
+        if (insertQuery.lastError().type() != QSqlError::NoError) {
+            qCWarning(dcZigbeeNetworkDatabase()) << "Error inserting into binding table:" << query.executedQuery() << query.lastError().databaseText() << query.lastError().driverText();
+            error = true;
+        }
+    }
+    return error;
 }
 
 bool ZigbeeNetworkDatabase::removeNode(ZigbeeNode *node)

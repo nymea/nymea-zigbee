@@ -147,7 +147,7 @@ public:
         // Heating, Ventilation and Air-Conditioning (HVAC)
         ClusterIdPumpConfigurationControl = 0x0200,
         ClusterIdThermostat               = 0x0201,
-        ClusterIdFanControll              = 0x0202,
+        ClusterIdFanControl               = 0x0202,
         ClusterIdDehumiditationControl    = 0x0203,
         ClusterIdThermostatUserControl    = 0x0204,
 

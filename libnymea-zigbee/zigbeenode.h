@@ -98,10 +98,14 @@ public:
     // This method starts the node initialization phase (read descriptors and endpoints)
     void startInitialization();
 
-    ZigbeeReply *removeAllBindings();
     ZigbeeReply *readBindingTableEntries();
     ZigbeeReply *readLqiTableEntries();
     ZigbeeReply *readRoutingTableEntries();
+
+    ZigbeeReply *addBinding(quint8 sourceEndpointId, quint16 clusterId, const ZigbeeAddress &destinationAddress, quint8 destinationEndpoint);
+    ZigbeeReply *addBinding(quint8 sourceEndpointId, quint16 clusterId, quint16 destinationGroupAddress);
+    ZigbeeReply *removeBinding(const ZigbeeDeviceProfile::BindingTableListRecord &binding);
+    ZigbeeReply *removeAllBindings();
 
 private:
     ZigbeeNode(ZigbeeNetwork *network, quint16 shortAddress, const ZigbeeAddress &extendedAddress, QObject *parent = nullptr);
@@ -132,6 +136,7 @@ private:
     QList<ZigbeeDeviceProfile::BindingTableListRecord> m_bindingTableRecords;
     QHash<quint16, ZigbeeDeviceProfile::NeighborTableListRecord> m_neighborTableRecords;
     QHash<quint16, ZigbeeDeviceProfile::RoutingTableListRecord> m_routingTableRecords;
+    ZigbeeDeviceProfile::BindingTable m_bindingTable;
     ZigbeeDeviceProfile::NeighborTable m_neighborTable; // Used internally to sync the table from the device in chunks
     ZigbeeDeviceProfile::RoutingTable m_routingTable; // Used internally to sync the table from the device in chunks
 
@@ -148,6 +153,7 @@ private:
     void initEndpoint(quint8 endpointId);
 
     void removeNextBinding(ZigbeeReply *reply);
+    void readBindingTableChunk(ZigbeeReply *reply, quint8 startIndex);
     void readNeighborTableChunk(ZigbeeReply *reply, quint8 startIndex);
     void readRoutingTableChunk(ZigbeeReply *reply, quint8 startIndex);
 

@@ -194,6 +194,7 @@ void ZigbeeNode::startInitialization()
       *    - Simple descriptor request
       *    - for each endpoint
       *      - read basic cluster
+      *    - Read binding table
       */
 
     initNodeDescriptor();
@@ -225,52 +226,7 @@ ZigbeeReply *ZigbeeNode::removeAllBindings()
 ZigbeeReply *ZigbeeNode::readBindingTableEntries()
 {
     ZigbeeReply *reply = new ZigbeeReply(this);
-    ZigbeeDeviceObjectReply *zdoReply = deviceObject()->requestMgmtBind();
-    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, this, [=](){
-        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
-            qCWarning(dcZigbeeNode()) << "Failed to read binding table" << zdoReply->error();
-            reply->finishReply(ZigbeeReply::ErrorZigbeeError);
-            return;
-        }
-
-        qCDebug(dcZigbeeDeviceObject()) << "Bind table payload" << ZigbeeUtils::convertByteArrayToHexString(zdoReply->responseData());
-        QByteArray response = zdoReply->responseData();
-        QDataStream stream(&response, QIODevice::ReadOnly);
-        stream.setByteOrder(QDataStream::LittleEndian);
-        quint8 sqn; quint8 statusInt; quint8 entriesCount; quint8 startIndex; quint8 bindingTableListCount;
-        stream >> sqn >> statusInt >> entriesCount >> startIndex >> bindingTableListCount;
-        ZigbeeDeviceProfile::Status status = static_cast<ZigbeeDeviceProfile::Status>(statusInt);
-        qCDebug(dcZigbeeDeviceObject()) << "SQN:" << sqn << status << "entries:" << entriesCount << "index:" << startIndex << "list count:" << bindingTableListCount;
-
-        m_bindingTableRecords.clear();
-        for (int i = 0; i < bindingTableListCount; i++) {
-            quint64 sourceAddress; quint8 addressMode;
-            ZigbeeDeviceProfile::BindingTableListRecord record;
-            stream >> sourceAddress;
-            record.sourceAddress = ZigbeeAddress(sourceAddress);
-
-            stream >> record.sourceEndpoint >> record.clusterId >> addressMode;
-            record.destinationAddressMode = static_cast<Zigbee::DestinationAddressMode>(addressMode);
-
-            if (addressMode == Zigbee::DestinationAddressModeGroup) {
-                stream >> record.destinationAddressShort;
-            } else if (addressMode == Zigbee::DestinationAddressModeIeeeAddress) {
-                quint64 destinationAddressIeee;
-                stream >> destinationAddressIeee >> record.destinationEndpoint;
-                record.destinationAddress = ZigbeeAddress(destinationAddressIeee);
-            } else {
-                qCWarning(dcZigbeeDeviceObject()) << "Invalid destination address mode in binding table record.";
-                break;
-            }
-            qCDebug(dcZigbeeDeviceObject()) << record;
-            m_bindingTableRecords << record;
-        }
-
-        // TODO: continue reading if there are more entries
-
-        emit bindingTableRecordsChanged();
-        reply->finishReply();
-    });
+    readBindingTableChunk(reply, 0);
     return reply;
 }
 
@@ -285,6 +241,63 @@ ZigbeeReply *ZigbeeNode::readRoutingTableEntries()
 {
     ZigbeeReply *reply = new ZigbeeReply(this);
     readRoutingTableChunk(reply, 0);
+    return reply;
+}
+
+ZigbeeReply *ZigbeeNode::addBinding(quint8 sourceEndpointId, quint16 clusterId, const ZigbeeAddress &destinationAddress, quint8 destinationEndpoint)
+{
+    ZigbeeReply *reply = new ZigbeeReply(this);
+    ZigbeeDeviceObjectReply *zdoReply = deviceObject()->requestBindIeeeAddress(sourceEndpointId, clusterId, destinationAddress, destinationEndpoint);
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, reply, [this, zdoReply, reply](){
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Failed to configure binding on node" << this;
+            reply->finishReply(ZigbeeReply::ErrorZigbeeError);
+            return;
+        }
+        qCDebug(dcZigbeeNode) << "Binding added";
+
+        reply->finishReply();
+
+        readBindingTableEntries();
+    });
+    return reply;
+}
+
+ZigbeeReply *ZigbeeNode::addBinding(quint8 sourceEndpointId, quint16 clusterId, quint16 destinationGroupAddress)
+{
+    ZigbeeReply *reply = new ZigbeeReply(this);
+    ZigbeeDeviceObjectReply *zdoReply = deviceObject()->requestBindGroupAddress(sourceEndpointId, clusterId, destinationGroupAddress);
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, reply, [this, zdoReply, reply](){
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Failed to configure binding on node" << this;
+            reply->finishReply(ZigbeeReply::ErrorZigbeeError);
+            return;
+        }
+        qCDebug(dcZigbeeNode) << "Binding added";
+
+        reply->finishReply();
+
+        readBindingTableEntries();
+    });
+    return reply;
+}
+
+ZigbeeReply *ZigbeeNode::removeBinding(const ZigbeeDeviceProfile::BindingTableListRecord &binding)
+{
+    ZigbeeReply *reply = new ZigbeeReply(this);
+    ZigbeeDeviceObjectReply *zdoReply = deviceObject()->requestUnbind(binding);
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, reply, [this, zdoReply, reply](){
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Failed to rebinding binding on node" << this;
+            reply->finishReply(ZigbeeReply::ErrorZigbeeError);
+            return;
+        }
+        qCDebug(dcZigbeeNode) << "Binding removed";
+
+        reply->finishReply();
+
+        readBindingTableEntries();
+    });
     return reply;
 }
 
@@ -534,6 +547,90 @@ void ZigbeeNode::removeNextBinding(ZigbeeReply *reply)
     });
 }
 
+void ZigbeeNode::readBindingTableChunk(ZigbeeReply *reply, quint8 startIndex)
+{
+    ZigbeeDeviceObjectReply *zdoReply = deviceObject()->requestMgmtBind(startIndex);
+    connect(zdoReply, &ZigbeeDeviceObjectReply::finished, reply, [=](){
+        if (zdoReply->error() != ZigbeeDeviceObjectReply::ErrorNoError) {
+            qCWarning(dcZigbeeNode()) << "Failed to read binding table" << zdoReply->error();
+            if (zdoReply->zigbeeDeviceObjectStatus() == ZigbeeDeviceProfile::StatusNotSupported) {
+                // Not an error, merely a valid response code that this optional request is not supported.
+                reply->finishReply(ZigbeeReply::ErrorNoError);
+            } else {
+                reply->finishReply(ZigbeeReply::ErrorZigbeeError);
+            }
+            return;
+        }
+
+        qCDebug(dcZigbeeNetwork()) << "Binding table reply from" << ZigbeeUtils::convertUint16ToHexString(shortAddress()) << zdoReply->responseData().toHex();
+
+        ZigbeeDeviceProfile::BindingTable bindingTable = ZigbeeDeviceProfile::parseBindingTable(zdoReply->responseData());
+        if (bindingTable.startIndex == 0) {
+            m_bindingTable = bindingTable;
+        } else if (m_bindingTable.records.count() == bindingTable.startIndex) {
+            m_bindingTable.records.append(bindingTable.records);
+        } else {
+            qCWarning(dcZigbeeNode()) << "Error reading binding table. Indices not matching. Starting from scratch.";
+            readBindingTableChunk(reply, 0);
+            return;
+        }
+        if (m_bindingTable.records.count() < m_bindingTable.tableSize) {
+            qCDebug(dcZigbeeNode) << "Binding table not complete yet (" << m_bindingTable.records.count() << "/" << m_bindingTable.tableSize << "). Fetching next chunk...";
+            readBindingTableChunk(reply, m_bindingTable.records.count());
+            return;
+        }
+
+        bool changed = false;
+        QMutableListIterator<ZigbeeDeviceProfile::BindingTableListRecord> it(m_bindingTableRecords);
+        while (it.hasNext()) {
+            ZigbeeDeviceProfile::BindingTableListRecord oldRecord = it.next();
+            bool found = false;
+            foreach (const ZigbeeDeviceProfile::BindingTableListRecord &record, m_bindingTable.records) {
+                if (record.sourceAddress == oldRecord.sourceAddress
+                        && record.sourceEndpoint == oldRecord.sourceEndpoint
+                        && record.clusterId == oldRecord.clusterId
+                        && record.destinationAddressMode == oldRecord.destinationAddressMode
+                        && record.destinationShortAddress == oldRecord.destinationShortAddress
+                        && record.destinationIeeeAddress == oldRecord.destinationIeeeAddress
+                        && record.destinationEndpoint == oldRecord.destinationEndpoint) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                it.remove();
+                changed = true;
+            }
+        }
+
+        foreach (const ZigbeeDeviceProfile::BindingTableListRecord &record, m_bindingTable.records) {
+            qCDebug(dcZigbeeNode()) << "Binding table record fetched" << record;
+            bool found = false;
+            foreach (const ZigbeeDeviceProfile::BindingTableListRecord &oldRecord, m_bindingTableRecords) {
+                if (record.sourceAddress == oldRecord.sourceAddress
+                        && record.sourceEndpoint == oldRecord.sourceEndpoint
+                        && record.clusterId == oldRecord.clusterId
+                        && record.destinationAddressMode == oldRecord.destinationAddressMode
+                        && record.destinationShortAddress == oldRecord.destinationShortAddress
+                        && record.destinationIeeeAddress == oldRecord.destinationIeeeAddress
+                        && record.destinationEndpoint == oldRecord.destinationEndpoint) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                qCDebug(dcZigbeeNode()) << "New binding table record:" << record;
+                m_bindingTableRecords.append(record);
+                changed = true;
+            }
+        }
+        if (changed) {
+            emit bindingTableRecordsChanged();
+        }
+        reply->finishReply(ZigbeeReply::ErrorNoError);
+    });
+}
+
 void ZigbeeNode::readNeighborTableChunk(ZigbeeReply *reply, quint8 startIndex)
 {
     ZigbeeDeviceObjectReply *zdoReply = deviceObject()->requestMgmtLqi(startIndex);
@@ -550,7 +647,7 @@ void ZigbeeNode::readNeighborTableChunk(ZigbeeReply *reply, quint8 startIndex)
         }
 
 
-//        qCDebug(dcZigbeeNode()) << "LQI response:" << zdoReply->responseData().toHex();
+//        qCDebug(dcZigbeeNode()) << "LQI neighbor table reply:" << zdoReply->responseData().toHex();
         ZigbeeDeviceProfile::NeighborTable neighborTable = ZigbeeDeviceProfile::parseNeighborTable(zdoReply->responseData());
         if (neighborTable.startIndex == 0) {
             m_neighborTable = neighborTable;
@@ -567,6 +664,7 @@ void ZigbeeNode::readNeighborTableChunk(ZigbeeReply *reply, quint8 startIndex)
             return;
         }
 
+        bool changed = false;
         QList<quint16> removedRecords = m_neighborTableRecords.keys();
         foreach(const ZigbeeDeviceProfile::NeighborTableListRecord &record, m_neighborTable.records) {
             qCDebug(dcZigbeeNode()).nospace() << "LQI neighbor for node: " << ZigbeeUtils::convertUint16ToHexString(m_shortAddress) << ": " << record;
@@ -578,15 +676,18 @@ void ZigbeeNode::readNeighborTableChunk(ZigbeeReply *reply, quint8 startIndex)
                         || existingRecord.depth != record.depth
                         || existingRecord.lqi != record.lqi) {
                     m_neighborTableRecords[record.shortAddress] = record;
-                    emit neighborTableRecordsChanged();
+                    changed = true;
                 }
             } else {
                 m_neighborTableRecords.insert(record.shortAddress, record);
-                emit neighborTableRecordsChanged();
+                changed = true;
             }
         }
         foreach (quint16 removedRecord, removedRecords) {
             m_neighborTableRecords.remove(removedRecord);
+            changed = true;
+        }
+        if (changed) {
             emit neighborTableRecordsChanged();
         }
         reply->finishReply(ZigbeeReply::ErrorNoError);
@@ -626,6 +727,7 @@ void ZigbeeNode::readRoutingTableChunk(ZigbeeReply *reply, quint8 startIndex)
             return;
         }
 
+        bool changed = false;
         QList<quint16> removedRecords = m_routingTableRecords.keys();
         foreach(const ZigbeeDeviceProfile::RoutingTableListRecord &record, m_routingTable.records) {
             qCDebug(dcZigbeeNode()).nospace() << "Route entry for node: " << ZigbeeUtils::convertUint16ToHexString(m_shortAddress) << ": " << record;
@@ -638,19 +740,21 @@ void ZigbeeNode::readRoutingTableChunk(ZigbeeReply *reply, quint8 startIndex)
                         || existingRecord.routeRecordRequired != record.routeRecordRequired
                         || existingRecord.nextHopAddress != record.nextHopAddress) {
                     m_routingTableRecords[record.destinationAddress] = record;
-                    emit routingTableRecordsChanged();
+                    changed = true;
                 }
             } else {
                 m_routingTableRecords.insert(record.destinationAddress, record);
-                emit routingTableRecordsChanged();
+                changed = true;
             }
         }
         foreach (quint16 removedRecord, removedRecords) {
             m_routingTableRecords.remove(removedRecord);
+            changed = true;
+        }
+        if (changed) {
             emit routingTableRecordsChanged();
         }
         reply->finishReply(ZigbeeReply::ErrorNoError);
-
     });
 }
 
@@ -903,6 +1007,9 @@ void ZigbeeNode::readSoftwareBuildId(ZigbeeClusterBasic *basicCluster)
 
         // Finished with reading basic cluster, the node is initialized.
         setState(StateInitialized);
+
+        // Reading binding table. If this fails, it's not critical, so setting the node to initialized before this is fine.
+        readBindingTableEntries();
     });
 }
 

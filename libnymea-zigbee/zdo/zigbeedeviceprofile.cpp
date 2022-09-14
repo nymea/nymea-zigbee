@@ -174,14 +174,53 @@ ZigbeeDeviceProfile::PowerDescriptor ZigbeeDeviceProfile::parsePowerDescriptor(q
     return powerDescriptor;
 }
 
+ZigbeeDeviceProfile::BindingTable ZigbeeDeviceProfile::parseBindingTable(const QByteArray &payload)
+{
+    ZigbeeDeviceProfile::BindingTable table;
+
+    QDataStream stream(payload);
+    stream.setByteOrder(QDataStream::LittleEndian);
+
+    quint8 sqn, status, listRecordCount;
+    stream >> sqn >> status >> table.tableSize >> table.startIndex >> listRecordCount;
+
+    table.status = static_cast<Status>(status);
+
+    for (int i = 0; i < listRecordCount; i++) {
+        ZigbeeDeviceProfile::BindingTableListRecord record;
+
+        quint64 sourceAddress;
+        stream >> sourceAddress;
+        record.sourceAddress = ZigbeeAddress(sourceAddress);
+
+        stream >> record.sourceEndpoint;
+        stream >> record.clusterId;
+        quint8 addressMode;
+        stream >> addressMode;
+        record.destinationAddressMode = static_cast<Zigbee::DestinationAddressMode>(addressMode);
+
+        if (addressMode == Zigbee::DestinationAddressModeGroup) {
+            stream >> record.destinationShortAddress;
+        } else if (addressMode == Zigbee::DestinationAddressModeIeeeAddress) {
+            quint64 destinationAddressIeee;
+            stream >> destinationAddressIeee >> record.destinationEndpoint;
+            record.destinationIeeeAddress = ZigbeeAddress(destinationAddressIeee);
+        }
+        table.records.append(record);
+    }
+
+    return table;
+}
+
 ZigbeeDeviceProfile::NeighborTable ZigbeeDeviceProfile::parseNeighborTable(const QByteArray &payload)
 {
     ZigbeeDeviceProfile::NeighborTable table;
     QDataStream stream(payload);
     stream.setByteOrder(QDataStream::LittleEndian);
 
-    quint8 messageId; quint8 listRecordCount;
-    stream >> messageId >> table.status >> table.tableSize >> table.startIndex >> listRecordCount;
+    quint8 messageId, status, listRecordCount;
+    stream >> messageId >> status >> table.tableSize >> table.startIndex >> listRecordCount;
+    table.status = static_cast<Status>(status);
     for (int i = 0; i < listRecordCount; i++) {
         ZigbeeDeviceProfile::NeighborTableListRecord record;
         stream >> record.extendedPanId;
@@ -213,8 +252,9 @@ ZigbeeDeviceProfile::RoutingTable ZigbeeDeviceProfile::parseRoutingTable(const Q
     QDataStream stream(payload);
     stream.setByteOrder(QDataStream::LittleEndian);
 
-    quint8 messageId; quint8 listRecordCount;
-    stream >> messageId >> table.status >> table.tableSize >> table.startIndex >> listRecordCount;
+    quint8 messageId, status, listRecordCount;
+    stream >> messageId >> status >> table.tableSize >> table.startIndex >> listRecordCount;
+    table.status = static_cast<Status>(status);
     for (int i = 0; i < listRecordCount; i++) {
         ZigbeeDeviceProfile::RoutingTableListRecord record;
         stream >> record.destinationAddress;
@@ -323,10 +363,10 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::BindingTableListRecor
     debug.nospace() << "cluster: " << static_cast<ZigbeeClusterLibrary::ClusterId>(bindingTableListRecord.clusterId) << " --> ";
     switch (bindingTableListRecord.destinationAddressMode) {
     case Zigbee::DestinationAddressModeGroup:
-        debug.nospace() << "destination address (group): " << ZigbeeUtils::convertUint16ToHexString(bindingTableListRecord.destinationAddressShort) << ") ";
+        debug.nospace() << "destination address (group): " << ZigbeeUtils::convertUint16ToHexString(bindingTableListRecord.destinationShortAddress) << ") ";
         break;
     case Zigbee::DestinationAddressModeIeeeAddress:
-        debug.nospace() << "destination address (unicast): " << bindingTableListRecord.destinationAddress.toString() << ", ";
+        debug.nospace() << "destination address (unicast): " << bindingTableListRecord.destinationIeeeAddress.toString() << ", ";
         debug.nospace() << "destination endpoint: " << bindingTableListRecord.destinationEndpoint << ") ";
         break;
     default:

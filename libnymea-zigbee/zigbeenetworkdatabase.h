@@ -73,6 +73,7 @@ public slots:
     bool updateNodeLqi(ZigbeeNode *node, quint8 lqi);
     bool updateNodeNetworkAddress(ZigbeeNode *node, quint16 networkAddress);
     bool updateNodeLastSeen(ZigbeeNode *node, const QDateTime &lastSeen);
+    bool updateNodeBindingTable(ZigbeeNode *node);
     bool removeNode(ZigbeeNode *node);
 
 };

@@ -330,7 +330,7 @@ void ZigbeeNetwork::removeZigbeeNode(const ZigbeeAddress &address)
     });
 }
 
-void ZigbeeNetwork::refreshNeighborTable()
+void ZigbeeNetwork::refreshNeighborTables()
 {
     foreach (ZigbeeNode *node, m_nodes) {
         if (node->macCapabilities().receiverOnWhenIdle) {
@@ -413,6 +413,10 @@ void ZigbeeNetwork::addNodeInternally(ZigbeeNode *node)
             qCWarning(dcZigbeeNetwork()) << node << cluster << "cluster added but the node has already been initialized. This node is out of spec. Save the node nether the less...";
             m_database->saveNode(node);
         }
+    });
+
+    connect(node, &ZigbeeNode::bindingTableRecordsChanged, this, [this, node](){
+        m_database->updateNodeBindingTable(node);
     });
 
     // Note: if a cluster shows up after initialization (out of spec devices), save the cluster and it's attributes

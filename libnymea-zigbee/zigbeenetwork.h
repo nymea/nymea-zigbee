@@ -132,7 +132,7 @@ public:
 
     void removeZigbeeNode(const ZigbeeAddress &address);
 
-    void refreshNeighborTable();
+    void refreshNeighborTables();
 
 private:
     QUuid m_networkUuid;

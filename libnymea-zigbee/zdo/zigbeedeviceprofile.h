@@ -292,11 +292,18 @@ public:
         ZigbeeAddress sourceAddress;
         quint8 sourceEndpoint;
         quint16 clusterId;
-        Zigbee::DestinationAddressMode destinationAddressMode; // Note: group or unicast
-        quint16 destinationAddressShort; // Only for destination address 0x01
-        ZigbeeAddress destinationAddress;  // Only for destination address 0x03
-        quint8 destinationEndpoint; // Only for destination address 0x03
+        Zigbee::DestinationAddressMode destinationAddressMode;
+        quint16 destinationShortAddress;
+        ZigbeeAddress destinationIeeeAddress;
+        quint8 destinationEndpoint;
     } BindingTableListRecord;
+
+    typedef struct BindingTable {
+        Status status;
+        quint8 tableSize;
+        quint8 startIndex;
+        QList<BindingTableListRecord> records;
+    } BindingTable;
 
     typedef struct NeighborTableListRecord {
         quint64 extendedPanId;
@@ -310,8 +317,8 @@ public:
         quint8 lqi;
     } NeighborTableListRecord;
 
-    typedef struct NeighborTable{
-        quint8 status;
+    typedef struct NeighborTable {
+        Status status;
         quint8 tableSize;
         quint8 startIndex;
         QList<NeighborTableListRecord> records;
@@ -327,7 +334,7 @@ public:
     } RoutingTableListRecord;
 
     typedef struct RoutingTable{
-        quint8 status;
+        Status status;
         quint8 tableSize;
         quint8 startIndex;
         QList<RoutingTableListRecord> records;
@@ -338,6 +345,7 @@ public:
     static ServerMask parseServerMask(quint16 serverMaskFlag);
     static DescriptorCapabilities parseDescriptorCapabilities(quint8 descriptorCapabilitiesFlag);
     static PowerDescriptor parsePowerDescriptor(quint16 powerDescriptorFlag);
+    static BindingTable parseBindingTable(const QByteArray &payload);
     static NeighborTable parseNeighborTable(const QByteArray &payload);
     static RoutingTable parseRoutingTable(const QByteArray &payload);
 };
