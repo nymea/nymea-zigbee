@@ -225,7 +225,7 @@ ZigbeeNetworkReply *ZigbeeNetworkNxp::requestSetPermitJoin(quint16 shortAddress,
     request.setProfileId(Zigbee::ZigbeeProfileDevice); // ZDP
     request.setClusterId(ZigbeeDeviceProfile::MgmtPermitJoinRequest);
     request.setSourceEndpoint(0); // ZDO
-    request.setRadius(10);
+    request.setRadius(30);
 
     // Build ASDU
     QByteArray asdu;
