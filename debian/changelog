@@ -1,3 +1,11 @@
+nymea-zigbee (1.4.1) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Fix node type parsing
+  * Fix permit joining in deconz backend
+
+ -- jenkins <developer@nymea.io>  Fri, 23 Sep 2022 16:33:18 +0200
+
 nymea-zigbee (1.4.0) jammy; urgency=medium
 
   [ Michael Zanetti ]
