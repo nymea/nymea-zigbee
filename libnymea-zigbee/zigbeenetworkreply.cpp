@@ -58,7 +58,7 @@ ZigbeeNetworkReply::ZigbeeNetworkReply(const ZigbeeNetworkRequest &request, QObj
 {
     m_timer = new QTimer(this);
     m_timer->setSingleShot(true);
-    m_timer->setInterval(10000);
+    m_timer->setInterval(20000);
     connect(m_timer, &QTimer::timeout, this, [this](){
         m_error = ErrorTimeout;
         emit finished();

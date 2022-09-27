@@ -48,7 +48,6 @@ ZigbeeClusterPowerConfiguration::BatteryAlarmMask ZigbeeClusterPowerConfiguratio
 
 void ZigbeeClusterPowerConfiguration::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
-    qCDebug(dcZigbeeCluster()) << "Update attribute" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();
     ZigbeeCluster::setAttribute(attribute);
 
     if (attribute.id() == AttributeBatteryPercentageRemaining) {

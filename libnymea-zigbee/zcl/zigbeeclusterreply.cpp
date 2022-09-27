@@ -32,7 +32,7 @@ ZigbeeClusterReply::ZigbeeClusterReply(const ZigbeeNetworkRequest &request, Zigb
     m_request(request),
     m_requestFrame(requestFrame)
 {
-    m_timeoutTimer.setInterval(10000);
+    m_timeoutTimer.setInterval(20000);
     connect(&m_timeoutTimer, &QTimer::timeout, this, [this](){
         m_error = ErrorTimeout;
         emit finished();
