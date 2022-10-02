@@ -41,6 +41,48 @@ bool ZigbeeClusterOccupancySensing::occupied() const
     return m_occupied;
 }
 
+quint16 ZigbeeClusterOccupancySensing::pirOccupiedToUnoccupiedDelay() const
+{
+    return m_pirOccupiedToUnoccupiedDelay;
+}
+
+ZigbeeClusterReply *ZigbeeClusterOccupancySensing::setPirOccupiedToUnoccupiedDelay(quint16 pirOccupiedToUnoccupiedDelay)
+{
+    ZigbeeClusterLibrary::WriteAttributeRecord record;
+    record.attributeId = AttributePirOccupiedToUnoccupiedDelay;
+    record.dataType = Zigbee::Uint16;
+    record.data = ZigbeeDataType(pirOccupiedToUnoccupiedDelay).data();
+    return writeAttributes({record});
+}
+
+quint16 ZigbeeClusterOccupancySensing::pirUnoccupiedToOccupiedDelay() const
+{
+    return m_pirUnoccupiedToOccupiedDelay;
+}
+
+ZigbeeClusterReply *ZigbeeClusterOccupancySensing::setPirUnoccupiedToOccupiedDelay(quint16 pirUnoccupiedToOccupiedDelay)
+{
+    ZigbeeClusterLibrary::WriteAttributeRecord record;
+    record.attributeId = AttributePirUnoccupiedToOccupiedDelay;
+    record.dataType = Zigbee::Uint16;
+    record.data = ZigbeeDataType(pirUnoccupiedToOccupiedDelay).data();
+    return writeAttributes({record});
+}
+
+quint16 ZigbeeClusterOccupancySensing::pirUnoccupiedToOccupiedThreshold() const
+{
+    return m_pirUnoccupiedToOccupiedThreshold;
+}
+
+ZigbeeClusterReply *ZigbeeClusterOccupancySensing::setPirUnoccupiedToOccupiedThreshold(quint16 pirUnoccupiedToOccupiedThreshold)
+{
+    ZigbeeClusterLibrary::WriteAttributeRecord record;
+    record.attributeId = AttributePirUnoccupiedToOccupiedThreshold;
+    record.dataType = Zigbee::Uint16;
+    record.data = ZigbeeDataType(pirUnoccupiedToOccupiedThreshold).data();
+    return writeAttributes({record});
+}
+
 void ZigbeeClusterOccupancySensing::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     ZigbeeCluster::setAttribute(attribute);
@@ -53,6 +95,36 @@ void ZigbeeClusterOccupancySensing::setAttribute(const ZigbeeClusterAttribute &a
             m_occupied = value;
             qCDebug(dcZigbeeCluster()) << "Occupancy changed on" << m_node << m_endpoint << this << m_occupied;
             emit occupancyChanged(m_occupied);
+        } else {
+            qCWarning(dcZigbeeCluster()) << "Failed to convert value from attribute" << m_node << m_endpoint << this << attribute;
+        }
+    } else if (attribute.id() == AttributePirOccupiedToUnoccupiedDelay) {
+        bool valueOk;
+        quint16 value = attribute.dataType().toUInt16(&valueOk);
+        if (valueOk) {
+            m_pirOccupiedToUnoccupiedDelay = value;
+            qCDebug(dcZigbeeCluster()) << "PirOccupiedToUnoccupiedDelay changed on" << m_node << m_endpoint << this << m_pirOccupiedToUnoccupiedDelay;
+            emit pirOccupiedToUnoccupiedDelayChanged(m_pirOccupiedToUnoccupiedDelay);
+        } else {
+            qCWarning(dcZigbeeCluster()) << "Failed to convert value from attribute" << m_node << m_endpoint << this << attribute;
+        }
+    } else if (attribute.id() == AttributePirUnoccupiedToOccupiedDelay) {
+        bool valueOk;
+        quint16 value = attribute.dataType().toUInt16(&valueOk);
+        if (valueOk) {
+            m_pirUnoccupiedToOccupiedDelay = value;
+            qCDebug(dcZigbeeCluster()) << "PirUnccupiedToOccupiedDelay changed on" << m_node << m_endpoint << this << m_pirOccupiedToUnoccupiedDelay;
+            emit pirUnoccupiedToOccupiedDelayChanged(m_pirUnoccupiedToOccupiedDelay);
+        } else {
+            qCWarning(dcZigbeeCluster()) << "Failed to convert value from attribute" << m_node << m_endpoint << this << attribute;
+        }
+    } else if (attribute.id() == AttributePirUnoccupiedToOccupiedThreshold) {
+        bool valueOk;
+        quint16 value = attribute.dataType().toUInt16(&valueOk);
+        if (valueOk) {
+            m_pirUnoccupiedToOccupiedThreshold = value;
+            qCDebug(dcZigbeeCluster()) << "PirUnoccupiedToOccupiedThreshold changed on" << m_node << m_endpoint << this << m_pirOccupiedToUnoccupiedDelay;
+            emit pirUnoccupiedToOccupiedThresholdChanged(m_pirUnoccupiedToOccupiedThreshold);
         } else {
             qCWarning(dcZigbeeCluster()) << "Failed to convert value from attribute" << m_node << m_endpoint << this << attribute;
         }
