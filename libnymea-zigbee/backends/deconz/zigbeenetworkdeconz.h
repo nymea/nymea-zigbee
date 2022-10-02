@@ -68,6 +68,7 @@ private:
     QString m_protocolVersion;
     QString m_firmwareVersion;
 
+    QList<ZigbeeNetworkReply*> m_requestQueue;
     QHash<quint8, ZigbeeNetworkReply *> m_pendingReplies;
 
     QTimer *m_pollNetworkStateTimer = nullptr;
@@ -78,6 +79,8 @@ private:
     void runNetworkInitProcess();
 
     ZigbeeNetworkReply *requestSetPermitJoin(quint16 shortAddress = Zigbee::BroadcastAddressAllRouters, quint8 duration = 0xfe);
+
+    void sendPendingRequests();
 
 protected:
     void startNetworkInternally();
