@@ -410,16 +410,16 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
             return;
         }
 
+        m_initializing = false;
+        setState(StateRunning);
+        setPermitJoining(0);
+
         ZigbeeNode *coordinatorNode = createNode(m_controller->networkConfiguration().shortAddress, m_controller->networkConfiguration().ieeeAddress, this);
         m_coordinatorNode = coordinatorNode;
 
-        // Network creation done when coordinator node is initialized
         connect(coordinatorNode, &ZigbeeNode::stateChanged, this, [this, coordinatorNode](ZigbeeNode::State state){
             if (state == ZigbeeNode::StateInitialized) {
                 qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
-                m_initializing = false;
-                setState(StateRunning);
-                setPermitJoining(0);
                 sendPendingRequests();
                 return;
             }
