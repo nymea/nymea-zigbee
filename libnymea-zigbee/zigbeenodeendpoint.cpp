@@ -65,6 +65,7 @@
 #include "zcl/ota/zigbeeclusterota.h"
 
 #include "zcl/hvac/zigbeeclusterthermostat.h"
+#include "zcl/hvac/zigbeeclusterfancontrol.h"
 
 #include "zcl/smartenergy/zigbeeclustermetering.h"
 
@@ -276,6 +277,8 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
         // HVAC
     case ZigbeeClusterLibrary::ClusterIdThermostat:
         return new ZigbeeClusterThermostat(m_network, m_node, this, direction, this);
+    case ZigbeeClusterLibrary::ClusterIdFanControl:
+        return new ZigbeeClusterFanControl(m_network, m_node, this, direction, this);
 
         // Smart energy
     case ZigbeeClusterLibrary::ClusterIdMetering:
