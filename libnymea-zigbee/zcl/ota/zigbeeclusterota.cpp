@@ -108,9 +108,10 @@ void ZigbeeClusterOta::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterOta::FileVersion &fileVersion)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace().noquote() << "FileVersion(Application Release: " << fileVersion.applicationRelease
                               << ", Application Build: " << fileVersion.applicationBuild
                               << ", Stack Release: " << fileVersion.stackRelease
                               << ", Stack Build: " << fileVersion.stackBuild << ")";
-    return debug.space();
+    return debug;
 }

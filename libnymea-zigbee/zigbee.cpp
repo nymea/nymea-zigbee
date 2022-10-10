@@ -31,6 +31,7 @@
 
 QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataConfirm &confirm)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "APSDE-DATA.confirm(";
     debug.nospace() << "SQN: " << confirm.requestId << ", ";
 
@@ -48,11 +49,12 @@ QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataConfirm &confirm)
     debug.nospace() << "Status:" << ZigbeeUtils::zigbeeStatusToString(confirm.zigbeeStatusCode);
     debug.nospace() << ")";
 
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataIndication &indication)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "APSDE-DATA.indication(";
     if (indication.destinationAddressMode == Zigbee::DestinationAddressModeGroup)
         debug.nospace() << "Group address:" << ZigbeeUtils::convertUint16ToHexString(indication.destinationShortAddress) << ", ";
@@ -82,11 +84,12 @@ QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataIndication &indication)
     debug.nospace() << "ASDU: " << ZigbeeUtils::convertByteArrayToHexString(indication.asdu) << ", ";
     debug.nospace() << "LQI: " << indication.lqi << ", ";
     debug.nospace() << "RSSI: " << indication.rssi << "dBm)";
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataAck &acknowledgement)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "APSDE-DATA.acknowledgement(";
     debug.nospace() << "SQN: " << acknowledgement.requestId << ", ";
     if (acknowledgement.destinationAddressMode == Zigbee::DestinationAddressModeGroup) {
@@ -104,5 +107,5 @@ QDebug operator<<(QDebug debug, const Zigbee::ApsdeDataAck &acknowledgement)
     }
     debug.nospace() << "Status:" << ZigbeeUtils::zigbeeStatusToString(acknowledgement.zigbeeStatusCode);
     debug.nospace() << ")";
-    return debug.space();
+    return debug;
 }

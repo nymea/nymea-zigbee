@@ -1165,6 +1165,7 @@ void ZigbeeDataType::setDataType(Zigbee::DataType dataType)
 QDebug operator<<(QDebug debug, const ZigbeeDataType &dataType)
 {
     // FIXME: print data depending on the datatype
+    QDebugStateSaver saver(debug);
     debug.nospace() << "ZigbeeDataType(" << dataType.name();
     switch (dataType.dataType()) {
     case Zigbee::OctetString:
@@ -1178,5 +1179,5 @@ QDebug operator<<(QDebug debug, const ZigbeeDataType &dataType)
     }
 
     debug.nospace() << ")";
-    return debug.space();
+    return debug;
 }

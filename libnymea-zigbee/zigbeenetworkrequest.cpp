@@ -146,6 +146,7 @@ void ZigbeeNetworkRequest::setRadius(quint8 radius)
 
 QDebug operator<<(QDebug debug, const ZigbeeNetworkRequest &request)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "Request(ID:" << request.requestId() << ", ";
     debug.nospace() << static_cast<Zigbee::ZigbeeProfile>(request.profileId()) << ", ";
     if (request.profileId() == Zigbee::ZigbeeProfileDevice) {
@@ -169,5 +170,5 @@ QDebug operator<<(QDebug debug, const ZigbeeNetworkRequest &request)
     debug.nospace() << request.txOptions() << ", ";
     debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(request.asdu());
     debug.nospace() << ")";
-    return debug.space();
+    return debug;
 }

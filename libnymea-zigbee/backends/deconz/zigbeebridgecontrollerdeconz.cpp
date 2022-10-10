@@ -1084,6 +1084,7 @@ void ZigbeeBridgeControllerDeconz::disable()
 
 QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "DeviceState(";
     switch (deviceState.networkState) {
     case Deconz::NetworkStateJoining:
@@ -1104,11 +1105,12 @@ QDebug operator<<(QDebug debug, const DeconzDeviceState &deviceState)
     debug.nospace() << "Indication=" << static_cast<int>(deviceState.apsDataIndication) << ", ";
     debug.nospace() << "ConfigChanged=" << static_cast<int>(deviceState.configurationChanged) << ", ";
     debug.nospace() << "CanSend=" << deviceState.apsDataRequestFreeSlots << ")";
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const DeconzNetworkConfiguration &configuration)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "Network configuration: " << "\n";
     debug.nospace() << " - Node type:" << configuration.nodeType << "\n";
     debug.nospace() << " - IEEE address: " << configuration.ieeeAddress.toString() << "\n";
@@ -1124,5 +1126,5 @@ QDebug operator<<(QDebug debug, const DeconzNetworkConfiguration &configuration)
     debug.nospace() << " - Protocol version: " << ZigbeeUtils::convertUint16ToHexString(configuration.protocolVersion) << "\n";
     debug.nospace() << " - Network update ID: " << ZigbeeUtils::convertByteToHexString(configuration.networkUpdateId) << "\n";
     debug.nospace() << " - Watchdog TTL: " << configuration.watchdogTimeout << "\n";
-    return debug.space();
+    return debug;
 }

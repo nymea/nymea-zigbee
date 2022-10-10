@@ -953,6 +953,7 @@ void ZigbeeNode::handleZigbeeClusterLibraryIndication(const Zigbee::ApsdeDataInd
 
 QDebug operator<<(QDebug debug, ZigbeeNode *node)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace().noquote() << "ZigbeeNode(" << ZigbeeUtils::convertUint16ToHexString(node->shortAddress());
     debug.nospace().noquote() << ", " << node->extendedAddress().toString();
     if (!node->manufacturerName().isEmpty())
@@ -977,5 +978,5 @@ QDebug operator<<(QDebug debug, ZigbeeNode *node)
 
     debug.nospace().noquote() << ", RxOn:" << node->macCapabilities().receiverOnWhenIdle;
     debug.nospace().noquote() << ")";
-    return debug.space().quote();
+    return debug;
 }

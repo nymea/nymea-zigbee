@@ -309,6 +309,7 @@ QList<ZigbeeClusterLibrary::AttributeReportingStatusRecord> ZigbeeClusterLibrary
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::FrameControl &frameControl)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "FrameControl(";
     if (frameControl.frameType == ZigbeeClusterLibrary::FrameTypeGlobal) {
         debug.nospace() << "Frame Type: Global" << ", ";
@@ -325,11 +326,12 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::FrameControl &frameC
     }
 
     debug.nospace() << "Disable default response: " << (frameControl.disableDefaultResponse ? "1" : "0") << ")";
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Header &header)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "Header(";
     debug.nospace() << header.frameControl;
     if (header.frameControl.manufacturerSpecific) {
@@ -337,19 +339,21 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Header &header)
     }
     debug.nospace() << "TSN:" << header.transactionSequenceNumber << ", ";
     debug.nospace() << header.command << ")";
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::Frame &frame)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "Frame(";
     debug.nospace() << frame.header;
     debug.nospace() << ZigbeeUtils::convertByteArrayToHexString(frame.payload) << ")";
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::ReadAttributeStatusRecord &attributeStatusRecord)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "ReadAttributeStatusRecord("
                     << ZigbeeUtils::convertUint16ToHexString(attributeStatusRecord.attributeId) << ", "
                     << attributeStatusRecord.attributeStatus;
@@ -357,11 +361,12 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::ReadAttributeStatusR
         debug.nospace() << ", " << attributeStatusRecord.dataType;
     }
     debug.nospace() << ")";
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::AttributeReportingConfiguration &attributeReportingConfiguration)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "AttributeReportingConfiguration("
                     << attributeReportingConfiguration.direction << ", "
                     << ZigbeeUtils::convertUint16ToHexString(attributeReportingConfiguration.attributeId) << ", "
@@ -371,16 +376,17 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::AttributeReportingCo
                     << "Change: " << ZigbeeUtils::convertByteArrayToHexString(attributeReportingConfiguration.reportableChange) << ", "
                     << "Timeout period: " << attributeReportingConfiguration.timeoutPeriod << "[s]"
                     << ")";
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterLibrary::AttributeReportingStatusRecord &attributeReportingStatusRecord)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "AttributeReportingConfiguration("
                     << attributeReportingStatusRecord.status << ", "
                     << attributeReportingStatusRecord.attributeId << ", "
                     << attributeReportingStatusRecord.direction
                     << ")";
-    return debug.space();
+    return debug;
 
 }

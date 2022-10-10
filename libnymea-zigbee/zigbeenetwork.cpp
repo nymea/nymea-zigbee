@@ -1000,11 +1000,12 @@ void ZigbeeNetwork::evaluateNodeReachableStates()
 
 QDebug operator<<(QDebug debug, ZigbeeNetwork *network)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace().noquote() << "ZigbeeNetwork(" << network->macAddress().toString() << ", "
                               << network->networkUuid().toString() << ", "
                               << network->backendType() << ", "
                               << "Channel: " << network->channel() << ", "
                               << network->state()
                               << ")";
-    return debug.space().quote();
+    return debug;
 }
