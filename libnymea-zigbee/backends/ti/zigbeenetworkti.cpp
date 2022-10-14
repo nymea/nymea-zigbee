@@ -382,7 +382,7 @@ void ZigbeeNetworkTi::onControllerStateChanged(ZigbeeBridgeControllerTi::Control
         // TODO: This should be public API of libnymea-zigbee so that the application layer (e.g. nymea-plugins)
         // can register the endpoints it needs for the particular application/device.
         // Fow now we're registering HomeAutomation, LightLink and GreenPower endpoints.
-        m_controller->registerEndpoint(1, Zigbee::ZigbeeProfileHomeAutomation, 5, 0);
+        m_controller->registerEndpoint(1, Zigbee::ZigbeeProfileHomeAutomation, 5, 0, {ZigbeeClusterLibrary::ClusterIdOtaUpgrade});
         m_controller->registerEndpoint(12, Zigbee::ZigbeeProfileLightLink, 5, 0);
 
         // The Green Power endpoing is a bit special, it also needs to be added to a group
@@ -411,13 +411,21 @@ void ZigbeeNetworkTi::onControllerStateChanged(ZigbeeBridgeControllerTi::Control
                     m_coordinatorNode = coordinatorNode;
                     addUnitializedNode(coordinatorNode);
                 }
-                // Introspecing ourselves on every start. Most of the times this wouldn't be needed, but if the above
-                // endpoints are changed (e.g. on a future upgrade), we'll want to refresh.
-                m_coordinatorNode->startInitialization();
+
 
                 ZigbeeInterfaceTiReply *ledReply = m_controller->setLed(false);
                 connect(ledReply, &ZigbeeInterfaceTiReply::finished, this, [=]() {
+
                     setState(StateRunning);
+
+                    // Introspecing ourselves on every start. Most of the times this wouldn't be needed, but if the above
+                    // endpoints are changed (e.g. on a future upgrade), we'll want to refresh.
+                    m_coordinatorNode->startInitialization();
+                    connect(m_coordinatorNode, &ZigbeeNode::stateChanged, this, [=](ZigbeeNode::State state){
+                        if (state == ZigbeeNode::StateInitialized) {
+                            setNodeInformation(m_coordinatorNode, "z-Stack", "", bridgeController()->firmwareVersion());
+                        }
+                    });
 
                     while (!m_requestQueue.isEmpty()) {
                         ZigbeeNetworkReply *reply = m_requestQueue.takeFirst();

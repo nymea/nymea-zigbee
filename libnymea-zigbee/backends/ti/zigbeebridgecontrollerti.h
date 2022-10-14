@@ -87,7 +87,7 @@ public:
     ZigbeeInterfaceTiReply *setLed(bool on);
 
     ZigbeeInterfaceTiReply *requestPermitJoin(quint8 seconds, const quint16 &networkAddress);
-    ZigbeeInterfaceTiReply *registerEndpoint(quint8 endpointId, Zigbee::ZigbeeProfile profile, quint16 deviceId, quint8 deviceVersion);
+    ZigbeeInterfaceTiReply *registerEndpoint(quint8 endpointId, Zigbee::ZigbeeProfile profile, quint16 deviceId, quint8 deviceVersion, const QList<quint16> &inputClusters = QList<quint16>(), const QList<quint16> &outputClusters = QList<quint16>());
     ZigbeeInterfaceTiReply *addEndpointToGroup(quint8 endpointId, quint16 groupId);
 
     // Send APS request data
