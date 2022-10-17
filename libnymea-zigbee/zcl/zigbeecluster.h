@@ -112,7 +112,7 @@ protected:
 
     // Cluster specific
     ZigbeeClusterReply *createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame);
-    ZigbeeClusterReply *executeClusterCommand(quint8 command, const QByteArray &payload = QByteArray());
+    ZigbeeClusterReply *executeClusterCommand(quint8 command, const QByteArray &payload = QByteArray(), ZigbeeClusterLibrary::Direction direction = ZigbeeClusterLibrary::DirectionClientToServer);
 
     ZigbeeClusterReply *sendClusterServerResponse(quint8 command, quint8 transactionSequenceNumber, const QByteArray &payload = QByteArray());
     ZigbeeClusterReply *sendDefaultResponse(quint8 transactionSequenceNumber, quint8 command, quint8 status);

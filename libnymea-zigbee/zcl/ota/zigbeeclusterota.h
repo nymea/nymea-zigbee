@@ -29,6 +29,7 @@
 #define ZIGBEECLUSTEROTA_H
 
 #include <QObject>
+#include <QDateTime>
 
 #include "zcl/zigbeecluster.h"
 #include "zcl/zigbeeclusterreply.h"
@@ -76,17 +77,25 @@ public:
     Q_ENUM(Command)
 
     enum StatusCode {
-        StatuCodeSuccess = 0x00,
-        StatuCodeAbort = 0x95,
-        StatuCodeNotAuthorized = 0x7E,
-        StatuCodeInvalidImage = 0x96,
-        StatuCodeWaitForData = 0x97,
-        StatuCodeNoImageAvailable = 0x98,
-        StatuCodeMalformedCommand = 0x80,
-        StatuCodeUnsupportedClusterCommand = 0x81,
-        StatuCodeRequireMoreImage = 0x99
+        StatusCodeSuccess = 0x00,
+        StatusCodeAbort = 0x95,
+        StatusCodeNotAuthorized = 0x7E,
+        StatusCodeInvalidImage = 0x96,
+        StatusCodeWaitForData = 0x97,
+        StatusCodeNoImageAvailable = 0x98,
+        StatusCodeMalformedCommand = 0x80,
+        StatusCodeUnsupportedClusterCommand = 0x81,
+        StatusCodeRequireMoreImage = 0x99
     };
     Q_ENUM(StatusCode)
+
+    enum PayloadType {
+        PayloadTypeQueryJitter = 0x00,
+        PayloadTypeQueryJitterAndManufacturerCode = 0x01,
+        PayloadTypeQueryJitterAndManufacturerCodeAndImageType = 0x02,
+        PayloadTypeQueryJitterAndManufacturerCodeAndImageTypeAndNewFileVersion = 0x03
+    };
+    Q_ENUM(PayloadType)
 
     typedef struct FileVersion {
         quint8 applicationRelease;
@@ -95,13 +104,28 @@ public:
         quint8 stackBuild;
     } FileVersion;
 
+
     explicit ZigbeeClusterOta(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    ZigbeeClusterReply *sendImageNotify(PayloadType payloadType = PayloadTypeQueryJitter, quint8 queryJitter = 100, quint16 manufacturerCode = 0, quint16 imageType = 0, quint32 newFileVersion = 0);
+    ZigbeeClusterReply *sendQueryNextImageResponse(quint8 transactionSequenceNumber, StatusCode statusCode = StatusCodeNoImageAvailable, quint16 manufacturerCode = 0, quint16 imageType = 0, quint32 fileVersion = 0, quint32 imageSize = 0);
+
+    ZigbeeClusterReply *sendImageBlockResponse(quint8 transactionSequenceNumber, quint16 manufacturerCode, quint16 imageType, quint32 fileVersion, quint32 fileOffset, const QByteArray &imageData);
+    ZigbeeClusterReply *sendAbortImageBlockResponse(quint8 transactionSequenceNumber);
+    ZigbeeClusterReply *sendDelayImageBlockResponse(quint8 transactionSequenceNumber, const QDateTime &requestTime, quint16 minimumBlockPeriod);
+
+    ZigbeeClusterReply *sendUpgradeEndResponse(quint8 transactionSequenceNumber, quint16 manufacturerCode, quint16 imageType, quint32 fileVersion, quint32 serverTime = 0, quint32 requestTime = 1);
+    ZigbeeClusterReply *sendAbortUpgradeEndResponse(quint8 transactionSequenceNumber);
+
+    static FileVersion parseFileVersion(quint32 fileVersionValue);
+
+signals:
+    void queryNextImageRequestReceived(quint8 transactionSequenceNumber, quint16 manufactuerCode, quint16 imageType, quint32 fileVersion, quint16 hardwareVersion);
+    void imageBlockRequestReceived(quint8 transactionSequenceNumber, quint16 manufacturerCode, quint16 imageType, quint32 fileVersion, quint32 fileOffset, quint8 maximumDataSize, const ZigbeeAddress &requestNodeAddress, quint16 minimumBlockPeriod);
+    void upgradeEndRequestReceived(quint8 transactionSequenceNumber, StatusCode statusCode, quint16 manufacturerCode, quint16 imageType, quint32 fileVersion);
 protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
 
-private:
-    FileVersion parseFileVersion(quint32 fileVersionValue);
 };
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterOta::FileVersion &fileVersion);

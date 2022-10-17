@@ -410,7 +410,7 @@ void ZigbeeNetwork::addNodeInternally(ZigbeeNode *node)
 
     connect(node, &ZigbeeNode::clusterAdded, this, [this, node](ZigbeeCluster *cluster){
         if (node->state() == ZigbeeNode::StateInitialized) {
-            qCWarning(dcZigbeeNetwork()) << node << cluster << "cluster added but the node has already been initialized. This node is out of spec. Save the node nether the less...";
+            qCWarning(dcZigbeeNetwork()) << node << "cluster" << cluster << "added on endpoint" << cluster->endpoint()->endpointId() << "but the node has already been initialized. This node is out of spec. Saving the node nethertheless...";
             m_database->saveNode(node);
         }
     });

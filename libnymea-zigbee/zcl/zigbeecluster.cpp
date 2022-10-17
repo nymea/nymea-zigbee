@@ -212,7 +212,7 @@ ZigbeeClusterReply *ZigbeeCluster::createClusterReply(const ZigbeeNetworkRequest
     return zclReply;
 }
 
-ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const QByteArray &payload)
+ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const QByteArray &payload, ZigbeeClusterLibrary::Direction direction)
 {
     ZigbeeNetworkRequest request = createGeneralRequest();
 
@@ -220,7 +220,7 @@ ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const Q
     ZigbeeClusterLibrary::FrameControl frameControl;
     frameControl.frameType = ZigbeeClusterLibrary::FrameTypeClusterSpecific;
     frameControl.manufacturerSpecific = false;
-    frameControl.direction = ZigbeeClusterLibrary::DirectionClientToServer;
+    frameControl.direction = direction;
     frameControl.disableDefaultResponse = false;
 
     // Build ZCL header
