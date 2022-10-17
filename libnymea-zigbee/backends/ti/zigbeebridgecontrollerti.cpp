@@ -1044,6 +1044,7 @@ void ZigbeeBridgeControllerTi::disable()
 
 QDebug operator<<(QDebug debug, const TiNetworkConfiguration &configuration)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "Network configuration: " << "\n";
     debug.nospace() << " - IEEE address: " << configuration.ieeeAddress.toString() << "\n";
     debug.nospace() << " - NWK address: " << ZigbeeUtils::convertUint16ToHexString(configuration.shortAddress) << "\n";
@@ -1052,6 +1053,6 @@ QDebug operator<<(QDebug debug, const TiNetworkConfiguration &configuration)
     debug.nospace() << " - Channel mask: " << ZigbeeChannelMask(configuration.channelMask) << "\n";
     debug.nospace() << " - Channel: " << configuration.currentChannel << "\n";
     debug.nospace() << " - ZNP version: " << ZigbeeUtils::convertUint16ToHexString(configuration.znpVersion) << "\n";
-    return debug.space();
+    return debug;
 }
 

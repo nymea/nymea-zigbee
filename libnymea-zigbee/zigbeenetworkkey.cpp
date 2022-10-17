@@ -114,6 +114,7 @@ bool ZigbeeNetworkKey::operator!=(const ZigbeeNetworkKey &other) const
 
 QDebug operator<<(QDebug debug, const ZigbeeNetworkKey &key)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "ZigbeeNetworkKey(" << key.toString() << ")";
-    return debug.space();
+    return debug;
 }

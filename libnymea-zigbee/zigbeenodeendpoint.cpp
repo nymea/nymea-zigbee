@@ -355,6 +355,7 @@ void ZigbeeNodeEndpoint::handleZigbeeClusterLibraryIndication(const Zigbee::Apsd
 
 QDebug operator<<(QDebug debug, ZigbeeNodeEndpoint *endpoint)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace().noquote() << "ZigbeeNodeEndpoint(" << ZigbeeUtils::convertByteToHexString(endpoint->endpointId());
     debug.nospace().noquote() << ", " << endpoint->profile();
     if (endpoint->profile() == Zigbee::ZigbeeProfileLightLink) {
@@ -366,5 +367,5 @@ QDebug operator<<(QDebug debug, ZigbeeNodeEndpoint *endpoint)
     }
 
     debug.nospace().noquote() << ")";
-    return debug.space().quote();
+    return debug;
 }

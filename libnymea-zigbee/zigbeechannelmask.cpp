@@ -148,9 +148,10 @@ bool ZigbeeChannelMask::operator!=(const ZigbeeChannelMask &other) const
 
 QDebug operator<<(QDebug debug, const ZigbeeChannelMask &channelMaks)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "ChannelMask(" << ZigbeeUtils::convertUint32ToHexString(channelMaks.toUInt32());
     debug.nospace() << ", " << channelMaks.channelArray();
-    debug.nospace() << ") ";
+    debug.nospace() << ")";
     return debug;
 }
 

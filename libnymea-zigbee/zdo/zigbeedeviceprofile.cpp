@@ -290,15 +290,17 @@ ZigbeeDeviceProfile::Adpu ZigbeeDeviceProfile::parseAdpu(const QByteArray &adpu)
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::Adpu &adpu)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "DeviceProfileAdpu(SQN: " << adpu.transactionSequenceNumber << ", ";
     debug.nospace() << adpu.status << ", ";
     debug.nospace() << ZigbeeUtils::convertUint16ToHexString(adpu.addressOfInterest) << ", ";
     debug.nospace() << "Payload: " << ZigbeeUtils::convertByteArrayToHexString(adpu.payload) << ")";
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NodeDescriptor &nodeDescriptor)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "NodeDescriptor(" << nodeDescriptor.nodeType << ")" << "\n";
     debug.nospace() << "    Complex descriptor available: " << nodeDescriptor.complexDescriptorAvailable << "\n";
     debug.nospace() << "    User descriptor available: " << nodeDescriptor.userDescriptorAvailable << "\n";
@@ -315,6 +317,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NodeDescriptor &nodeD
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::MacCapabilities &macCapabilities)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "MacCapabilities(" << ZigbeeUtils::convertByteToHexString(macCapabilities.flag) << ")" << "\n";
     debug.nospace() << "    Alternate PAN Coordinator: " << macCapabilities.alternatePanCoordinator << "\n";
     debug.nospace() << "    " << macCapabilities.deviceType << "\n";
@@ -327,6 +330,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::MacCapabilities &macC
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::ServerMask &serverMask)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "ServerMask(" << ZigbeeUtils::convertUint16ToHexString(serverMask.serverMaskFlag) << ")" << "\n";
     debug.nospace() << "    Primary trust center: " << serverMask.primaryTrustCenter << "\n";
     debug.nospace() << "    Backup trust center: " << serverMask.backupTrustCenter << "\n";
@@ -340,6 +344,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::ServerMask &serverMas
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::DescriptorCapabilities &descriptorCapabilities)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "DescriptorCapabilities(" << ZigbeeUtils::convertByteToHexString(descriptorCapabilities.descriptorCapabilitiesFlag) << ")" << "\n";
     debug.nospace() << "    Extended active endpoint list available: " << descriptorCapabilities.extendedActiveEndpointListAvailable << "\n";
     debug.nospace() << "    Extended simple descriptor list available: " << descriptorCapabilities.extendedSimpleDescriptorListAvailable;
@@ -348,6 +353,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::DescriptorCapabilitie
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::PowerDescriptor &powerDescriptor)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "PowerDescriptor(" << ZigbeeUtils::convertByteToHexString(powerDescriptor.powerDescriptoFlag) << ")" << "\n";
     debug.nospace() << "    Power mode: " << powerDescriptor.powerMode << "\n";
     debug.nospace() << "    Available power sources: " << powerDescriptor.availablePowerSources << "\n";
@@ -358,6 +364,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::PowerDescriptor &powe
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::BindingTableListRecord &bindingTableListRecord)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "BindingTableListRecord(" << bindingTableListRecord.sourceAddress.toString() << ", ";
     debug.nospace() << "source endpoint: " << bindingTableListRecord.sourceEndpoint << ", ";
     debug.nospace() << "cluster: " << static_cast<ZigbeeClusterLibrary::ClusterId>(bindingTableListRecord.clusterId) << " --> ";
@@ -377,6 +384,7 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::BindingTableListRecor
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NeighborTableListRecord &neighborTableListRecord)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "NeighborTableListRecord(" << neighborTableListRecord.ieeeAddress.toString() << ", ";
     debug.nospace() << "NWK address: " << ZigbeeUtils::convertUint16ToHexString(neighborTableListRecord.shortAddress) << ", ";
     debug.nospace() << "Extended PAN ID: " << neighborTableListRecord.extendedPanId << ", ";
@@ -385,12 +393,13 @@ QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::NeighborTableListReco
     debug.nospace() << "Relationship: " << neighborTableListRecord.relationship << ", ";
     debug.nospace() << "Permit join: " << neighborTableListRecord.permitJoining << ", ";
     debug.nospace() << "Depth: " << neighborTableListRecord.depth << ", ";
-    debug.nospace() << "LQI: " << neighborTableListRecord.lqi << ") ";
+    debug.nospace() << "LQI: " << neighborTableListRecord.lqi << ")";
     return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeDeviceProfile::RoutingTableListRecord &routingTableListRecord)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "RoutingTableListRecord(";
     debug.nospace() << "Destination address: " << ZigbeeUtils::convertUint16ToHexString(routingTableListRecord.destinationAddress) << ", ";
     debug.nospace() << "Next hop: " << routingTableListRecord.nextHopAddress << ", ";

@@ -484,6 +484,7 @@ void ZigbeeCluster::processApsDataIndication(const QByteArray &asdu, const Zigbe
 
 QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace().noquote() << "ZigbeeCluster("
                               << ZigbeeUtils::convertUint16ToHexString(static_cast<quint16>(cluster->clusterId())) << ", "
                               << cluster->clusterName() << ", ";
@@ -496,11 +497,12 @@ QDebug operator<<(QDebug debug, ZigbeeCluster *cluster)
         break;
     }
 
-    return debug.space();
+    return debug;
 }
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterAttributeReport &attributeReport)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace().noquote() << "AttributeReport("
                               << attributeReport.clusterId << ", "
                               << attributeReport.attributeId << ", "
@@ -509,6 +511,6 @@ QDebug operator<<(QDebug debug, const ZigbeeClusterAttributeReport &attributeRep
                               << ZigbeeUtils::convertByteArrayToHexString(attributeReport.data)
                               << ")";
 
-    return debug.space();
+    return debug;
 }
 

@@ -80,9 +80,10 @@ bool ZigbeeClusterAttribute::isValid() const
 
 QDebug operator<<(QDebug debug, const ZigbeeClusterAttribute &attribute)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace().noquote() << "ZigbeeClusterAttribute("
                               << ZigbeeUtils::convertUint16ToHexString(attribute.id()) << ", "
                               << attribute.dataType()
                               << ")";
-    return debug.space();
+    return debug;
 }

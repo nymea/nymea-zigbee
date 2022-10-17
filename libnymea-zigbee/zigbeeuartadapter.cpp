@@ -104,6 +104,7 @@ void ZigbeeUartAdapter::setBaudRate(qint32 baudRate)
 
 QDebug operator<<(QDebug debug, const ZigbeeUartAdapter &adapter)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "ZigbeeUartAdapter(" << adapter.name() << " - " << adapter.description();
     debug.nospace() << ", " << adapter.serialPort();
     if (!adapter.serialNumber().isEmpty()) {
@@ -115,5 +116,5 @@ QDebug operator<<(QDebug debug, const ZigbeeUartAdapter &adapter)
     }
 
     debug.nospace() << ")";
-    return debug.space();
+    return debug;
 }

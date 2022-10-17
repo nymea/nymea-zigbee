@@ -105,6 +105,7 @@ void ZigbeeInterfaceDeconzReply::onTimeout()
 
 QDebug operator<<(QDebug debug, ZigbeeInterfaceDeconzReply *reply)
 {
+    QDebugStateSaver saver(debug);
     debug.nospace() << "InterfaceReply(" << reply->requestName() << ", " << reply->sequenceNumber() << ")";
-    return debug.space();
+    return debug;
 }
