@@ -30,6 +30,7 @@
 
 #include <QtGlobal>
 #include <QDataStream>
+#include <qmath.h>
 
 ZigbeeDataType::ZigbeeDataType()
 {
@@ -603,15 +604,38 @@ QString ZigbeeDataType::toString(bool *ok) const
 float ZigbeeDataType::toFloat(bool *ok) const
 {
     if (ok) *ok = true;
+    QDataStream stream(m_data);
+    stream.setByteOrder(QDataStream::LittleEndian);
+
     float value = 0;
     if (m_dataType == Zigbee::FloatSemi && m_data.length() == 2) {
-        value = (m_data.at(0) & 0xFF)
-                | ((m_data.at(1) & 0xFF00) << 8);
+        quint16 number;
+        stream >> number;
+        qint8 sign = ((number >> 15) & 1) == 1 ? -1 : 1;
+        qint8 exponent = ((number >> 10) & 0x1f) - 31;
+
+        int power = -1;
+        double total = 0.0;
+        for (int i = 0; i < 10; i++) {
+            int calc = (number >> (10 - i - 1)) & 0x01;
+            total += calc * pow(2.0, power);
+            power--;
+        }
+        value = sign * qPow(2.0, exponent) * (total + 1.0);
     } else if (m_dataType == Zigbee::FloatSingle && m_data.length() == 4) {
-        value = (m_data.at(0) & 0xFF)
-                | ((m_data.at(1) & 0xFF00) << 8)
-                | ((m_data.at(2) & 0xFF0000) << 16)
-                | ((m_data.at(3) & 0xFF000000) << 24);
+        quint32 number;
+        stream >> number;
+        qint8 sign = ((number >> 31) & 1) == 1 ? -1 : 1;
+        qint8 exponent = ((number >> 23) & 0xff) - 127;
+
+        int power = -1;
+        double total = 0.0;
+        for (int i = 0; i < 23; i++) {
+            int calc = (number >> (23 - i - 1)) & 0x01;
+            total += calc * pow(2.0, power);
+            power--;
+        }
+        value = sign * qPow(2.0, exponent) * (total + 1.0);
     } else {
         if (ok) *ok = false;
     }
@@ -623,22 +647,25 @@ double ZigbeeDataType::toDouble(bool *ok) const
     if (ok) *ok = true;
     double value = 0;
     if (m_dataType == Zigbee::FloatSemi && m_data.length() == 2) {
-        value = (m_data.at(0) & 0xFF)
-                | ((m_data.at(1) & 0xFF00) << 8);
+        return toFloat(ok);
     } else if (m_dataType == Zigbee::FloatSingle && m_data.length() == 4) {
-        value = (m_data.at(0) & 0xFF)
-                | ((m_data.at(1) & 0xFF00) << 8)
-                | ((m_data.at(2) & 0xFF0000) << 16)
-                | ((m_data.at(3) & 0xFF000000) << 24);
+        return toFloat(ok);
     } else if (m_dataType == Zigbee::FloatDouble && m_data.length() == 8) {
-        value = (m_data.at(0) & 0xFF)
-                | ((m_data.at(1) & 0xFF00) << 8)
-                | ((m_data.at(2) & 0xFF0000) << 16)
-                | ((m_data.at(3) & 0xFF000000) << 24)
-                | ((m_data.at(4) & 0xFF00000000) << 32)
-                | ((m_data.at(5) & 0xFF0000000000) << 40)
-                | ((m_data.at(6) & 0xFF000000000000) << 48)
-                | ((m_data.at(7) & 0xFF00000000000000) << 56);
+        QDataStream stream(m_data);
+        stream.setByteOrder(QDataStream::LittleEndian);
+        quint64 number;
+        stream >> number;
+        qint8 sign = ((number >> 63) & 1) == 1 ? -1 : 1;
+        qint16 exponent = ((number >> 52) & 0x7FF) - 1023;
+
+        int power = -1;
+        double total = 0.0;
+        for (int i = 0; i < 52; i++) {
+            int calc = (number >> (52 - i - 1)) & 0x01;
+            total += calc * pow(2.0, power);
+            power--;
+        }
+        value = sign * qPow(2.0, exponent) * (total + 1.0);
     } else {
         if (ok) *ok = false;
     }
