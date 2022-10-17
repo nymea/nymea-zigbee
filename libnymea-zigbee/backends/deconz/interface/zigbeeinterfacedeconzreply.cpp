@@ -84,7 +84,7 @@ ZigbeeInterfaceDeconzReply::ZigbeeInterfaceDeconzReply(Deconz::Command command, 
     m_timer(new QTimer(this)),
     m_command(command)
 {
-    m_timer->setInterval(5000);
+    m_timer->setInterval(10000);
     m_timer->setSingleShot(true);
     connect(m_timer, &QTimer::timeout, this, &ZigbeeInterfaceDeconzReply::onTimeout);
 }

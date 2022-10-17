@@ -76,6 +76,14 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::sendRequest(const ZigbeeNetworkRequest 
         return reply;
     }
 
+    if (state() == ZigbeeNetwork::StateStarting) {
+        m_requestQueue.append(reply);
+        connect(reply, &ZigbeeNetworkReply::finished, this, [this, reply](){
+            m_requestQueue.removeAll(reply);
+        });
+        return reply;
+    }
+
     ZigbeeInterfaceDeconzReply *interfaceReply = m_controller->requestSendRequest(request);
     connect(interfaceReply, &ZigbeeInterfaceDeconzReply::finished, reply, [this, reply, interfaceReply](){
         if (interfaceReply->statusCode() != Deconz::StatusCodeSuccess) {
@@ -155,6 +163,25 @@ ZigbeeNetworkReply *ZigbeeNetworkDeconz::requestSetPermitJoin(quint16 shortAddre
 
     qCDebug(dcZigbeeNetwork()) << "Send permit join request" << ZigbeeUtils::convertUint16ToHexString(request.destinationShortAddress()) << duration << "s";
     return sendRequest(request);
+}
+
+void ZigbeeNetworkDeconz::sendPendingRequests()
+{
+    while (!m_requestQueue.isEmpty()) {
+        ZigbeeNetworkReply *reply = m_requestQueue.takeFirst();
+
+        ZigbeeInterfaceDeconzReply *interfaceReply = m_controller->requestSendRequest(reply->request());
+        connect(interfaceReply, &ZigbeeInterfaceDeconzReply::finished, reply, [this, reply, interfaceReply](){
+            if (interfaceReply->statusCode() != Deconz::StatusCodeSuccess) {
+                qCWarning(dcZigbeeController()) << "Could not send request to controller. SQN:" << interfaceReply->sequenceNumber() << interfaceReply->statusCode();
+                finishNetworkReply(reply, ZigbeeNetworkReply::ErrorInterfaceError);
+                return;
+            }
+
+            // The request has been sent successfully to the device, start the timeout timer now
+            startWaitingReply(reply);
+        });
+    }
 }
 
 void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetworkState state)
@@ -379,19 +406,21 @@ void ZigbeeNetworkDeconz::setCreateNetworkState(ZigbeeNetworkDeconz::CreateNetwo
 
             setState(StateRunning);
             setPermitJoining(0);
+            sendPendingRequests();
             return;
         }
+
+        m_initializing = false;
+        setState(StateRunning);
+        setPermitJoining(0);
 
         ZigbeeNode *coordinatorNode = createNode(m_controller->networkConfiguration().shortAddress, m_controller->networkConfiguration().ieeeAddress, this);
         m_coordinatorNode = coordinatorNode;
 
-        // Network creation done when coordinator node is initialized
         connect(coordinatorNode, &ZigbeeNode::stateChanged, this, [this, coordinatorNode](ZigbeeNode::State state){
             if (state == ZigbeeNode::StateInitialized) {
                 qCDebug(dcZigbeeNetwork()) << "Coordinator initialized successfully." << coordinatorNode;
-                m_initializing = false;
-                setState(StateRunning);
-                setPermitJoining(0);
+                sendPendingRequests();
                 return;
             }
         });
@@ -534,6 +563,7 @@ void ZigbeeNetworkDeconz::runNetworkInitProcess()
 
                                 qCDebug(dcZigbeeNetwork()) << "Set permit join configuration request finished" << reply->statusCode();
                                 setState(StateRunning);
+                                sendPendingRequests();
                             });
 
                         } else if (m_controller->networkState() == Deconz::NetworkStateOffline) {

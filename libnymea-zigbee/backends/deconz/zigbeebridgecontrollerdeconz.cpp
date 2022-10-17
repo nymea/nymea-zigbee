@@ -233,9 +233,13 @@ void ZigbeeBridgeControllerDeconz::sendNextRequest()
     if (m_currentReply)
         return;
 
-    //    // FIXME: If the controler request queue is full, wait until it's free again
-    //    if (!m_apsFreeSlotsAvailable)
-    //        return;
+    // If the controler request queue is full, wait until it's free again
+    if (!m_apsFreeSlotsAvailable)
+        return;
+
+    if (!m_available) {
+        return;
+    }
 
     // Get the next reply, set the sequence number, send the request data over the interface and start waiting
     m_currentReply = m_replyQueue.dequeue();
@@ -864,14 +868,15 @@ void ZigbeeBridgeControllerDeconz::processDeviceState(DeconzDeviceState deviceSt
     }
 
     if (m_apsFreeSlotsAvailable != deviceState.apsDataRequestFreeSlots) {
-        m_apsFreeSlotsAvailable = deviceState.apsDataRequestFreeSlots;
-        if (!m_apsFreeSlotsAvailable) {
+        if (!deviceState.apsDataRequestFreeSlots) {
             // Warn only if the network is up
             if (m_networkState == Deconz::NetworkStateConnected) {
                 qCWarning(dcZigbeeController()) << "The APS request table is full on the device. Cannot send requests until the queue gets processed on the controller.";
+                m_apsFreeSlotsAvailable = false;
             }
             return;
         } else {
+            m_apsFreeSlotsAvailable = true;
             qCDebug(dcZigbeeController()) << "The APS request table is free again. Sending the next request";
             sendNextRequest();
         }
@@ -1021,6 +1026,14 @@ void ZigbeeBridgeControllerDeconz::onInterfacePackageReceived(const QByteArray &
 
     // Check if this is the response to the current active reply
     if (m_currentReply && m_currentReply->sequenceNumber() == sequenceNumber && m_currentReply->command() == command) {
+        // If the controller is busy, let's try again once the device state reports free slots
+        if (status == Deconz::StatusCodeBusy) {
+            qCWarning(dcZigbeeController()) << "Controller busy. Rescheduling command.";
+            m_apsFreeSlotsAvailable = false;
+            m_replyQueue.prepend(m_currentReply);
+            m_currentReply = nullptr;
+            return;
+        }
         m_currentReply->m_responseData = data;
         m_currentReply->m_statusCode = status;
         emit m_currentReply->finished();
