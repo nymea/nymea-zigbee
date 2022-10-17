@@ -45,6 +45,7 @@ SOURCES += \
     zcl/general/zigbeeclusterpowerconfiguration.cpp \
     zcl/general/zigbeeclusterscenes.cpp \
     zcl/general/zigbeeclustertime.cpp \
+    zcl/hvac/zigbeeclusterfancontrol.cpp \
     zcl/hvac/zigbeeclusterthermostat.cpp \
     zcl/lighting/zigbeeclustercolorcontrol.cpp \
     zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.cpp \
@@ -122,6 +123,7 @@ HEADERS += \
     zcl/general/zigbeeclusterpowerconfiguration.h \
     zcl/general/zigbeeclusterscenes.h \
     zcl/general/zigbeeclustertime.h \
+    zcl/hvac/zigbeeclusterfancontrol.h \
     zcl/hvac/zigbeeclusterthermostat.h \
     zcl/lighting/zigbeeclustercolorcontrol.h \
     zcl/manufacturerspecific/philips/zigbeeclustermanufacturerspecificphilips.h \
