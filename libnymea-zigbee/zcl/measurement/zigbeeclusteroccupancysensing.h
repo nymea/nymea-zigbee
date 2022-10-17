@@ -74,13 +74,29 @@ public:
 
     bool occupied() const;
 
+    quint16 pirOccupiedToUnoccupiedDelay() const;
+    ZigbeeClusterReply *setPirOccupiedToUnoccupiedDelay(quint16 pirOccupiedToUnoccupiedDelay);
+
+    quint16 pirUnoccupiedToOccupiedDelay() const;
+    ZigbeeClusterReply *setPirUnoccupiedToOccupiedDelay(quint16 pirUnoccupiedToOccupiedDelay);
+
+    quint16 pirUnoccupiedToOccupiedThreshold() const;
+    ZigbeeClusterReply *setPirUnoccupiedToOccupiedThreshold(quint16 pirUnoccupiedToOccupiedThreshold);
+
 private:
     bool m_occupied = false;
+
+    quint16 m_pirOccupiedToUnoccupiedDelay = 0;
+    quint16 m_pirUnoccupiedToOccupiedDelay = 0;
+    quint16 m_pirUnoccupiedToOccupiedThreshold = 0;
 
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:
     void occupancyChanged(bool occupied);
+    void pirOccupiedToUnoccupiedDelayChanged(quint16 pirOccupiedToUnoccupiedDelay);
+    void pirUnoccupiedToOccupiedDelayChanged(quint16 pirUnoccupiedToOccupiedDelay);
+    void pirUnoccupiedToOccupiedThresholdChanged(quint16 pirUnoccupiedToOccupiedThreshold);
 
 };
 
