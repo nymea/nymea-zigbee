@@ -826,6 +826,9 @@ void ZigbeeBridgeControllerTi::onInterfacePacketReceived(Ti::SubSystem subSystem
             case Ti::ZDOCommandSimpleDescRsp:
             case Ti::ZDOCommandActiveEpRsp:
             case Ti::ZDOCommandBindRsp:
+            case Ti::ZDOCommandMgmtLqiRsp:
+            case Ti::ZDOCommandMgmtRtgRsp:
+            case Ti::ZDOCommandMgmtBindRsp:
                 // silencing these as we're using the raw data in MsgCbIncoming instead
                 // nymea-zigbee parses this on its own.
                 break;
@@ -883,7 +886,7 @@ void ZigbeeBridgeControllerTi::onInterfacePacketReceived(Ti::SubSystem subSystem
                 break;
             }
             default:
-                qCWarning(dcZigbeeController()) << "Unhandled ZDO AREQ notification";
+                qCWarning(dcZigbeeController()) << "Unhandled ZDO AREQ notification" << (Ti::ZDOCommand)command;
             }
             break;
         case Ti::SubSystemAF:
