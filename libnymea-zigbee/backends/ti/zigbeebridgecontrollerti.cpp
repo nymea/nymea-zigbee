@@ -605,7 +605,7 @@ ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::start()
     return sendCommand(Ti::SubSystemZDO, Ti::ZDOCommandStartupFromApp, payload);
 }
 
-ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::registerEndpoint(quint8 endpointId, Zigbee::ZigbeeProfile profile, quint16 deviceId, quint8 deviceVersion)
+ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::registerEndpoint(quint8 endpointId, Zigbee::ZigbeeProfile profile, quint16 deviceId, quint8 deviceVersion, const QList<quint16> &inputClusters, const QList<quint16> &outputClusters)
 {
     if (m_registeredEndpointIds.contains(endpointId)) {
         ZigbeeInterfaceTiReply *reply = new ZigbeeInterfaceTiReply(this);
@@ -621,10 +621,14 @@ ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::registerEndpoint(quint8 endpoi
     stream << deviceId;
     stream << deviceVersion;
     stream << static_cast<quint8>(0x00); // latency requirement
-    stream << static_cast<quint8>(0x00); // num input clusters
-//    stream << static_cast<quint16>(0x0000); // input clusters
-    stream << static_cast<quint8>(0x00); // num outout clusters
-//    stream << static_cast<quint16>(0x0000); // output clusters
+    stream << static_cast<quint8>(inputClusters.count());
+    foreach (quint16 inputCluster, inputClusters) {
+        stream << inputCluster;
+    }
+    stream << static_cast<quint8>(outputClusters.count());
+    foreach (quint16 outputCluster, outputClusters) {
+        stream << static_cast<quint16>(outputCluster);
+    }
 
 
     ZigbeeInterfaceTiReply *reply = sendCommand(Ti::SubSystemAF, Ti::AFCommandRegister, payload);
