@@ -1,3 +1,23 @@
+nymea-zigbee (1.5.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Fetch LQI neighbor and routing tables from the network
+  * Add API to interact with bindings
+  * Complete the OTA cluster implementation
+  * Implement timeout settings for occupancy sensing cluster
+  * Deconz: Fixes for command queuing
+  * Add Fan Control cluster implementation
+
+  [ Simon Stürz ]
+  * Update all debug operators and make use of state saver
+
+  [ Michael Zanetti ]
+  * Silence a warning about unhandled callbacks
+  * Register the OTA server cluster on the TI backend
+  * Fix parsing of floating point data types
+
+ -- jenkins <developer@nymea.io>  Mon, 17 Oct 2022 11:20:06 +0200
+
 nymea-zigbee (1.4.1) jammy; urgency=medium
 
   [ Michael Zanetti ]
