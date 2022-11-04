@@ -212,7 +212,7 @@ ZigbeeClusterReply *ZigbeeCluster::createClusterReply(const ZigbeeNetworkRequest
     return zclReply;
 }
 
-ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const QByteArray &payload, ZigbeeClusterLibrary::Direction direction)
+ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const QByteArray &payload, ZigbeeClusterLibrary::Direction direction, bool disableDefaultResponse)
 {
     ZigbeeNetworkRequest request = createGeneralRequest();
 
@@ -221,7 +221,7 @@ ZigbeeClusterReply *ZigbeeCluster::executeClusterCommand(quint8 command, const Q
     frameControl.frameType = ZigbeeClusterLibrary::FrameTypeClusterSpecific;
     frameControl.manufacturerSpecific = false;
     frameControl.direction = direction;
-    frameControl.disableDefaultResponse = false;
+    frameControl.disableDefaultResponse = disableDefaultResponse;
 
     // Build ZCL header
     ZigbeeClusterLibrary::Header header;
@@ -419,7 +419,8 @@ void ZigbeeCluster::finishZclReply(ZigbeeClusterReply *zclReply)
 void ZigbeeCluster::processDataIndication(ZigbeeClusterLibrary::Frame frame)
 {
     // Warn about the unhandled cluster indication, you can override this method in cluster implementations
-    qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
+    qCDebug(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
+    emit dataIndication(frame);
 }
 
 quint8 ZigbeeCluster::newTransactionSequenceNumber()
