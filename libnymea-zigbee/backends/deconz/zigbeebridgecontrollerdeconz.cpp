@@ -298,6 +298,9 @@ ZigbeeInterfaceDeconzReply *ZigbeeBridgeControllerDeconz::createReply(Deconz::Co
         m_replyQueue.enqueue(reply);
         qCDebug(dcZigbeeController()) << "Enqueue request:" << reply->requestName();
     }
+    connect(reply, &ZigbeeInterfaceDeconzReply::timeout, this, [=](){
+        m_replyQueue.removeAll(reply);
+    });
 
     QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
     return reply;
