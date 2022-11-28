@@ -440,7 +440,7 @@ ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::requestSendRequest(const Zigbe
     // so if anything goes wrong, it would appear in the logs unconditionally.
     qCWarning(dcZigbeeController()) << "Splitting huge packet into chunks!";
     qCWarning(dcZigbeeController()) << "Full packet payload:" << asdu.toHex() << "LEN:" << asdu.length();
-    ZigbeeInterfaceTiReply *lastReply = nullptr;
+    ZigbeeInterfaceTiReply *lastReply = sendCommand(Ti::SubSystemAF, Ti::AFCommandDataRequestExt, payload);
     int i = 0;
     while (!asdu.isEmpty()) {
         QByteArray chunk = asdu.left(qMin(asdu.length(), 252));
@@ -465,6 +465,10 @@ void ZigbeeBridgeControllerTi::sendNextRequest()
     if (m_currentReply)
         return;
 
+    if (!m_interface->available()) {
+        return;
+    }
+
     m_currentReply = m_replyQueue.dequeue();
     qCDebug(dcZigbeeController()) << "-->" << m_currentReply->subSystem() << QHash<Ti::SubSystem, QMetaEnum>({
             { Ti::SubSystemSys, QMetaEnum::fromType<Ti::SYSCommand>() },
@@ -486,16 +490,13 @@ void ZigbeeBridgeControllerTi::sendNextRequest()
 
 ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::sendCommand(Ti::SubSystem subSystem, quint8 command, const QByteArray &payload, int timeout)
 {
-    // Create the reply
     ZigbeeInterfaceTiReply *reply = new ZigbeeInterfaceTiReply(subSystem, command, this, payload, timeout);
 
-    // Make sure we clean up on timeout
-    connect(reply, &ZigbeeInterfaceTiReply::timeout, this, [reply](){
-        qCWarning(dcZigbeeController()) << "Reply timeout" << reply;
-        // Note: send next reply with the finished signal
+    connect(reply, &ZigbeeInterfaceTiReply::timeout, this, [=](){
+        qCWarning(dcZigbeeController()) << "Controller command timed out. Resetting controller.";
+        m_interface->reconnectController();
     });
 
-    // Auto delete the object on finished
     connect(reply, &ZigbeeInterfaceTiReply::finished, reply, [this, reply](){
         if (m_currentReply == reply) {
             m_currentReply = nullptr;

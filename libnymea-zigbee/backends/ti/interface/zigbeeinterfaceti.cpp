@@ -36,7 +36,7 @@ ZigbeeInterfaceTi::ZigbeeInterfaceTi(QObject *parent) : QObject(parent)
 {
     m_reconnectTimer = new QTimer(this);
     m_reconnectTimer->setSingleShot(true);
-    m_reconnectTimer->setInterval(5000);
+    m_reconnectTimer->setInterval(1000);
 
     connect(m_reconnectTimer, &QTimer::timeout, this, &ZigbeeInterfaceTi::onReconnectTimeout);
 }
