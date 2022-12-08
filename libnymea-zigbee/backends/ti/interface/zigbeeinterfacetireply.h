@@ -54,7 +54,7 @@ public:
     // Response content
     Ti::StatusCode statusCode() const;
 
-    bool timendOut() const;
+    bool timedOut() const;
     bool aborted() const;
     void abort();
 

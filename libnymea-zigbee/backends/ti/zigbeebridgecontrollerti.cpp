@@ -72,14 +72,22 @@ ZigbeeInterfaceTiReply* ZigbeeBridgeControllerTi::reset()
     stream << static_cast<quint8>(Ti::ResetTypeSoft);
     ZigbeeInterfaceTiReply *resetReply = sendCommand(Ti::SubSystemSys, Ti::SYSCommandResetReq, payload);
     waitFor(resetReply, Ti::SubSystemSys, Ti::SYSCommandResetInd);
+    connect(resetReply, &ZigbeeInterfaceTiReply::finished, this, [=](){
+        m_interface->reconnectController();
+    });
     return resetReply;
 }
 
 ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::init()
 {
+    m_registeredEndpointIds.clear();
+
     ZigbeeInterfaceTiReply *initReply = new ZigbeeInterfaceTiReply(this, 15000);
 
-    ZigbeeInterfaceTiReply *resetReply = reset();
+    // Not using public reset() as that will start the init from scratch by reconnecting the controller
+    NEW_PAYLOAD
+    stream << static_cast<quint8>(Ti::ResetTypeSoft);
+    ZigbeeInterfaceTiReply *resetReply = sendCommand(Ti::SubSystemSys, Ti::SYSCommandResetReq, payload);
     connect(resetReply, &ZigbeeInterfaceTiReply::finished, initReply, [=]() {
 
         qCDebug(dcZigbeeController()) << "Skipping CC2530/CC2531 bootloader.";
@@ -486,17 +494,25 @@ void ZigbeeBridgeControllerTi::sendNextRequest()
 
 ZigbeeInterfaceTiReply *ZigbeeBridgeControllerTi::sendCommand(Ti::SubSystem subSystem, quint8 command, const QByteArray &payload, int timeout)
 {
-    // Create the reply
     ZigbeeInterfaceTiReply *reply = new ZigbeeInterfaceTiReply(subSystem, command, this, payload, timeout);
 
-    // Make sure we clean up on timeout
-    connect(reply, &ZigbeeInterfaceTiReply::timeout, this, [reply](){
-        qCWarning(dcZigbeeController()) << "Reply timeout" << reply;
-        // Note: send next reply with the finished signal
-    });
+    connect(reply, &ZigbeeInterfaceTiReply::finished, reply, [=](){
 
-    // Auto delete the object on finished
-    connect(reply, &ZigbeeInterfaceTiReply::finished, reply, [this, reply](){
+        if (reply->timedOut()) {
+            if (m_controllerState == ControllerStateRunning) {
+                qCWarning(dcZigbeeController()) << "Interface command timed out.";
+                if (++m_timeouts < 5) {
+                    qCInfo(dcZigbeeController()) << "Retrying..." << m_timeouts << "/" << 5;
+                    sendCommand(subSystem, command, payload, timeout);
+                } else {
+                    qCInfo(dcZigbeeController()) << "Resetting ZigBee interface";
+                    m_interface->reconnectController();
+                }
+            }
+        } else {
+            m_timeouts = 0;
+        }
+
         if (m_currentReply == reply) {
             m_currentReply = nullptr;
             QMetaObject::invokeMethod(this, "sendNextRequest", Qt::QueuedConnection);
@@ -731,6 +747,9 @@ void ZigbeeBridgeControllerTi::onInterfaceAvailableChanged(bool available)
             ZigbeeInterfaceTiReply *reply = m_replyQueue.dequeue();
             reply->abort();
         }
+
+        m_controllerState = ControllerStateDown;
+        emit controllerStateChanged(m_controllerState);
     }
 
     setAvailable(available);

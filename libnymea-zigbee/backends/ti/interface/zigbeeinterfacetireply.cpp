@@ -52,7 +52,7 @@ Ti::StatusCode ZigbeeInterfaceTiReply::statusCode() const
     return m_statusCode;
 }
 
-bool ZigbeeInterfaceTiReply::timendOut() const
+bool ZigbeeInterfaceTiReply::timedOut() const
 {
     return m_timeout;
 }

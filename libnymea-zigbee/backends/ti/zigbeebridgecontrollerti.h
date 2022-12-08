@@ -144,6 +144,7 @@ private:
     QTimer m_permitJoinTimer;
 
     QList<int> m_registeredEndpointIds;
+    int m_timeouts = 0;
 
     void finishRequest(Ti::StatusCode statusCode = Ti::StatusCodeSuccess);
 };

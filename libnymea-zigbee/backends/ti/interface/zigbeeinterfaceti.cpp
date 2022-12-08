@@ -99,6 +99,7 @@ void ZigbeeInterfaceTi::setAvailable(bool available)
 
 void ZigbeeInterfaceTi::onReconnectTimeout()
 {
+    qCDebug(dcZigbeeInterface()) << "Reconnecting to serial port...";
     if (m_serialPort && !m_serialPort->isOpen()) {
         if (!m_serialPort->open(QSerialPort::ReadWrite)) {
             setAvailable(false);
@@ -169,9 +170,7 @@ void ZigbeeInterfaceTi::onError(const QSerialPort::SerialPortError &error)
 {
     if (error != QSerialPort::NoError && m_serialPort->isOpen()) {
         qCWarning(dcZigbeeInterface()) << "Serial port error:" << error << m_serialPort->errorString();
-        m_reconnectTimer->start();
-        m_serialPort->close();
-        setAvailable(false);
+        reconnectController();
     }
 }
 
@@ -207,7 +206,7 @@ void ZigbeeInterfaceTi::sendPacket(Ti::CommandType type, Ti::SubSystem subSystem
 
 bool ZigbeeInterfaceTi::enable(const QString &serialPort, qint32 baudrate)
 {
-    qCDebug(dcZigbeeInterface()) << "Start UART interface " << serialPort << baudrate;
+    qCDebug(dcZigbeeInterface()) << "Starting UART interface " << serialPort << baudrate;
 
     if (m_serialPort) {
         delete m_serialPort;
@@ -243,13 +242,18 @@ void ZigbeeInterfaceTi::reconnectController()
     if (!m_serialPort)
         return;
 
-    if (m_serialPort->isOpen())
+    if (m_serialPort->isOpen()) {
         m_serialPort->close();
+    }
+
+    QString portName = m_serialPort->portName();
+    int baudrate = m_serialPort->baudRate();
+    setAvailable(false);
 
     delete m_serialPort;
     m_serialPort = nullptr;
-    setAvailable(false);
-    m_reconnectTimer->start();
+
+    enable(portName, baudrate);
 }
 
 void ZigbeeInterfaceTi::disable()
