@@ -94,6 +94,22 @@ public:
     ZigbeeClusterReply *writeAttributes(QList<ZigbeeClusterLibrary::WriteAttributeRecord> writeAttributeRecords, quint16 manufacturerCode = 0x0000);
     ZigbeeClusterReply *configureReporting(QList<ZigbeeClusterLibrary::AttributeReportingConfiguration> reportingConfigurations, quint16 manufacturerCode = 0x0000);
 
+    // Helper methods for sending cluster specific commands
+    ZigbeeNetworkRequest createGeneralRequest();
+
+    // Global commands
+    ZigbeeClusterReply *executeGlobalCommand(quint8 command, const QByteArray &payload = QByteArray(), quint16 manufacturerCode = 0x0000, quint8 transactionSequenceNumber = newTransactionSequenceNumber());
+
+    // Cluster specific
+    ZigbeeClusterReply *createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame);
+    ZigbeeClusterReply *executeClusterCommand(quint8 command, const QByteArray &payload = QByteArray(), ZigbeeClusterLibrary::Direction direction = ZigbeeClusterLibrary::DirectionClientToServer, bool disableDefaultResponse = false);
+
+    ZigbeeClusterReply *sendClusterServerResponse(quint8 command, quint8 transactionSequenceNumber, const QByteArray &payload = QByteArray());
+    ZigbeeClusterReply *sendDefaultResponse(quint8 transactionSequenceNumber, quint8 command, quint8 status);
+
+    bool verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetworkReply *networkReply);
+    void finishZclReply(ZigbeeClusterReply *zclReply);
+
 protected:
     ZigbeeNetwork *m_network = nullptr;
     ZigbeeNode *m_node = nullptr;
@@ -103,22 +119,7 @@ protected:
     Direction m_direction = Server;
     QHash<quint16, ZigbeeClusterAttribute> m_attributes;
 
-    // Helper methods for sending cluster specific commands
-    ZigbeeNetworkRequest createGeneralRequest();
     QHash<quint8, ZigbeeClusterReply *> m_pendingReplies;
-
-    // Global commands
-    ZigbeeClusterReply *executeGlobalCommand(quint8 command, const QByteArray &payload = QByteArray(), quint16 manufacturerCode = 0x0000, quint8 transactionSequenceNumber = newTransactionSequenceNumber());
-
-    // Cluster specific
-    ZigbeeClusterReply *createClusterReply(const ZigbeeNetworkRequest &request, ZigbeeClusterLibrary::Frame frame);
-    ZigbeeClusterReply *executeClusterCommand(quint8 command, const QByteArray &payload = QByteArray(), ZigbeeClusterLibrary::Direction direction = ZigbeeClusterLibrary::DirectionClientToServer);
-
-    ZigbeeClusterReply *sendClusterServerResponse(quint8 command, quint8 transactionSequenceNumber, const QByteArray &payload = QByteArray());
-    ZigbeeClusterReply *sendDefaultResponse(quint8 transactionSequenceNumber, quint8 command, quint8 status);
-
-    bool verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetworkReply *networkReply);
-    void finishZclReply(ZigbeeClusterReply *zclReply);
 
     virtual void processDataIndication(ZigbeeClusterLibrary::Frame frame);
 
@@ -128,6 +129,7 @@ protected:
 
 signals:
     void attributeChanged(const ZigbeeClusterAttribute &attribute);
+    void dataIndication(const ZigbeeClusterLibrary::Frame &frame);
 
 public slots:
     void processApsDataIndication(const QByteArray &asdu, const ZigbeeClusterLibrary::Frame &frame);
