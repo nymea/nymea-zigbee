@@ -60,7 +60,9 @@ void ZigbeeClusterElectricalMeasurement::processDataIndication(ZigbeeClusterLibr
             QList<quint16> values;
             stream >> startTime >> status >> profileIntervalPeriod >> numberOfIntevalsDelivered >> attributeId;
             while (!stream.atEnd()) {
-                stream >> values;
+                quint16 value;
+                stream >> value;
+                values.append(value);
             }            
             qCDebug(dcZigbeeCluster()) << "ElectricalMeasurement: GetMeasurementProfileInfoResponse:" << QDateTime::fromMSecsSinceEpoch((qulonglong)startTime * 1000) << static_cast<MeasurementStatus>(status) << static_cast<ProfileIntervalPeriod>(profileIntervalPeriod) << numberOfIntevalsDelivered << attributeId << values;
             emit getMeasurementProfileInfoResponse(QDateTime::fromMSecsSinceEpoch((qulonglong)startTime * 1000), static_cast<MeasurementStatus>(status), static_cast<ProfileIntervalPeriod>(profileIntervalPeriod), numberOfIntevalsDelivered, attributeId, values);
