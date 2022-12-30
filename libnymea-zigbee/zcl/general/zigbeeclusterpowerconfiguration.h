@@ -101,16 +101,19 @@ public:
     explicit ZigbeeClusterPowerConfiguration(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
     double batteryPercentage() const;
+    double batteryVoltage() const;
     BatteryAlarmMask batteryAlarmState() const;
 
 private:
     double m_batteryPercentage = 0;
+    double m_batteryVoltage = 0;
     BatteryAlarmMask m_batteryAlarmState = BatteryAlarmNone;
 
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:
     void batteryPercentageChanged(double percentage);
+    void batteryVoltageChanged(double voltage);
     void batteryAlarmStateChanged(ZigbeeClusterPowerConfiguration::BatteryAlarmMask alarmState);
 
 };
