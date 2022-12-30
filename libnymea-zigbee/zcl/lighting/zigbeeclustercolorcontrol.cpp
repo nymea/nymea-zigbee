@@ -223,6 +223,22 @@ ZigbeeClusterColorControl::ColorCapabilities ZigbeeClusterColorControl::colorCap
     return m_colorCapabilities;
 }
 
+void ZigbeeClusterColorControl::processDataIndication(ZigbeeClusterLibrary::Frame frame)
+{
+    switch (m_direction) {
+    case Client:
+        if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {
+            Command command = static_cast<Command>(frame.header.command);
+            emit commandReceived(command, frame.payload, frame.header.transactionSequenceNumber);
+        }
+        break;
+    case Server:
+        qCWarning(dcZigbeeCluster()) << "Unhandled ZCL indication in" << m_node << m_endpoint << this << frame;
+        break;
+    }
+
+}
+
 void ZigbeeClusterColorControl::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     qCDebug(dcZigbeeCluster()) << "Attribute changed" << m_node << m_endpoint << this << static_cast<Attribute>(attribute.id()) << attribute.dataType();

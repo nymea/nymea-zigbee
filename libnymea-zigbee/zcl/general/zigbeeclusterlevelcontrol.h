@@ -106,11 +106,11 @@ protected:
 
 signals:
     void currentLevelChanged(quint8 level);
-    void commandSent(ZigbeeClusterLevelControl::Command command, const QByteArray &parameter, quint8 transactionSequenceNumber);
-    void commandMoveToLevelSent(bool withOnOff, quint8 level, quint16 transitionTime, quint8 transactionSequenceNumber);
-    void commandMoveSent(bool withOnOff, MoveMode moveMode, quint8 rate, quint8 transactionSeqenceNumber);
-    void commandStepSent(bool withOnOff, StepMode stepMode, quint8 stepSize, quint16 transitionTime, quint8 transactionSequenceNumber);
-    void commandStopSent(bool withOnOff, quint8 transactionSequenceNumber);
+    void commandReceived(ZigbeeClusterLevelControl::Command command, const QByteArray &parameter, quint8 transactionSequenceNumber);
+    void commandMoveToLevelReceived(bool withOnOff, quint8 level, quint16 transitionTime, quint8 transactionSequenceNumber);
+    void commandMoveReceived(bool withOnOff, MoveMode moveMode, quint8 rate, quint8 transactionSeqenceNumber);
+    void commandStepReceived(bool withOnOff, StepMode stepMode, quint8 stepSize, quint16 transitionTime, quint8 transactionSequenceNumber);
+    void commandStopReceived(bool withOnOff, quint8 transactionSequenceNumber);
 
 };
 

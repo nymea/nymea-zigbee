@@ -63,7 +63,7 @@ public:
     explicit ZigbeeClusterScenes(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
 signals:
-    void commandSent(ZigbeeClusterScenes::Command command, quint16 groupId, quint8 sceneId, quint8 transactionSequenceNumber);
+    void commandReceived(ZigbeeClusterScenes::Command command, quint16 groupId, quint8 sceneId, quint8 transactionSequenceNumber);
 
 protected:
     void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
