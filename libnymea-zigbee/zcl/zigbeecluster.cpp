@@ -206,6 +206,7 @@ ZigbeeClusterReply *ZigbeeCluster::createClusterReply(const ZigbeeNetworkRequest
     zclReply->m_transactionSequenceNumber = frame.header.transactionSequenceNumber;
     m_pendingReplies.insert(zclReply->transactionSequenceNumber(), zclReply);
     connect(zclReply, &ZigbeeClusterReply::finished, this, [this, zclReply](){
+        qCDebug(dcZigbeeCluster()) << "ZCL request to" << zclReply->request().destinationShortAddress() << "finished with status:" << zclReply->error();
         zclReply->deleteLater();
         m_pendingReplies.remove(zclReply->transactionSequenceNumber());
     });
@@ -367,6 +368,7 @@ bool ZigbeeCluster::verifyNetworkError(ZigbeeClusterReply *zclReply, ZigbeeNetwo
     case ZigbeeNetworkReply::ErrorNoError:
         // The request has been transported successfully to he destination, now
         // wait for the expected indication or check if we already recieved it
+        qCDebug(dcZigbeeCluster()) << "ZCL request sent. Waiting for response data indication...";
         zclReply->m_apsConfirmReceived = true;
         if (!zclReply->m_zclIndicationReceived) {
             zclReply->m_timeoutTimer.start();
