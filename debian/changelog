@@ -1,3 +1,14 @@
+nymea-zigbee (1.7.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Fix a typo in ClusterIdOnOffConfiguration
+  * TI: fix reconncting the controller at runtime
+  * Rework the reachable refreshing and manual LQI/RTG fetching
+  * Align command signal names in clusters
+  * PowerConfiguration cluster: Add battery voltage
+
+ -- jenkins <developer@nymea.io>  Tue, 21 Feb 2023 17:42:47 +0100
+
 nymea-zigbee (1.6.3) jammy; urgency=medium
 
 
