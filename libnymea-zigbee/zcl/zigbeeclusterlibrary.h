@@ -115,7 +115,7 @@ public:
         ClusterIdGroups                 = 0x0004,
         ClusterIdScenes                 = 0x0005,
         ClusterIdOnOff                  = 0x0006,
-        ClusterIdOnOffCOnfiguration     = 0x0007,
+        ClusterIdOnOffConfiguration     = 0x0007,
         ClusterIdLevelControl           = 0x0008,
         ClusterIdAlarms                 = 0x0009,
         ClusterIdTime                   = 0x000A,
