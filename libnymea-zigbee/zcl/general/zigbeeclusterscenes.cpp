@@ -49,7 +49,7 @@ void ZigbeeClusterScenes::processDataIndication(ZigbeeClusterLibrary::Frame fram
         quint16 groupId = 0; quint8 sceneId;
         payloadStream >> groupId >> sceneId;
         qCDebug(dcZigbeeCluster()).noquote() << "Received" << command << "for group" << "0x" + QString::number(groupId, 16) << "and scene" << sceneId << "from" << m_node << m_endpoint << this;
-        emit commandSent(command, groupId, sceneId, frame.header.transactionSequenceNumber);
+        emit commandReceived(command, groupId, sceneId, frame.header.transactionSequenceNumber);
         break;
     }
     case Server:

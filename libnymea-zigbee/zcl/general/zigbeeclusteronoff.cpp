@@ -110,7 +110,7 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
         if (frame.header.frameControl.direction == ZigbeeClusterLibrary::DirectionClientToServer) {
             // Read the payload which is
             Command command = static_cast<Command>(frame.header.command);
-            emit commandSent(command, frame.payload, frame.header.transactionSequenceNumber);
+            emit commandReceived(command, frame.payload, frame.header.transactionSequenceNumber);
             switch (command) {
             case CommandOffWithEffect: {
                 QByteArray payload = frame.payload;
@@ -119,7 +119,7 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
                 quint8 effectValue = 0; quint16 effectVariant;
                 payloadStream >> effectValue >> effectVariant;
                 qCDebug(dcZigbeeCluster()) << "Command received from" << m_node << m_endpoint << this << command << "effect:" << effectValue << "effectVariant:" << effectVariant;
-                emit commandOffWithEffectSent(static_cast<Effect>(effectValue), effectVariant, frame.header.transactionSequenceNumber);
+                emit commandOffWithEffectReceived(static_cast<Effect>(effectValue), effectVariant, frame.header.transactionSequenceNumber);
                 break;
             }
             case CommandOnWithTimedOff: {
@@ -129,7 +129,7 @@ void ZigbeeClusterOnOff::processDataIndication(ZigbeeClusterLibrary::Frame frame
                 quint8 acceptOnlyWhenOnInt = 0; quint16 onTime; quint16 offTime;
                 payloadStream >> acceptOnlyWhenOnInt >> onTime >> offTime;
                 qCDebug(dcZigbeeCluster()) << "Command received from" << m_node << m_endpoint << this << command << "accentOnlyWhenOnInt:" << acceptOnlyWhenOnInt << "onTime:" << onTime << "offTime:" << offTime;
-                emit commandOnWithTimedOffSent(static_cast<bool>(acceptOnlyWhenOnInt), onTime, offTime, frame.header.transactionSequenceNumber);
+                emit commandOnWithTimedOffReceived(static_cast<bool>(acceptOnlyWhenOnInt), onTime, offTime, frame.header.transactionSequenceNumber);
                 break;
             }
             default:

@@ -238,6 +238,11 @@ signals:
     void colorTemperatureMiredsChanged(quint16 colorTemperatureMireds);
     void colorCapabilitiesChanged(ColorCapabilities colorCapabilities);
 
+    void commandReceived(ZigbeeClusterColorControl::Command command, const QByteArray &payload, quint8 transactionSequenceNumber);
+
+protected:
+    void processDataIndication(ZigbeeClusterLibrary::Frame frame) override;
+
 private:
     quint16 m_colorTemperatureMireds = 0;
     ColorCapabilities m_colorCapabilities = ColorCapabilities();
