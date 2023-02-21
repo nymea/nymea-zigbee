@@ -187,8 +187,9 @@ protected:
 
     QTimer *m_reachableRefreshTimer = nullptr;
     QList<ZigbeeAddress> m_reachableRefreshAddresses;
-    QList<ZigbeeAddress> m_refreshNeighborTableAddresses;
-    void fetchNextNodeLqiTable();
+
+    void fetchNextNodeLqiAndRtgTables();
+    QList<ZigbeeAddress> m_refreshLqiAndRtgTablesAddresses;
 
     void setPermitJoiningState(bool permitJoiningEnabled, quint8 duration = 0);
 
