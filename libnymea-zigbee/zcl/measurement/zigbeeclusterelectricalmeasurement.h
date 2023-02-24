@@ -260,6 +260,12 @@ public:
 
     explicit ZigbeeClusterElectricalMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    // Used to refresh formatting attributes (multiplier/divisor)
+    ZigbeeClusterReply* readFormatting();
+
+    quint16 acPowerMultiplier() const;
+    quint16 acPowerDivisor() const;
+
     quint16 activePowerPhaseA() const;
 
 signals:
@@ -275,7 +281,8 @@ private:
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
     qint16 m_activePowerPhaseA = 0;
-
+    quint16 m_acPowerMultiplier = 1;
+    quint16 m_acPowerDivisor = 1;
 };
 
 #endif // ZIGBEECLUSTERELECTRICALMEASUREMENT_H

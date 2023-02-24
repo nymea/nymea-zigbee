@@ -16,6 +16,16 @@ quint16 ZigbeeClusterElectricalMeasurement::activePowerPhaseA() const
     return m_activePowerPhaseA;
 }
 
+quint16 ZigbeeClusterElectricalMeasurement::acPowerMultiplier() const
+{
+    return m_acPowerMultiplier;
+}
+
+quint16 ZigbeeClusterElectricalMeasurement::acPowerDivisor() const
+{
+    return m_acPowerDivisor;
+}
+
 void ZigbeeClusterElectricalMeasurement::setAttribute(const ZigbeeClusterAttribute &attribute)
 {
     ZigbeeCluster::setAttribute(attribute);
@@ -25,6 +35,12 @@ void ZigbeeClusterElectricalMeasurement::setAttribute(const ZigbeeClusterAttribu
         qCDebug(dcZigbeeCluster) << "Active power changed" << attribute.dataType() << attribute.dataType().toInt16();
         m_activePowerPhaseA = attribute.dataType().toInt16();
         emit activePowerPhaseAChanged(m_activePowerPhaseA);
+        break;
+    case AttributeACFormattingPowerMultiplier:
+        m_acPowerMultiplier = attribute.dataType().toUInt16();
+        break;
+    case AttributeACFormattingPowerDivisor:
+        m_acPowerDivisor = attribute.dataType().toUInt16();
         break;
     }
 }
@@ -74,4 +90,17 @@ void ZigbeeClusterElectricalMeasurement::processDataIndication(ZigbeeClusterLibr
 
         break;
     }
+}
+
+ZigbeeClusterReply *ZigbeeClusterElectricalMeasurement::readFormatting()
+{
+    ZigbeeClusterReply *readDivisorReply = readAttributes({ZigbeeClusterElectricalMeasurement::AttributeACFormattingPowerDivisor, ZigbeeClusterElectricalMeasurement::AttributeACFormattingPowerMultiplier});
+    connect(readDivisorReply, &ZigbeeClusterReply::finished, this, [=](){
+        if (readDivisorReply->error() != ZigbeeClusterReply::ErrorNoError) {
+            qCWarning(dcZigbeeCluster()) << "Failed to read formatting." << readDivisorReply->error();
+            return;
+        }
+    });
+    return readDivisorReply;
+
 }
