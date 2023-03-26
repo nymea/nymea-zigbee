@@ -140,9 +140,8 @@ public:
 
         // Closures
         ClusterIdShadeConfiguration     = 0x0100,
-
-        // Door Lock
         ClusterIdDoorLock               = 0x0101,
+        ClusterIdWindowCovering         = 0x0102,
 
         // Heating, Ventilation and Air-Conditioning (HVAC)
         ClusterIdPumpConfigurationControl = 0x0200,

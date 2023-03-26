@@ -49,6 +49,7 @@
 #include "zcl/general/zigbeeclustermultistatevalue.h"
 
 #include "zcl/closures/zigbeeclusterdoorlock.h"
+#include "zcl/closures/zigbeeclusterwindowcovering.h"
 
 #include "zcl/measurement/zigbeeclusteroccupancysensing.h"
 #include "zcl/measurement/zigbeeclusterilluminancemeasurement.h"
@@ -258,6 +259,8 @@ ZigbeeCluster *ZigbeeNodeEndpoint::createCluster(ZigbeeClusterLibrary::ClusterId
         // Colsures
     case ZigbeeClusterLibrary::ClusterIdDoorLock:
         return new ZigbeeClusterDoorLock(m_network, m_node, this, direction, this);
+    case ZigbeeClusterLibrary::ClusterIdWindowCovering:
+        return new ZigbeeClusterWindowCovering(m_network, m_node, this, direction, this);
 
         // Lighting
     case ZigbeeClusterLibrary::ClusterIdColorControl:
