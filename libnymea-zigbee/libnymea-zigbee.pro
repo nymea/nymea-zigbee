@@ -29,6 +29,7 @@ SOURCES += \
     backends/ti/zigbeebridgecontrollerti.cpp \
     backends/ti/zigbeenetworkti.cpp \
     zcl/closures/zigbeeclusterdoorlock.cpp \
+    zcl/closures/zigbeeclusterwindowcovering.cpp \
     zcl/general/zigbeeclusteranaloginput.cpp \
     zcl/general/zigbeeclusteranalogoutput.cpp \
     zcl/general/zigbeeclusteranalogvalue.cpp \
@@ -107,6 +108,7 @@ HEADERS += \
     backends/ti/zigbeebridgecontrollerti.h \
     backends/ti/zigbeenetworkti.h \
     zcl/closures/zigbeeclusterdoorlock.h \
+    zcl/closures/zigbeeclusterwindowcovering.h \
     zcl/general/zigbeeclusteranaloginput.h \
     zcl/general/zigbeeclusteranalogoutput.h \
     zcl/general/zigbeeclusteranalogvalue.h \
