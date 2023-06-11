@@ -496,20 +496,39 @@ void ZigbeeNetworkDeconz::runNetworkInitProcess()
                 if (reply->statusCode() != Deconz::StatusCodeSuccess) {
                     qCWarning(dcZigbeeController()) << "Request" << reply->command() << "finished with error" << reply->statusCode();
                 } else {
-                    qCDebug(dcZigbeeNetwork()) << "Version request finished successfully" << ZigbeeUtils::convertByteArrayToHexString(reply->responseData());
                     // Note: version is an uint32 value, little endian, but we can read the individual bytes in reversed order
+                    qCDebug(dcZigbeeNetwork()) << "Version request finished successfully" << ZigbeeUtils::convertByteArrayToHexString(reply->responseData());
                     quint8 majorVersion = static_cast<quint8>(reply->responseData().at(3));
                     quint8 minorVersion = static_cast<quint8>(reply->responseData().at(2));
                     Deconz::Platform platform = static_cast<Deconz::Platform>(reply->responseData().at(1));
-                    m_firmwareVersion = QString("%1.%2").arg(majorVersion).arg(minorVersion);
-                    qCDebug(dcZigbeeNetwork()) << "Firmware version" << firmwareVersion << platform;
+                    quint8 patchVersion = static_cast<quint8>(reply->responseData().at(0));
+                    QString platformString;
+                    switch (platform) {
+                    case Deconz::PlatformConbeeRaspbee:
+                        platformString = "RaspBee";
+                        break;
+                    case Deconz::PlatformConbeeII:
+                        platformString = "ConBee II";
+                        break;
+                    default:
+                        platformString = "N/A";
+                    }
+
+                    QString versionString = QString("0x%1%2%3%4").arg(majorVersion, 2, 16, QChar('0'))
+                            .arg(minorVersion, 2, 16, QChar('0'))
+                            .arg(platform, 2, 16, QChar('0'))
+                            .arg(patchVersion, 2, 16, QChar('0'));
+
+
+                    m_firmwareVersion = QString("%1.%2 - %3 (%4)").arg(majorVersion).arg(minorVersion).arg(platformString).arg(QString(versionString));
+                    qCDebug(dcZigbeeNetwork()) << "Firmware version" << firmwareVersion << platform << versionString;
 
                 }
 
                 if (!m_firmwareVersion.isEmpty()) {
-                    m_controller->setFirmwareVersion(QString("%1 - %2").arg(m_firmwareVersion).arg(m_protocolVersion));
+                    m_controller->setFirmwareVersion(m_firmwareVersion);
                 } else {
-                    m_controller->setFirmwareVersion(m_protocolVersion);
+                    m_controller->setFirmwareVersion("N/A");
                 }
 
                 qCDebug(dcZigbeeNetwork()) << "Reading current network state";
