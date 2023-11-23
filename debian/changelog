@@ -1,3 +1,13 @@
+nymea-zigbee (1.9.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Improve Deconz backend version number representation
+  * Fix sleepy device being marked as reachable after a long time of
+    being unreachable
+  * Add min/max value support to temperaturemeasurement cluster
+
+ -- jenkins <developer@nymea.io>  Thu, 23 Nov 2023 09:52:09 +0100
+
 nymea-zigbee (1.8.4) jammy; urgency=medium
 
 
