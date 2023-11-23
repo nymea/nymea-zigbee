@@ -56,15 +56,24 @@ public:
 
     explicit ZigbeeClusterTemperatureMeasurement(ZigbeeNetwork *network, ZigbeeNode *node, ZigbeeNodeEndpoint *endpoint, Direction direction, QObject *parent = nullptr);
 
+    ZigbeeClusterReply* readTemperature();
+    ZigbeeClusterReply* readMinMaxTemperature();
+
     double temperature() const;
+    double minTemperature() const;
+    double maxTemperature() const;
 
 private:
     double m_temperature = 0;
+    double m_minTemperature = -55.54; // Absolute min/max as per Zigbee spec
+    double m_maxTemperature = 327.67;
 
     void setAttribute(const ZigbeeClusterAttribute &attribute) override;
 
 signals:
     void temperatureChanged(double temperature);
+    void minTemperatureChanged(double minTemperature);
+    void maxTemperatureChanged(double maxTemperature);
 
 };
 
