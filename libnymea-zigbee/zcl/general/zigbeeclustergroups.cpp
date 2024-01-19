@@ -39,7 +39,11 @@ ZigbeeClusterGroups::ZigbeeClusterGroups(ZigbeeNetwork *network, ZigbeeNode *nod
 ZigbeeClusterReply *ZigbeeClusterGroups::addGroup(quint16 groupId, const QString &groupName)
 {
     QByteArray payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&payload, QDataStream::WriteOnly);
+#else
     QDataStream stream(&payload, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << groupId << static_cast<quint8>(Zigbee::CharString);
     for (int i = 0; i < groupName.length(); i++) {
@@ -51,7 +55,11 @@ ZigbeeClusterReply *ZigbeeClusterGroups::addGroup(quint16 groupId, const QString
 ZigbeeClusterReply *ZigbeeClusterGroups::viewGroup(quint16 groupId)
 {
     QByteArray payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&payload, QDataStream::WriteOnly);
+#else
     QDataStream stream(&payload, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << groupId;
     return executeClusterCommand(ZigbeeClusterGroups::CommandViewGroup, payload);
@@ -60,7 +68,11 @@ ZigbeeClusterReply *ZigbeeClusterGroups::viewGroup(quint16 groupId)
 ZigbeeClusterReply *ZigbeeClusterGroups::getGroupMembership(quint8 groupCount, const QList<quint16> &groupList)
 {
     QByteArray payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&payload, QDataStream::WriteOnly);
+#else
     QDataStream stream(&payload, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << groupCount;
     for (int i = 0; i < groupList.length(); i++) {
@@ -72,7 +84,11 @@ ZigbeeClusterReply *ZigbeeClusterGroups::getGroupMembership(quint8 groupCount, c
 ZigbeeClusterReply *ZigbeeClusterGroups::removeGroup(quint16 groupId)
 {
     QByteArray payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&payload, QDataStream::WriteOnly);
+#else
     QDataStream stream(&payload, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << groupId;
     return executeClusterCommand(ZigbeeClusterGroups::CommandRemoveGroup, payload);
@@ -86,7 +102,11 @@ ZigbeeClusterReply *ZigbeeClusterGroups::removeAllGroups()
 ZigbeeClusterReply *ZigbeeClusterGroups::addGroupIfIdentifying(quint16 groupId, const QString &groupName)
 {
     QByteArray payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&payload, QDataStream::WriteOnly);
+#else
     QDataStream stream(&payload, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << groupId << static_cast<quint8>(Zigbee::CharString);
     for (int i = 0; i < groupName.length(); i++) {
