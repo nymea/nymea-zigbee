@@ -174,7 +174,11 @@ ZigbeeDataType::ZigbeeDataType(quint8 value)
 {
     setDataType(Zigbee::Uint8);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << value;
 }
@@ -183,7 +187,11 @@ ZigbeeDataType::ZigbeeDataType(quint16 value)
 {
     setDataType(Zigbee::Uint16);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << value;
 }
@@ -193,7 +201,11 @@ ZigbeeDataType::ZigbeeDataType(quint32 value, Zigbee::DataType dataType)
     Q_ASSERT_X(dataType == Zigbee::Uint24 || dataType == Zigbee::Uint32, "ZigbeeDataType", "invalid data type for quint32 constructor");
     setDataType(dataType);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << value;
 
@@ -207,7 +219,11 @@ ZigbeeDataType::ZigbeeDataType(quint64 value, Zigbee::DataType dataType)
     Q_ASSERT_X(dataType == Zigbee::Uint40 || dataType == Zigbee::Uint48 || dataType == Zigbee::Uint56 || dataType == Zigbee::Uint64, "ZigbeeDataType", "invalid data type for quint64 constructor");
     setDataType(dataType);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << value;
 
@@ -224,7 +240,11 @@ ZigbeeDataType::ZigbeeDataType(qint8 value)
 {
     setDataType(Zigbee::Int8);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << value;
 }
@@ -233,7 +253,11 @@ ZigbeeDataType::ZigbeeDataType(qint16 value)
 {
     setDataType(Zigbee::Int16);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << value;
 }
@@ -243,7 +267,11 @@ ZigbeeDataType::ZigbeeDataType(qint32 value, Zigbee::DataType dataType)
     Q_ASSERT_X(dataType == Zigbee::Int24 || dataType == Zigbee::Int32, "ZigbeeDataType", "invalid data type for qint32 constructor");
     setDataType(dataType);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << value;
 
@@ -257,7 +285,11 @@ ZigbeeDataType::ZigbeeDataType(qint64 value, Zigbee::DataType dataType)
     Q_ASSERT_X(dataType == Zigbee::Int40 || dataType == Zigbee::Int48 || dataType == Zigbee::Int56 || dataType == Zigbee::Int64, "ZigbeeDataType", "invalid data type for qint64 constructor");
     setDataType(dataType);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << value;
 
@@ -274,7 +306,11 @@ ZigbeeDataType::ZigbeeDataType(bool value)
 {
     setDataType(Zigbee::Bool);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << (value ? static_cast<quint8>(1) : static_cast<quint8>(0));
 }
@@ -284,7 +320,11 @@ ZigbeeDataType::ZigbeeDataType(const QString &value, Zigbee::DataType dataType)
     Q_ASSERT_X(dataType == Zigbee::OctetString || dataType == Zigbee::CharString || dataType == Zigbee::LongOctetString || dataType == Zigbee::LongCharString, "ZigbeeDataType", "invalid data type for QString constructor");
     setDataType(dataType);
     m_data.clear();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&m_data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&m_data, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
 
     if (dataType == Zigbee::OctetString || dataType == Zigbee::CharString) {
@@ -305,7 +345,7 @@ ZigbeeDataType::ZigbeeDataType(const QString &value, Zigbee::DataType dataType)
 quint8 ZigbeeDataType::toUInt8(bool *ok) const
 {
     if (ok) *ok = true;
-    if (m_data.count() != 1) {
+    if (m_data.size() != 1) {
         if (ok) *ok = false;
         return 0;
     }
@@ -318,7 +358,7 @@ quint16 ZigbeeDataType::toUInt16(bool *ok) const
     if (ok) *ok = true;
 
     quint16 value = 0;
-    if (m_data.count() != 2) {
+    if (m_data.size() != 2) {
         if (ok) *ok = false;
         return value;
     }
@@ -341,12 +381,12 @@ quint32 ZigbeeDataType::toUInt32(bool *ok) const
     }
 
     // Make sure there is enought data
-    if (m_data.count() != 3 && m_data.count() != 4) {
+    if (m_data.size() != 3 && m_data.size() != 4) {
         if (ok) *ok = false;
         return value;
     }
 
-    if (m_data.count() == 3) {
+    if (m_data.size() == 3) {
         // Make it 32 bit for converting
         QByteArray convertedData(m_data);
         convertedData.append(static_cast<char>(0));
@@ -369,7 +409,7 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
 
     switch (m_dataType) {
     case Zigbee::Uint40: {
-        if (m_data.count() != 5) {
+        if (m_data.size() != 5) {
             if (ok) *ok = false;
             break;
         }
@@ -385,7 +425,7 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
         break;
     }
     case Zigbee::Uint48: {
-        if (m_data.count() != 6) {
+        if (m_data.size() != 6) {
             if (ok) *ok = false;
             break;
         }
@@ -401,7 +441,7 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
         break;
     }
     case Zigbee::Uint56: {
-        if (m_data.count() != 7) {
+        if (m_data.size() != 7) {
             if (ok) *ok = false;
             break;
         }
@@ -415,7 +455,7 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
         break;
     }
     case Zigbee::Uint64: {
-        if (m_data.count() != 8) {
+        if (m_data.size() != 8) {
             if (ok) *ok = false;
             break;
         }
@@ -436,7 +476,7 @@ quint64 ZigbeeDataType::toUInt64(bool *ok) const
 qint8 ZigbeeDataType::toInt8(bool *ok) const
 {
     if (ok) *ok = true;
-    if (m_data.count() != 1) {
+    if (m_data.size() != 1) {
         if (ok) *ok = false;
         return 0;
     }
@@ -449,7 +489,7 @@ qint16 ZigbeeDataType::toInt16(bool *ok) const
     if (ok) *ok = true;
 
     qint16 value = 0;
-    if (m_data.count() != 2 || m_dataType != Zigbee::Int16) {
+    if (m_data.size() != 2 || m_dataType != Zigbee::Int16) {
         if (ok) *ok = false;
         return value;
     }
@@ -472,12 +512,12 @@ qint32 ZigbeeDataType::toInt32(bool *ok) const
     }
 
     // Make sure there is enought data
-    if (m_data.count() != 3 && m_data.count() != 4) {
+    if (m_data.size() != 3 && m_data.size() != 4) {
         if (ok) *ok = false;
         return value;
     }
 
-    if (m_data.count() == 3) {
+    if (m_data.size() == 3) {
         // Make it 32 bit for converting
         QByteArray convertedData(m_data);
         convertedData.append(static_cast<char>(0));
@@ -500,7 +540,7 @@ qint64 ZigbeeDataType::toInt64(bool *ok) const
 
     switch (m_dataType) {
     case Zigbee::Int40: {
-        if (m_data.count() != 5) {
+        if (m_data.size() != 5) {
             if (ok) *ok = false;
             break;
         }
@@ -516,7 +556,7 @@ qint64 ZigbeeDataType::toInt64(bool *ok) const
         break;
     }
     case Zigbee::Int48: {
-        if (m_data.count() != 6) {
+        if (m_data.size() != 6) {
             if (ok) *ok = false;
             break;
         }
@@ -532,7 +572,7 @@ qint64 ZigbeeDataType::toInt64(bool *ok) const
         break;
     }
     case Zigbee::Int56: {
-        if (m_data.count() != 7) {
+        if (m_data.size() != 7) {
             if (ok) *ok = false;
             break;
         }
@@ -546,7 +586,7 @@ qint64 ZigbeeDataType::toInt64(bool *ok) const
         break;
     }
     case Zigbee::Int64: {
-        if (m_data.count() != 8) {
+        if (m_data.size() != 8) {
             if (ok) *ok = false;
             break;
         }
@@ -569,7 +609,7 @@ bool ZigbeeDataType::toBool(bool *ok) const
     if (ok) *ok = true;
     bool value = false;
 
-    if (m_data.count() != 1) {
+    if (m_data.size() != 1) {
         if (ok) *ok = false;
         return value;
     }

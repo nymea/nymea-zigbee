@@ -11,8 +11,13 @@ packagesExist(libudev) {
     message(Build without libudev support)
     DEFINES += DISABLE_UDEV
 }
-
-PKGCONFIG += qca2-qt5
+greaterThan(QT_MAJOR_VERSION, 5) {
+    # Note: available since mantic
+    # PKGCONFIG += qca2-qt6
+    DEFINES += DISABLE_TI
+} else {
+    PKGCONFIG += qca2-qt5
+}
 
 SOURCES += \
     backends/deconz/interface/zigbeeinterfacedeconz.cpp \
@@ -24,10 +29,6 @@ SOURCES += \
     backends/nxp/interface/zigbeeinterfacenxpreply.cpp \
     backends/nxp/zigbeebridgecontrollernxp.cpp \
     backends/nxp/zigbeenetworknxp.cpp \
-    backends/ti/interface/zigbeeinterfaceti.cpp \
-    backends/ti/interface/zigbeeinterfacetireply.cpp \
-    backends/ti/zigbeebridgecontrollerti.cpp \
-    backends/ti/zigbeenetworkti.cpp \
     zcl/closures/zigbeeclusterdoorlock.cpp \
     zcl/closures/zigbeeclusterwindowcovering.cpp \
     zcl/general/zigbeeclusteranaloginput.cpp \
@@ -90,6 +91,21 @@ SOURCES += \
     zigbeenode.cpp \
     zigbeeaddress.cpp
 
+!contains(DEFINES, DISABLE_TI) {
+    SOURCES += \
+        backends/ti/interface/zigbeeinterfaceti.cpp \
+        backends/ti/interface/zigbeeinterfacetireply.cpp \
+        backends/ti/zigbeebridgecontrollerti.cpp \
+        backends/ti/zigbeenetworkti.cpp \
+
+    HEADERS += \
+        backends/ti/interface/ti.h \
+        backends/ti/interface/zigbeeinterfaceti.h \
+        backends/ti/interface/zigbeeinterfacetireply.h \
+        backends/ti/zigbeebridgecontrollerti.h \
+        backends/ti/zigbeenetworkti.h \
+}
+
 HEADERS += \
     backends/deconz/interface/deconz.h \
     backends/deconz/interface/zigbeeinterfacedeconz.h \
@@ -102,11 +118,6 @@ HEADERS += \
     backends/nxp/interface/zigbeeinterfacenxpreply.h \
     backends/nxp/zigbeebridgecontrollernxp.h \
     backends/nxp/zigbeenetworknxp.h \
-    backends/ti/interface/ti.h \
-    backends/ti/interface/zigbeeinterfaceti.h \
-    backends/ti/interface/zigbeeinterfacetireply.h \
-    backends/ti/zigbeebridgecontrollerti.h \
-    backends/ti/zigbeenetworkti.h \
     zcl/closures/zigbeeclusterdoorlock.h \
     zcl/closures/zigbeeclusterwindowcovering.h \
     zcl/general/zigbeeclusteranaloginput.h \
