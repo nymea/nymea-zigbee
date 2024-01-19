@@ -45,7 +45,7 @@ ZigbeeNetworkKey::ZigbeeNetworkKey(const QString &keyString)
     if (rawKey.isEmpty())
         return;
 
-    Q_ASSERT_X(rawKey.count() == 32, "ZigbeeNetworkKey", "invalid key length in ZigbeeNetworkKey(QString).");
+    Q_ASSERT_X(rawKey.size() == 32, "ZigbeeNetworkKey", "invalid key length in ZigbeeNetworkKey(QString).");
     m_key = QByteArray::fromHex(rawKey.toLatin1());
 }
 
@@ -57,7 +57,7 @@ ZigbeeNetworkKey::ZigbeeNetworkKey(const QByteArray &key) :
 
 bool ZigbeeNetworkKey::isValid() const
 {
-    return m_key.count() == 16;
+    return m_key.size() == 16;
 }
 
 bool ZigbeeNetworkKey::isNull() const
@@ -88,7 +88,12 @@ QByteArray ZigbeeNetworkKey::toByteArray() const
 ZigbeeNetworkKey ZigbeeNetworkKey::generateKey()
 {
     QByteArray keyData;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&keyData, QDataStream::WriteOnly);
+#else
     QDataStream stream(&keyData, QIODevice::WriteOnly);
+#endif
+
     for (int i = 0; i < 16; i++) {
         stream << static_cast<quint8>(rand() % (256 - 1) + 1);
     }

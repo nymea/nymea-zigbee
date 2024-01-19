@@ -221,8 +221,12 @@ bool ZigbeeInterfaceTi::enable(const QString &serialPort, qint32 baudrate)
     m_serialPort->setFlowControl(QSerialPort::NoFlowControl);
 
     connect(m_serialPort, &QSerialPort::readyRead, this, &ZigbeeInterfaceTi::onReadyRead);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
+    connect(m_serialPort, &QSerialPort::errorOccurred, this, &ZigbeeInterfaceTi::onError);
+#else
     typedef void (QSerialPort::* errorSignal)(QSerialPort::SerialPortError);
     connect(m_serialPort, static_cast<errorSignal>(&QSerialPort::error), this, &ZigbeeInterfaceTi::onError);
+#endif
 
     if (!m_serialPort->open(QSerialPort::ReadWrite)) {
         qCWarning(dcZigbeeInterface()) << "Could not open serial port" << serialPort << baudrate << m_serialPort->errorString();

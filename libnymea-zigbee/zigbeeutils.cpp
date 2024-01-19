@@ -134,10 +134,10 @@ static QList<QColor> colorTemperatureScale = {
 
 QBitArray ZigbeeUtils::convertByteArrayToBitArray(const QByteArray &byteArray)
 {
-    QBitArray bitArray(byteArray.count() * 8);
+    QBitArray bitArray(byteArray.size() * 8);
 
     // Convert from QByteArray to QBitArray
-    for(int i = 0; i < byteArray.count(); ++i) {
+    for(int i = 0; i < byteArray.size(); ++i) {
         for(int b = 0; b < 8; b++) {
             bitArray.setBit(i * 8 + b, byteArray.at(i) & (1 << ( 7 - b)));
         }
@@ -168,7 +168,7 @@ bool ZigbeeUtils::checkBitUint16(const quint16 &value, const int &bitNumber)
 
 quint16 ZigbeeUtils::convertByteArrayToUint16(const QByteArray &data)
 {
-    Q_ASSERT_X(data.count() == 2, "converting data", "Invalid byte array size for converting to quint16");
+    Q_ASSERT_X(data.size() == 2, "converting data", "Invalid byte array size for converting to quint16");
 
     quint16 value = static_cast<quint8>(data.at(0));
     value <<= 8;
@@ -178,7 +178,7 @@ quint16 ZigbeeUtils::convertByteArrayToUint16(const QByteArray &data)
 
 quint64 ZigbeeUtils::convertByteArrayToUint64(const QByteArray &data)
 {
-    Q_ASSERT_X(data.count() == 8, "converting data", "Invalid byte array size for converting to quint64");
+    Q_ASSERT_X(data.size() == 8, "converting data", "Invalid byte array size for converting to quint64");
 
     quint64 value = static_cast<quint8>(data.at(0));
     value <<= 8;
@@ -208,9 +208,9 @@ QString ZigbeeUtils::convertByteToHexString(const quint8 &byte)
 QString ZigbeeUtils::convertByteArrayToHexString(const QByteArray &byteArray)
 {
     QString hexString;
-    for (int i = 0; i < byteArray.count(); i++) {
+    for (int i = 0; i < byteArray.size(); i++) {
         hexString.append(convertByteToHexString(static_cast<quint8>(byteArray.at(i))));
-        if (i != byteArray.count() - 1) {
+        if (i != byteArray.size() - 1) {
             hexString.append(" ");
         }
     }
@@ -220,7 +220,11 @@ QString ZigbeeUtils::convertByteArrayToHexString(const QByteArray &byteArray)
 QString ZigbeeUtils::convertUint16ToHexString(const quint16 &value)
 {
     QByteArray data;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&data, QIODevice::WriteOnly);
+#endif
     stream << value;
 
     return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
@@ -229,7 +233,11 @@ QString ZigbeeUtils::convertUint16ToHexString(const quint16 &value)
 QString ZigbeeUtils::convertUint32ToHexString(const quint32 &value)
 {
     QByteArray data;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&data, QIODevice::WriteOnly);
+#endif
     stream << value;
 
     return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
@@ -238,7 +246,11 @@ QString ZigbeeUtils::convertUint32ToHexString(const quint32 &value)
 QString ZigbeeUtils::convertUint64ToHexString(const quint64 &value)
 {
     QByteArray data;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&data, QDataStream::WriteOnly);
+#else
     QDataStream stream(&data, QIODevice::WriteOnly);
+#endif
     stream << value;
     return QString("0x%1").arg(convertByteArrayToHexString(data).remove(" ").remove("0x"));
 }

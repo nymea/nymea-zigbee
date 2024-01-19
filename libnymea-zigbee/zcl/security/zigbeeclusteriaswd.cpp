@@ -40,7 +40,11 @@ ZigbeeClusterIasWd::ZigbeeClusterIasWd(ZigbeeNetwork *network, ZigbeeNode *node,
 ZigbeeClusterReply *ZigbeeClusterIasWd::startWarning(WarningMode warningMode, bool strobeEnabled, SirenLevel sirenLevel, quint16 duration, quint8 strobeDutyCycle, StrobeLevel strobeLevel)
 {
     QByteArray payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&payload, QDataStream::WriteOnly);
+#else
     QDataStream stream(&payload, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(warningMode | (strobeEnabled ? 0x04 : 0x00) | sirenLevel);
     stream << duration;
@@ -55,7 +59,11 @@ ZigbeeClusterReply *ZigbeeClusterIasWd::startWarning(WarningMode warningMode, bo
 ZigbeeClusterReply *ZigbeeClusterIasWd::squawk(SquawkMode squawkMode, bool strobeEnabled, SquawkLevel squawkLevel)
 {
     QByteArray payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&payload, QDataStream::WriteOnly);
+#else
     QDataStream stream(&payload, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(squawkMode | (strobeEnabled ? 0x08 : 0x00) | squawkLevel);
     qCDebug(dcZigbeeCluster) << "Sending payload:" << payload.toHex();

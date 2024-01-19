@@ -29,6 +29,7 @@
 #include "loggingcategory.h"
 
 #include <QSerialPortInfo>
+#include <QRegularExpression>
 
 #ifndef DISABLE_UDEV
 #include <libudev.h>
@@ -238,7 +239,7 @@ void ZigbeeUartAdapterMonitor::addAdapterInternally(const QString &serialPort)
             adapter.setBaudRate(115200);
         }
         QStringList zStackModels = {"cc2530", "cc2531", "cc2538", "cc1352p", "cc2652p", "cc2652r", "cc2652rb", "sonoff zigbee 3.0 usb"};
-        if (QRegExp(".*(" + zStackModels.join("|") + ").*").exactMatch(serialPortInfo.description().toLower())) {
+        if (QRegularExpression(".*(" + zStackModels.join("|") + ").*").match(serialPortInfo.description().toLower()).hasMatch()) {
             adapter.setHardwareRecognized(true);
             adapter.setBackendType(Zigbee::ZigbeeBackendTypeTi);
             adapter.setBaudRate(115200);

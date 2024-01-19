@@ -44,7 +44,11 @@ void ZigbeeClusterScenes::processDataIndication(ZigbeeClusterLibrary::Frame fram
         // Read the payload which is
         Command command = static_cast<Command>(frame.header.command);
         QByteArray payload = frame.payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        QDataStream payloadStream(&payload, QDataStream::ReadOnly);
+#else
         QDataStream payloadStream(&payload, QIODevice::ReadOnly);
+#endif
         payloadStream.setByteOrder(QDataStream::LittleEndian);
         quint16 groupId = 0; quint8 sceneId;
         payloadStream >> groupId >> sceneId;

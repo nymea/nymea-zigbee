@@ -262,7 +262,11 @@ bool ZigbeeInterfaceDeconz::enable(const QString &serialPort, qint32 baudrate)
     m_serialPort->setFlowControl(QSerialPort::NoFlowControl);
 
     connect(m_serialPort, &QSerialPort::readyRead, this, &ZigbeeInterfaceDeconz::onReadyRead);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
+    connect(m_serialPort, &QSerialPort::errorOccurred, this, &ZigbeeInterfaceDeconz::onError, Qt::QueuedConnection);
+#else
     connect(m_serialPort, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(onError(QSerialPort::SerialPortError)), Qt::QueuedConnection);
+#endif
 
     if (!m_serialPort->open(QSerialPort::ReadWrite)) {
         qCWarning(dcZigbeeInterface()) << "Could not open serial port" << serialPort << baudrate << m_serialPort->errorString();

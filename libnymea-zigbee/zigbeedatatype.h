@@ -30,7 +30,6 @@
 
 #include "zigbee.h"
 
-
 class ZigbeeDataType
 {
 public:
