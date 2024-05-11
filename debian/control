@@ -22,10 +22,6 @@ Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends},
-         libqt5network5,
-         libqt5gui5,
-         libqt5serialport5,
-         libqt5sql5-sqlite
 Description: Qt 5 based library for ZigBee
  Qt 5 based library for ZigBee.
 
