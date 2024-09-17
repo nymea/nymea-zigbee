@@ -32,7 +32,9 @@
 #include "zigbeenetworkdatabase.h"
 
 #include <QDataStream>
+#ifndef DISABLE_QCA
 #include <QtCrypto>
+#endif
 
 ZigbeeNetworkTi::ZigbeeNetworkTi(const QUuid &networkUuid, QObject *parent) :
     ZigbeeNetwork(networkUuid, parent)
@@ -291,7 +293,7 @@ void ZigbeeNetworkTi::processGreenPowerFrame(const Zigbee::ApsdeDataIndication &
 
 QByteArray ZigbeeNetworkTi::encryptSecurityKey(quint32 sourceId, const QByteArray &securityKey)
 {
-#if (QCA_VERSION >= QCA_VERSION_CHECK(2, 2, 0))
+#ifndef DISABLE_QCA
     QByteArray sourceIdArray;
     sourceIdArray.append(static_cast<quint8>(sourceId & 0x000000ff));
     sourceIdArray.append(static_cast<quint8>((sourceId & 0x0000ff00) >> 8));
