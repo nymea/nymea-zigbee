@@ -14,6 +14,7 @@ packagesExist(libudev) {
 greaterThan(QT_MAJOR_VERSION, 5) {
     # Note: available since mantic
     # PKGCONFIG += qca2-qt6
+    message(Building without TI support)
     DEFINES += DISABLE_TI
 } else {
     PKGCONFIG += qca2-qt5
