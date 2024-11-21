@@ -30,7 +30,9 @@
 
 #include "backends/nxp/zigbeenetworknxp.h"
 #include "backends/deconz/zigbeenetworkdeconz.h"
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include "backends/ti/zigbeenetworkti.h"
+#endif
 
 #include <QDateTime>
 
@@ -49,8 +51,10 @@ ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(const QUuid &networkUui
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(networkUuid, parent));
     case Zigbee::ZigbeeBackendTypeDeconz:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(networkUuid, parent));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     case Zigbee::ZigbeeBackendTypeTi:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkTi(networkUuid, parent));
+#endif
     }
 
     return nullptr;

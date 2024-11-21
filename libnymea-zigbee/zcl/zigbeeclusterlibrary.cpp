@@ -80,7 +80,12 @@ ZigbeeClusterLibrary::FrameControl ZigbeeClusterLibrary::parseFrameControlByte(q
 QByteArray ZigbeeClusterLibrary::buildHeader(const ZigbeeClusterLibrary::Header &header)
 {
     QByteArray headerData;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&headerData, QDataStream::WriteOnly);
+#else
     QDataStream stream(&headerData, QIODevice::WriteOnly);
+#endif
+
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << buildFrameControlByte(header.frameControl);
 
@@ -144,7 +149,11 @@ QList<ZigbeeClusterLibrary::ReadAttributeStatusRecord> ZigbeeClusterLibrary::par
 ZigbeeDataType ZigbeeClusterLibrary::readDataType(QDataStream *stream, Zigbee::DataType dataType)
 {
     QByteArray data; quint16 numberOfElenemts = 0; quint8 elementType = 0;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream dataStream(&data, QDataStream::WriteOnly);
+#else
     QDataStream dataStream(&data, QIODevice::WriteOnly);
+#endif
     dataStream.setByteOrder(QDataStream::LittleEndian);
 
     // Parse data depending on the type
@@ -257,7 +266,11 @@ QByteArray ZigbeeClusterLibrary::buildFrame(const ZigbeeClusterLibrary::Frame &f
 QByteArray ZigbeeClusterLibrary::buildAttributeReportingConfiguration(const ZigbeeClusterLibrary::AttributeReportingConfiguration &reportingConfiguration)
 {
     QByteArray payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&payload, QDataStream::WriteOnly);
+#else
     QDataStream stream(&payload, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << static_cast<quint8>(reportingConfiguration.direction);
     stream << reportingConfiguration.attributeId;
@@ -265,7 +278,7 @@ QByteArray ZigbeeClusterLibrary::buildAttributeReportingConfiguration(const Zigb
     stream << reportingConfiguration.minReportingInterval;
     stream << reportingConfiguration.maxReportingInterval;
 
-    for (int i = 0; i < reportingConfiguration.reportableChange.count(); i++) {
+    for (int i = 0; i < reportingConfiguration.reportableChange.size(); i++) {
         stream << static_cast<quint8>(reportingConfiguration.reportableChange.at(i));
     }
 
@@ -280,11 +293,15 @@ QByteArray ZigbeeClusterLibrary::buildAttributeReportingConfiguration(const Zigb
 QByteArray ZigbeeClusterLibrary::buildWriteAttributeRecord(const ZigbeeClusterLibrary::WriteAttributeRecord &writeAttributeRecord)
 {
     QByteArray payload;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QDataStream stream(&payload, QDataStream::WriteOnly);
+#else
     QDataStream stream(&payload, QIODevice::WriteOnly);
+#endif
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << writeAttributeRecord.attributeId;
     stream << static_cast<quint8>(writeAttributeRecord.dataType);
-    for (int i = 0; i < writeAttributeRecord.data.count(); i++) {
+    for (int i = 0; i < writeAttributeRecord.data.size(); i++) {
         stream << static_cast<quint8>(writeAttributeRecord.data.at(i));
     }
 
