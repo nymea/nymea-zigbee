@@ -62,7 +62,6 @@ private:
 
     bool initDatabase();
     void createTable(const QString &tableName, const QString &schema);
-    void createIndices(const QString &indexName, const QString &tableName, const QString &columns);
 
 public slots:
     bool saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint);
