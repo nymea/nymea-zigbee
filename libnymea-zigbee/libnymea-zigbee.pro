@@ -12,7 +12,13 @@ packagesExist(libudev) {
     DEFINES += DISABLE_UDEV
 }
 
-PKGCONFIG += qca2-qt5
+packagesExist(qca2-qt5) {
+    message(Build with libqca2 support)
+    PKGCONFIG += qca2-qt5
+} else {
+    message(Build without libqca2 support)
+    DEFINES += DISABLE_QCA
+}
 
 SOURCES += \
     backends/deconz/interface/zigbeeinterfacedeconz.cpp \
