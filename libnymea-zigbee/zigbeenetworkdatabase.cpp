@@ -256,7 +256,6 @@ bool ZigbeeNetworkDatabase::initDatabase()
                     "powerDescriptor INTEGER NOT NULL, " // uint16
                     "lqi INTEGER NOT NULL," // uint8
                     "timestamp INTEGER NOT NULL)"); // unix timestamp with the last communication
-        createIndices("ieeeAddressIndex", "nodes", "ieeeAddress");
     }
 
     // Create endpoints table
@@ -269,7 +268,6 @@ bool ZigbeeNetworkDatabase::initDatabase()
                     "deviceId INTEGER NOT NULL, " // uint16
                     "deviceVersion INTEGER, " // uint8
                     "CONSTRAINT fk_ieeeAddress FOREIGN KEY(ieeeAddress) REFERENCES nodes(ieeeAddress) ON DELETE CASCADE)");
-        createIndices("endpointIndex", "endpoints", "ieeeAddress, endpointId");
     }
 
     // Create server cluster table
@@ -279,7 +277,6 @@ bool ZigbeeNetworkDatabase::initDatabase()
                     "endpointId INTEGER NOT NULL, " // reference to endpoint.id
                     "clusterId INTEGER NOT NULL, " // uint16
                     "CONSTRAINT fk_endpoint FOREIGN KEY(endpointId) REFERENCES endpoints(id) ON DELETE CASCADE)");
-        createIndices("serverClusterIndex", "serverClusters", "endpointId, clusterId");
     }
 
     // Create client cluster table
@@ -289,7 +286,6 @@ bool ZigbeeNetworkDatabase::initDatabase()
                     "endpointId INTEGER NOT NULL, " // reference to endpoint.id
                     "clusterId INTEGER NOT NULL, " // uint16
                     "CONSTRAINT fk_endpoint FOREIGN KEY(endpointId) REFERENCES endpoints(id) ON DELETE CASCADE)");
-        createIndices("clientClusterIndex", "clientClusters", "endpointId, clusterId");
     }
 
     // Create cluster attributes table
@@ -301,7 +297,6 @@ bool ZigbeeNetworkDatabase::initDatabase()
                     "dataType INTEGER NOT NULL, " // uint8
                     "data BLOB NOT NULL, " // raw data from attribute
                     "CONSTRAINT fk_cluster FOREIGN KEY(clusterId) REFERENCES serverClusters(id) ON DELETE CASCADE)");
-        createIndices("attributesIndex", "attributes", "clusterId, attributeId");
     }
 
     if (!m_db.tables().contains("bindings")) {
@@ -328,12 +323,6 @@ void ZigbeeNetworkDatabase::createTable(const QString &tableName, const QString 
         qCWarning(dcZigbeeNetworkDatabase()) << "Could not create table in database." << query << m_db.lastError().databaseText() << m_db.lastError().driverText();
         return;
     }
-}
-
-void ZigbeeNetworkDatabase::createIndices(const QString &indexName, const QString &tableName, const QString &columns)
-{
-    qCDebug(dcZigbeeNetworkDatabase()) << "Creating table indices" << indexName << tableName << columns;
-    m_db.exec(QString("CREATE UNIQUE INDEX IF NOT EXISTS %1 ON %2(%3);").arg(indexName).arg(tableName).arg(columns));
 }
 
 bool ZigbeeNetworkDatabase::saveNodeEndpoint(ZigbeeNodeEndpoint *endpoint)
