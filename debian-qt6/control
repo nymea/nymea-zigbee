@@ -1,0 +1,36 @@
+Source: nymea-zigbee
+Section: utils
+Priority: optional
+Maintainer: Simon Stuerz <simon.stuerz@nymea.io>
+Standards-Version: 4.7.2
+Homepage: https://nymea.io
+Vcs-Git: https://github.com/nymea/nymea-zigbee.git
+Build-Depends: debhelper,
+               dpkg-dev,
+               pkg-config,
+               qt6-base-dev,
+               qt6-base-dev-tools,
+               qt6-serialport-dev,
+               libqt6sql6-sqlite,
+               libudev-dev,
+
+Package: libnymea-zigbee1
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+Description: Qt 6 based library for ZigBee
+ Qt 6 based library for ZigBee.
+
+
+Package: libnymea-zigbee-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libnymea-zigbee1 (= ${binary:Version}),
+  ${shlibs:Depends},
+  ${misc:Depends},
+  pkg-config
+Description: Qt 6 based library for ZigBee - development files
+ Development files for Qt 6 based ZigBee library.
