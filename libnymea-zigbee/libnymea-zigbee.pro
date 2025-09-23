@@ -17,7 +17,13 @@ greaterThan(QT_MAJOR_VERSION, 5) {
     message(Building without TI support)
     DEFINES += DISABLE_TI
 } else {
-    PKGCONFIG += qca2-qt5
+    packagesExist(qca2-qt5) {
+        message(Build with libqca2 support)
+        PKGCONFIG += qca2-qt5
+    } else {
+        message(Build without libqca2 support)
+        DEFINES += DISABLE_TI
+    }
 }
 
 SOURCES += \

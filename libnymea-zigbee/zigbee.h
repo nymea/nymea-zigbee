@@ -43,7 +43,7 @@ public:
     enum ZigbeeBackendType {
         ZigbeeBackendTypeDeconz,
         ZigbeeBackendTypeNxp,
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#ifndef DISABLE_TI
         ZigbeeBackendTypeTi
 #endif
     };
