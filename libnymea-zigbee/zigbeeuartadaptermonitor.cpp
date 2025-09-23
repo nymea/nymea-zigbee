@@ -239,7 +239,7 @@ void ZigbeeUartAdapterMonitor::addAdapterInternally(const QString &serialPort)
             adapter.setBaudRate(115200);
         }
 
-#ifndef DISABLE_TI
+#ifndef ZIGBEE_DISABLE_TI
         QStringList zStackModels = {"cc2530", "cc2531", "cc2538", "cc1352p", "cc2652p", "cc2652r", "cc2652rb", "sonoff zigbee 3.0 usb"};
         if (QRegularExpression(".*(" + zStackModels.join("|") + ").*").match(serialPortInfo.description().toLower()).hasMatch()) {
             adapter.setHardwareRecognized(true);

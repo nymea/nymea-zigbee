@@ -30,7 +30,7 @@
 
 #include "backends/nxp/zigbeenetworknxp.h"
 #include "backends/deconz/zigbeenetworkdeconz.h"
-#ifndef DISABLE_TI
+#ifndef ZIGBEE_DISABLE_TI
 #include "backends/ti/zigbeenetworkti.h"
 #endif
 
@@ -51,7 +51,7 @@ ZigbeeNetwork *ZigbeeNetworkManager::createZigbeeNetwork(const QUuid &networkUui
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkNxp(networkUuid, parent));
     case Zigbee::ZigbeeBackendTypeDeconz:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkDeconz(networkUuid, parent));
-#ifndef DISABLE_TI
+#ifndef ZIGBEE_DISABLE_TI
     case Zigbee::ZigbeeBackendTypeTi:
         return qobject_cast<ZigbeeNetwork *>(new ZigbeeNetworkTi(networkUuid, parent));
 #endif

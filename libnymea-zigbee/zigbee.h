@@ -43,7 +43,7 @@ public:
     enum ZigbeeBackendType {
         ZigbeeBackendTypeDeconz,
         ZigbeeBackendTypeNxp,
-#ifndef DISABLE_TI
+#ifndef ZIGBEE_DISABLE_TI
         ZigbeeBackendTypeTi
 #endif
     };
