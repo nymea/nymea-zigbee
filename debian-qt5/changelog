@@ -1,3 +1,10 @@
+nymea-zigbee (1.13.0) jammy; urgency=medium
+
+  [ Simon Stürz ]
+  * Add Qt6 support
+
+ -- jenkins <developer@nymea.io>  Thu, 25 Sep 2025 09:29:16 +0200
+
 nymea-zigbee (1.11.1) jammy; urgency=medium
 
 
