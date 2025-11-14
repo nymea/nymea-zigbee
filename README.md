@@ -1,17 +1,39 @@
 # nymea-zigbee
 ----------------------
 
-This repository contains the nymea-zigbee library and tools.
+nymea-zigbee provides a reusable ZigBee coordinator library that can be embedded
+in nymea-based products or standalone gateway projects. It provides a clean Qt
+API to handle network management, ZCL data types, and manufacturer specific
+extensions.
 
-nymea-zigbee is a general purpose ZigBee coordinator library to build ZigBee coordinators/gateways.
-The provided zigbee-cli is a minimal ZigBee coordinator implementation which allows to host a ZigBee
-network for devices to join and interact with each other but without interacting with the devices.
+## Highlights
 
-For a full fetaured ZigBee coordinator/gateway implementation based on this library, please see 
-https://github.com/nymea/nymea.
+* Modular backend architecture with native implementations for TI, NXP and deCONZ adapters.
+* Full ZigBee Cluster Library implementation with HVAC, lighting, smart energy and security clusters.
+* QML/Qt-friendly C++ API, including a pkg-config file for downstream projects.
+* Optional QCA2 integration for TI adapters (enabled automatically when the dependency is available).
 
+For a full featured ZigBee coordinator/gateway implementation based on this
+library, please see https://github.com/nymea/nymea.
 
-# Supported ZigBee adapters
+## Building from source
+
+nymea-zigbee builds with qmake against either Qt 5.15 or newer Qt 6 releases.
+Typical build dependencies on Debian/Ubuntu are: `qtbase5-dev` (or `qt6-base-dev`),
+`qtserialport`, `libudev-dev`, and optionally `libqca2-dev` for TI adapter
+support. A minimal build looks like this:
+
+```bash
+mkdir build
+cd build
+qmake ..
+make -j$(nproc)
+```
+
+You can install the resulting library with `make install` or by using the
+packaging rules under `debian/`.
+
+## Supported ZigBee adapters
 
 ## TI z-Stack
 
@@ -47,4 +69,9 @@ Each sensor/remote cluster will be bound automatically to the sensors group in o
 - Sensors: `0xfff0`
 - Light: `0xfff1`
 
+## License
+
+nymea-zigbee is licensed under the terms of the GNU Lesser General Public
+License version 3 or (at your option) any later version. See the SPDX headers in
+each source file and `LICENSE.LGPL3` for the complete text.
 
