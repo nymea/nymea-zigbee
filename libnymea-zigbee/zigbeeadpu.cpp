@@ -65,11 +65,11 @@ quint8 ZigbeeAdpu::buildFrameControlByte(FrameControl frameControl)
 ZigbeeAdpu::FrameControl ZigbeeAdpu::readFrameControlByte(quint8 frameControlByte)
 {
     FrameControl frameControl;
-    frameControl.frameType = static_cast<FrameType>(frameControlByte | 0x03);
-    frameControl.deliveryMode = static_cast<DeliveryMode>(frameControlByte | 0x0C);
-    frameControl.apsAckFormat = frameControlByte | 0x10;
-    frameControl.security = frameControlByte | 0x20;
-    frameControl.acknowledgementRequest = frameControlByte | 0x40;
-    frameControl.extendedHeader = frameControlByte | 0x80;
+    frameControl.frameType = static_cast<FrameType>(frameControlByte & 0x03);
+    frameControl.deliveryMode = static_cast<DeliveryMode>(frameControlByte & 0x0C);
+    frameControl.apsAckFormat = (frameControlByte & 0x10) != 0;
+    frameControl.security = (frameControlByte & 0x20) != 0;
+    frameControl.acknowledgementRequest = (frameControlByte & 0x40) != 0;
+    frameControl.extendedHeader = (frameControlByte & 0x80) != 0;
     return frameControl;
 }
