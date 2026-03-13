@@ -1,3 +1,10 @@
+nymea-zigbee (1.16.0) noble; urgency=medium
+
+  [ Simon Stürz ]
+  * Fix clang build flags and APDU bit parsing
+
+ -- jenkins <developer@nymea.io>  Fri, 13 Mar 2026 15:05:58 +0100
+
 nymea-zigbee (1.14.2) noble; urgency=medium
 
 
