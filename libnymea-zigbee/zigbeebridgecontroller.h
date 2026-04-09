@@ -64,7 +64,7 @@ protected:
     bool m_canUpdate = false;
     bool m_initiallyFlashed = false;
     bool m_updateRunning = false;
-    QDir m_settingsDirectory = QDir("/etc/nymea/");
+    QDir m_settingsDirectory = QDir("/var/lib/nymea/");
 
     void setAvailable(bool available);
     void setFirmwareVersion(const QString &firmwareVersion);
