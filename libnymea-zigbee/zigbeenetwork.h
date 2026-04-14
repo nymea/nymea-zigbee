@@ -158,7 +158,7 @@ private:
     ZigbeeDeviceProfile::NodeType m_nodeType = ZigbeeDeviceProfile::NodeTypeCoordinator;
 
     // Network storage
-    QDir m_settingsDirectory = QDir("/etc/nymea/");
+    QDir m_settingsDirectory = QDir("/var/lib/nymea/");
     QList<ZigbeeNode *> m_nodes;
     QList<ZigbeeNode *> m_uninitializedNodes;
     QList<ZigbeeNode *> m_temporaryNodes;
