@@ -1,3 +1,12 @@
+nymea-zigbee (1.15.0) noble; urgency=medium
+
+  [ Simon Stürz ]
+  * Fix clang build flags and APDU bit parsing
+  * Update default configuration directory from /etc/nymea to
+    /var/lib/nymea
+
+ -- jenkins <developer@nymea.io>  Tue, 14 Apr 2026 14:23:04 +0200
+
 nymea-zigbee (1.14.2) noble; urgency=medium
 
 
