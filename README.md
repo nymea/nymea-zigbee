@@ -20,8 +20,8 @@ library, please see https://github.com/nymea/nymea.
 
 nymea-zigbee builds with qmake against either Qt 5.15 or newer Qt 6 releases.
 Typical build dependencies on Debian/Ubuntu are: `qtbase5-dev` (or `qt6-base-dev`),
-`qtserialport`, `libudev-dev`, and optionally `libqca2-dev` for TI adapter
-support. A minimal build looks like this:
+`qtserialport`, `libudev-dev`, and optionally `libqca-qt5-2-dev` (Qt 5) or
+`libqca-qt6-dev` (Qt 6) for TI adapter support. A minimal build looks like this:
 
 ```bash
 mkdir build
