@@ -1,3 +1,10 @@
+nymea-zigbee (1.17.0) resolute; urgency=medium
+
+  [ Simon Stürz ]
+  * Re-enable TI backend for Qt6 builds
+
+ -- jenkins <developer@nymea.io>  Fri, 11 Sep 2026 08:39:12 +0200
+
 nymea-zigbee (1.16.0) resolute; urgency=medium
 
 
