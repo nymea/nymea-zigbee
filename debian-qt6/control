@@ -13,6 +13,7 @@ Build-Depends: debhelper,
                qt6-serialport-dev,
                libqt6sql6-sqlite,
                libudev-dev,
+               libqca-qt6-dev,
 
 Package: libnymea-zigbee1
 Section: libs
