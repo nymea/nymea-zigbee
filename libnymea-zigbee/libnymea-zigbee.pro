@@ -12,10 +12,15 @@ packagesExist(libudev) {
     DEFINES += DISABLE_UDEV
 }
 greaterThan(QT_MAJOR_VERSION, 5) {
-    # Note: available since mantic
-    # PKGCONFIG += qca2-qt6
-    message(Building without TI support)
-    DEFINES += ZIGBEE_DISABLE_TI
+    # libqca-qt6-dev ships no pkg-config file (only CMake config), so detect via header presence
+    exists(/usr/include/Qca-qt6/QtCrypto/qca.h) {
+        message(Build with libqca2 support)
+        INCLUDEPATH += /usr/include/Qca-qt6/QtCrypto
+        LIBS += -lqca-qt6
+    } else {
+        message(Build without libqca2 support)
+        DEFINES += ZIGBEE_DISABLE_TI
+    }
 } else {
     packagesExist(qca2-qt5) {
         message(Build with libqca2 support)
